@@ -1,0 +1,11 @@
+node_modules
+dist
+out
+release
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+backups
+.DS_Store
+.env*
+coverage

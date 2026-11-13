@@ -1,0 +1,24 @@
+appId: in.shopos.desktop
+productName: Shop OS
+directories:
+  output: release
+files:
+  - out/**
+  - package.json
+# Generated SQL migrations are read from disk at startup (see src/main/index.ts).
+extraResources:
+  - from: drizzle
+    to: drizzle
+# better-sqlite3 is a native module: it must be rebuilt for Electron and live outside the asar.
+asarUnpack:
+  - "**/node_modules/better-sqlite3/**"
+npmRebuild: true
+mac:
+  category: public.app-category.business
+  target: [dmg]
+  # Unsigned unless an Apple developer account is available; see docs/restore-guide.md for first-run steps.
+  identity: null
+win:
+  target: [nsis]
+linux:
+  target: [AppImage]

@@ -1,0 +1,82 @@
+import { useEffect, useState } from "react";
+import { Badge, Box, Button, Flex, Text } from "@radix-ui/themes";
+import { ItemsScreen } from "./screens/ItemsScreen";
+import { NewBillScreen } from "./screens/NewBillScreen";
+import { SettingsScreen } from "./screens/SettingsScreen";
+import { uiText } from "./strings";
+import { call } from "./state/api";
+
+type Route = "items" | "bill" | "settings";
+
+export function App() {
+  const [route, setRoute] = useState<Route>("bill");
+  const [negatives, setNegatives] = useState(0);
+
+  // Keyboard: Ctrl/Cmd+1..3 to switch screens.
+  useEffect(() => {
+    const handleKeyDown = (keyboardEvent: KeyboardEvent) => {
+      if (!(keyboardEvent.ctrlKey || keyboardEvent.metaKey)) return;
+      const map: Record<string, Route> = { "1": "items", "2": "bill", "3": "settings" };
+      const shortcutRoute = map[keyboardEvent.key];
+      if (shortcutRoute) {
+        keyboardEvent.preventDefault();
+        setRoute(shortcutRoute);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    call("items.list", { needsCorrection: true, limit: 1, offset: 0 })
+      .then((listResult) => setNegatives(listResult.total))
+      .catch(() => {});
+  }, [route]);
+
+  const nav: [Route, string][] = [
+    ["items", uiText.nav.items],
+    ["bill", uiText.nav.newBill],
+    ["settings", uiText.nav.settings],
+  ];
+  return (
+    <Flex style={{ height: "100vh" }}>
+      <Flex
+        direction="column"
+        gap="2"
+        p="3"
+        style={{ width: 200, borderRight: "1px solid var(--gray-6)", background: "var(--gray-2)" }}
+        asChild
+      >
+        <nav aria-label="Main">
+          <Text size="5" weight="bold" mb="3">
+            {uiText.appName}
+          </Text>
+          {nav.map(([navigationRoute, label]) => (
+            <Button
+              key={navigationRoute}
+              size="3"
+              variant={route === navigationRoute ? "solid" : "soft"}
+              onClick={() => setRoute(navigationRoute)}
+              aria-current={route === navigationRoute ? "page" : undefined}
+              style={{ justifyContent: "flex-start" }}
+            >
+              {label}
+              {navigationRoute === "items" && negatives > 0 && (
+                <Badge color="red" ml="2">
+                  {negatives} {uiText.items.needsCorrection}
+                </Badge>
+              )}
+            </Button>
+          ))}
+        </nav>
+      </Flex>
+      <Box flexGrow="1" p="4" style={{ overflow: "auto" }} asChild>
+        <main>
+          {route === "items" && <ItemsScreen />}
+          {route === "bill" && <NewBillScreen />}
+          {route === "settings" && <SettingsScreen />}
+        </main>
+      </Box>
+    </Flex>
+  );
+}
