@@ -36,7 +36,7 @@ Checked against `.specify/memory/constitution.md` v1.1.0.
 
 | Principle | How this plan satisfies it | Status |
 |---|---|---|
-| I. Never lose or alter a bill | Bill, lines and movements saved in one transaction; print after commit; database triggers block edits and deletes of saved bills (only the cancel fields may change); cancel keeps the number. Gap: no idempotency key on `bills.save` yet (review finding B2) | Pass with open item |
+| I. Never lose or alter a bill | Bill, lines and movements saved in one transaction; print after commit; database triggers block edits and deletes of saved bills (only the cancel fields may change); cancel keeps the number. `bills.save` is idempotent through a unique `client_bill_id` (review B2, fixed 2026-11-14) | Pass |
 | II. Immutable records | Append-only `stock_movement` (triggers); cached item stock verified against the sum of movements in tests | Pass |
 | III. Integer money and quantity | Paise and thousandths; rounding in `packages/core/src/money.ts`; see research D5 and data-model "Rounding" | Pass |
 | IV. Offline-first | Local SQLite only; UUID ids; business and shop ids on every table | Pass |
@@ -45,7 +45,7 @@ Checked against `.specify/memory/constitution.md` v1.1.0.
 | VII. Simplicity | Two packages only; Radix UI and Drizzle as chosen; no server | Pass |
 | VIII. Readable names | ESLint `id-length` (minimum 2) enforced; existing code renamed on 2026-11-13; readability beyond length is a review check | Pass |
 
-Post-design re-check: passes; the one open item is B2 (idempotent save), tracked in `docs/reviews/2026-11-13-spec-review.md`. No complexity violations.
+Post-design re-check: passes; open review items are tracked in `docs/reviews/2026-11-13-spec-review.md`. No complexity violations.
 
 ## Project Structure
 

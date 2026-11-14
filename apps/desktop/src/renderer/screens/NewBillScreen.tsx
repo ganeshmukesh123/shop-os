@@ -153,8 +153,8 @@ export function NewBillScreen() {
     setSaving(true);
     try {
       const saveResult = await call("bills.save", {
+        clientBillId: form.clientBillId,
         customerName: form.customerName.trim() || undefined,
-        customerPhone: form.customerPhone.trim() || undefined,
         paymentMode: form.paymentMode,
         billDiscountPaise: ev.billDiscountPaise,
         lines: ev.input.map(({ itemId, quantityMilli, ratePaise, lineDiscountPaise }) => ({
@@ -345,23 +345,6 @@ export function NewBillScreen() {
               }
             />
           </label>
-          <label>
-            <Text as="div" size="2" weight="bold" mb="1">
-              {uiText.bill.customerPhone}
-            </Text>
-            <TextField.Root
-              size="3"
-              inputMode="numeric"
-              maxLength={15}
-              value={form.customerPhone}
-              onChange={(changeEvent) =>
-                setForm((previousForm) => ({
-                  ...previousForm,
-                  customerPhone: changeEvent.target.value.replace(/\D/g, ""),
-                }))
-              }
-            />
-          </label>
           <div>
             <Text as="div" size="2" weight="bold" mb="1" id="pay-label">
               {uiText.bill.payment}
@@ -471,7 +454,10 @@ export function NewBillScreen() {
                 size="3"
                 autoFocus
                 onClick={() => {
-                  setForm(recover);
+                  setForm({
+                    ...recover,
+                    clientBillId: recover.clientBillId ?? crypto.randomUUID(),
+                  });
                   setRecover(null);
                 }}
               >

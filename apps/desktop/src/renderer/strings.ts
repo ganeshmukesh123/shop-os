@@ -56,7 +56,6 @@ export const uiText = {
     amount: "Amount",
     remove: "Remove",
     customerName: "Customer name (optional)",
-    customerPhone: "Customer phone (optional)",
     payment: "Payment",
     billDiscount: "Bill discount",
     total: "Total",

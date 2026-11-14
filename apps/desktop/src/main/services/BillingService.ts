@@ -47,26 +47,45 @@ export class BillingService {
       const bills = new BillRepository(tx, this.ctx);
       const profile = new SettingsRepository(tx, this.ctx).get();
 
+      // Idempotent save: a retry, double-click or crash-and-retry with the same id returns the
+      // first bill and changes nothing (no second bill, no second stock movement).
+      const alreadySaved = bills.findByClientBillId(input.clientBillId);
+      if (alreadySaved) {
+        return {
+          ...alreadySaved,
+          negativeStockItems: this.itemsWithNegativeStock(
+            items,
+            alreadySaved.lines.map((savedLine) => savedLine.itemId),
+          ),
+        };
+      }
+
       const resolved = input.lines.map((lineInput) => {
-        const it = items.get(lineInput.itemId);
-        if (!it) throw new CoreError("NOT_FOUND", "Item not found on the bill");
-        if (!it.active) throw new CoreError("ITEM_INACTIVE", `${it.name} is inactive`);
-        assertQuantity(lineInput.quantityMilli, it.allowsDecimal);
-        return it;
+        const catalogItem = items.get(lineInput.itemId);
+        if (!catalogItem) throw new CoreError("NOT_FOUND", "Item not found on the bill");
+        if (!catalogItem.active)
+          throw new CoreError("ITEM_INACTIVE", `${catalogItem.name} is inactive`);
+        assertQuantity(lineInput.quantityMilli, catalogItem.allowsDecimal);
+        return catalogItem;
       });
 
-      const fy = financialYear(now);
-      const seq = bills.nextSeq(profile.seriesCode, fy);
-      const number = formatBillNumber(profile.numberTemplate, profile.seriesCode, fy, seq);
+      const billFinancialYear = financialYear(now);
+      const seq = bills.nextSeq(profile.seriesCode, billFinancialYear);
+      const number = formatBillNumber(
+        profile.numberTemplate,
+        profile.seriesCode,
+        billFinancialYear,
+        seq,
+      );
 
       const saved = bills.insertBill({
         number,
         seriesCode: profile.seriesCode,
-        financialYear: fy,
+        financialYear: billFinancialYear,
         seq,
         billDate: localIso(now),
         customerName: input.customerName?.trim() || null,
-        customerPhone: input.customerPhone?.trim() || null,
+        clientBillId: input.clientBillId,
         paymentMode: input.paymentMode,
         linesTotalPaise: totals.linesTotalPaise,
         billDiscountPaise: totals.billDiscountPaise,
@@ -96,11 +115,18 @@ export class BillingService {
       }
       bills.clearDraft();
 
-      const negativeStockItems = [...new Set(input.lines.map((lineInput) => lineInput.itemId))]
-        .map((id) => items.get(id)!)
-        .filter((item) => item.stockMilli < 0);
+      const negativeStockItems = this.itemsWithNegativeStock(
+        items,
+        input.lines.map((lineInput) => lineInput.itemId),
+      );
       return { bill: saved, lines, negativeStockItems };
     });
+  }
+
+  private itemsWithNegativeStock(items: ItemRepository, itemIds: string[]): Item[] {
+    return [...new Set(itemIds)]
+      .map((itemId) => items.get(itemId)!)
+      .filter((item) => item.stockMilli < 0);
   }
 
   getBill(id: string): { bill: Bill; lines: BillLine[] } {

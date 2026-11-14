@@ -3,24 +3,22 @@ import type { DraftBill, PaymentMode } from "@shopos/core";
 import { call } from "./api";
 
 export interface BillForm {
+  /** Made when the bill is started; sent with the save so a retry can never create a second bill. */
+  clientBillId: string;
   draft: DraftBill;
   customerName: string;
-  customerPhone: string;
   paymentMode: PaymentMode;
 }
 
 export const emptyForm = (): BillForm => ({
+  clientBillId: crypto.randomUUID(),
   draft: { lines: [], billDisc: "", billDiscMode: "rupees" },
   customerName: "",
-  customerPhone: "",
   paymentMode: "cash",
 });
 
 export const isEmptyForm = (billForm: BillForm) =>
-  billForm.draft.lines.length === 0 &&
-  !billForm.customerName &&
-  !billForm.customerPhone &&
-  !billForm.draft.billDisc;
+  billForm.draft.lines.length === 0 && !billForm.customerName && !billForm.draft.billDisc;
 
 /** Autosave the in-progress bill after every change so a crash or power cut loses nothing. */
 export function useDraftAutosave(form: BillForm, enabled: boolean) {

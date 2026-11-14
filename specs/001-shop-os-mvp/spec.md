@@ -98,8 +98,9 @@ Staff and owner view the list of past bills (by date, bill number or customer na
 - **FR-008**: System MUST let users create a bill by searching items (2+ characters) and adding them with quantities.
 - **FR-009**: System MUST let users change a line's quantity and price, remove a line, and apply a discount (₹ or %) to a line or the whole bill.
 - **FR-010**: System MUST calculate line amounts and the grand total automatically, with no tax.
-- **FR-011**: A customer name and phone MUST be optional on the bill.
+- **FR-011**: A customer name MUST be optional on the bill. Customer phone is intentionally not captured in this release (decision of 2026-11-13, review B4/B6): collecting contact details needs the privacy notice and consent from feature 008 and a separate erasable customer record from feature 004.
 - **FR-012**: System MUST record a payment mode label (cash, UPI, card, unpaid) on each bill, without processing payments.
+- **FR-013a**: Saving the same bill twice (double-click, retry, crash-and-retry) MUST NOT create a second bill or a second stock movement; the first bill is returned.
 - **FR-013**: System MUST assign each saved bill a unique, sequential bill number that is never reused, including for cancelled bills.
 - **FR-014**: Saving a bill MUST reduce stock for each line; billing MUST NOT be blocked by insufficient stock, and negative-stock items MUST be flagged.
 - **FR-015**: System MUST print the bill (receipt-size and A4/A5) or export it as a PDF, showing shop name, bill number, date, customer (if given), lines, discount and grand total, with no tax shown. A print failure MUST NOT prevent saving.
@@ -117,7 +118,7 @@ Staff and owner view the list of past bills (by date, bill number or customer na
 
 - **Item**: Name, unit, selling price, current stock, active flag.
 - **Stock Change**: Record of an item's quantity moving up or down, with reason (opening, adjustment, sale, cancellation), date and time.
-- **Bill**: Number, date and time, optional customer name and phone, payment mode label, discount, grand total, status (Saved or Cancelled), cancel reason.
+- **Bill**: Number, date and time, optional customer name, payment mode label, discount, grand total, status (Saved or Cancelled), cancel reason.
 - **Bill Line**: Item, quantity, unit, rate, line discount, line amount.
 - **Shop Profile**: Shop name, address and phone shown on the bill.
 

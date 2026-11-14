@@ -24,7 +24,7 @@ All decisions come from the architecture doc, narrowed to the desktop-only MVP. 
 
 ### D4. Encryption-ready, not encrypted, in MVP
 - **Decision**: Keep a single place that opens the database where an encryption key can be supplied; ship unencrypted unless the M0 spike shows SQLCipher builds cleanly.
-- **Rationale**: The MVP has no customer personal data beyond optional name and phone; avoid build risk for a solo builder.
+- **Rationale**: The MVP holds no customer personal data beyond an optional name (phone was removed 2026-11-13, review B4); avoid build risk for a solo builder.
 - **Alternatives**: SQLCipher from day one (deferred); OS full-disk encryption advised in the restore guide.
 - **Status (implementation)**: Deferred. The key hook is the commented `encryptionKey` line in `apps/desktop/src/main/db/connection.ts`. No SQLCipher build was tried (spike T009 not run); the restore guide advises disk encryption.
 
@@ -89,7 +89,6 @@ All decisions come from the architecture doc, narrowed to the desktop-only MVP. 
 ## Unresolved items (non-blocking, tracked as milestone work)
 
 - Business time zone (Asia/Kolkata) and the 31 March / 1 April boundary test (review M3).
-- Idempotent `bills.save` so a retry cannot create a second bill (review B2).
 - How customer data is kept so privacy-law erasure is possible despite immutable bills (review B6).
 
 - SQLCipher availability in packaged Electron builds (M0).

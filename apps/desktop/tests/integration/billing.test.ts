@@ -36,6 +36,7 @@ const line = (itemId: string, quantityMilli = 1000, rate = 10000, disc = 0) => (
   lineDiscountPaise: disc,
 });
 const bill = (lines: ReturnType<typeof line>[], extra: object = {}) => ({
+  clientBillId: crypto.randomUUID(),
   paymentMode: "cash" as const,
   billDiscountPaise: 0,
   lines,
@@ -49,7 +50,6 @@ describe("billing", () => {
     const saveResult = billing.saveBill(
       bill([line(firstItem.id, 2000), line(secondItem.id, 2500, 5000)], {
         customerName: "Ravi",
-        customerPhone: "9876543210",
       }),
     );
     expect(saveResult.bill.status).toBe("saved");
@@ -233,6 +233,42 @@ describe("billing", () => {
     expect(billing.loadDraft()).toEqual({ lines: [3] });
     billing.saveBill(bill([line(firstItem.id)]));
     expect(billing.loadDraft()).toBeNull();
+  });
+
+  it("saving the same clientBillId twice returns the first bill and changes nothing", () => {
+    const firstItem = mk("A", "pcs", 100, 10000);
+    const retriedInput = bill([line(firstItem.id, 3000)]);
+    const firstSave = billing.saveBill(retriedInput);
+    const secondSave = billing.saveBill(retriedInput); // double-click, retry or crash-and-retry
+    expect(secondSave.bill.id).toBe(firstSave.bill.id);
+    expect(secondSave.bill.number).toBe(firstSave.bill.number);
+    expect(secondSave.lines).toHaveLength(1);
+    expect(testDb.sqlite.prepare("select count(*) as rowCount from bill").get()).toEqual({
+      rowCount: 1,
+    });
+    expect(
+      testDb.sqlite
+        .prepare("select count(*) as rowCount from stock_movement where reason = 'sale'")
+        .get(),
+    ).toEqual({ rowCount: 1 });
+    expect(
+      inv.listItems({ limit: 10, offset: 0 }).items.find((item) => item.id === firstItem.id)!
+        .stockMilli,
+    ).toBe(7000); // reduced once, not twice
+  });
+
+  it("different clientBillIds create different bills with consecutive numbers", () => {
+    const firstItem = mk("A");
+    const firstSave = billing.saveBill(bill([line(firstItem.id)]));
+    const secondSave = billing.saveBill(bill([line(firstItem.id)]));
+    expect(secondSave.bill.id).not.toBe(firstSave.bill.id);
+    expect(secondSave.bill.seq).toBe(firstSave.bill.seq + 1);
+  });
+
+  it("rejects a save without a valid clientBillId", () => {
+    const firstItem = mk("A");
+    const withoutId = { ...bill([line(firstItem.id)]), clientBillId: "not-a-uuid" };
+    expect(() => billing.saveBill(withoutId)).toThrow();
   });
 
   it("totals match a manual calculation on a 20-bill set (SC-007)", () => {

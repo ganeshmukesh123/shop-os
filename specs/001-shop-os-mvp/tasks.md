@@ -12,7 +12,7 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 
 **Tests**: Included. The plan commits to Vitest for core and service logic and Playwright for Electron end-to-end scenarios (quickstart.md), and the milestone exit criteria depend on them. Within each story, write the tests first and confirm they fail before implementing.
 
-**Organization**: MVP scope = US1 (inventory) + US2 (basic bill, saved, printed, PDF) + automatic backup (FR-021) + a packaged build. Bill list/reprint/cancel (US3), spreadsheet import and the formal shop trial are deferred; the full 80-task list is kept in `tasks.full.md` and its deferred items are listed at the end of this file. Milestone references (M0 to M6) are from plan.md.
+**Organization**: MVP scope = US1 (inventory) + US2 (basic bill, saved, printed, PDF) + US3 (bill list, reprint, cancel; moved back into the first release on 2026-11-13, review B3) + automatic backup (FR-021) + a packaged build. Spreadsheet import (FR-007) and the formal shop trial remain deferred; the full 80-task list is kept in `tasks.full.md` for reference only. Milestone references (M0 to M6) are from plan.md.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -119,7 +119,7 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 - [X] T045 [US2] Implement `BillingService.saveBill` in `apps/desktop/src/main/services/BillingService.ts`: validate with core `billing.ts`, take the next sequence from `number_counter` for the series and financial year, build the number with core `numbering.ts`, insert bill, lines and `sale` movements, update cached item stock, all in one database transaction; return the saved bill and `negativeStockItems` (depends on T043, T044)
 - [X] T046 [US2] Implement draft handling (`bills.draft.save`, `bills.draft.load`, clear on save) in `apps/desktop/src/main/services/BillingService.ts` and `apps/desktop/src/main/ipc/billing.ts`
 - [X] T047 [US2] Wire `bills.save`, `settings.get`, `settings.update` in `apps/desktop/src/main/ipc/billing.ts` and `apps/desktop/src/main/ipc/settings.ts`
-- [X] T048 [US2] Build the New bill screen in `apps/desktop/src/renderer/screens/NewBillScreen.tsx`: search box focused on open; 2+ characters shows matches; Enter adds the top match at quantity 1; editable quantity and rate per line; per-line and whole-bill discount as rupees or percent; running totals from core `billing.ts`; optional customer name and phone; payment mode picker (cash, UPI, card, unpaid, label only); remove line; Save with Ctrl or Cmd+S
+- [X] T048 [US2] Build the New bill screen in `apps/desktop/src/renderer/screens/NewBillScreen.tsx`: search box focused on open; 2+ characters shows matches; Enter adds the top match at quantity 1; editable quantity and rate per line; per-line and whole-bill discount as rupees or percent; running totals from core `billing.ts`; optional customer name; payment mode picker (cash, UPI, card, unpaid, label only); remove line; Save with Ctrl or Cmd+S
 - [X] T049 [P] [US2] Build the line editor in `apps/desktop/src/renderer/components/BillLineRow.tsx` with decimal rules from core `quantity.ts` and inline error text
 - [ ] T050 [P] [US2] Build the Settings screen in `apps/desktop/src/renderer/screens/SettingsScreen.tsx` for the shop profile fields and the bill number template with a live preview and a warning if the number could exceed 16 characters **(Status: code written, builds and typechecks; the Settings screen was not opened in a test)**
 - [X] T051 [US2] Autosave the in-progress bill to the draft after every change in `apps/desktop/src/renderer/state/billDraft.ts` and offer recovery on app start; make T041 and T042 pass
@@ -152,6 +152,31 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 
 ---
 
+## Phase 6: User Story 3 - Find, reprint and cancel bills (Priority: P2, in the first release) (M4)
+
+**Goal**: Staff find any past bill, reprint it identically, and cancel a wrong bill with a reason so stock is restored and the number is never reused (spec FR-016, FR-017, FR-018; quickstart scenario 5).
+
+**Independent Test**: Save a bill, find it by number, date range and customer name, reprint it, then cancel it with a reason and confirm stock returns, the bill shows as Cancelled, and its number is not reused.
+
+### Tests for User Story 3 (write first)
+
+- [ ] T064 [P] [US3] Integration tests in `apps/desktop/tests/integration/billCancel.test.ts`: cancel requires a non-empty reason (`REASON_REQUIRED`); cancel inserts one `sale_cancel` movement per line equal and opposite to the sale; item stock returns to its pre-sale value; the next saved bill gets the next sequence number (cancelled number never reused); a second cancel returns `ALREADY_CANCELLED`; the database refuses any other update or delete of a saved bill, bill line or movement
+- [ ] T065 [P] [US3] Unit tests in `apps/desktop/tests/unit/billLayout.test.ts`: a cancelled bill renders a CANCELLED banner with the reason and keeps its number; a normal bill is unchanged
+- [ ] T066 [P] [US3] End-to-end test in `apps/desktop/tests/e2e/bills.spec.ts` following quickstart scenario 5 (find by number, date range and customer name; reprint; cancel; stock restored)
+
+### Implementation for User Story 3
+
+- [ ] T067 [P] [US3] Implement `BillRepository.list` (filter by number, date range, customer name, status; newest first; paging with a maximum page size) in `apps/desktop/src/main/repositories/BillRepository.ts`
+- [ ] T068 [US3] Implement `BillingService.cancelBill` in `apps/desktop/src/main/services/BillingService.ts`: one transaction that sets status `cancelled`, `cancel_reason` and `cancelled_at`, appends the reverse `sale_cancel` movements and restores cached item stock; refuse if already cancelled or the reason is empty (depends on T067)
+- [ ] T069 [US3] Wire `bills.list` and `bills.cancel` in `apps/desktop/src/main/ipc/billing.ts` with the Zod schemas in `packages/core/src/types.ts` (contract: `specs/001-shop-os-mvp/contracts/ipc-commands.md`)
+- [ ] T070 [P] [US3] Build the Bills screen in `apps/desktop/src/renderer/screens/BillsScreen.tsx`: search by number, date range and customer name; status shown as the word "Cancelled" (not colour alone); open a bill in the existing bill view
+- [ ] T071 [US3] Add the Cancel bill action with a required-reason dialog in `apps/desktop/src/renderer/components/CancelBillDialog.tsx`, show the CANCELLED banner in `apps/desktop/src/renderer/screens/BillView.tsx` and `apps/desktop/src/main/services/billHtml.ts`; saved bills show no edit or delete controls anywhere; make T064 to T066 pass
+- [ ] T072 [US3] Verify reprint is identical to the original and cancel restores stock on a real counter run; record the result in `specs/001-shop-os-mvp/quickstart.md` (scenario 5)
+
+**Checkpoint (US3 exit)**: Spec US3 scenarios 1 to 3 pass; a wrong bill can be cancelled and the stock comes back.
+
+---
+
 ## Dependencies and execution order
 
 - **Phase 1** (T001 to T009) first. T002 to T004 can run in parallel after T001. T006 to T009 are spikes that gate the rest.
@@ -170,9 +195,10 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 
 1. Phases 1 and 2, then US1 and US2 including print (T001 to T058). Demo at the end of US2.
 2. Backup and packaging (T059 to T063), then use the app at the counter.
-3. Deferred until after the MVP is in use (descriptions in `tasks.full.md`, T053 to T057, T065 to T067, T074 to T080 there): US3 bill list/search, reprint and cancel with stock restore; spreadsheet import (FR-007); accessibility and shortcut polish; the formal 2-week trial with SC-004/005/006/007 checks. Until cancel exists, a wrong bill cannot be undone in the app, so build US3 right after the MVP.
-4. Do not start tax, khata or other PRD modules before that.
+3. US3 (T064 to T072): bill list, reprint and cancel. In the first release because, until cancel exists, a wrong bill cannot be undone in the app. Build it before the counter trial.
+4. Still deferred (descriptions in `tasks.full.md`, items T065 to T067 and T074 to T080 there): spreadsheet import (FR-007); accessibility and shortcut polish; the formal 2-week trial with SC-004/005/006/007 checks.
+5. Do not start tax, khata or other PRD modules before that.
 
 ## Format validation
 
-Every task starts with `- [ ]`, has a sequential ID (T001 to T063), carries a story label only inside story phases, and names exact file paths.
+Every task starts with `- [ ]`, has a sequential ID (T001 to T072), carries a story label only inside story phases, and names exact file paths.

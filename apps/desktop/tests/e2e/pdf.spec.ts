@@ -18,6 +18,7 @@ test("export a saved bill as PDF for receipt, A5 and A4", async () => {
       });
       if (!created.ok) throw new Error(created.message);
       const saved = await window.shopos["bills.save"]({
+        clientBillId: crypto.randomUUID(),
         paymentMode: "upi",
         billDiscountPaise: 500,
         customerName: "Ravi",

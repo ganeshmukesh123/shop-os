@@ -20,6 +20,7 @@ beforeEach(() => {
     openingQtyMilli: 5000,
   }).item;
   billId = new BillingService(testDb.db, testDb.ctx).saveBill({
+    clientBillId: crypto.randomUUID(),
     paymentMode: "cash",
     billDiscountPaise: 0,
     lines: [{ itemId: createdItem.id, quantityMilli: 1000, ratePaise: 5000, lineDiscountPaise: 0 }],

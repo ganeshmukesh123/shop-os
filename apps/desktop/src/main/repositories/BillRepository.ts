@@ -1,4 +1,4 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import type { Bill, BillLine, PaymentMode } from "@shopos/core";
 import type { Handle } from "../db/connection";
 import { newId, nowIso } from "../db/ids";
@@ -12,7 +12,6 @@ const toBill = (billRow: typeof bill.$inferSelect): Bill => ({
   seq: billRow.seq,
   billDate: billRow.billDate,
   customerName: billRow.customerName,
-  customerPhone: billRow.customerPhone,
   paymentMode: billRow.paymentMode as PaymentMode,
   linesTotalPaise: billRow.linesTotalPaise,
   billDiscountPaise: billRow.billDiscountPaise,
@@ -42,7 +41,7 @@ export interface NewBill {
   seq: number;
   billDate: string;
   customerName: string | null;
-  customerPhone: string | null;
+  clientBillId: string;
   paymentMode: PaymentMode;
   linesTotalPaise: number;
   billDiscountPaise: number;
@@ -113,6 +112,16 @@ export class BillRepository {
           .get(),
       ),
     );
+  }
+
+  /** The bill already saved for this idempotency key, if any (so a retried save returns the first bill). */
+  findByClientBillId(clientBillId: string): { bill: Bill; lines: BillLine[] } | null {
+    const existingRow = this.databaseHandle
+      .select({ id: bill.id })
+      .from(bill)
+      .where(and(eq(bill.shopId, this.ctx.shopId), eq(bill.clientBillId, clientBillId)))
+      .get();
+    return existingRow ? this.get(existingRow.id) : null;
   }
 
   get(id: string): { bill: Bill; lines: BillLine[] } | null {

@@ -72,10 +72,7 @@ export function renderBillHtml(
     )
     .join("\n");
 
-  const customer =
-    bill.customerName || bill.customerPhone
-      ? `<div>Customer: ${esc([bill.customerName, bill.customerPhone].filter(Boolean).join(" · "))}</div>`
-      : "";
+  const customer = bill.customerName ? `<div>Customer: ${esc(bill.customerName)}</div>` : "";
 
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>${esc(bill.number)}</title>

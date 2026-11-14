@@ -35,11 +35,11 @@ Append-only. Invariant: item.stock_milli equals the sum of the item's movements.
 |---|---|
 | number | text, not null, unique per shop; formatted from series, financial year and counter |
 | series_code | text, not null (for example `C1`) |
+| client_bill_id | text, unique per shop (idempotency key from the screen that started the bill); null only for bills saved before it existed; never changes after save |
 | financial_year | text, not null (for example `26-27`; 1 April to 31 March, from the local bill date) |
 | seq | integer, not null, unique with series and financial year |
 | bill_date | ISO-8601 local timestamp, not null |
 | customer_name | text up to 80 characters, optional |
-| customer_phone | text, optional, digits only, 10-15 characters when present |
 | payment_mode | one of `cash`, `upi`, `card`, `unpaid`, not null |
 | lines_total_paise | integer, not null |
 | bill_discount_paise | integer, not null, 0 up to lines_total_paise |
@@ -77,8 +77,8 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - `stock_movement`: update and delete are rejected ("append-only").
 - `bill_line`: update and delete are rejected.
-- `bill`: delete is rejected; update is allowed only for the change `status` `saved` to `cancelled` (with its cancel fields) while every other column stays identical.
-- Consequence: customer fields on a saved bill cannot be edited or erased later. See review finding B6 (privacy erasure) for the open decision.
+- `bill`: delete is rejected (also the key `client_bill_id` is protected); update is allowed only for the change `status` `saved` to `cancelled` (with its cancel fields) while every other column stays identical.
+- Consequence: the optional `customer_name` on a saved bill cannot be edited or erased later. Customer phone was removed from the bill (migration `0002`, 2026-11-13) so this release holds no contact details. When contact details arrive (features 004 and 008) they live in a separate, erasable party record referenced by id (review B6).
 
 ## Rounding (implemented in `packages/core/src/money.ts`)
 

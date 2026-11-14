@@ -34,6 +34,7 @@ const seed = () => {
     openingQtyMilli: 10000,
   }).item;
   new BillingService(testDb.db, testDb.ctx).saveBill({
+    clientBillId: crypto.randomUUID(),
     paymentMode: "cash",
     billDiscountPaise: 0,
     lines: [{ itemId: seededItem.id, quantityMilli: 2000, ratePaise: 5000, lineDiscountPaise: 0 }],
@@ -64,6 +65,7 @@ describe("backup", () => {
     const pendingBackup = backup.run(new Date(2026, 11, 7, 10, 0, 0));
     for (let itemIndex = 0; itemIndex < 20; itemIndex++)
       billing.saveBill({
+        clientBillId: crypto.randomUUID(),
         paymentMode: "cash",
         billDiscountPaise: 0,
         lines: [

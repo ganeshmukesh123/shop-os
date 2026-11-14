@@ -29,22 +29,17 @@ export const item = sqliteTable(
     gstRateBp: integer("gst_rate_bp"),
     barcode: text("barcode"),
   },
-  (tableColumns) => ({
-    item_name_nocase_idx: index("item_name_nocase_idx").on(
-      sql`${tableColumns.name} COLLATE NOCASE`,
-    ),
-    item_name_len: check(
+  (tableColumns) => [
+    index("item_name_nocase_idx").on(sql`${tableColumns.name} COLLATE NOCASE`),
+    check(
       "item_name_len",
       sql`length(${tableColumns.name}) between 1 and 120 and ${tableColumns.name} = trim(${tableColumns.name})`,
     ),
-    item_unit_len: check("item_unit_len", sql`length(${tableColumns.unit}) between 1 and 20`),
-    item_price_nonneg: check("item_price_nonneg", sql`${tableColumns.pricePaise} >= 0`),
-    item_allows_decimal_bool: check(
-      "item_allows_decimal_bool",
-      sql`${tableColumns.allowsDecimal} in (0, 1)`,
-    ),
-    item_active_bool: check("item_active_bool", sql`${tableColumns.active} in (0, 1)`),
-  }),
+    check("item_unit_len", sql`length(${tableColumns.unit}) between 1 and 20`),
+    check("item_price_nonneg", sql`${tableColumns.pricePaise} >= 0`),
+    check("item_allows_decimal_bool", sql`${tableColumns.allowsDecimal} in (0, 1)`),
+    check("item_active_bool", sql`${tableColumns.active} in (0, 1)`),
+  ],
 );
 
 export const bill = sqliteTable(
@@ -57,7 +52,8 @@ export const bill = sqliteTable(
     seq: integer("seq").notNull(),
     billDate: text("bill_date").notNull(), // ISO-8601 local timestamp
     customerName: text("customer_name"),
-    customerPhone: text("customer_phone"),
+    // Idempotency key from the screen that started the bill; unique per shop. Null only for bills saved before it existed.
+    clientBillId: text("client_bill_id"),
     // payment_mode: one of cash, upi, card, unpaid
     paymentMode: text("payment_mode").notNull(),
     linesTotalPaise: integer("lines_total_paise").notNull(),
@@ -68,37 +64,31 @@ export const bill = sqliteTable(
     cancelReason: text("cancel_reason"),
     cancelledAt: text("cancelled_at"),
   },
-  (tableColumns) => ({
-    bill_number_uq: uniqueIndex("bill_number_uq").on(tableColumns.shopId, tableColumns.number),
-    bill_series_fy_seq_uq: uniqueIndex("bill_series_fy_seq_uq").on(
+  (tableColumns) => [
+    uniqueIndex("bill_number_uq").on(tableColumns.shopId, tableColumns.number),
+    uniqueIndex("bill_series_fy_seq_uq").on(
       tableColumns.seriesCode,
       tableColumns.financialYear,
       tableColumns.seq,
     ),
-    bill_date_idx: index("bill_date_idx").on(tableColumns.billDate),
-    bill_customer_idx: index("bill_customer_idx").on(tableColumns.customerName),
-    bill_payment_mode: check(
-      "bill_payment_mode",
-      sql`${tableColumns.paymentMode} in ('cash','upi','card','unpaid')`,
-    ),
-    bill_status: check("bill_status", sql`${tableColumns.status} in ('saved','cancelled')`),
-    bill_cancel_reason_required: check(
+    uniqueIndex("bill_client_bill_id_uq").on(tableColumns.shopId, tableColumns.clientBillId),
+    index("bill_date_idx").on(tableColumns.billDate),
+    index("bill_customer_idx").on(tableColumns.customerName),
+    check("bill_payment_mode", sql`${tableColumns.paymentMode} in ('cash','upi','card','unpaid')`),
+    check("bill_status", sql`${tableColumns.status} in ('saved','cancelled')`),
+    check(
       "bill_cancel_reason_required",
       sql`${tableColumns.status} <> 'cancelled' or (${tableColumns.cancelReason} is not null and length(trim(${tableColumns.cancelReason})) > 0)`,
     ),
-    bill_discount_range: check(
+    check(
       "bill_discount_range",
       sql`${tableColumns.billDiscountPaise} >= 0 and ${tableColumns.billDiscountPaise} <= ${tableColumns.linesTotalPaise}`,
     ),
-    bill_total_eq: check(
+    check(
       "bill_total_eq",
       sql`${tableColumns.grandTotalPaise} = ${tableColumns.linesTotalPaise} - ${tableColumns.billDiscountPaise}`,
     ),
-    bill_phone_digits: check(
-      "bill_phone_digits",
-      sql`${tableColumns.customerPhone} is null or (length(${tableColumns.customerPhone}) between 10 and 15 and ${tableColumns.customerPhone} not glob '*[^0-9]*')`,
-    ),
-  }),
+  ],
 );
 
 export const billLine = sqliteTable(
@@ -120,15 +110,12 @@ export const billLine = sqliteTable(
     lineDiscountPaise: integer("line_discount_paise").notNull(),
     amountPaise: integer("amount_paise").notNull(),
   },
-  (tableColumns) => ({
-    bill_line_bill_idx: index("bill_line_bill_idx").on(tableColumns.billId),
-    bill_line_qty_pos: check("bill_line_qty_pos", sql`${tableColumns.quantityMilli} > 0`),
-    bill_line_rate_nonneg: check("bill_line_rate_nonneg", sql`${tableColumns.ratePaise} >= 0`),
-    bill_line_discount_nonneg: check(
-      "bill_line_discount_nonneg",
-      sql`${tableColumns.lineDiscountPaise} >= 0`,
-    ),
-  }),
+  (tableColumns) => [
+    index("bill_line_bill_idx").on(tableColumns.billId),
+    check("bill_line_qty_pos", sql`${tableColumns.quantityMilli} > 0`),
+    check("bill_line_rate_nonneg", sql`${tableColumns.ratePaise} >= 0`),
+    check("bill_line_discount_nonneg", sql`${tableColumns.lineDiscountPaise} >= 0`),
+  ],
 );
 
 export const stockMovement = sqliteTable(
@@ -147,24 +134,18 @@ export const stockMovement = sqliteTable(
     occurredAt: text("occurred_at").notNull(),
     deviceId: text("device_id").notNull(),
   },
-  (tableColumns) => ({
-    stock_movement_item_idx: index("stock_movement_item_idx").on(
-      tableColumns.itemId,
-      tableColumns.occurredAt,
-    ),
-    stock_movement_nonzero: check(
-      "stock_movement_nonzero",
-      sql`${tableColumns.quantityMilli} <> 0`,
-    ),
-    stock_movement_reason: check(
+  (tableColumns) => [
+    index("stock_movement_item_idx").on(tableColumns.itemId, tableColumns.occurredAt),
+    check("stock_movement_nonzero", sql`${tableColumns.quantityMilli} <> 0`),
+    check(
       "stock_movement_reason",
       sql`${tableColumns.reason} in ('opening','adjustment','sale','sale_cancel')`,
     ),
-    stock_movement_note_len: check(
+    check(
       "stock_movement_note_len",
       sql`${tableColumns.note} is null or length(${tableColumns.note}) <= 200`,
     ),
-  }),
+  ],
 );
 
 export const shopProfile = sqliteTable(
@@ -181,28 +162,13 @@ export const shopProfile = sqliteTable(
     backupFolder: text("backup_folder").notNull().default(""),
     deviceId: text("device_id").notNull(),
   },
-  (tableColumns) => ({
-    shop_profile_name_len: check(
-      "shop_profile_name_len",
-      sql`length(${tableColumns.name}) between 1 and 80`,
-    ),
-    shop_profile_address_len: check(
-      "shop_profile_address_len",
-      sql`length(${tableColumns.address}) <= 200`,
-    ),
-    shop_profile_phone_len: check(
-      "shop_profile_phone_len",
-      sql`length(${tableColumns.phone}) <= 20`,
-    ),
-    shop_profile_footer_len: check(
-      "shop_profile_footer_len",
-      sql`length(${tableColumns.footer}) <= 200`,
-    ),
-    shop_profile_width: check(
-      "shop_profile_width",
-      sql`${tableColumns.receiptWidth} in ('58mm','80mm')`,
-    ),
-  }),
+  (tableColumns) => [
+    check("shop_profile_name_len", sql`length(${tableColumns.name}) between 1 and 80`),
+    check("shop_profile_address_len", sql`length(${tableColumns.address}) <= 200`),
+    check("shop_profile_phone_len", sql`length(${tableColumns.phone}) <= 20`),
+    check("shop_profile_footer_len", sql`length(${tableColumns.footer}) <= 200`),
+    check("shop_profile_width", sql`${tableColumns.receiptWidth} in ('58mm','80mm')`),
+  ],
 );
 
 export const numberCounter = sqliteTable(
@@ -213,12 +179,9 @@ export const numberCounter = sqliteTable(
     financialYear: text("financial_year").notNull(),
     lastSeq: integer("last_seq").notNull(),
   },
-  (tableColumns) => ({
-    number_counter_uq: uniqueIndex("number_counter_uq").on(
-      tableColumns.seriesCode,
-      tableColumns.financialYear,
-    ),
-  }),
+  (tableColumns) => [
+    uniqueIndex("number_counter_uq").on(tableColumns.seriesCode, tableColumns.financialYear),
+  ],
 );
 
 export const draftBill = sqliteTable("draft_bill", {
@@ -236,7 +199,5 @@ export const backupLog = sqliteTable(
     status: text("status").notNull(),
     error: text("error"),
   },
-  (tableColumns) => ({
-    backup_log_status: check("backup_log_status", sql`${tableColumns.status} in ('ok','failed')`),
-  }),
+  (tableColumns) => [check("backup_log_status", sql`${tableColumns.status} in ('ok','failed')`)],
 );

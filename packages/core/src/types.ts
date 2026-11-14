@@ -46,7 +46,6 @@ export interface Bill {
   seq: number;
   billDate: string;
   customerName: string | null;
-  customerPhone: string | null;
   paymentMode: PaymentMode;
   linesTotalPaise: number;
   billDiscountPaise: number;
@@ -134,13 +133,9 @@ export const billLineInput = z.object({
 export type BillLineInput = z.infer<typeof billLineInput>;
 
 export const billsSaveInput = z.object({
+  /** Unique id made when the bill is started; saving the same id twice returns the first bill (no duplicates). */
+  clientBillId: z.string().uuid(),
   customerName: z.string().trim().max(80).optional(),
-  customerPhone: z
-    .string()
-    .trim()
-    .regex(/^\d{10,15}$/, "Phone must be 10 to 15 digits")
-    .optional()
-    .or(z.literal("")),
   paymentMode: paymentModeSchema,
   billDiscountPaise: nonNegPaise,
   lines: z.array(billLineInput),

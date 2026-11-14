@@ -77,13 +77,23 @@ describe("IPC handlers", () => {
       code: "INVALID_FIELD",
     });
     expect(
-      await handlers["bills.save"]({ paymentMode: "bitcoin", billDiscountPaise: 0, lines: [] }),
+      await handlers["bills.save"]({
+        clientBillId: crypto.randomUUID(),
+        paymentMode: "bitcoin",
+        billDiscountPaise: 0,
+        lines: [],
+      }),
     ).toMatchObject({ ok: false, code: "INVALID_FIELD" });
   });
 
   it("maps EMPTY_BILL and INVALID_BACKUP", async () => {
     expect(
-      await handlers["bills.save"]({ paymentMode: "cash", billDiscountPaise: 0, lines: [] }),
+      await handlers["bills.save"]({
+        clientBillId: crypto.randomUUID(),
+        paymentMode: "cash",
+        billDiscountPaise: 0,
+        lines: [],
+      }),
     ).toMatchObject({ ok: false, code: "EMPTY_BILL" });
     expect(
       await handlers["backup.restore"]({ filePath: "/definitely/not/here.sqlite" }),

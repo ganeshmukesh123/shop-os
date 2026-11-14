@@ -19,7 +19,6 @@ const bill: Bill = {
   seq: 123,
   billDate: "2026-12-07T14:05:09",
   customerName: "Ravi Kumar",
-  customerPhone: "9876500000",
   paymentMode: "upi",
   linesTotalPaise: 10000000 + 12500,
   billDiscountPaise: 2500,
@@ -55,7 +54,7 @@ const lines = [
 describe("bill layout", () => {
   it("contains header, lines, totals and footer", () => {
     const html = renderBillHtml(bill, lines, profile, "receipt");
-    for (const forbiddenWord of [
+    for (const expectedText of [
       "Prabhat Hardware",
       "12 Main Road",
       "9876543210",
@@ -64,11 +63,10 @@ describe("bill layout", () => {
       "14:05",
       "UPI",
       "Ravi Kumar",
-      "9876500000",
       "Goods once sold are not returnable",
       "Thank you",
     ]) {
-      expect(html).toContain(forbiddenWord);
+      expect(html).toContain(expectedText);
     }
     expect(html).toContain("₹1,00,000.00"); // line 1 amount, Indian grouping
     expect(html).toContain("₹1,00,100.00"); // grand total
@@ -105,12 +103,7 @@ describe("bill layout", () => {
   });
 
   it("omits customer block when none was entered", () => {
-    const html = renderBillHtml(
-      { ...bill, customerName: null, customerPhone: null },
-      lines,
-      profile,
-      "receipt",
-    );
+    const html = renderBillHtml({ ...bill, customerName: null }, lines, profile, "receipt");
     expect(html).not.toContain("Customer");
   });
 

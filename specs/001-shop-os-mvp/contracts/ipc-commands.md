@@ -12,7 +12,7 @@ The UI (renderer) never touches the database. It calls these typed commands thro
 | `import.commit` | `{ previewId }` | `{ created }` | `PREVIEW_EXPIRED` |
 | `bills.draft.save` | `{ payload }` | `{}` | |
 | `bills.draft.load` | `{}` | `{ payload or null }` | |
-| `bills.save` | `{ customerName?, customerPhone?, paymentMode, billDiscountPaise, lines[{ itemId, quantityMilli, ratePaise, lineDiscountPaise }] }` | `{ bill, negativeStockItems[] }` | `EMPTY_BILL`, `INVALID_QUANTITY`, `INVALID_DISCOUNT`, `ITEM_INACTIVE` |
+| `bills.save` | `{ clientBillId, customerName?, paymentMode, billDiscountPaise, lines[{ itemId, quantityMilli, ratePaise, lineDiscountPaise }] }` | `{ bill, negativeStockItems[] }` | `EMPTY_BILL`, `INVALID_QUANTITY`, `INVALID_DISCOUNT`, `ITEM_INACTIVE` |
 | `bills.list` | `{ number?, from?, to?, customer?, status?, limit, offset }` | `{ bills[], total }` | |
 | `bills.get` | `{ id }` | `{ bill, lines[] }` | `NOT_FOUND` |
 | `bills.cancel` | `{ id, reason }` | `{ bill }` | `ALREADY_CANCELLED`, `REASON_REQUIRED` |
@@ -26,5 +26,6 @@ The UI (renderer) never touches the database. It calls these typed commands thro
 ## Guarantees
 
 - `bills.save` runs in one transaction: counter increment, bill, lines, stock movements and cached stock updates either all commit or none do. The saved bill is returned before any printing begins.
+- `bills.save` is idempotent: `clientBillId` (a UUID the screen makes when the bill is started) is unique per shop; saving the same id again returns the first bill and its lines and changes nothing (no second bill, number or stock movement), so a double-click, retry or crash-and-retry can never duplicate a bill.
 - `bills.save` never rejects for insufficient stock; items that end below zero are reported in `negativeStockItems`.
 - No command edits or deletes a saved bill, bill line or stock movement.

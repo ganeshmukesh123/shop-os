@@ -70,3 +70,23 @@
 2. Do you want customer phone captured in the first release, and if so with what notice? (B4)
 3. Should customer data live on a separate record so erasure is possible? (B6)
 4. What are the printer model and the bill-number format, and by what date will you decide? (M8)
+
+
+## Status update (2026-11-14)
+
+| # | Finding | Status |
+|---|---|---|
+| B1 | No version control | Done: git initialised, baseline commit `0cb2c24`; later changes are uncommitted |
+| B2 | No idempotency on `bills.save` | Done: required `clientBillId`, unique `client_bill_id` (migration 0003), trigger protects it, 3 new tests; contract, data model, spec FR-013a and plan updated |
+| B3 | MUST requirements missing from tasks | Decided: cancel and bill list are IN the first release. `tasks.md` Phase 6 (T064 to T072) added; code not built yet |
+| B4 | Personal data without consent | Decided: customer phone dropped, name only. Removed from schema (migration 0002), contract, UI, tests and spec FR-011 |
+| B5 | Dependency cycles across specs | Open |
+| B6 | Erasure vs immutability | Partly addressed: no contact details are stored now; the customer name on a saved bill still cannot be erased. Separate erasable party record is for features 004 and 008 |
+| M1 | Documents drift | Partly done: data-model (financial year, triggers, rounding, time), plan Constitution Check updated; another session is ticking tasks.md |
+| M2 | Two task files | Open |
+| M3 | Time zone | Documented as open item; not fixed in code |
+| M4 | Rounding | Documented in data-model from the code |
+| M5 | Operations design | Proposed in research D15; not built |
+| M14 | No access control in 001 | Documented as accepted risk (research D16) |
+| M6, M7, M8, M9 to M13 | IPC contract depth, CI, estimates, release split, traceability, clarify markers, 016 wording, architecture export | Open |
+| Naming | Single-letter names | Done: 339 renamed, lint rule enforced, constitution v1.1.0 |
