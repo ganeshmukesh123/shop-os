@@ -241,6 +241,42 @@ Changes: `apps/desktop/package.json`, 2 lines; no source or config changes neede
 
 Results: `pnpm peers check`: no issues; `pnpm --filter @shopos/desktop build`: built, main bundle still CommonJS (`"use strict"; const fs = require(...)`); `pnpm test:e2e`: 3 of 3 pass; lint 0 errors (91 warnings, unchanged); typecheck 0 errors; `pnpm -r test`: core 34/34, desktop 65/65; `pnpm test:scripts`: 36/36; `pnpm test:coverage` exit 0 (core 67.22%, desktop 37.32% lines, unchanged); `pnpm check:migrations` in sync. Audit unchanged at high 11, critical 4: the one remaining vite advisory path is `@vitest/coverage-v8 > vitest > vite` (vitest 2.1.9's own vite 5), removed by the vitest group.
 
+#### Group 2: vitest 2.1.9 to 4.1.12 (and @vitest/coverage-v8 to 4.1.12): VERIFIED locally (macOS arm64)
+
+Why 4.x and not 3.x: vitest 3.2.7 (latest 3.x, clears GHSA-5xrq-8626-4rwp) still depends on `tinypool ^1.1.1`, and the tinypool advisories are vulnerable `<2.1.2`, so the two critical tinypool findings would remain. Vitest 4.1.12 has no tinypool dependency (the 4.0 migration guide: "Tinypool removed; pools rewritten without new dependencies") and also clears the moderate GHSA-82fw-gwwq-j7x9 (patched 4.1.11). Vitest 5.0 needs Node 22.12 or newer and Vite 6.4 or newer; 4.1.12 was chosen as the lowest line that clears everything.
+
+Sources: `npm view vitest@4.1.12` (dependencies, peers: `vite ^6 || ^7 || ^8` non-optional, engines `node ^20 || ^22 || >=24`), `npm view tinypool versions`, the audit JSON, and the official migration guide `https://v4.vitest.dev/guide/migration` (WebFetch 2026-11-14). Electron 43 bundles Node 24.22.1 (`ELECTRON_RUN_AS_NODE=1 electron -p process.versions.node`), which satisfies the engines range; the host Node is 25.6.1; CI uses `.nvmrc` 22.
+
+Breaking changes read, and whether they touch us:
+
+| 4.0 change | Touches us? |
+|---|---|
+| Vite 6 or newer required | **Yes**: this is why the vite group came first |
+| `coverage.all` and `coverage.extensions` removed; coverage includes only loaded files unless `coverage.include` is set | No: `config/coverage.ts` already sets `include`, which keeps counting untested files |
+| V8 coverage now AST-based remapping; reports may change | **Yes**: the measured numbers moved (below) |
+| Default `exclude` narrowed to node_modules and .git | No: our `include` globs are explicit |
+| `poolOptions`, `singleFork`, `maxThreads` removed; tinypool removed | No: not used in our configs |
+| `workspace` renamed `projects`; `environmentMatchGlobs` removed | No: not used |
+| Mock changes (`vi.fn`, `restoreAllMocks`, automock) | No: the repo uses no `vi.*` mocks (grep) |
+| `basic` reporter removed | No |
+
+Changes made: versions in `package.json` (root), `apps/desktop/package.json`, `packages/core/package.json`; coverage `include` narrowed from `src/**` to the code files (`src/**/*.ts`, and `src/**/*.{ts,tsx}` for desktop), because vitest 4 now parses every matched file and `renderer/index.html` produced a (non-fatal) "Failed to parse ... Excluding it from coverage" error. The comment in `config/coverage.ts` explains it.
+
+Runs inside Electron's Node: VERIFIED. `node scripts/vitest-electron.mjs run` starts, runs 65 tests, and `--coverage` works (same `ELECTRON_RUN_AS_NODE` mechanism as with vitest 2).
+
+Results: lint 0 errors (91 warnings, unchanged); typecheck 0 errors; core 34/34, desktop 65/65; scripts 36/36; build ok; `pnpm test:e2e` 3/3; `pnpm check:migrations` in sync; `COVERAGE_ENFORCE=true pnpm test:coverage` still fails both packages with "does not meet global threshold (90%)" (the switch works); `pnpm test:coverage` exits 0.
+
+**The coverage baseline restated (measurement change, not a code change).** Same code, same tests:
+
+| | vitest 2.1.9 (V8, line-based) | vitest 4.1.12 (V8, AST-based) |
+|---|---|---|
+| core lines / statements / branches / functions | 67.22 / 67.22 / 86.88 / 87.87 | 77.43 / 77.88 / 85.15 / 93.93 |
+| desktop lines / statements / branches / functions | 37.32 / 37.32 / 86.66 / 78.35 | 39.8 / 39.4 / **30.36** / 32.7 |
+
+Reading: AST remapping drops lines with no runtime code and counts every function and branch in files no test imports (the renderer), which v2 reported as 0 of 0. The desktop branch figure of 86.66% therefore overstated reality; 30.36% is the honest starting point for the 90% climb. Some files show lower numbers too (for example `schema.ts` 80%: the table-extras callbacks are never called in tests). The plan's baseline table (S2) is superseded by this one; the re-measure task T026 should start from these numbers.
+
+Audit after this group: low 0, moderate 6, **high 10, critical 1**; the only remaining high and critical advisories are `tar`, `app-builder-lib` and `builder-util-runtime`, all under electron-builder (next group). `pnpm audit --prod --audit-level high`: no known vulnerabilities.
+
 ## Open items (unverified; each resolved by the task named)
 
 | # | Item | Resolved by |
