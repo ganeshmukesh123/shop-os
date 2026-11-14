@@ -1,9 +1,9 @@
 <!--
 Sync Impact Report
-Version change: 1.0.0 -> 1.1.0 (added principle VIII, Readable Names; MINOR)
+Version change: 1.3.0 -> 1.4.0 (Development Workflow adds change size and PR rules; MINOR)
 Modified principles: none
-Added sections: Core Principles VIII
-Earlier (1.0.0, template -> initial ratification): Core Principles I-VII, Technical and Compliance Constraints, Development Workflow and Quality Gates, Governance
+Added sections: none (Development Workflow bullet)
+Earlier (1.3.0: new X Design Consistency. 1.2.0: VIII expanded with naming conventions, new IX Small Pure Code. 1.1.0: added VIII Readable Names. 1.0.0, template -> initial ratification): Core Principles I-VII, Technical and Compliance Constraints, Development Workflow and Quality Gates, Governance
 Removed sections: none
 Templates reviewed: .specify/templates/plan-template.md (Constitution Check section reads this file), spec-template.md, tasks-template.md (no change needed)
 Follow-up: none
@@ -38,8 +38,37 @@ Build only what the current feature spec asks for. PRD items tagged V2, V3 or La
 ### VIII. Readable Names
 Every variable, parameter, function, method, class, type, file and database column has a name that says what it holds or does. No single-letter names anywhere, including loop counters, callback parameters and test code. No unexplained abbreviations. Functions are named for what they do (`calculateLineAmount`, not `calc` or `doIt`); values are named for what they hold (`billDiscountPaise`, not `d` or `x`); booleans read as questions (`isCancelled`, `hasNegativeStock`). Units go in the name when not obvious (`...Paise`, `...Milli`). Linting enforces the single-letter rule; review enforces the rest.
 
+Naming conventions (examples):
+
+```ts
+const API_BASE_URL = "https://api.example.com"; // constants: UPPER_SNAKE_CASE
+
+enum UserRole { // enums: PascalCase name and members
+  Admin = "ADMIN",
+  User = "USER",
+  Guest = "GUEST",
+}
+
+interface IUser { // interfaces: "I" prefix, then PascalCase
+  id: number;
+  name: string;
+  role: UserRole;
+}
+
+type UserStatus = "ACTIVE" | "INACTIVE"; // types: PascalCase, no prefix
+```
+
+Variables, parameters, functions and methods are camelCase; classes and React components are PascalCase.
+
+### IX. Small, Pure Code, Kept Where It Belongs
+Keep components and functions small and single-purpose (single responsibility); if one needs "and" to describe it, split it. Components are pure: they render from props and state and do not fetch data, touch the database or hold business rules. Functions are pure wherever possible: same input gives the same output, with side effects (database, files, printing, clock, randomness) pushed to the edges and passed in. Constants, types, interfaces and enums that belong to one component live in that component's own folder; anything used by more than one folder lives in a `shared` folder. Do not create a shared file for something only one component uses.
+
+### X. Design Consistency, Light and Dark
+Every screen follows `docs/design/design-guidelines.md`. Both light and dark mode are supported on every screen and checked before a screen is done; the user can choose System, Light or Dark. Colours and sizes come from theme tokens and component props, never hard-coded values; status is never shown by colour alone; the same job uses the same component, wording and place everywhere. Printed and PDF bills are always light. A screen is not done until it passes the guideline's new-screen checklist.
+
 ## Technical and Compliance Constraints
 
+- **Code layout**: each React component has its own folder holding the component, its styles, its constants (`<name>.constants.ts`), its types and interfaces (`<name>.types.ts`) and its tests; cross-folder code lives in `shared/` (renderer: `apps/desktop/src/renderer/shared/`; rules: `packages/core`).
 - **Stack**: TypeScript (strict) throughout; Electron + React + Radix UI for the desktop app; SQLite with Drizzle for local data. A later server uses Node.js and PostgreSQL as set out in the architecture reference. Changing the stack requires an amendment.
 - **Electron security**: renderer runs with `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`; a narrow typed preload bridge; a restrictive Content-Security-Policy; the database is never touched from the renderer. Keep Electron updated.
 - **Database**: WAL mode, foreign keys on, schema changes only through generated migrations, backups only through SQLite's online backup API (never by copying the live file), and every backup is proven by a real restore.
@@ -52,6 +81,7 @@ Every variable, parameter, function, method, class, type, file and database colu
 
 - **Spec-driven order**: constitution, then per feature `/speckit-specify`, `/speckit-clarify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-analyze`, `/speckit-implement`. One feature per spec. No code before its spec, plan and tasks exist.
 - **Reference documents**: `docs/reference/PRD.md` and the architecture reference are the long-term source of requirements and design; feature specs cite their requirement IDs (FR-, NFR-, EC-, US-). If a spec conflicts with the PRD, resolve it in writing before building.
+- **Change size and pull requests**: every change goes through a pull request described with `.github/pull_request_template.md`, titled `type(scope): summary`, one concern each (never a refactor mixed with a behaviour change). Size limits in changed lines excluding generated files: 200 small, 400 target ceiling, 800 hard ceiling (above 400 needs a written reason; above 800 is split unless purely mechanical). Measured with `pnpm pr:size`. Details: `docs/contributing/pull-requests.md`.
 - **Gates**: the plan's Constitution Check must pass before research and again after design; `/speckit-analyze` must show no unresolved conflict with this constitution before implementation starts.
 - **Definition of done** for a task: code and tests merged, lint and type checks clean, relevant quickstart scenario passes, checklist box ticked in `tasks.md`.
 - **Release**: a new version reaches the shop every 2 weeks only after offline testing passes; the previous version stays installable for rollback; new features switch on after a short staff walkthrough.
@@ -66,4 +96,4 @@ This constitution supersedes other practices and conversation habits. Every plan
 
 **Runtime guidance** for day-to-day work lives in `CLAUDE.md`.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-13
+**Version**: 1.4.0 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-13

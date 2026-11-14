@@ -8,6 +8,29 @@ Billing, stock, credit and control for Indian hardware shops. Built solo, first 
 - Requirements: `docs/reference/PRD.md` (long-term), `specs/<feature>/spec.md` (current)
 - Design: `specs/<feature>/plan.md`, `research.md`, `data-model.md`, `contracts/`
 - Work list: `specs/<feature>/tasks.md`; run scenarios in `specs/<feature>/quickstart.md`
+- Architecture (long-term design, layers, patterns): `docs/reference/architecture.md`
+- Design guidelines (light and dark): `docs/design/design-guidelines.md`
+
+## Skills: load the matching one before you work
+
+Project skills in `.claude/skills/` hold the coding standards. Use them.
+
+| Working on | Skill |
+|---|---|
+| Any code (size, naming, control flow, purity) | `shopos-engineering-standards` |
+| React screens, components, hooks | `shopos-react-components` |
+| Radix UI, theme, light and dark, messages | `shopos-radix-design-system` |
+| Business rules in `packages/core` | `shopos-core-domain` |
+| Schema, migrations, queries, backups | `shopos-database-drizzle` |
+| Main process, preload, IPC commands, printing | `shopos-electron-ipc` |
+| Services, repositories, layering | `shopos-service-layer` |
+| Tests | `shopos-testing` |
+| Starting or finishing a feature or task | `shopos-feature-workflow` |
+| Reviewing a change | `shopos-code-review` |
+
+Pull requests: one concern each, titled `type(scope): summary`, described with `.github/pull_request_template.md`, within 200 (small) / 400 (target) / 800 (hard) changed lines; measure with `pnpm pr:size`. Details: `docs/contributing/pull-requests.md`.
+
+Limits (lint warnings): file 200 lines (tests 300), function 40, component 120, complexity 10, parameters 4, nesting 2. Control flow: ternary and `&&`, never `continue`, no nested ternaries (lint errors). Layering is lint-enforced: core imports nothing outer; the renderer never imports main-process, Node or database code.
 
 ## Non-negotiable rules (full text in the constitution)
 
@@ -46,7 +69,18 @@ specs/                    one folder per feature
 - `pnpm test:e2e`: Playwright for Electron (run `pnpm build` first)
 - After changing `apps/desktop/src/main/db/schema.ts`: `pnpm --filter @shopos/desktop db:generate`
 
-Notes: the installed drizzle-orm is 0.36, so table extras use the object form `(t) => ({ ... })`, not the array form. better-sqlite3 has ONE native binary per install, so Node (vitest) and Electron (e2e, dev) need different builds: for e2e run `npx prebuild-install -r electron -t 33.4.11` inside the better-sqlite3 folder, and run `pnpm rebuild better-sqlite3` to switch back before `pnpm test`. Playwright specs read the database with the `sqlite3` CLI for this reason. electron-builder rebuilds it when packaging.
+Notes: the installed drizzle-orm is 0.45 (drizzle-kit 0.31), so table extras use the array form `(tableColumns) => [index(...), check(...)]`. better-sqlite3 has ONE native binary per install, and it must be the ELECTRON build (ABI 130 for Electron 33). The app, the Vitest integration tests and the Playwright specs all use it: `pnpm test` in `apps/desktop` runs Vitest inside Electron's Node (`ELECTRON_RUN_AS_NODE=1`, see `apps/desktop/scripts/vitest-electron.mjs`). `scripts/ensure-electron-sqlite.mjs` runs on `postinstall` and before `dev`, `test` and `test:e2e`, and downloads the matching prebuilt binary if the file is the wrong build. Do NOT run `pnpm rebuild better-sqlite3` (it builds for plain Node and breaks the app). Running `npx vitest` directly uses plain Node and fails with `NODE_MODULE_VERSION`; use `pnpm test` or `pnpm test:watch`. `packages/core` has no native code and still runs in plain Node. Playwright specs read the database with the `sqlite3` CLI. electron-builder rebuilds the module when packaging.
+
+## Explaining (chat replies, docs, skills)
+
+Every explanation uses a **concrete example** and, where there is structure or flow, an **ASCII diagram**. Lead with the point in plain words, then the example (use the shop's own data: a bill, an item, ₹ amounts), then the diagram. Keep diagrams under about 70 characters wide so they render in a terminal. Tables for comparisons; diagrams for layers, data flow, state changes, before/after and file layout.
+
+```
+Screen --> typed API --> IPC handler --> Service --> Repository --> SQLite
+                                           |
+                                           +--> @shopos/core (pure rules)
+Example: save bill C1/26-27/000123  (2 pcs x ₹120 = ₹240)
+```
 
 ## Working with Spec Kit here
 
@@ -60,6 +94,10 @@ Notes: the installed drizzle-orm is 0.36, so table extras use the object form `(
 ## Style
 
 - Names must be readable and say what a value holds or what a function does. No single-letter names anywhere (not `e`, `i`, `r`, `m`, `x`, `S`), including loop counters, callbacks and tests. Write `event`, `itemIndex`, `response`, `matchingItem`, `calculateLineAmount`. Booleans read as questions (`isCancelled`). Put units in names (`...Paise`, `...Milli`). ESLint `id-length` enforces the single-letter rule; constitution principle VIII.
+- Conventions: constants `UPPER_SNAKE_CASE` (`API_BASE_URL`); enums and their members `PascalCase` (`UserRole.Admin = "ADMIN"`); interfaces `I` prefix + PascalCase (`IUser`); types `PascalCase` without prefix (`UserStatus`); variables, parameters, functions and methods `camelCase`; classes and components `PascalCase`.
+- Design: follow `docs/design/design-guidelines.md` (constitution X). Light and dark mode both supported and checked on every screen (System, Light, Dark). Radix tokens and component props only: no hex colours, no inline `style`. Status always has a word as well as a colour. Printed bills are always light. Use the shared message, status and format components.
+- Small, single-responsibility components and functions. Components are pure (props and state in, markup out; no data fetching or business rules). Functions are pure where possible; side effects live at the edges.
+- Placement: a component's constants, types and interfaces live in that component's folder; anything shared across folders goes in a `shared` folder. Do not make a file shared for one user.
 - Plain, small modules; prefer the libraries already chosen over wrappers.
 - Use Radix components for dialogs, selects, tables, tabs and toasts.
 - Keyboard-first counter screens; large tap targets; no information by colour alone.

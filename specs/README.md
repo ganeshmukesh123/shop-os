@@ -20,6 +20,7 @@ One folder per feature. Order is a proposal; dependencies are listed in each spe
 | 014 | [Languages and localization](014-languages-localization/spec.md) | NFR-012, ITM-006, KHA-007 | spec written |
 | 015 | [Devices, printing, scanning](015-devices-printing-scanning/spec.md) | NFR-013, BIL-015, ITM-013 | spec written |
 | 016 | [Cross-cutting quality requirements](016-quality-nfr/spec.md) | NFR-001 to 016 | spec written |
+| 017 | [GitHub workflow: CI and merge protection](017-ci-github-workflow/spec.md) | Constitution VI, PR rules | spec, plan, research, tasks written; packages installed; baseline measured |
 
 ## Dependency sketch
 
@@ -28,6 +29,7 @@ One folder per feature. Order is a proposal; dependencies are listed in each spe
 - 004 needs 001 and 005. 006 needs 003, 004, 005. 007 needs 002 and 005. 008 needs 002, 003, 004.
 - 009 needs 002, 004, 007, 008. 010 needs the counter features before sync is useful. 011 needs data from most others.
 
+- 017 is the gate every other feature passes through; do it early, right after the repository is on GitHub.
 - 012 applies from the first trial of 001 and grows with the full MVP go-live. 013 needs 010 and a passed Gate 3. 014 and 015 start in 001 (text separation, first print test) and extend later. 016 applies to every feature as the release check.
 
 ## Next for each spec
