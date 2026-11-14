@@ -5,3 +5,5 @@ allowBuilds:
   better-sqlite3: true
   electron: true
   esbuild: true
+  # Only prepares a 7-Zip binary for Squirrel.Windows installers; our Windows target is NSIS (see electron-builder.yml).
+  electron-winstaller: false

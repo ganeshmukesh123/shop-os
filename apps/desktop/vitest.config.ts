@@ -5,6 +5,6 @@ export default defineConfig({
   test: {
     include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
     testTimeout: 30000,
-    coverage: buildCoverageOptions(["src/**"]),
+    coverage: buildCoverageOptions(["src/**/*.{ts,tsx}"]),
   },
 });
