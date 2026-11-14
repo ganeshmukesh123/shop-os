@@ -3,7 +3,8 @@
 #   quick-checks --> tests-and-coverage --> end-to-end
 #        \                                     ^
 #         +-----------> build -----------------+
-#   dependency-audit, secret-scan: informational, run alongside, never block yet
+#   dependency-audit: a real check (no high or critical advisories, shipped or tooling), runs alongside.
+#   secret-scan: informational, runs alongside, never blocks yet.
 #
 # Report-only means: every job runs and shows red or green, and coverage is measured, but branch protection
 # does not require any of it yet and the 90% coverage threshold is not enforced (config/coverage.ts).
@@ -151,10 +152,11 @@ jobs:
           if-no-files-found: ignore
 
   dependency-audit:
-    name: Dependency audit (informational)
+    name: Dependency audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true # not required: the audit can fail on advisories the project cannot fix (open item O4)
+    # A new advisory can turn this red without any code change. Fix it by upgrading the package, or record a
+    # reviewed exception in the PR; do not silence the job (spec 017 research F8, open item O4).
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

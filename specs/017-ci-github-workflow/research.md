@@ -277,6 +277,46 @@ Reading: AST remapping drops lines with no runtime code and counts every functio
 
 Audit after this group: low 0, moderate 6, **high 10, critical 1**; the only remaining high and critical advisories are `tar`, `app-builder-lib` and `builder-util-runtime`, all under electron-builder (next group). `pnpm audit --prod --audit-level high`: no known vulnerabilities.
 
+#### Group 3: electron-builder 25.1.8 to 26.15.7 (app-builder-lib, dmg-builder, builder-util-runtime, tar): VERIFIED locally (macOS arm64)
+
+Sources: `npm view electron-builder dist-tags/versions` (latest `26.18.0`, `v26` tag `26.18.1`); `npm view app-builder-lib@26.x dependencies` (`tar ^7.5.7`, `builder-util-runtime 9.7.0`); the GitHub release notes for every `electron-builder@26.x` tag up to 26.15.7 (GitHub API, read 2026-11-14); the electron.build changelog page (covers 27.0.0-alpha only). Advisories (audit JSON): app-builder-lib GHSA-7g7r-gx96-252g patched 26.15.0; builder-util-runtime GHSA-p2f4-r6v6-j797 patched 9.7.0; tar 12 advisories, newest GHSA-r292-9mhp-454m patched 7.5.21.
+
+Chosen: `electron-builder ~26.15.7` (the last patch of the first line that clears app-builder-lib and builder-util-runtime). Because app-builder-lib 26.15.x asks for `tar ^7.5.7`, pnpm resolved tar to **7.5.23**, above every patched version. `~` keeps the toolchain on 26.15.x; later 26.16 to 26.18 exist but were not tested.
+
+What the release notes say (none verified beyond reading): no entry is marked breaking in 26.0 to 26.15.7. Notable for us: 26.1.0 adds a dynamic-import helper; 26.3.3 "double check hoisted mode for each node module" (pnpm related); **26.15.0 replaces the Go binary `app-builder-bin` with a TypeScript implementation and replaces its node dependency-tree and rebuild helpers**, which is why the packaging dry run is the test that matters. The 25 to 26.0.0 release body itself could not be retrieved (no release object for that tag in the API listing).
+
+Changes: `apps/desktop/package.json` (1 line), `pnpm-workspace.yaml` (+2 lines: `electron-winstaller: false` with a comment; electron-builder 26 pulls in `electron-winstaller@5.4.0`, whose install script only copies a 7-Zip binary for Squirrel.Windows installers; our Windows target is NSIS, and pnpm 12 fails `pnpm install` with `ERR_PNPM_IGNORED_BUILDS` for an unreviewed build script, which would also fail `pnpm install --frozen-lockfile` in CI), and `electron-builder.yml` was **not** changed.
+
+Packaging dry run (`pnpm exec electron-builder --dir`, baseline on 25.1.8 first):
+
+| | 25.1.8 (baseline) | 26.15.7 |
+|---|---|---|
+| runtime | 5.6 s | 9.8 s (includes re-downloading the Electron zip) |
+| `app.asar` entries | 5,799 | 5,796 (3 fewer: a leftover `node-gyp` build folder from the old native rebuild) |
+| Resources tree | 72 entries | identical |
+| `better-sqlite3` unpacked outside the asar | yes | yes |
+| `drizzle/` migrations in Resources | yes | yes (all 3 migration files present) |
+| `@shopos/core` bundled | no | no (devDependency fix from F6 still holds) |
+| `.app` size | 347 MB | 338 MB |
+| new log noise | none | one warning "duplicate dependency references" listing react, react-dom and the radix packages (the redundant runtime dependency listing noted in F6); harmless in this run |
+
+Smoke test of the **packaged** app's native module: `ELECTRON_RUN_AS_NODE=1 "Shop OS.app/Contents/MacOS/Shop OS" -e "...require(.../app.asar.unpacked/node_modules/better-sqlite3)..."` printed `electron 43.8.10 node 24.22.1 sqlite 3.54.1`. The full app window was not launched here beyond the end-to-end run against the built bundle (3 of 3 pass).
+
+Results: lint 0 errors (91 warnings, unchanged); typecheck 0 errors; core 34/34, desktop 65/65; scripts 36/36; `pnpm test:coverage` exit 0 (core 77.43%, desktop 39.8% lines, as restated under group 2); `pnpm check:migrations` in sync; build ok; `pnpm test:e2e` 3/3; `pnpm install --frozen-lockfile` clean.
+
+#### Audit before and after (`pnpm audit`, run 2026-11-14)
+
+| Stage | low | moderate | high | critical | `audit --audit-level high` exit |
+|---|---|---|---|---|---|
+| Baseline (`main`, 0aa3609) | 1 | 15 | 11 | 4 | 1 |
+| After vite + electron-vite | 1 | 15 | 11 | 4 | 1 |
+| After vitest 4 | 0 | 6 | 10 | 1 | 1 |
+| After electron-builder 26.15.7 | **0** | **2** | **0** | **0** | **0** |
+
+`pnpm audit --prod --audit-level high` passes (no known vulnerabilities) at every stage. Remaining, both moderate and not required by the high-level gate: esbuild GHSA-67mh-4wv8-2f99 (patched 0.25.0) via `drizzle-kit > @esbuild-kit/esm-loader > @esbuild-kit/core-utils` (drizzle-kit's own deprecated loader; the newer esbuild is installed separately), and minimatch GHSA-g3hv-75wg-m249 (patched 11.0.1) via `typescript-eslint`. Neither is reachable from the shipped app; they are build-time tools.
+
+`.github/workflows/ci.yml`: the audit job is now a real check (name "Dependency audit", `continue-on-error` removed, header and comments updated) because `pnpm audit --audit-level high` exits 0. The secret-scan job stays informational. **Not verifiable here:** how that job behaves on GitHub; a new advisory can turn it red with no code change (the job comment says to upgrade or record a reviewed exception). This answers open item O4 differently from F4: the audit is now stable enough to keep as a check, with that caveat.
+
 ## Open items (unverified; each resolved by the task named)
 
 | # | Item | Resolved by |
@@ -284,6 +324,6 @@ Audit after this group: low 0, moderate 6, **high 10, critical 1**; the only rem
 | O1 | Linux runner needs a virtual display for Electron: `xvfb-run` or a display action; whether the app launches under it and whether Chromium sandbox flags are needed | T010 |
 | O2 | ~~Exact third-party action versions to pin~~ **Resolved 2026-11-14**: looked up and verified, see F1 | T008 |
 | O3 | Runner minutes: macOS and Windows runners cost more than Linux; confirm the account's allowance before the nightly smoke job | T040 |
-| O4 | **Answered (F4): not stable, stays non-required.** Was: whether `pnpm audit` is stable enough to be a required check (it can fail on advisories the project cannot fix) | T014 |
+| O4 | **Answered (F4): not stable, stays non-required.** *Updated 2026-11-14 (F8): after the tooling upgrades the high-level audit exits 0 and the job is no longer informational.* Was: whether `pnpm audit` is stable enough to be a required check (it can fail on advisories the project cannot fix) | T014 |
 | O5 | The repository is not on GitHub yet: hosting and the default branch name (`main`) | T006 (owner action) |
 | O6 | Branch coverage at 90% on UI code may be hard; decided by data after renderer tests exist | T034 |
