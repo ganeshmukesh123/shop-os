@@ -63,13 +63,13 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 
 ### Main process (`apps/desktop/src/main`, `preload`)
 
-- [ ] T020 [P] [US3] Tests for `main/db/seed.ts` (first-run creates one business, one shop, a default profile; second run changes nothing) and the `connection.ts` branch
-- [ ] T021 [P] [US3] Tests for `main/ipc/index.ts` and the uncovered paths of `main/ipc/handlers.ts` (every command registered; unexpected error mapped to a safe result)
-- [ ] T022 [P] [US3] Tests for the uncovered paths in `BillRepository.ts`, `StockRepository.ts` and `ItemRepository.ts`
-- [ ] T023 [P] [US3] Refactor `main/services/electronRenderer.ts` to take the Electron window API as an argument, and test it with a fake window (print, PDF, failure, cancel)
-- [ ] T024 [US3] Refactor `main/index.ts` (174 lines) into small functions that take the Electron API as an argument (create window, register dialogs, register handlers, start backups, quit hook) and test each with fakes; keep any untestable line to a minimum and justify it in a comment
-- [ ] T025 [P] [US3] Refactor `preload/index.ts` so the bridge is built by a function from the command list, and test that it exposes exactly the contract commands and nothing else
-- [ ] T026 [US3] Confirm the main process is at 90% on all four metrics; re-measure the whole baseline (Step 2 of the sequence) and record it in `research.md`
+- [X] T020 [P] [US3] Tests for `main/db/seed.ts` (first-run creates one business, one shop, a default profile; second run changes nothing) and the `connection.ts` branch (done: `database.test.ts` covers seed, connection and the schema contract; `repositories.test.ts` the repository gaps)
+- [X] T021 [P] [US3] Tests for `main/ipc/index.ts` and the uncovered paths of `main/ipc/handlers.ts` (every command registered; unexpected error mapped to a safe result) (done: `handlers.commands.test.ts` and `ipcRegistration.test.ts`; every command and the unknown-command guard)
+- [X] T022 [P] [US3] Tests for the uncovered paths in `BillRepository.ts`, `StockRepository.ts` and `ItemRepository.ts` (done: repository gaps, partly in `repositories.test.ts` and `database.test.ts`)
+- [X] T023 [P] [US3] Refactor `main/services/electronRenderer.ts` to take the Electron window API as an argument, and test it with a fake window (print, PDF, failure, cancel) (done: `electronRenderer.ts` now builds from a window factory, `electronRenderer.test.ts`)
+- [X] T024 [US3] Refactor `main/index.ts` (174 lines) into small functions that take the Electron API as an argument (create window, register dialogs, register handlers, start backups, quit hook) and test each with fakes; keep any untestable line to a minimum and justify it in a comment (done: `main/index.ts` split into `main/app/*` modules taking the Electron objects as arguments; tests in `appConfig`, `mainWindow`, `securityHeaders`, `backupLifecycle`, `shell`, `startApp` and `mainEntry`; no line excluded)
+- [X] T025 [P] [US3] Refactor `preload/index.ts` so the bridge is built by a function from the command list, and test that it exposes exactly the contract commands and nothing else (done: `preload/bridge.ts` builds the api from the command list; `preload.test.ts` proves it exposes exactly the contract commands)
+- [X] T026 [US3] Confirm the main process is at 90% on all four metrics; re-measure the whole baseline (Step 2 of the sequence) and record it in `research.md` (done 2026-11-15: main process + preload 100% lines, statements and functions, 98.0% branches; enforced run on that slice exits 0; whole baseline re-measured in research F10; whole desktop package is still 56% because the renderer is untouched)
 
 **Checkpoint (M2 exit)**: core and main process at 90% on every metric.
 
