@@ -56,10 +56,10 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 
 ### Core (`packages/core`)
 
-- [ ] T016 [P] [US3] Write `packages/core/tests/types.test.ts` covering every Zod schema in `types.ts` with valid inputs, each invalid field, and boundary values (name length, UUID `clientBillId`, discount, quantity)
-- [ ] T017 [P] [US3] Write `packages/core/tests/commands.test.ts` covering the command map in `commands.ts` and the exports in `index.ts` (every command has an input schema and a result type)
-- [ ] T018 [P] [US3] Close the remaining gaps with tests: `money.ts` (parse and format edge cases), `quantity.ts` (unit and decimal rules), `draftBill.ts` (percent and error paths), `numbering.ts` (financial year boundary), `stock.ts`
-- [ ] T019 [US3] Confirm `packages/core` is at 90% on all four metrics; record it in `research.md`
+- [X] T016 [P] [US3] Write `packages/core/tests/types.test.ts` covering every Zod schema in `types.ts` with valid inputs, each invalid field, and boundary values (name length, UUID `clientBillId`, discount, quantity) (done: `packages/core/tests/types.test.ts`, 32 tests, zod 4 behaviour pinned)
+- [X] T017 [P] [US3] Write `packages/core/tests/commands.test.ts` covering the command map in `commands.ts` and the exports in `index.ts` (every command has an input schema and a result type) (done: `packages/core/tests/commands.test.ts`, contract list and package exports)
+- [X] T018 [P] [US3] Close the remaining gaps with tests: `money.ts` (parse and format edge cases), `quantity.ts` (unit and decimal rules), `draftBill.ts` (percent and error paths), `numbering.ts` (financial year boundary), `stock.ts` (done: edge cases in the money, quantity, numbering, stock and draftBill tests; the work found and fixed a real defect: `evaluateDraft` threw on a huge amount, commit 919beed)
+- [X] T019 [US3] Confirm `packages/core` is at 90% on all four metrics; record it in `research.md` (done 2026-11-14: core 100% lines/statements/functions, 99.21% branches; `COVERAGE_ENFORCE=true` run exits 0. One branch left: the defensive non-CoreError path in `draftBill.ts` line 98, unreachable without mocking)
 
 ### Main process (`apps/desktop/src/main`, `preload`)
 
