@@ -17,6 +17,64 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe("item and stock commands", () => {
+  async function createItemThroughHandler(fixture: IHandlersFixture) {
+    const created = await fixture.handlers["items.create"]({
+      name: "PVC Pipe",
+      unit: "pcs",
+      pricePaise: 12000,
+      openingQtyMilli: 10000,
+    });
+    if (!created.ok) throw new Error(created.message);
+    return created.data.item;
+  }
+
+  it("updates an item's price", async () => {
+    const fixture = buildHandlersFixture();
+    const pipe = await createItemThroughHandler(fixture);
+    const result = await fixture.handlers["items.update"]({ id: pipe.id, pricePaise: 13500 });
+    expect(result).toMatchObject({ ok: true, data: { item: { id: pipe.id, pricePaise: 13500 } } });
+  });
+
+  it("answers NOT_FOUND when updating an item that does not exist", async () => {
+    const { handlers } = buildHandlersFixture();
+    expect(await handlers["items.update"]({ id: "missing", pricePaise: 100 })).toMatchObject({
+      ok: false,
+      code: "NOT_FOUND",
+    });
+  });
+
+  it("adjusts stock and returns the item with the new movement", async () => {
+    const fixture = buildHandlersFixture();
+    const pipe = await createItemThroughHandler(fixture);
+    const result = await fixture.handlers["stock.adjust"]({
+      itemId: pipe.id,
+      mode: "add",
+      quantityMilli: 5000,
+      note: "delivery",
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      data: {
+        item: { stockMilli: 15000 },
+        movement: { reason: "adjustment", quantityMilli: 5000 },
+      },
+    });
+  });
+
+  it("refuses a stock adjustment without a note", async () => {
+    const fixture = buildHandlersFixture();
+    const pipe = await createItemThroughHandler(fixture);
+    const result = await fixture.handlers["stock.adjust"]({
+      itemId: pipe.id,
+      mode: "add",
+      quantityMilli: 1000,
+      note: "",
+    });
+    expect(result).toMatchObject({ ok: false, code: "NOTE_REQUIRED" });
+  });
+});
+
 describe("draft commands", () => {
   it("saves a draft and loads it back", async () => {
     const { handlers } = buildHandlersFixture();
