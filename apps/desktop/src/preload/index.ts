@@ -1,12 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { COMMAND_NAMES, type ShopOsApi } from "@shopos/core/commands";
+import { buildShopOsApi } from "./bridge";
 
-// Narrow bridge: exactly the commands in contracts/ipc-commands.md, nothing else.
-const api = Object.fromEntries(
-  COMMAND_NAMES.map((name) => [
-    name,
-    (input: unknown) => ipcRenderer.invoke("shopos:invoke", name, input ?? {}),
-  ]),
-) as unknown as ShopOsApi;
-
-contextBridge.exposeInMainWorld("shopos", api);
+contextBridge.exposeInMainWorld(
+  "shopos",
+  buildShopOsApi((channel, commandName, input) => ipcRenderer.invoke(channel, commandName, input)),
+);
