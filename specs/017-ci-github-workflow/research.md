@@ -1,0 +1,226 @@
+# Research: GitHub Workflow (CI and merge protection)
+
+Findings from the spike run on 2026-11-14 and decisions for the plan. Claims marked **unverified** have not been run and must be checked when the task that depends on them is done.
+
+## Spike results (2026-11-14)
+
+### S1. Coverage works inside Electron's Node: VERIFIED
+`@vitest/coverage-v8@2.1.9` (matches vitest 2.1.9) was installed in `packages/core` and `apps/desktop`. Running `node scripts/vitest-electron.mjs run --coverage ...` (tests run in Electron's Node via `ELECTRON_RUN_AS_NODE`, sharing the app's SQLite binary) printed a full coverage table. So tests, app and coverage can all use the same Electron SQLite binary, and CI can reuse `pnpm test`.
+
+### S2. Baseline coverage (statements = lines; V8 provider; all files under `src/` included)
+
+| Area | Statements/lines | Branches | Functions | Notes |
+|---|---|---|---|---|
+| `packages/core` | 67.22% | 86.88% | 87.87% | `types.ts` (Zod schemas), `commands.ts`, `index.ts` are 0% in core's own tests; they are exercised only through desktop tests, which do not count for core |
+| desktop `main/db` | 96.26% | 84.61% | 80% | `seed.ts` partly uncovered |
+| desktop `main/repositories` | 95.09% | 91.93% | 93.75% | small gaps in Bill, Stock, Item repositories |
+| desktop `main/services` | 90.63% | 91.87% | 94.59% | `electronRenderer.ts` is 0% |
+| desktop `main/ipc` | 72.64% | 89.47% | 71.42% | `ipc/index.ts` 0%, `handlers.ts` 81% |
+| desktop `main/index.ts`, `preload/index.ts` | 0% | 0% | 0% | Electron entry and bridge: no unit tests |
+| desktop `renderer` (App, screens, components, state, strings, main) | 0% | 0% | 0% | about 1,700 lines, no component tests yet |
+| **Desktop total** | **38.17%** | **86.66%** | **78.35%** | |
+
+Reading: the logic that handles money and stock is already close to the target; the distance to 90% is the **renderer**, the Electron entry files and a few gaps. Branch numbers look healthy only because the renderer's branches are not counted when no test imports the file (V8 reports 0 statements for it); they will move when renderer tests exist.
+
+### S3. Count of the work to reach 90%
+Not measured by file-line arithmetic yet. After the renderer files are imported by tests, the baseline must be re-measured (Step 2 of the sequence) because branch and function totals will change.
+
+## Decisions
+
+### D1. Reuse existing commands
+CI runs `pnpm test` (Electron's Node, via `scripts/vitest-electron.mjs`), `pnpm build` and `pnpm test:e2e`, so developers and CI run the same thing. No separate CI-only test invocation.
+
+### D2. Coverage configuration in one place
+A single module `config/coverage.ts` exports `COVERAGE_THRESHOLD_PERCENT = 90` and `COVERAGE_EXCLUDED_PATHS`. Both vitest configs import it. The exclusion list starts with only: generated files, `*.d.ts`, test folders. Nothing else without a written reason in a PR (FR-011, FR-012).
+
+### D3. Report-only first, then the gate
+Thresholds are applied only when `COVERAGE_ENFORCE=true`. The workflow sets it from a single committed value (`config/coverage.ts` exports `COVERAGE_ENFORCE`, default `false`). The gate is switched on by a PR that sets it to `true`, once `main` measures at least 90% on every metric (FR-010a).
+
+### D4. Per package and total
+Thresholds apply to `packages/core` and `apps/desktop` separately (each package must reach 90% by itself) and the CI summary also shows the combined figure. Each package's own tests must cover its own code (core's schemas get core tests rather than relying on desktop tests).
+
+### D5. Entry files are counted, and made testable
+Electron entry (`main/index.ts`), preload and `electronRenderer.ts` are counted. To test them, move logic into small functions that take Electron objects as arguments (for example `createMainWindow(electronApi)`), leaving a thin untested-by-design line or two if any is justified in writing. End-to-end runs do not contribute coverage.
+
+### D6. Renderer tests use Testing Library with jsdom
+Component and hook tests run in the same Vitest, under `jsdom`, with `window.shopos` replaced by a typed fake. User-event drives interactions. They live in `apps/desktop/tests/renderer/**`. Large screens are split first (React skill plan) so tests stay small.
+
+### D7. Order of workflow steps
+Quick checks (format, lint, types, migrations in sync, PR title and size) run first and fail fast; tests with coverage next; build; end-to-end last (slowest). Heavy steps depend on quick checks passing.
+
+### D8. Workflow hygiene (from the spec)
+Least-privilege `permissions: contents: read`, `pull_request` (never `pull_request_target`), pinned action versions, concurrency group to cancel superseded runs, job timeouts, Node from `.nvmrc`, pnpm from `package.json` `packageManager`, `--frozen-lockfile`, caches for the pnpm store and the Electron download.
+
+### D9. Required checks and protection (no reviewer)
+Branch protection on `main`: require the named checks, require the branch to be up to date, squash merge only, no force push or delete, include administrators, **zero required approving reviews** (solo project, owner decision). Configured in the repository settings (or by an infrastructure script); documented in `docs/contributing/ci.md`.
+
+### D10. Retries
+Unit and integration tests: no retries. End-to-end: Playwright `retries: 1` on CI only, and any retried test is reported as a flake with its trace.
+
+## Implementation findings (2026-11-14, from building T004 to T014 locally)
+
+### F1. Pinned actions (resolves O2): VERIFIED
+Latest releases were read from the GitHub API and each tag was resolved to its commit SHA with `git ls-remote`. A script (not committed) then re-checked every SHA in `.github/**` against GitHub: all 7 match. They are newer than commonly remembered, which is why they were looked up.
+
+| Action | Release | Published | Commit SHA |
+|---|---|---|---|
+| actions/checkout | v7.0.1 | 2026-07-20 | `3d3c42e5aac5ba805825da76410c181273ba90b1` |
+| pnpm/action-setup | v6.1.1 | 2026-11-03 | `73e46992e05b19abd31f2f3c20e0e7370d762115` |
+| actions/setup-node | v7.1.0 | 2026-10-08 | `949feb2413d6458794dcd2491c4babbbce0c15c1` |
+| actions/cache | v6.1.0 | 2026-06-26 | `55cc8345863c7cc4c66a329aec7e433d2d1c52a9` |
+| actions/upload-artifact | v7.0.2 | 2026-10-07 | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` |
+| actions/download-artifact | v8.0.2 | 2026-10-07 | `9000827ccba6bdab643e8b6fd33ac0654aef8333` |
+| trufflesecurity/trufflehog | v3.99.9 | 2026-11-12 | `3bd2b5887eb0efb8fa18bfd1d296032924e4ffdc` |
+
+Notes: `pnpm/action-setup` v6.1.1 was published 11 days before this was written (newest release); it reads `packageManager` from `package.json` and can cache the store itself. gitleaks-action (v3.0.0) was not used: its README says a licence key is required for organisation accounts. TruffleHog's action reads the commit range from the event; its `version` input is a Docker image tag and the value `3.99.9` is **unverified** until the first run.
+
+### F2. Coverage in a recursive run: VERIFIED
+`pnpm -r test:coverage` skips `apps/desktop` when `packages/core` fails, because desktop depends on core (pnpm skips dependents of a failed package, even with `--no-bail`). `pnpm -r --no-bail --no-sort` runs both independently, so both packages always report. Report-only exits 0; with the gate on both fail with "does not meet global threshold (90%)".
+
+### F3. Playwright JSON report shape: VERIFIED
+Generated from a throwaway probe (pass, pass-on-retry, always-fail): a test passing only on retry has `status: "flaky"` and `results: [failed (retry 0), passed (retry 1)]`. `scripts/ci/flaky-summary.mjs` reads exactly this shape.
+
+### F4. Dependency audit (answers O4): MEASURED
+`pnpm audit --audit-level high` reports **81 vulnerabilities (4 critical, 27 high, 40 moderate, 10 low)**; production dependencies alone: **2 high**. The installed Electron is **33.4.11** (declared `^33.0.0`) with 12 high advisories; the advisory text names a fix at 42.11.16 or later, so the fix is a major upgrade. Others: `tar`, `vitest`, `tinypool` (critical, tooling), `drizzle-orm`, `zod`, `vite`, `extract-zip`, `app-builder-lib`, `builder-util-runtime` (high). Consequence: the audit job is informational (`continue-on-error`) and must not become a required check until these are dealt with. The Electron and dependency upgrades are a separate piece of work, not part of spec 017.
+
+### F4b. Migration check: VERIFIED
+`scripts/ci/check-migrations.sh` fingerprints `apps/desktop/drizzle`, runs the generator, and fails if the fingerprint changed. Passes on the real tree; fails (exit 1) when the generator adds a file (tested through `MIGRATION_GENERATE_COMMAND`, without touching the real schema).
+
+### F5. Behaviour when the real tree is measured
+With the gate off, `pnpm test:coverage` exits 0 (core 67.2% lines, desktop 38.2%). `pnpm pr:size` in CI mode on the current working tree (about 5,700 uncommitted lines) fails as designed.
+
+### F6. Electron upgrade 33.4.11 to 43.8.10 (2026-11-14; asked for as "F5", renumbered because F5 already exists)
+
+**Result: DONE and verified locally (macOS arm64).** `pnpm audit` Electron advisories: 46 before (12 high, 25 moderate, 9 low), **0 after**. Overall audit: 4 critical / 27 high / 40 moderate / 10 low before; 4 critical / 13 high / 15 moderate / 1 low after (part of the drop is the old `prebuild-install` dependency tree leaving with better-sqlite3 13).
+
+```
+ Before                         After
+ Electron 33.4.11 (ABI 130)     Electron 43.8.10 (ABI 148, Node 24.22.1, Node-API 10)
+ better-sqlite3 12.11.1         better-sqlite3 13.1.1
+   one binary per Electron        Node-API build: ONE binary per platform,
+   version, fetched by              shipped inside the npm package,
+   prebuild-install                 works in Node, Electron and the packaged app
+```
+
+**Why 43.8.10.** Electron's policy is that the latest three stable majors are supported (source: electronjs.org/docs/latest/tutorial/electron-timelines); npm `latest` is 45.3.2, so 45, 44 and 43 are supported. For each of the 46 advisories the first patched version per major line was read from the GitHub advisory API (`api.github.com/advisories/<id>`). A line with no entry for an advisory is not affected by it. Minimum stable that clears all 46: **43.8.1** on 43.x, **44.9.1** on 44.x, any stable 45.x on 45.x (every 45 patch is in a pre-release). The lowest supported line is 43, and 43.8.10 is its latest patch, so that is the chosen version (example advisory: GHSA-jr5w-w6x2-84p9, eMudhra certificates, patched 42.11.16 / 43.8.1 / 44.9.1 / 45.0.0-beta.6). **Risk:** Electron 43 leaves support once Electron 46 reaches stable (release dates not read from a source; the timelines page gave the policy but no dates). Because better-sqlite3 13 no longer depends on the Electron ABI, moving to 44 or 45 later is only an `electron` version change; it has not been tried.
+
+**Compatibility checks (with sources)**
+
+| Check | Finding | Source |
+|---|---|---|
+| ABI numbers | Electron 33 = 130, 43 = 148, 44 = 149, 45 = 150 | `abi_registry.json` in github.com/electron/node-abi |
+| better-sqlite3 12.x prebuilds for Electron 43 | 12.11.1 stops at ABI 146 (**no** 148). 12.11.2 has 148 but **no Linux** binary. 12.12.0 has 148 incl. linux-x64, but **12.11.2 and 12.12.0 are not published to npm** (npm 12.x ends at 12.11.1); `pnpm install` failed with "No matching version found for better-sqlite3@^12.12.0" | GitHub releases API for WiseLibs/better-sqlite3; `npm view better-sqlite3 versions` |
+| better-sqlite3 13.x | Built as Node-API (`NAPI_VERSION=10` in `binding.gyp`), prebuilds for darwin/linux/win32 and arm64/x64 shipped **inside the npm package** (`prebuilds/<platform>-<arch>.node`), `prebuild-install` dropped, `engines.node >=22`; release notes list no JavaScript API break, only additions (`db.explain()`, `statement.toString()`) | tarball of better-sqlite3@13.1.1 (`npm pack`); github.com/WiseLibs/better-sqlite3/releases/tag/v13.0.0 |
+| Electron 43 runtime check | In Electron's Node: Node 24.22.1, napi 10, modules 148; better-sqlite3 13.1.1 opens a database, SQLite 3.54.1 | run locally |
+| electron-builder 25.1.8 | Declares no peer dependency on Electron; works with 43.8.10 for the native-module step and the app skeleton. Latest is 26.18.0 (not needed) | `npm view`; packaging run below |
+| electron-vite 2.3.0 | No Electron peer dependency; builds main, preload and renderer with Electron 43 | `npm view`; build run below |
+| @playwright/test 1.65.0 | Drives the built app on Electron 43: 3 of 3 end-to-end scenarios pass | e2e run below |
+
+**Breaking changes 34 to 43 against what the app uses** (source: electronjs.org/docs/latest/breaking-changes, first 100,000 characters, covering 45 down to 34; I did not read the part for 33 and earlier). The app uses: `BrowserWindow` + `webPreferences`, `will-navigate`, `setWindowOpenHandler`, `dialog.showOpenDialog` / `showSaveDialog` / `showErrorBox`, `app.getPath` / `setPath` / `relaunch` / `exit` / `quit` / `isPackaged`, `before-quit`, `webContents.print` / `printToPDF`, `ipcMain.handle`, `ipcRenderer.invoke`, `contextBridge`. **No removed or changed behaviour for any of these.** Relevant notes: (43) `dialog` without `defaultPath` now opens in the user's Downloads folder (our save dialog passes `defaultPath`; the open dialogs do not, so they will start in Downloads, which is acceptable); (39) `window.open` popups become resizable (we deny all window opens); (38) macOS 12 or later is required to run Electron 38+. No source change to `apps/desktop/src` was needed. Security defaults are unchanged: `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false` in `main/index.ts` and `main/services/electronRenderer.ts`.
+
+**Changes made (6 lines of `apps/desktop/package.json` plus the lockfile, which is excluded from the PR size)**
+- `electron`: `^33.0.0` to `^43.8.10`
+- `better-sqlite3`: `^12.0.0` to `^13.1.1`
+- `@shopos/core` moved from `dependencies` to `devDependencies`. This is not caused by the upgrade: the packaging dry run failed with "`packages/core/coverage/base.css` must be under `apps/desktop/`" because electron-builder tried to ship the whole workspace package as a runtime dependency. The built app bundles core (the main bundle requires only `electron`, `better-sqlite3` and Node built-ins), so it is not needed at runtime. (Other bundled libraries, for example react, radix, drizzle-orm, zod and uuid, are also listed as runtime dependencies and are shipped redundantly; not changed here.)
+
+**Verification (all on macOS arm64, 2026-11-14)**
+
+| Check | Result |
+|---|---|
+| `pnpm lint` | 0 errors, 92 warnings (same as before) |
+| `pnpm -r typecheck` | clean |
+| `pnpm -r test` | core 34/34, desktop 65/65 (run inside Electron 43's Node) |
+| `pnpm test:coverage` | exit 0; baseline unchanged (core 67.22% lines, desktop 38.17%) |
+| `pnpm test:scripts` | 36/36 |
+| `pnpm --filter @shopos/desktop build` | succeeds |
+| `pnpm test:e2e` | 3/3: billing (totals, negative stock, draft recovery, exactly-once save), inventory, PDF export |
+| `electron-builder --dir` | succeeds; `Shop OS.app` (343 MB, unsigned as configured); from inside the packaged app, better-sqlite3 loads from `app.asar.unpacked` (Electron 43.8.10, Node 24.22.1, napi 10, SQLite 3.54.1) |
+| `pnpm audit` | Electron advisories 46 to 0 (see above) |
+
+**Packaging detour worth knowing.** The first dry runs hung for 13 minutes in electron-builder's `unpack-electron` step. Cause found: a **corrupt cached zip** `~/Library/Caches/electron/electron-v43.8.10-darwin-arm64.zip` (555 MB, `unzip -t`: "bad zipfile offset"; the valid file is 123,480,564 bytes). It most likely came from overlapping and killed runs during this work. Deleting it and re-running downloaded a valid zip and unpacking worked. If CI ever hangs there, clear the Electron cache.
+
+**Not verified**
+- Windows and Linux builds, and the macOS x64 build (only arm64 macOS was run). The Node-API prebuilds exist for those platforms (listed in the tarball) but were not executed.
+- Real printer behaviour on Electron 43 (receipt width, driver): `webContents.print` and `printToPDF` run (PDF export passes end to end) but no physical printer was tested; spike T008 is still open.
+- Packaging with code signing, `.dmg`, NSIS and AppImage targets: only `--dir` was run.
+- The remaining audit findings: high or critical advisories in `tar`, `vitest` (3.2.6 or later is advised; we use 2.1.9), `tinypool`, `vite`, `drizzle-orm` (0.45.2 or later is advised; we use 0.36), `zod` (4.6.6 or later is advised; we use 3.x), `app-builder-lib` and `builder-util-runtime` (electron-builder 26 line). Of these, `drizzle-orm` and `zod` are runtime libraries bundled into the app and deserve their own review; the rest are build or test tooling. None of them was changed here.
+- `apps/desktop/scripts/ensure-electron-sqlite.mjs` still works (it passes its probe) but its `prebuild-install` fallback is now unnecessary with better-sqlite3 13; it could be simplified later.
+
+**Rollback.** Restore `apps/desktop/package.json` and `pnpm-lock.yaml` from git (the files were uncommitted at the time, so copies of the pre-upgrade `package.json`, `pnpm-lock.yaml` and the two workspace `package.json` files were saved in the session scratchpad `electron-backup/`), run `pnpm install`, then `node apps/desktop/scripts/ensure-electron-sqlite.mjs`. The code under `apps/desktop/src` is unchanged, so no code rollback is needed.
+
+### F7. zod 3 to 4 and drizzle-orm 0.36 to 0.45 upgrade (2026-11-14): VERIFIED locally
+
+Owner decision: upgrade both runtime libraries now to clear their audit advisories. Done as two separate groups, each verified in full before the next. Nothing committed.
+
+**Advisories (from `pnpm audit --json`, 2026-11-14)**
+
+| Library | Advisory | Vulnerable | Patched | Title |
+|---|---|---|---|---|
+| zod | GHSA-mrhx-c7xc-m3w5 | below 4.6.6 | 4.6.6 or later | Can exhaust memory while validating oversized constrained collections |
+| drizzle-orm | GHSA-gpj5-g38j-94v9 | below 0.45.2 | 0.45.2 or later | SQL injection via improperly escaped SQL identifiers (`sql.identifier()`, `sql.as()`) |
+
+Neither flaw was reachable in our code: we never call `sql.identifier()` or `sql.as()` (grep of `apps/desktop/src`, `tests`, `drizzle.config.ts`), and our zod schemas validate small, bounded IPC inputs (no oversized constrained collections from untrusted sources).
+
+**Versions chosen**
+
+| Package | From | To (installed) | Why |
+|---|---|---|---|
+| zod | ^3.23.0 | ^4.6.7 (4.6.7) | Lowest stable line that clears the advisory is 4.6.6; `npm view zod dist-tags` shows 4.6.7 as `latest`, and pnpm resolved the caret range to it |
+| drizzle-orm | ^0.36.0 | ^0.45.4 (0.45.4) | Advisory fixed in 0.45.2; 0.45.4 is `latest` (the stable 0.x line; 1.0.0 is only beta and rc) |
+| drizzle-kit | ^0.28.0 | ^0.31.11 (0.31.11) | The 0.31 line is the stable kit contemporaneous with drizzle-orm 0.44 and 0.45 (0.31.8 shipped the same day as 0.45.0, 0.31.11 the same day as 0.45.3, per GitHub releases); npm `latest` is 0.31.11. The release notes do not state a pairing table, so this is inferred from release dates and proven by `check:migrations` |
+
+**Sources**: `npm view zod|drizzle-orm|drizzle-kit dist-tags`; zod migration guide https://zod.dev/v4/changelog (fetched); GitHub releases API for `drizzle-team/drizzle-orm` (every release from 0.37.0 to 0.45.4 and drizzle-kit 0.28.0 to 0.31.11 read for breaking, deprecated, removed and migration lines); drizzle-orm@0.45.x peer dependency `better-sqlite3 >=7` (we use 13.1.1).
+
+**Breaking changes that touch our usage, and how each was handled**
+
+| Library | Change (source) | Our usage | Result |
+|---|---|---|---|
+| zod 4 | `.uuid()` is stricter, follows RFC 9562/4122 (migration guide) | `clientBillId: z.string().uuid()` | No change needed: `crypto.randomUUID()` ids validate; a non-UUID is rejected (checked directly) |
+| zod 4 | Method forms such as `.uuid()` are deprecated in favour of `z.uuid()` (guide) | same | Left as is (still works); candidate for a later tidy-up |
+| zod 4 | `z.ZodTypeAny` "eliminated, use `z.ZodType`" (guide) | `handlers.ts` imports `ZodTypeAny` | Still compiles in 4.6.7; left unchanged |
+| zod 4 | `z.unknown()` object keys are no longer optional: the key must be present (guide, v4.4.0 note) | `draftSaveInput = z.object({ payload: z.unknown() })` | **Behaviour change**: `{}` now fails (`success: false`), `{ payload: null }` and `{ payload: {...} }` pass (checked directly). The renderer always sends `payload`, so no code change |
+| zod 4 | Default error messages changed (guide, "error customization") | Messages are joined into `INVALID_FIELD` text in `toFailure` | Custom messages we set ("Name is required") are unchanged; the default for a missing field is now "Invalid input: expected string, received undefined" instead of "Required". Only malformed input the UI never sends shows it |
+| zod 4 | `ZodError.errors` removed, use `.issues` (guide) | `toFailure` uses `.issues` | No change needed |
+| drizzle-orm 0.36 | Table extras: array form introduced, object form "still available but deprecated" (0.36.0 notes) | All 7 tables used the object form | Converted to the array form (126 changed lines, extras only); `check:migrations` proves no SQL changed |
+| drizzle-orm 0.38 | Internal builder types changed (0.38.0 "Types breaking changes") | We do not use those types | None |
+| drizzle-orm 0.41 | `sql-js` prepare behaviour; Postgres type mappers removed (0.41.0) | We use better-sqlite3 | None |
+| drizzle-kit 0.30 | PostgreSQL no longer emits `IF NOT EXISTS` (0.30.0) | SQLite only | None |
+| drizzle-kit 0.31.10 | `esbuild-register` replaced by the `tsx` loader | `drizzle.config.ts` | `drizzle-kit generate` works unchanged |
+
+No change was needed to the better-sqlite3 driver import (`drizzle-orm/better-sqlite3`), the migrator import (`drizzle-orm/better-sqlite3/migrator`), `.returning()`, `.onConflictDoUpdate()`, `.transaction()`, `eq`/`and`/`asc`/`desc`/`lt`, `sql` templates, or `check()`/`index()`/`uniqueIndex()`.
+
+**The migration question (the risk with drizzle-kit)**: after the bump, `pnpm check:migrations` (runs `drizzle-kit generate` and fails on any change) printed "Migrations are in sync with the schema." and a directory diff of `apps/desktop/drizzle` against a backup taken before the group shows it unchanged. So the new drizzle-kit did not rewrite any snapshot or emit a new migration. The immutability triggers are untouched; the tests "saved bills and lines cannot be edited or deleted" and "movements are append-only at the database level" were run by name and pass.
+
+**Verification (macOS arm64, Electron 43.8.10, after each group)**
+
+| Check | After zod | After drizzle |
+|---|---|---|
+| `pnpm lint` | 0 errors, 92 warnings | 0 errors, 91 warnings |
+| `pnpm typecheck` | 0 errors | 0 errors |
+| `pnpm -r test` | core 34/34, desktop 65/65 | core 34/34, desktop 65/65 |
+| `pnpm test:scripts` | 36/36 | 36/36 |
+| `pnpm test:coverage` | exit 0; core 67.22%, desktop 38.17% lines | exit 0; core 67.22%, desktop 37.32% lines (lower only because `schema.ts` got shorter; its removed lines were covered) |
+| `pnpm check:migrations` | in sync | in sync, drizzle folder unchanged |
+| `pnpm --filter @shopos/desktop build` | built | built |
+| `pnpm test:e2e` | 3 of 3 | 3 of 3 |
+
+**Audit, overall (low / moderate / high / critical)**: before both groups 1 / 15 / 13 / 4; after zod 1 / 15 / 12 / 4; after drizzle 1 / 15 / 11 / 4. Zero zod, drizzle-orm or drizzle-kit advisories remain. The remaining high and critical advisories are build and test tooling: `tar`, `vitest`, `tinypool`, `vite`, `app-builder-lib`, `builder-util-runtime`.
+
+**Size**: zod group: 2 manifest lines (plus lockfile, excluded). drizzle group: 2 manifest lines, `schema.ts` 126 changed lines, 1 line each in `CLAUDE.md` and `shopos-database-drizzle/SKILL.md`; about 134 lines excluding the lockfile.
+
+**Not verified**: macOS x64, Windows and Linux; a real packaged build with the new drizzle (not run; migrations are applied by `migrate()` in the same code path the integration tests exercise); the migrator against a database created by the old version (not run; migration files are unchanged so the journal is compatible, but a real old database was not opened).
+
+**Risks**: zod 4 behaviour changes for malformed input (message text, required `unknown` keys) could surprise a future caller; drizzle 0.45 is a nine-minor jump and drizzle-kit pairing is inferred from release dates. Both are covered by the tests and the migration check above.
+
+**Rollback**: restore `packages/core/package.json`, `apps/desktop/package.json` and `pnpm-lock.yaml` from the backups taken before each group (scratchpad `zod-backup/` and `drizzle-backup/`), restore `apps/desktop/src/main/db/schema.ts` from `drizzle-backup/schema.ts.before` and the two note lines in `CLAUDE.md` and the drizzle skill, then `pnpm install` and `node apps/desktop/scripts/ensure-electron-sqlite.mjs`. The migration files did not change, so nothing needs undoing in the database folder.
+
+## Open items (unverified; each resolved by the task named)
+
+| # | Item | Resolved by |
+|---|---|---|
+| O1 | Linux runner needs a virtual display for Electron: `xvfb-run` or a display action; whether the app launches under it and whether Chromium sandbox flags are needed | T010 |
+| O2 | ~~Exact third-party action versions to pin~~ **Resolved 2026-11-14**: looked up and verified, see F1 | T008 |
+| O3 | Runner minutes: macOS and Windows runners cost more than Linux; confirm the account's allowance before the nightly smoke job | T040 |
+| O4 | **Answered (F4): not stable, stays non-required.** Was: whether `pnpm audit` is stable enough to be a required check (it can fail on advisories the project cannot fix) | T014 |
+| O5 | The repository is not on GitHub yet: hosting and the default branch name (`main`) | T006 (owner action) |
+| O6 | Branch coverage at 90% on UI code may be hard; decided by data after renderer tests exist | T034 |

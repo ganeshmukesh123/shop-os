@@ -13,8 +13,11 @@ export interface Launched {
 export async function launch(
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "shopos-e2e-")),
 ): Promise<Launched> {
+  // CI on Linux may need Chromium's sandbox switched off (open item O1 in specs/017.../research.md);
+  // off by default so local runs keep the real sandbox.
+  const sandboxArguments = process.env.SHOPOS_E2E_NO_SANDBOX === "1" ? ["--no-sandbox"] : [];
   const app = await electron.launch({
-    args: [path.resolve(__dirname, "../../out/main/index.js")],
+    args: [...sandboxArguments, path.resolve(__dirname, "../../out/main/index.js")],
     env: { ...process.env, SHOPOS_USER_DATA: dataDir },
   });
   const page = await app.firstWindow();

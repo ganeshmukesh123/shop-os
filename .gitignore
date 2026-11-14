@@ -9,3 +9,5 @@ backups
 .DS_Store
 .env*
 coverage
+test-results
+playwright-report

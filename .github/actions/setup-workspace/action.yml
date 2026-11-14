@@ -1,0 +1,32 @@
+name: Set up workspace
+description: Install pnpm and Node (versions come from package.json and .nvmrc), restore caches, install dependencies.
+
+# Used by every job in ci.yml so the setup is written once.
+# Third-party actions are pinned to a full commit SHA; the comment names the release (looked up 2026-11-14).
+runs:
+  using: composite
+  steps:
+    - name: Install pnpm (version from package.json "packageManager"), cache the store
+      uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      with:
+        cache: true
+
+    - name: Install Node (version from .nvmrc)
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: .nvmrc
+        package-manager-cache: false
+
+    # Electron's binary and the SQLite prebuilt are downloaded on install; cache them (paths are for Linux runners).
+    - name: Cache the Electron and SQLite downloads
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ~/.cache/electron
+          ~/.npm/_prebuilds
+        key: electron-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: electron-${{ runner.os }}-
+
+    - name: Install dependencies (frozen lock file)
+      shell: bash
+      run: pnpm install --frozen-lockfile
