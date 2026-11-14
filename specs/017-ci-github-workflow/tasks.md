@@ -23,7 +23,7 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 
 - [X] T001 Install `@vitest/coverage-v8@2.1.9` in `packages/core` and `apps/desktop`, and `@testing-library/react`, `@testing-library/user-event`, `jsdom` in `apps/desktop` (approved 2026-11-14)
 - [X] T002 Spike: coverage runs inside Electron's Node via `node apps/desktop/scripts/vitest-electron.mjs run --coverage` (result: works; recorded in `research.md` S1)
-- [X] T003 Measure the baseline for core and desktop and record it in `specs/017-ci-github-workflow/research.md` S2 (core 67.2%, desktop 38.2% lines; renderer 0%)
+- [X] T003 Measure the baseline for core and desktop and record it in `specs/017-ci-github-workflow/research.md` S2 (vitest 2: core 67.2%, desktop 38.2% lines; renderer 0%). Re-measured under vitest 4 (the numbers are not comparable): core 77.4% lines / 85.2% branches, desktop 39.8% / 30.4%, main-process slice 74.2% / 64.5% (research F9)
 - [X] T004 Create `config/coverage.ts` exporting `COVERAGE_THRESHOLD_PERCENT = 90`, `COVERAGE_EXCLUDED_PATHS` (generated files, `*.d.ts`, test folders only) and `COVERAGE_ENFORCE = false`
 - [X] T005 Use `config/coverage.ts` in `packages/core/vitest.config.ts` and `apps/desktop/vitest.config.ts`: provider `v8`, reporters `text`, `lcov`, `json-summary`, `html`, include `src/**`, thresholds (lines, statements, functions, branches) applied only when `COVERAGE_ENFORCE` is true; add `test:coverage` scripts in root, core and desktop `package.json` _(verified: `pnpm test:coverage` runs core in Node and desktop through Electron's Node; report-only exits 0; with `COVERAGE_ENFORCE=true` both packages fail naming the 90% threshold. Root script uses `--no-bail --no-sort` because desktop depends on core and pnpm otherwise skips it when core fails.)_
 - [ ] T006 Owner action: push the repository to GitHub, confirm the default branch is `main`, and note whether the repository is private (affects runner minutes) (resolves O5)
@@ -56,10 +56,10 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 
 ### Core (`packages/core`)
 
-- [ ] T016 [P] [US3] Write `packages/core/tests/types.test.ts` covering every Zod schema in `types.ts` with valid inputs, each invalid field, and boundary values (name length, UUID `clientBillId`, discount, quantity)
-- [ ] T017 [P] [US3] Write `packages/core/tests/commands.test.ts` covering the command map in `commands.ts` and the exports in `index.ts` (every command has an input schema and a result type)
-- [ ] T018 [P] [US3] Close the remaining gaps with tests: `money.ts` (parse and format edge cases), `quantity.ts` (unit and decimal rules), `draftBill.ts` (percent and error paths), `numbering.ts` (financial year boundary), `stock.ts`
-- [ ] T019 [US3] Confirm `packages/core` is at 90% on all four metrics; record it in `research.md`
+- [X] T016 [P] [US3] Write `packages/core/tests/types.test.ts` covering every Zod schema in `types.ts` with valid inputs, each invalid field, and boundary values (name length, UUID `clientBillId`, discount, quantity) (done: `packages/core/tests/types.test.ts`, 32 tests, zod 4 behaviour pinned)
+- [X] T017 [P] [US3] Write `packages/core/tests/commands.test.ts` covering the command map in `commands.ts` and the exports in `index.ts` (every command has an input schema and a result type) (done: `packages/core/tests/commands.test.ts`, contract list and package exports)
+- [X] T018 [P] [US3] Close the remaining gaps with tests: `money.ts` (parse and format edge cases), `quantity.ts` (unit and decimal rules), `draftBill.ts` (percent and error paths), `numbering.ts` (financial year boundary), `stock.ts` (done: edge cases in the money, quantity, numbering, stock and draftBill tests; the work found and fixed a real defect: `evaluateDraft` threw on a huge amount, commit 919beed)
+- [X] T019 [US3] Confirm `packages/core` is at 90% on all four metrics; record it in `research.md` (done 2026-11-14: core 100% lines/statements/functions, 99.21% branches; `COVERAGE_ENFORCE=true` run exits 0. One branch left: the defensive non-CoreError path in `draftBill.ts` line 98, unreachable without mocking)
 
 ### Main process (`apps/desktop/src/main`, `preload`)
 

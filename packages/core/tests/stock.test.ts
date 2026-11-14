@@ -34,3 +34,15 @@ describe("stock", () => {
     ]);
   });
 });
+
+describe("stock invariant edge cases", () => {
+  it("reports an item that has movements but no cached stock", () => {
+    const breaks = checkInvariant(new Map(), [mv("x", 500)]);
+    expect(breaks).toEqual([{ itemId: "x", cached: 0, derived: 500 }]);
+  });
+
+  it("reports an item with cached stock but no movements", () => {
+    const breaks = checkInvariant(new Map([["y", 700]]), []);
+    expect(breaks).toEqual([{ itemId: "y", cached: 700, derived: 0 }]);
+  });
+});

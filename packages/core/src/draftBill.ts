@@ -77,10 +77,11 @@ export function evaluateDraft(draftBill: DraftBill): DraftEvaluation {
       return fail("This unit accepts whole numbers only");
     const rate = parseRupees(draftLine.rate);
     if (rate === null) return fail("Enter the rate in rupees");
-    const gross = mulQtyRate(quantityMilli, rate);
-    const disc = lineDiscount(draftLine, gross);
-    if ("error" in disc) return fail(disc.error);
     try {
+      // Inside the try: an amount too large to hold exactly must become a line error, never a throw.
+      const gross = mulQtyRate(quantityMilli, rate);
+      const disc = lineDiscount(draftLine, gross);
+      if ("error" in disc) return fail(disc.error);
       const amount = computeLine({
         quantityMilli: quantityMilli,
         ratePaise: rate,

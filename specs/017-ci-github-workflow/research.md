@@ -317,6 +317,23 @@ Results: lint 0 errors (91 warnings, unchanged); typecheck 0 errors; core 34/34,
 
 `.github/workflows/ci.yml`: the audit job is now a real check (name "Dependency audit", `continue-on-error` removed, header and comments updated) because `pnpm audit --audit-level high` exits 0. The secret-scan job stays informational. **Not verifiable here:** how that job behaves on GitHub; a new advisory can turn it red with no code change (the job comment says to upgrade or record a reviewed exception). This answers open item O4 differently from F4: the audit is now stable enough to keep as a check, with that caveat.
 
+### F9. Coverage baseline under vitest 4 (2026-11-14, before the M2 tests)
+
+Measured with `pnpm test:coverage` on branch `test/coverage-core-main` (vitest 4.1.12, V8 provider, report-only). The earlier S2 numbers (vitest 2) are **not comparable**: vitest 4 counts coverage from the AST, so untested files and branches now show up.
+
+| Area | Lines | Statements | Functions | Branches |
+|---|---|---|---|---|
+| `packages/core` (whole package) | 77.43 | 77.88 | 93.93 | 85.15 |
+| `apps/desktop` (whole package, renderer still 0%) | 39.80 | 39.40 | 32.70 | 30.36 |
+| desktop slice `src/main/**` | 74.16 | 73.31 | 67.53 | 64.52 |
+| desktop slice `src/preload/**` | 0 | 0 | 0 | 0 |
+
+Per file, `packages/core` (lines / statements / functions / branches): `commands.ts` 0/0/100/100, `index.ts` 0/0/100/100 and `types.ts` 0/0/100/100 (no core test imports them: the Zod schemas are only exercised through the desktop tests, which do not count for core); `money.ts` 85.7/84.2/90/79.2; `quantity.ts` 88.2/89.5/80/70.6; `draftBill.ts` 96/92.1/100/85.1; `numbering.ts` 95.5/95.8/100/93.8; `stock.ts` 100/100/100/87.5; `billing.ts` and `errors.ts` 100 on all four.
+
+Per file, main process: `main/index.ts` 0 on all four; `main/ipc/index.ts` 0; `main/ipc/handlers.ts` 55.6/57.9/50/75; `main/db/seed.ts` 60/54.5/50/25; `main/db/schema.ts` 80/80/63.6/100; `main/db/connection.ts` 100/85.7/100/50; `main/services/electronRenderer.ts` 0; `preload/index.ts` 0; repositories 90 to 100 lines but 50 to 83 branches (`SettingsRepository` 50, `StockRepository` 66.7, `ItemRepository` 83.3); services 91.8 to 100 lines, branches 81.8 to 100.
+
+Reading: the slice that matters is the main process (74% lines, 65% branches) and core (77% lines). The shortfalls are untested entry files (`main/index.ts`, `preload/index.ts`, `electronRenderer.ts`, `ipc/index.ts`), schema factory functions that vitest counts as functions, and untested branches. The renderer is a separate, later phase.
+
 ## Open items (unverified; each resolved by the task named)
 
 | # | Item | Resolved by |
