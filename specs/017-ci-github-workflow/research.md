@@ -214,6 +214,33 @@ No change was needed to the better-sqlite3 driver import (`drizzle-orm/better-sq
 
 **Rollback**: restore `packages/core/package.json`, `apps/desktop/package.json` and `pnpm-lock.yaml` from the backups taken before each group (scratchpad `zod-backup/` and `drizzle-backup/`), restore `apps/desktop/src/main/db/schema.ts` from `drizzle-backup/schema.ts.before` and the two note lines in `CLAUDE.md` and the drizzle skill, then `pnpm install` and `node apps/desktop/scripts/ensure-electron-sqlite.mjs`. The migration files did not change, so nothing needs undoing in the database folder.
 
+### F8. Tooling upgrade (vitest, vite, electron-vite, electron-builder) (2026-11-14)
+
+Goal: clear the high and critical advisories left in build and test tooling so the CI "Dependency audit" job can pass. Baseline from `pnpm audit --json` on `main` (0aa3609): low 1, moderate 15, **high 11, critical 4**; `pnpm audit --prod --audit-level high` passes (no known vulnerabilities in shipped dependencies).
+
+| Package | Severity | Advisory ids (examples) | Patched in | Comes from |
+|---|---|---|---|---|
+| vitest | critical | GHSA-5xrq-8626-4rwp (Vitest UI server file read/exec) | 3.2.6 | our test runner |
+| tinypool | critical (2) | GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr (prototype pollution to RCE) | **2.1.2** (vulnerable `<2.1.2`) | vitest 2.x and 3.x (`tinypool ^1.1.1`) |
+| vite | high (1) | GHSA-587h-7wmj-h5pm (plus moderate/low launch-editor and fs.deny advisories) | 6.4.4 | vitest, electron-vite |
+| tar | critical 1, high 8 | GHSA-34x7-hfp2-rc4v and others | up to 7.5.21 | electron-builder > dmg-builder > app-builder-lib |
+| app-builder-lib | high | GHSA-7g7r-gx96-252g | 26.15.0 | electron-builder |
+| builder-util-runtime | high | GHSA-p2f4-r6v6-j797 | 9.7.0 | electron-builder |
+
+**Group order changed from the brief (coupling found, not assumed).** Vitest 4.1.12 declares `vite ^6 || ^7 || ^8` as a non-optional peer; desktop pins `vite` directly, so vitest resolved to desktop's vite 5.4.21 and the desktop test run failed at start-up (`ERR_PACKAGE_PATH_NOT_EXPORTED: './module-runner'`, observed). `electron-vite@2.3.0` caps vite at `^4 || ^5`. So vite and electron-vite had to move first, then vitest. Core alone ran 34/34 on vitest 4.1.12 (with vite 8) before this was understood.
+
+#### Group 1 (done first): vite 5.4 to 6.4.6 and electron-vite 2.3.0 to 3.1.0: VERIFIED locally (macOS arm64)
+
+Sources:
+- `npm view` (2026-11-14): vite 6.4.6 is the latest 6.x (engines `^18 || ^20 || >=22`); `electron-vite@3.1.0` peers `vite ^4 || ^5 || ^6`, engines `^18 || >=20`; `electron-vite@4.0.1` and later need Node `^20.19 || >=22.12` and (v4) Vite 7; `@vitejs/plugin-react@4.7.0` peers `vite ^4.2 || ^5 || ^6 || ^7`.
+- electron-vite CHANGELOG (raw.githubusercontent.com/alex8088/electron-vite/master/CHANGELOG.md): v3.0.0 only "feat: resolve conditions for preload"; v3.1.0 only a bytecode-plugin fix; **v4.0.0 breaking: Vite 7 and the CJS build removed** (not taken: the app ships a CommonJS main bundle); v5.0.0 breaking config restructuring (not taken). Electron targets listed: 3.0.0 adds Electron 32 to 34, 3.1.0 adds 35; Electron 43 has no table entry in any 3.x release, the same position as 2.3.0 had, and the build output is unchanged in shape.
+
+Chosen: vite `^6.4.6` (clears every vite advisory, all were `<=6.4.3`), electron-vite `^3.1.0` (smallest version supporting vite 6, no breaking changes listed).
+
+Changes: `apps/desktop/package.json`, 2 lines; no source or config changes needed (`electron.vite.config.ts` untouched).
+
+Results: `pnpm peers check`: no issues; `pnpm --filter @shopos/desktop build`: built, main bundle still CommonJS (`"use strict"; const fs = require(...)`); `pnpm test:e2e`: 3 of 3 pass; lint 0 errors (91 warnings, unchanged); typecheck 0 errors; `pnpm -r test`: core 34/34, desktop 65/65; `pnpm test:scripts`: 36/36; `pnpm test:coverage` exit 0 (core 67.22%, desktop 37.32% lines, unchanged); `pnpm check:migrations` in sync. Audit unchanged at high 11, critical 4: the one remaining vite advisory path is `@vitest/coverage-v8 > vitest > vite` (vitest 2.1.9's own vite 5), removed by the vitest group.
+
 ## Open items (unverified; each resolved by the task named)
 
 | # | Item | Resolved by |
