@@ -10,14 +10,14 @@ Authority: constitution (Electron security), `specs/018-electron-hardening/spec.
 ```
 Renderer (sandboxed) --invoke--> ipcMain.handle --> service --> SQLite
                           ^             ^
-        file:// -> custom protocol    check sender origin, null = refuse
+        file:// -> custom protocol    null frame = refuse; then check page location
 Window: will-navigate (exact URL) | permissions (deny) | window.open (deny)
 Package: fuses + ASAR integrity  (packaged output only, never the dev binary)
 ```
 
 ## 1. Rules (main process)
 
-- **Sender check.** Every IPC handler first checks `event.senderFrame`. Accept only the app's **main frame** (not a same-origin child frame) whose address is the app's own page. Do **not** compare serialized origins: for `file:` and unregistered custom schemes the origin is the text `"null"`, so a foreign page looks the same as ours. Compare the parsed scheme plus location instead (exact file location for `file:`, scheme and host for the custom protocol). A null frame, child frame or foreign page returns the normal error envelope and calls no service. Wrap once, not per handler. What Electron returns for `senderFrame.origin` on `file:` is unverified (research O11); test it.
+- **Sender check.** Every IPC handler first checks `event.senderFrame`. Accept only the app's **main frame** (not a same-origin child frame) whose address is the app's own page. Do **not** compare serialized origins: for `file:` and unregistered custom schemes the origin is the text `"null"`, so a foreign page looks the same as ours. Compare the parsed scheme plus location instead (exact file location for `file:`; scheme, host **and the app's entry path** for the custom protocol, so another page on the same host is refused). A null frame, child frame or foreign page returns the normal error envelope and calls no service. Wrap once, not per handler. What Electron returns for `senderFrame.origin` on `file:` is unverified (research O11); test it.
 - **Permissions.** `session.setPermissionRequestHandler` and `setPermissionCheckHandler` deny everything. A feature that needs one (camera for a scanner, spec 015) adds a named, tested exception.
 - **Navigation.** In `will-navigate`, parse with `new URL()` and compare exactly with the app page (plus the dev server, only when `isDev`). Never `startsWith`: `https://allowed.com.evil.com` passes it. Unparsable means blocked. Run the **same check on `will-redirect`** too, because a redirect from an allowed dev-server URL to a foreign one is a separate event; test it.
 - **New windows and links.** Keep `setWindowOpenHandler` returning `{ action: "deny" }`. Never pass renderer-supplied text to `shell.openExternal`; allow only fixed or verified URLs.

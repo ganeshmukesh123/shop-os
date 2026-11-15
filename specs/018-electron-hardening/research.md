@@ -78,6 +78,8 @@ Source: official Electron docs read 2026-11-15 (links in `spec.md`) and an audit
 - **O11**: what Electron's `senderFrame.origin` and `senderFrame.url` return for the app's `file:` page and for a custom protocol, and whether the main-frame test (`senderFrame === webContents.mainFrame`) works as intended. Test before relying on it.
 - **O12**: `electron-builder.yml` also builds a Linux AppImage, and ASAR integrity does not apply there. Decide whether Linux is an accepted exception or needs a separate protection (the shop's first use is Mac, NFR-013).
 - **O13**: the `drizzle` migrations are in `extraResources`, outside `app.asar`, and run against the shop database at start. Decide whether to bundle them inside the archive or protect them separately.
+- **O14**: the ASAR page says the app checks the hash of the archive **header** at launch. Does a changed file with an intact header fail at launch, or only when that file is read? Test by modifying one packed file and launching.
+- **O15**: the `nodeCliInspect` fuse covers Node's `--inspect` arguments, not Chromium's remote-debugging switch. Check whether and how to block the latter before claiming no debugger can attach.
 
 ## Not adopted
 
