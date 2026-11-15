@@ -9,10 +9,31 @@ import { makeTempFolder } from "../helpers/appStateFixture";
 const electronMocks = vi.hoisted(() => ({ handle: vi.fn() }));
 vi.mock("electron", () => ({ ipcMain: { handle: electronMocks.handle }, BrowserWindow: class {} }));
 
-import { startApp, type IStartAppDependencies } from "../../src/main/app/startApp";
+import Database from "better-sqlite3";
+import {
+  PRE_MIGRATION_FOLDER_NAME,
+  startApp,
+  type IStartAppDependencies,
+} from "../../src/main/app/startApp";
+import { openDatabase } from "../../src/main/db/connection";
+
+const START_TIME = new Date(2026, 10, 15, 9, 30, 0);
+
+/** A counter PC that lost power mid-write: the file is there but is not a readable database. */
+function writeDamagedDatabase(databasePath: string): void {
+  fs.mkdirSync(path.dirname(databasePath), { recursive: true });
+  fs.writeFileSync(databasePath, "damaged bytes ".repeat(500));
+}
+
+function createBackupFile(): string {
+  const backupPath = path.join(makeTempFolder("shopos-start-"), "shopos-20261114-180000.sqlite");
+  openDatabase(backupPath, { migrationsFolder: MIGRATIONS }).sqlite.close();
+  return backupPath;
+}
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  // Fake only the backup timer's clocks: SQLite's online backup steps through setImmediate.
+  vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "setTimeout", "clearTimeout"] });
   electronMocks.handle.mockReset();
 });
 
@@ -131,6 +152,79 @@ describe("startApp", () => {
       "Shop OS could not start",
       "plain failure",
     );
+  });
+
+  it("backs up the database before running a pending migration on shop data", async () => {
+    const config = buildConfig();
+    fs.mkdirSync(path.dirname(config.databasePath), { recursive: true });
+    const olderInstall = openDatabase(config.databasePath, { migrationsFolder: MIGRATIONS });
+    olderInstall.sqlite
+      .prepare(
+        "delete from __drizzle_migrations where created_at = (select max(created_at) from __drizzle_migrations)",
+      )
+      .run();
+    olderInstall.sqlite.close();
+
+    await startApp(buildDependencies().dependencies, config, () => START_TIME);
+
+    const backupFolder = path.join(path.dirname(config.databasePath), PRE_MIGRATION_FOLDER_NAME);
+    expect(fs.readdirSync(backupFolder)).toEqual(["shopos-pre-migrate-20261115-093000.sqlite"]);
+  });
+
+  it("takes no pre-migration copy for a brand-new database", async () => {
+    const config = buildConfig();
+
+    await startApp(buildDependencies().dependencies, config, () => START_TIME);
+
+    const backupFolder = path.join(path.dirname(config.databasePath), PRE_MIGRATION_FOLDER_NAME);
+    expect(fs.existsSync(backupFolder)).toBe(false);
+  });
+
+  it("offers a restore when the database is damaged, then restarts on the restored file", async () => {
+    const config = buildConfig();
+    writeDamagedDatabase(config.databasePath);
+    const backupFile = createBackupFile();
+    const { dependencies, parts } = buildDependencies();
+    parts.dialog.showOpenDialog.mockResolvedValue({ canceled: false, filePaths: [backupFile] });
+
+    await startApp(dependencies, config);
+
+    const restored = new Database(config.databasePath, { readonly: true });
+    expect(restored.pragma("integrity_check", { simple: true })).toBe("ok");
+    restored.close();
+    expect(parts.app.relaunch).toHaveBeenCalledOnce();
+    expect(parts.app.exit).toHaveBeenCalledWith(0);
+    expect(parts.createBrowserWindow).not.toHaveBeenCalled();
+  });
+
+  it("explains and exits when the owner cancels the restore of a damaged database", async () => {
+    const config = buildConfig();
+    writeDamagedDatabase(config.databasePath);
+    const { dependencies, parts } = buildDependencies();
+    parts.dialog.showOpenDialog.mockResolvedValue({ canceled: true, filePaths: [] });
+
+    await startApp(dependencies, config);
+
+    expect(parts.dialog.showErrorBox).toHaveBeenCalledWith(
+      "Shop OS database is damaged",
+      expect.stringContaining("restore-guide"),
+    );
+    expect(parts.app.exit).toHaveBeenCalledWith(1);
+    expect(parts.app.relaunch).not.toHaveBeenCalled();
+  });
+
+  it("reports a failed restore and leaves the app closed", async () => {
+    const config = buildConfig();
+    writeDamagedDatabase(config.databasePath);
+    const notABackup = path.join(makeTempFolder("shopos-start-"), "notes.sqlite");
+    fs.writeFileSync(notABackup, "not a backup");
+    const { dependencies, parts } = buildDependencies();
+    parts.dialog.showOpenDialog.mockResolvedValue({ canceled: false, filePaths: [notABackup] });
+
+    await startApp(dependencies, config);
+
+    expect(parts.dialog.showErrorBox).toHaveBeenCalledWith("Restore failed", expect.any(String));
+    expect(parts.app.exit).toHaveBeenCalledWith(1);
   });
 
   it("fails to start, with a message, when the database cannot be opened", async () => {

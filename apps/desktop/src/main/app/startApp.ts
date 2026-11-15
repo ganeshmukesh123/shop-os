@@ -1,8 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { App, BrowserWindow, Dialog, Session } from "electron";
-import { openDatabase } from "../db/connection";
+import { CoreError } from "@shopos/core";
+import { migrateConnection } from "../db/connection";
 import { ensureSeed } from "../db/seed";
+import {
+  backupBeforeMigrating,
+  needsPreMigrationBackup,
+  openCheckedSqlite,
+} from "../db/startupSafety";
 import { registerIpc } from "../ipc";
 import type { Services } from "../ipc/handlers";
 import { BillRepository } from "../repositories/BillRepository";
@@ -19,6 +25,10 @@ import { registerQuitHooks, startBackupTimer } from "./backupLifecycle";
 import { createMainWindow, type CreateBrowserWindow } from "./mainWindow";
 import { installSecurityHeaders } from "./securityHeaders";
 import { createShell } from "./shell";
+import { offerRestoreForDamagedDatabase } from "./startupRecovery";
+
+/** Copies taken just before a migration, kept beside the database (not in the owner's backup folder). */
+export const PRE_MIGRATION_FOLDER_NAME = "pre-migration-backups";
 
 export interface IStartAppDependencies {
   app: Pick<App, "whenReady" | "on" | "quit" | "relaunch" | "exit">;
@@ -47,29 +57,48 @@ function buildServices(state: IAppState): Services {
   };
 }
 
-function openShopDatabase(state: IAppState, config: IAppConfig): void {
-  fs.mkdirSync(path.dirname(config.databasePath), { recursive: true });
-  state.connection = openDatabase(config.databasePath, {
-    migrationsFolder: config.migrationsFolder,
-  });
+/** Integrity check, then a backup if a migration is pending on real data, then migrate and seed (task T091). */
+async function openShopDatabase(state: IAppState, config: IAppConfig, now: Date): Promise<void> {
+  const dataFolder = path.dirname(config.databasePath);
+  fs.mkdirSync(dataFolder, { recursive: true });
+  const sqlite = openCheckedSqlite(config.databasePath);
+  const needsBackup = needsPreMigrationBackup(sqlite, config.migrationsFolder);
+  if (needsBackup) {
+    await backupBeforeMigrating(sqlite, path.join(dataFolder, PRE_MIGRATION_FOLDER_NAME), now);
+  }
+  state.connection = migrateConnection(sqlite, config.migrationsFolder);
   state.context = ensureSeed(state.connection.db);
 }
 
-function showStartFailure(dependencies: IStartAppDependencies, caughtError: unknown): void {
+async function handleStartFailure(
+  dependencies: IStartAppDependencies,
+  config: IAppConfig,
+  caughtError: unknown,
+): Promise<void> {
   const message = caughtError instanceof Error ? caughtError.message : String(caughtError);
+  const isDamagedDatabase =
+    caughtError instanceof CoreError && caughtError.code === "DATABASE_CORRUPT";
+  if (isDamagedDatabase) {
+    await offerRestoreForDamagedDatabase(dependencies, config.databasePath, message);
+    return;
+  }
   dependencies.dialog.showErrorBox("Shop OS could not start", message);
   dependencies.app.exit(1);
 }
 
 /** Opens the database, wires the commands, shows the window, and keeps backing up. Resolves once started. */
-export function startApp(dependencies: IStartAppDependencies, config: IAppConfig): Promise<void> {
+export function startApp(
+  dependencies: IStartAppDependencies,
+  config: IAppConfig,
+  now: () => Date = () => new Date(),
+): Promise<void> {
   const { app } = dependencies;
   const state = createAppState();
   registerQuitHooks(app, state);
   return app
     .whenReady()
-    .then(() => {
-      openShopDatabase(state, config);
+    .then(async () => {
+      await openShopDatabase(state, config, now());
       const services = buildServices(state);
       installSecurityHeaders(dependencies.getDefaultSession(), config.isDev);
       registerIpc(
@@ -84,5 +113,5 @@ export function startApp(dependencies: IStartAppDependencies, config: IAppConfig
         }
       });
     })
-    .catch((caughtError: unknown) => showStartFailure(dependencies, caughtError));
+    .catch((caughtError: unknown) => handleStartFailure(dependencies, config, caughtError));
 }

@@ -80,7 +80,7 @@ All decisions come from the architecture doc, narrowed to the desktop-only MVP. 
 
 ### D15. Operations: upgrades, corruption, disk, logging (open design, review M5)
 - **Proposed**: take an automatic backup copy before running a pending migration on start-up; run SQLite's integrity check on start and offer restore-from-backup on failure; check free disk space before a bill save and warn below a threshold; write a local log file with no customer data; no crash reporting leaves the machine.
-- **Status**: proposed, not built. To be turned into tasks once confirmed.
+- **Status (2026-11-15)**: backup-before-migrate and the start-up integrity check with a restore offer are built (task T091). The free-disk-space check and the local log file are still proposed, not built.
 
 ### D16. Access control in this release (accepted risk, review M14)
 - **Decision**: Feature 001 has no login or PIN; anyone at the counter can cancel bills, adjust stock and change settings. This is accepted until feature 005 adds roles and approvals.
