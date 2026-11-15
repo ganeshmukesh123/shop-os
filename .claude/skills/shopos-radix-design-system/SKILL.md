@@ -7,6 +7,8 @@ description: "Use when building or restyling any Shop OS screen, dialog or compo
 
 Source of truth: `docs/design/design-guidelines.md` (constitution X). This skill is the short working version. Visual sample: https://claude.ai/artifact/BVHiC7yxTdokTbZDbG6B2T
 
+**Current state (2026-11-15)**: the shared `StatusMessage`, `StatusBadge` and theme module described below do not exist yet; they are spec 001 tasks T085 and T086. Until then, build new UI against these rules and add the shared component rather than hand-building another alert.
+
 ## Rules
 
 1. **Radix Themes first.** Use Radix components and props (`size`, `color`, `variant`, `radius`, `highContrast`). Use Radix primitives only where a custom behaviour is needed. Do not write CSS for what a prop already does.

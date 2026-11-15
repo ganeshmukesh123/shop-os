@@ -1,6 +1,6 @@
 # Feature Specification: Stock by Location, Counts, Reorder and Cut-Length Rolls
 
-**Feature Branch**: `007-stock-locations-rolls` (no git repository yet; directory name only)
+**Feature Branch**: `007-stock-locations-rolls`
 
 **Created**: 2026-11-13
 
@@ -10,7 +10,7 @@
 
 **PRD source**: `docs/reference/PRD.md` section 7 (FR-STK-001 to 018), US-11, US-13, EC-02, EC-07, EC-13, EC-21, BO-4.
 
-**Depends on**: 001 (movements, items), 002 (variants, petroleum class), 005 (approvals), 009 (receipts supply rolls and cost; licence meter checks receipts).
+**Depends on**: 001 (movements, items), 002 (variants, petroleum class), 005 (approvals). (Note: provides multi-location inventory and roll tracking structures to downstream 009 for goods receiving).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -103,7 +103,7 @@ Items flagged "sold by length from rolls" get a roll record on receipt with labe
 
 Litres held per petroleum class per premises (stock x litres per unit) are compared with licence limits, warning at 85% on receipt or transfer and blocking above 100% unless the owner overrides with a reason (V2, only if needed). A weekly buying suggestion list uses sales speed, lead time, same month last year, pack sizes and distributor price (V3). Transfers between outlets with in-transit status and receive confirmation come Later.
 
-**Independent Test**: Per increment, written when scheduled.
+**Independent Test**: Simulate receiving solvent paint up to 86% of class licence threshold and confirm amber warning; attempt receipt exceeding 100% and confirm hard block until owner override reason is entered.
 
 **Acceptance Scenarios**:
 

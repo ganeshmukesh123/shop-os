@@ -1,6 +1,6 @@
 # Feature Specification: Advanced Counter Billing
 
-**Feature Branch**: `003-advanced-billing` (no git repository yet; directory name only)
+**Feature Branch**: `003-advanced-billing`
 
 **Created**: 2026-11-13
 
@@ -10,7 +10,7 @@
 
 **PRD source**: `docs/reference/PRD.md` section 6 (FR-BIL-001 to 025), US-01 to 04, US-06, US-07, EC-01, EC-04, EC-05, EC-09, EC-11, EC-12, EC-18, EC-19.
 
-**Depends on**: 001 (basic bill), 002 (variants and grid), 004 (parties and credit), 005 (approvals and discount limits), 008 (bill format by registration). Where a dependency is not yet built, the behaviour is marked and delivered once it exists.
+**Depends on**: 001 (basic bill), 002 (variants and grid), 004 (parties and credit), 005 (approvals and discount limits). (Note: downstream feature 008 extends bill formatting for formal GST scheme switching and tax invoices).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -113,7 +113,7 @@ Saved bills are editable only the same day by permitted roles, creating a new ve
 
 **Acceptance Scenarios**:
 
-1. **Given** a bill from the same day, **When** an allowed role edits it, **Then** a new version saves and the old is in the audit log.
+1. **Given** bill C1/26-27/000123 (2 pcs x ₹120 = ₹240) from the same business day, **When** an allowed role changes it to 3 pcs, **Then** version 2 (₹360) saves under the same number, version 1 stays readable unchanged, stock gets a reversing +2 and a new -3 movement, and the audit log records who, when and why.
 2. **Given** a bill from a previous day, **Then** edit is refused and a return or credit note is offered (EC-18).
 3. **Given** a cancel, **Then** reason and owner approval are required; the cancelled bill keeps its number and appears in the exceptions report.
 4. **Given** a search with no match, **Then** one tap records unmet demand with free text or item.
@@ -125,7 +125,7 @@ Saved bills are editable only the same day by permitted roles, creating a new ve
 
 Inter-state check and format by registration come from 008. Site return of unused contractor-site material (V2, FR-BIL-024), challan and partial delivery (V2, with 006), and quote from a pasted list or photo (V3, FR-BIL-025) follow.
 
-**Independent Test**: Written when each is scheduled.
+**Independent Test**: Process a contractor site return linking unused material to original delivery bill lines; verify stock returns to the site rack, credit posts to the contractor ledger, and values exceeding threshold trigger approval.
 
 **Acceptance Scenarios**:
 
@@ -158,7 +158,7 @@ Inter-state check and format by registration come from 008. Site return of unuse
 - **FR-011**: Bill numbers MUST stay unique per counter and financial year (FR-BIL-013).
 - **FR-012**: Bill format MUST follow the shop's registration at the bill date; output MUST include thermal, A4/A5 and WhatsApp share, and printer failure MUST NOT block save (FR-BIL-014, FR-BIL-015).
 - **FR-013**: System MUST hold up to 10 bills per counter (FR-BIL-016).
-- **FR-014**: Same-day edit MUST create a new version with the previous kept in the audit log; cancel MUST need reason and owner approval and keep the number (FR-BIL-017, FR-BIL-018).
+- **FR-014**: Same-day edit (same business date in the shop's time zone, roles with permission from 005) MUST save a new bill version that keeps the bill number; the previous version MUST stay stored, unchanged and readable, and the edit MUST be written to the audit log with user, time and reason. No version is ever overwritten. Stock and ledger changes from an edit are new opposite and new entries, never edits. Cancel MUST need reason and owner approval and keep the number (FR-BIL-017, FR-BIL-018; constitution v2.0.0 principle I, owner decision 2026-11-15).
 - **FR-015**: Returns MUST work against an original bill by number, phone or QR, with refund by cash, UPI or credit note and sellable or defective routing; no-bill returns need approval (FR-BIL-019).
 - **FR-016**: Quotations MUST support validity (default 7 days), WhatsApp share, full or partial conversion with locked or refreshed prices, and version numbers (FR-BIL-020).
 - **FR-017**: System SHOULD capture unmet demand in one tap (FR-BIL-021).

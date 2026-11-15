@@ -1,6 +1,6 @@
 # Feature Specification: GitHub Workflow (Continuous Integration and Merge Protection)
 
-**Feature Branch**: `017-ci-github-workflow` (directory name only until the repository is on GitHub)
+**Feature Branch**: `017-ci-github-workflow`
 
 **Created**: 2026-11-14
 
@@ -10,7 +10,7 @@
 
 **Source documents**: `.specify/memory/constitution.md` (VI test-first, development workflow, change size), `docs/contributing/pull-requests.md`, `.github/pull_request_template.md`, skills `shopos-testing` and `shopos-feature-workflow`, `specs/016-quality-nfr` (release checks).
 
-**Depends on**: the project being hosted on GitHub (it has no remote today). Applies to every feature spec as the gate they all pass through.
+**Depends on**: the project being hosted on GitHub (remote `origin` added by 2026-11-15). Applies to every feature spec as the gate they all pass through.
 
 ## How it fits together
 

@@ -1,6 +1,6 @@
 # Feature Specification: Owner and Godown Phone Apps, Sync and Cloud Backup
 
-**Feature Branch**: `010-owner-app-sync` (no git repository yet; directory name only)
+**Feature Branch**: `010-owner-app-sync`
 
 **Created**: 2026-11-13
 

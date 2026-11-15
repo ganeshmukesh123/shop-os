@@ -19,7 +19,7 @@ Authority: constitution VI. Architecture: `docs/reference/architecture.md` 11.11
 | End to end | Real window, the quickstart scenarios | `apps/desktop/tests/e2e` | Playwright for Electron (run `pnpm build` first) |
 | Drills | Backup and restore, offline run, packaged app | `quickstart.md` | By hand until scripted |
 
-Commands: `pnpm test` (all unit and integration), `pnpm test:e2e`, `pnpm typecheck`, `pnpm lint`. Run a single file with `pnpm --filter @shopos/desktop exec vitest run tests/integration/billing.test.ts`.
+Commands: `pnpm test` (all unit and integration), `pnpm test:e2e`, `pnpm typecheck`, `pnpm lint`. Run a single desktop file inside Electron's Node with `pnpm --filter @shopos/desktop exec node scripts/vitest-electron.mjs run tests/integration/billing.test.ts` (plain `vitest` uses plain Node and fails on the SQLite binary, see section 6). Coverage: `pnpm test:coverage`.
 
 ## 3. Test-first rule
 
@@ -43,7 +43,7 @@ For `@shopos/core` and any code that writes bills, stock or ledger entries: writ
 
 ## 6. Pitfall: the better-sqlite3 binary
 
-better-sqlite3 has ONE native binary and it must be the Electron build. `pnpm test` in `apps/desktop` runs Vitest inside Electron's Node (`scripts/vitest-electron.mjs`), so tests, the app and Playwright share it. `scripts/ensure-electron-sqlite.mjs` fixes a wrong binary automatically (needs network once). If you see a `NODE_MODULE_VERSION` mismatch, you probably ran `npx vitest` directly or `pnpm rebuild better-sqlite3`: use `pnpm test`, or run `pnpm --filter @shopos/desktop ensure:sqlite`. `packages/core` tests need no database and run in plain Node. This is an environment issue, not a code bug.
+better-sqlite3 has ONE native binary and it must be the Electron build. `pnpm test` in `apps/desktop` runs Vitest inside Electron's Node (`apps/desktop/scripts/vitest-electron.mjs`), so tests, the app and Playwright share it. `apps/desktop/scripts/ensure-electron-sqlite.mjs` fixes a wrong binary automatically (needs network once). If you see a `NODE_MODULE_VERSION` mismatch, you probably ran `npx vitest` directly or `pnpm rebuild better-sqlite3`: use `pnpm test`, or run `pnpm --filter @shopos/desktop ensure:sqlite`. `packages/core` tests need no database and run in plain Node. This is an environment issue, not a code bug.
 
 ## 7. Coverage expectations
 
@@ -51,7 +51,7 @@ Every requirement ID in a task has at least one test that names it or its scenar
 
 ## 7b. Coverage gate (spec 017)
 
-CI will require at least 90% coverage (lines, statements, functions, branches) on `packages/core`, the main process and the renderer, once the project has reached it (the gate is switched on at 90%, never before). Write tests with that in mind: every new function and every branch (error path, empty state, edge value) gets a test; do not add untested code and plan to "cover it later". The coverage tool is not installed yet.
+CI will require at least 90% coverage (lines, statements, functions, branches) on `packages/core`, the main process and the renderer, once the project has reached it (the gate is switched on at 90%, never before). Write tests with that in mind: every new function and every branch (error path, empty state, edge value) gets a test; do not add untested code and plan to "cover it later". The coverage tool is installed (`@vitest/coverage-v8`); thresholds and exclusions live only in `config/coverage.ts`, and `COVERAGE_ENFORCE` stays false until spec 017 T036.
 
 ## 8. Checklist
 

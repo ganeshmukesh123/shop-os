@@ -1,6 +1,6 @@
 # Feature Specification: Devices, Printing and Scanning
 
-**Feature Branch**: `015-devices-printing-scanning` (no git repository yet; directory name only)
+**Feature Branch**: `015-devices-printing-scanning`
 
 **Created**: 2026-11-13
 

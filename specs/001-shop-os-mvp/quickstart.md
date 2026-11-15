@@ -46,11 +46,18 @@ Build a bill, force-quit the app before saving, reopen. Expected: the draft is o
 
 Expected: reprint is identical; stock is restored; the bill stays listed as Cancelled and its number is not reused; saved bills offer no edit or delete.
 
-### 6. Import and backup (after M5)
-1. Import a spreadsheet containing errors and duplicates; review the preview; confirm.
-2. Set a backup folder and run a backup; delete the local database; restore from the backup.
+### 6. Backup and restore (after M5 and T082 to T084)
+Spreadsheet import moved to feature 012 (2026-11-15).
+1. Set a backup folder and run a backup when the last bill is `C1/26-27/000120`.
+2. Save 6 more bills (121 to 126); delete the local database; restore from the backup and enter "last issued: 126".
 
-Expected: nothing is saved before confirming; after restore, all items, stock and bills are present.
+Expected: all items, stock and bills from the backup are present; the next bill is 127; 121 to 126 show as "Lost in restore" in the bill list.
+
+### 6b. Decisions of 2026-11-15 (after M3b)
+1. Bill lines totalling ₹849.60 with rounding on. Expected: round-off +₹0.40, grand total ₹850.00, both printed.
+2. Print with the default settings. Expected: heading "Estimate", 80 mm receipt, no tax wording.
+3. Set the computer's time zone to another zone, keep the shop setting `Asia/Kolkata`, save a bill at 23:50 IST on 31 March and another at 00:10 IST on 1 April. Expected: they fall in FY 26-27 and 27-28; a time-zone warning shows; billing is not blocked.
+4. Switch System, Light and Dark in Settings. Expected: every screen is readable in both modes; the printed bill stays black on white.
 
 ### 7. Shop trial (M6)
 Run alongside the paper book for 2 weeks. Check: no lost or duplicated bills, 20-item stock check matches, 20-bill totals match, 5-line bill under 60 seconds.

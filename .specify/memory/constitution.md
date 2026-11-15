@@ -1,9 +1,10 @@
 <!--
 Sync Impact Report
-Version change: 1.3.0 -> 1.4.0 (Development Workflow adds change size and PR rules; MINOR)
-Modified principles: none
-Added sections: none (Development Workflow bullet)
-Earlier (1.3.0: new X Design Consistency. 1.2.0: VIII expanded with naming conventions, new IX Small Pure Code. 1.1.0: added VIII Readable Names. 1.0.0, template -> initial ratification): Core Principles I-VII, Technical and Compliance Constraints, Development Workflow and Quality Gates, Governance
+Version change: 1.4.0 -> 2.0.0 (Principle I redefined: a same-day edit by a permitted role creates a new version; MAJOR). Owner decision 2026-11-15, audit finding C1, PRD FR-BIL-017.
+Modified principles: I. Never Lose or Alter a Bill -> I. Never Lose or Alter a Saved Bill Version
+Added sections: none
+Templates reviewed: no change needed. Follow-up: spec 003 FR-014 builds the edit; spec 001 stays cancel-and-rebill (no roles or audit log yet).
+Earlier (1.4.0: Development Workflow adds change size and PR rules. 1.3.0: new X Design Consistency. 1.2.0: VIII expanded with naming conventions, new IX Small Pure Code. 1.1.0: added VIII Readable Names. 1.0.0, template -> initial ratification): Core Principles I-VII, Technical and Compliance Constraints, Development Workflow and Quality Gates, Governance
 Removed sections: none
 Templates reviewed: .specify/templates/plan-template.md (Constitution Check section reads this file), spec-template.md, tasks-template.md (no change needed)
 Follow-up: none
@@ -14,8 +15,8 @@ Shop OS is a billing, stock, credit and control system for Indian hardware shops
 
 ## Core Principles
 
-### I. Never Lose or Alter a Bill (NON-NEGOTIABLE)
-A bill, once saved, is never edited or deleted. Mistakes are fixed by cancelling with a recorded reason (or, later, by a return or credit note); a cancelled bill keeps its number and that number is never reused. A bill, its lines and its stock movements are saved in one database transaction, and the bill is committed before any printing or sharing starts, so a printer or network failure can never lose a sale.
+### I. Never Lose or Alter a Saved Bill Version (NON-NEGOTIABLE)
+A saved bill version is never changed or deleted. Mistakes are fixed by cancelling with a recorded reason, by a return or credit note, or, on the same business day only and only by a role with permission, by an edit that saves a **new version** of the bill: the bill keeps its number, the previous version stays stored and readable, and the edit is written to the audit log with user, time and reason. No version is ever overwritten. A cancelled bill keeps its number and that number is never reused. Until roles and the audit log exist (feature 005), bills can only be cancelled and re-billed. A bill, its lines and its stock movements are saved in one database transaction, and the bill is committed before any printing or sharing starts, so a printer or network failure can never lose a sale.
 
 ### II. Stock and Balances Come From Immutable Records
 Stock quantity is derived from append-only stock movements, and party balances from ledger entries. Movements and ledger entries are inserted, never updated or deleted; corrections are new, opposite entries. Any cached total (for example stock on an item) must equal the sum of its records and must be verifiable by a test. Every number on a screen or report must trace back to source documents.
@@ -96,4 +97,4 @@ This constitution supersedes other practices and conversation habits. Every plan
 
 **Runtime guidance** for day-to-day work lives in `CLAUDE.md`.
 
-**Version**: 1.4.0 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-13
+**Version**: 2.0.0 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-15

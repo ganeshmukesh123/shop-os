@@ -1,6 +1,6 @@
 # Feature Specification: Pilot with Other Shops, Multi-Shop Separation and Paid Plans
 
-**Feature Branch**: `013-pilot-multi-shop-plans` (no git repository yet; directory name only)
+**Feature Branch**: `013-pilot-multi-shop-plans`
 
 **Created**: 2026-11-13
 

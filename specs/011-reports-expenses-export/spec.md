@@ -1,6 +1,6 @@
 # Feature Specification: Reports, Expenses, Real Profit and CA Export
 
-**Feature Branch**: `011-reports-expenses-export` (no git repository yet; directory name only)
+**Feature Branch**: `011-reports-expenses-export`
 
 **Created**: 2026-11-13
 
@@ -81,12 +81,12 @@ A distributor scorecard shows price trend, delivery delay, short supply, roll va
 
 Price change impact compares units and margin 4 weeks before and after a price change per item. Monthly targets by shop, category and staff show progress. A customer area map by pin code shows only parties with consent.
 
-**Independent Test**: Written when scheduled.
+**Independent Test**: Update selling price on 2 test items; run the price impact report across simulated periods and verify volume/margin deltas; confirm parties lacking marketing consent are filtered from the pincode map.
 
 **Acceptance Scenarios**:
 
-1. **Given** a price change, **Then** units and margin before and after show for 4 weeks each side.
-2. **Given** a party without consent, **Then** it does not appear on the area map.
+1. **Given** an item with historical sales, **When** its rate is changed, **Then** units sold and margin comparison for 4 weeks before and after are displayed.
+2. **Given** a customer party record, **When** marketing consent is false, **Then** the party is excluded from the geographic pincode map.
 
 ---
 

@@ -1,6 +1,6 @@
 # Feature Specification: Purchases, Distributors and Warranty Claims
 
-**Feature Branch**: `009-purchases-warranty` (no git repository yet; directory name only)
+**Feature Branch**: `009-purchases-warranty`
 
 **Created**: 2026-11-13
 
@@ -24,10 +24,10 @@ The godown helper starts a receipt for a distributor, scans or picks items, ente
 
 **Acceptance Scenarios**:
 
-1. **Given** a receipt, **Then** distributor, items, quantities, batch, MRP and purchase price are captured and short, excess or damaged lines can be marked.
-2. **Given** 600 freight on a receipt, **Then** it spreads over lines by value (or by quantity if chosen) and updates item cost (US-14).
-3. **Given** save, **Then** stock goes in by purchase movements and the distributor ledger updates.
-4. **Given** a BIS-mandatory electrical item received without an ISI/BIS number, **Then** a warning shows.
+1. **Given** a goods receipt from a distributor, **When** staff enter items, quantities, batch, MRP and purchase price, **Then** short, excess or damaged lines are recorded and validated.
+2. **Given** 600 freight on a receipt, **When** landed cost is calculated, **Then** it spreads over lines by value (or by quantity if chosen) and updates each item's cost (US-14).
+3. **Given** receipt confirmation, **When** saved, **Then** stock increases via purchase movements and the distributor ledger updates.
+4. **Given** a BIS-mandatory electrical item, **When** received without an ISI/BIS number, **Then** a compliance warning shows.
 
 ---
 
@@ -41,10 +41,10 @@ A purchase bill links to one or more receipts, with the due date from the distri
 
 **Acceptance Scenarios**:
 
-1. **Given** a purchase bill, **Then** it links to receipts and its due date comes from the distributor's credit days.
-2. **Given** a cash purchase without a GST bill, **Then** it is allowed and flagged.
-3. **Given** the distributor ledger, **Then** ageing and due-this-week show.
-4. **Given** GST charged per purchase line, **Then** it is stored so input credit can be calculated if the shop moves to regular (FR-CMP-012).
+1. **Given** a purchase bill, **When** linked to receipts, **Then** its payment due date is calculated from distributor credit terms.
+2. **Given** a cash purchase without a GST bill, **When** entered, **Then** it is saved with an unbilled compliance flag.
+3. **Given** the distributor ledger, **When** viewed, **Then** payables ageing and due-this-week amounts are displayed.
+4. **Given** GST charged per purchase line, **When** recorded, **Then** it is stored for input tax credit tracking upon switching to regular GST (FR-CMP-012).
 
 ---
 
@@ -58,8 +58,8 @@ Every purchase price per item per distributor is kept. The system alerts when a 
 
 **Acceptance Scenarios**:
 
-1. **Given** a price more than 2% above the last, **Then** an alert shows with a suggested new selling price to keep the target margin.
-2. **Given** an item bought from two distributors, **Then** the comparison shows last price, delivery days, short-supply rate and roll variance (SHOULD).
+1. **Given** an item with purchase history, **When** a newly received rate is >2% above the previous price, **Then** an alert displays and suggests an updated selling price to preserve margin.
+2. **Given** an item bought from multiple distributors, **When** comparison is viewed, **Then** historical purchase rates, delivery lead times, short-supply rates and roll variances are displayed.
 
 ---
 
@@ -73,8 +73,8 @@ Damaged, short or wrong goods are returned with a debit note linked to the origi
 
 **Acceptance Scenarios**:
 
-1. **Given** a return linked to a receipt, **Then** stock leaves, a debit note is created and the distributor ledger reduces.
-2. **Given** status changes, **Then** Raised, Sent, Accepted and Settled are tracked.
+1. **Given** damaged or short goods from a receipt, **When** a return is created, **Then** stock decreases, a debit note is generated, and the distributor balance decreases.
+2. **Given** an active debit note, **When** status is updated through Raised, Sent, Accepted and Settled, **Then** each transition is logged with user and timestamp.
 
 ---
 
@@ -88,10 +88,10 @@ Every sale of a warranty item stores sale date, customer, serial or batch (if tr
 
 **Acceptance Scenarios**:
 
-1. **Given** a warranty-item sale, **Then** a register entry exists with the end date.
-2. **Given** a warranty case, **Then** the replacement leaves sellable stock at once and the faulty unit waits in the Defective bin until settled (US-17).
-3. **Given** a claim window ending in 7 days, **Then** an alert shows; after expiry the case is marked lost and costed (EC-22).
-4. **Given** a rejected claim, **Then** a loss posts with a reason.
+1. **Given** a warranty-item sale, **When** committed, **Then** a warranty register entry is stored with start date, serial/batch, and coverage end date.
+2. **Given** an eligible warranty claim, **When** staff issue a swap, **Then** the replacement departs sellable stock and the faulty unit moves to the Defective bin (US-17).
+3. **Given** an open distributor claim, **When** the claim window ends in 7 days or less, **Then** an expiration alert displays; upon expiry, the case is marked lost and costed (EC-22).
+4. **Given** a rejected distributor claim, **When** recorded, **Then** an inventory loss is posted with required explanation.
 
 ---
 
@@ -99,11 +99,11 @@ Every sale of a warranty item stores sale date, customer, serial or batch (if tr
 
 Per-distributor slab or target schemes (for example 2% back above 5 lakh a quarter, or free goods) track progress and expected credit (V3). Purchase orders to distributors go over WhatsApp from the buying suggestion list (Later).
 
-**Independent Test**: Written when scheduled.
+**Independent Test**: Configure a 2% rebate slab above ₹5,00,000 for a distributor; record qualifying purchases and verify expected credit accrues.
 
 **Acceptance Scenarios**:
 
-1. **Given** a quarterly slab scheme, **Then** progress and expected credit show.
+1. **Given** an active quarterly slab scheme, **When** purchase totals advance towards or cross threshold tiers, **Then** progress percentage and expected rebate credit are updated.
 
 ---
 

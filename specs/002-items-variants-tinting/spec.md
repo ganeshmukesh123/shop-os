@@ -1,6 +1,6 @@
 # Feature Specification: Items - Variants, Names and Paint Tinting
 
-**Feature Branch**: `002-items-variants-tinting` (no git repository yet; directory name only)
+**Feature Branch**: `002-items-variants-tinting`
 
 **Created**: 2026-11-13
 
@@ -92,7 +92,7 @@ Paint, thinner and solvent items carry a petroleum class, litres per unit and a 
 
 These come after the items above prove themselves: ISI/BIS number capture at purchase for BIS-mandatory electrical items (V2); kits that bill as one line and deduct component stock (V2); substitutes shown at zero stock (V2); colorant low-level alerts, refill movements and monthly usage versus formula (V2); counter item notes such as compatibility and "suggest also" (V3); tinting machine file import (Later).
 
-**Independent Test**: Per increment, written when it is scheduled.
+**Independent Test**: Configure a kit with 3 components; sell 1 kit and confirm each component's stock decreases accordingly. Test substitute recommendation display when an item sits at zero stock.
 
 **Acceptance Scenarios**:
 

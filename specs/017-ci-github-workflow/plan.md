@@ -21,7 +21,7 @@ Add a GitHub Actions pipeline that runs formatting, lint, types, tests with cove
 
 **Language/Version**: TypeScript 5.x, Node 22 (from `.nvmrc`), workflow YAML
 
-**Primary Dependencies**: GitHub Actions (hosted runners), pnpm (version from `package.json` `packageManager`), Vitest 2.1.9 with `@vitest/coverage-v8@2.1.9`, `@testing-library/react`, `@testing-library/user-event`, `jsdom`, Playwright for Electron
+**Primary Dependencies**: GitHub Actions (hosted runners), pnpm (version from `package.json` `packageManager`), Vitest ^4.1.12 with `@vitest/coverage-v8@4.1.12` (upgraded from 2.1.9 on 2026-11-14, research F9), `@testing-library/react`, `@testing-library/user-event`, `jsdom`, Playwright for Electron
 
 **Storage**: N/A (artifacts: coverage report, e2e traces)
 

@@ -1,5 +1,34 @@
 # Data Model: Shop OS MVP
 
+> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0004) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
+
+## Target shape (research D18, architecture section 8)
+
+Conventions: `id` UUID v7 text primary key; `business_id` and `shop_id` not null on every table; `created_at` and `updated_at` INTEGER epoch milliseconds (UTC); money `*_paise` integer; quantity `*_milli` integer thousandths of the base unit. Enums are text with a CHECK.
+
+```
+item_family 1--* item_variant 1--* bill_line *--1 bill 1--* bill_tender
+                      |                              |
+                      1--* stock_movement *--1 location   1--* bill_number_gap (via number_series)
+number_series 1--* bill            shop_profile (one row)
+```
+
+| Table | Columns (this release) | Rules |
+|---|---|---|
+| `item_family` | `name` | One family per item for now; feature 002 adds category, brand, spec |
+| `item_variant` | `family_id`, `item_code`, `display_name`, `base_uom`, `allow_decimal`, `selling_price_paise`, `is_active`, `stock_milli` (cache), reserved nullable `hsn_code`, `gst_rate_override_bp`, `barcode` | `UNIQUE(business_id, item_code)`; name unique per shop among active variants, case-insensitive (warning) |
+| `location` | `name`, `kind` | One seeded row "Shop floor"; feature 007 adds more |
+| `stock_movement` | `variant_id`, `movement_type` (`opening`, `adjustment`, `sale`, `sale_cancel`), `qty_base_milli` (always > 0), `from_location_id`, `to_location_id`, `doc_type`, `doc_id`, `reason_code`, `note`, `device_id`, `occurred_at` | Append-only (triggers). Direction from the locations: stock in has only `to`, stock out only `from`. Adjustment needs a note |
+| `bill` | `device_id`, `counter_code`, `bill_no`, `number_series_id`, `seq`, `financial_year`, `doc_title`, `status` (`posted`, `cancelled`), `business_date` (text `YYYY-MM-DD` in the shop zone), `billed_at`, `customer_name`, `client_bill_id`, `subtotal_paise`, `bill_discount_paise`, `round_off_paise`, `total_paise`, `cancel_reason`, `cancelled_at` | `UNIQUE(shop_id, bill_no)`, `length(bill_no) <= 16`, `total = subtotal - discount + round_off`, `abs(round_off) <= 50`; no delete; update only posted to cancelled |
+| `bill_line` | `bill_id`, `line_no`, `variant_id`, `item_name_snapshot`, `unit_snapshot`, `qty_base_milli`, `unit_price_paise`, `line_discount_paise`, `amount_paise` | Append-only |
+| `bill_tender` | `bill_id`, `mode` (`cash`, `upi`, `card`, `unpaid`), `amount_paise`, `status` (`label` in this release) | One row per bill in this release; append-only |
+| `number_series` | `counter_code`, `financial_year`, `template`, `last_seq` | Incremented in the bill transaction |
+| `bill_number_gap` | `number_series_id`, `seq_from`, `seq_to`, `reason` (`lost_in_restore`), `recorded_at` | Append-only; shown in the bill list (D21) |
+| `shop_profile` | name, address, phone, `doc_title` (default `Estimate`), `number_template`, `round_bill_total` (default 1), `time_zone` (default `Asia/Kolkata`), `receipt_width` (`58mm`, `80mm` default, `a4`, `a5`), footer, backup folder | One row |
+| `draft_bill`, `backup_log` | as today | Not financial records |
+
+## Current schema (until T073 to T081)
+
 Conventions for every table: `id` UUID v7 text primary key; `business_id` and `shop_id` UUID text, not null; `created_at` and `updated_at` as ISO-8601 UTC text, not null. Money columns are integer paise; quantity columns are integer thousandths of the item's unit. Saved bills, bill lines and stock movements are never updated or deleted by the app.
 
 ## Entities
@@ -91,7 +120,13 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - Timestamps in the audit-style columns (`created_at`, `updated_at`, `occurred_at`, `cancelled_at`) are ISO-8601 UTC.
 - `bill_date` is the device's local time as ISO-8601 text; the financial year and "same day" rules use that local date.
-- Open item (review M3): the business time zone is not yet fixed to Asia/Kolkata in code; it uses the device's time zone. To be decided and tested at the 31 March and 1 April boundary.
+- Decided 2026-11-15 (research D22): the business time zone is the shop setting `time_zone` (default `Asia/Kolkata`), not the device's. Until task T079 lands, the code still uses the device's time zone.
+
+## Rounding of the bill total (research D20, target)
+
+- Grand total before rounding = lines total minus bill discount.
+- When `round_bill_total` is on: round to the nearest 100 paise, 50 paise and above up; `round_off_paise` = rounded minus unrounded (between -49 and +50). Example: ₹849.60 gives round-off +₹0.40, total ₹850.00; ₹849.49 gives -₹0.49, total ₹849.00.
+- When off: `round_off_paise` is 0.
 
 ## Relationships
 
@@ -103,7 +138,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 - Bill: `saved` to `cancelled` only, once, with a reason. Cancelled is terminal. A cancel inserts one `sale_cancel` movement per line (the exact reverse of the sale) in one transaction.
 - Item: `active` to inactive and back; inactive items cannot be added to new bills but remain on old bills.
 
-## Derived values (computed in `shopos_core`)
+## Derived values (computed in `@shopos/core`)
 
 - Line amount, bill total, change due (display only).
 - Current stock = sum of movements; negative stock is flagged and listed in the Items screen filter "Needs correction".
