@@ -133,7 +133,7 @@ Beyond tests, the workflow enforces the PR rules already agreed: title format, s
 **Acceptance Scenarios**:
 
 1. **Given** a title not in `type(scope): summary` form, **Then** the title check fails.
-2. **Given** a PR over 800 changed lines (excluding generated files) without the `mechanical` label, **Then** the size check fails; 401 to 800 requires a "reason" line in the description.
+2. **Given** a PR over 800 changed lines (excluding generated files) without the `mechanical` label, **Then** the informational size check shows red while tests, build and end-to-end still run; 401 to 800 requires a "reason" line in the description.
 3. **Given** a committed secret or a dependency with a high-severity known vulnerability, **Then** the check fails.
 
 ---
@@ -162,7 +162,7 @@ Beyond tests, the workflow enforces the PR rules already agreed: title format, s
 
 **Checks, in order**
 
-- **FR-005**: Step 1 (quick checks) MUST run: formatting check, lint (zero errors; warnings reported), type check for all packages, migration-in-sync check (regenerating migrations produces no change), PR title format, PR size.
+- **FR-005**: Step 1 (quick checks) MUST run: formatting check, lint (zero errors; warnings reported), type check for all packages, migration-in-sync check (regenerating migrations produces no change), PR title format. PR size runs as its own informational job beside the pipeline: it shows red over 800 lines without the `mechanical` label, but no step waits on it and it is not a required check (owner decision 2026-11-15: a size warning must never skip the tests).
 - **FR-006**: Step 2 MUST run all unit and integration tests with coverage, using the same test command developers use, and MUST fail on any failing test.
 - **FR-007**: Step 3 MUST build the application bundle.
 - **FR-008**: Step 4 MUST run the end-to-end tests against the built app under a virtual display and MUST fail on any failing scenario.

@@ -3,6 +3,7 @@
 #   quick-checks --> tests-and-coverage --> end-to-end
 #        \                                     ^
 #         +-----------> build -----------------+
+#   pr-size: informational, pull requests only, runs alongside; nothing waits on it.
 #   dependency-audit: a real check (no high or critical advisories, shipped or tooling), runs alongside.
 #   secret-scan: informational, runs alongside, never blocks yet.
 #
@@ -39,7 +40,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0 # the PR size check needs the base branch
           persist-credentials: false
       - uses: ./.github/actions/setup-workspace
       - name: Formatting
@@ -57,8 +57,20 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: node scripts/ci/check-pr-title.mjs
-      - name: PR size (fails over 800 changed lines unless labelled "mechanical")
-        if: github.event_name == 'pull_request'
+
+  # Informational: shows red over 800 lines as a warning, but no job waits on it and branch protection does
+  # not require it, so a large PR still gets its tests, build and end-to-end run (owner decision 2026-11-15).
+  pr-size:
+    name: PR size (informational)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the size is measured against the base branch
+          persist-credentials: false
+      - name: PR size (red over 800 changed lines unless labelled "mechanical")
         env:
           BASE_REF: ${{ github.base_ref }}
           PR_SIZE_FAIL_OVER: "800"
