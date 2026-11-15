@@ -2,6 +2,10 @@
 # Docs: https://docs.coderabbit.ai/configuration/path-instructions
 reviews:
   profile: chill
+  auto_review:
+    enabled: true
+    base_branches:
+      - ".*"
   path_filters:
     - "!apps/desktop/drizzle/**"
     - "!pnpm-lock.yaml"

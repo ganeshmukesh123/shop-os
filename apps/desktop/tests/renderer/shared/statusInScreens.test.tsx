@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Table } from "@radix-ui/themes";
 import type { DraftLine, Item, ShopProfile } from "@shopos/core";
@@ -94,6 +94,30 @@ describe("status words in the screens (design guidelines 5.1, PRD NFR-011)", () 
 
     const toastStatus = await screen.findAllByRole("status");
     expect(toastStatus.some((element) => element.textContent === "Done Settings saved")).toBe(true);
+  });
+
+  it("a success toast is announced politely and a failure toast assertively", async () => {
+    renderWithTheme(
+      <ToastProvider>
+        <ToastButtons />
+      </ToastProvider>,
+    );
+    const announcementOf = (toastText: string) =>
+      Array.from(document.querySelectorAll("[aria-live]")).find((element) =>
+        element.textContent?.includes(toastText),
+      );
+
+    await userEvent.click(screen.getByRole("button", { name: "succeed" }));
+    await screen.findAllByRole("status");
+    await userEvent.click(screen.getByRole("button", { name: "fail" }));
+    await screen.findByRole("alert");
+
+    await waitFor(() =>
+      expect(announcementOf("Settings saved")?.getAttribute("aria-live")).toBe("polite"),
+    );
+    await waitFor(() =>
+      expect(announcementOf("Disk is full")?.getAttribute("aria-live")).toBe("assertive"),
+    );
   });
 
   it("a failed backup shows the words 'Last backup failed' before the reason", async () => {

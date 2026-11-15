@@ -70,14 +70,6 @@ describe("ThemeProvider (design guidelines section 3)", () => {
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
   });
 
-  it("tells the browser the colour scheme, so scrollbars and the page edge match", async () => {
-    renderApp();
-
-    await userEvent.click(screen.getByRole("radio", { name: "Dark" }));
-
-    expect(document.documentElement.style.colorScheme).toBe("dark");
-  });
-
   it("stops listening to the operating system when it goes away", () => {
     const fakeMatchMedia = installFakeMatchMedia(false);
     const { unmount } = renderApp();

@@ -51,6 +51,30 @@ export function mulQtyRate(quantityMilli: number, ratePaise: Paise): Paise {
   return Number(roundedPaise);
 }
 
+const PAISE_PER_RUPEE = 100;
+const HALF_RUPEE_PAISE = 50;
+
+export interface IRoundedBillTotal {
+  /** Signed difference added to the total: +40 for 849.60, -49 for 849.49, 0 when off. */
+  roundOffPaise: Paise;
+  roundedTotalPaise: Paise;
+}
+
+/**
+ * Round a bill total to the nearest rupee, 50 paise and above up (FR-010a).
+ * Lines keep exact paise; only the grand total is rounded, and the difference is kept apart.
+ */
+export function roundBillTotal(totalPaise: Paise, isRoundingOn: boolean): IRoundedBillTotal {
+  assertPaise(totalPaise, "total");
+  if (totalPaise < 0) throw new CoreError("INVALID_AMOUNT", "total cannot be negative");
+  const leftoverPaise = totalPaise % PAISE_PER_RUPEE;
+  const roundsUp = leftoverPaise >= HALF_RUPEE_PAISE;
+  const roundOffPaise = roundsUp ? PAISE_PER_RUPEE - leftoverPaise : 0 - leftoverPaise;
+  return isRoundingOn
+    ? { roundOffPaise, roundedTotalPaise: assertPaise(totalPaise + roundOffPaise, "rounded total") }
+    : { roundOffPaise: 0, roundedTotalPaise: totalPaise };
+}
+
 function groupIndian(intPart: string): string {
   if (intPart.length <= 3) return intPart;
   const last3 = intPart.slice(-3);
