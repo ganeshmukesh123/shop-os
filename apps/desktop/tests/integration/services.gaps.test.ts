@@ -3,7 +3,6 @@ import os from "node:os";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { CoreError } from "@shopos/core";
-import { describe, expect, it } from "vitest";
 import { BackupService, validateBackupFile } from "../../src/main/services/BackupService";
 import { InventoryService } from "../../src/main/services/InventoryService";
 import { buildHandlersFixture, saveOneBill } from "../helpers/handlersFixture";

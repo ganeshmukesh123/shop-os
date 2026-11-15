@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { CoreError } from "../src/errors";
 import {
   addPaise,

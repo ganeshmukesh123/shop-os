@@ -1,5 +1,4 @@
 import { COMMAND_NAMES } from "@shopos/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { IPC_CHANNEL, buildShopOsApi } from "../../src/preload/bridge";
 
 afterEach(() => {

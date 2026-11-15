@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import type { IAppConfig } from "../../src/main/app/appConfig";
 import {
   buildMainWindowOptions,

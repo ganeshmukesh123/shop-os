@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { createShell } from "../../src/main/app/shell";
 import { buildAppStateFixture, makeTempFolder } from "../helpers/appStateFixture";
 

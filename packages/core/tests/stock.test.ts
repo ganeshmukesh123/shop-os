@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { checkInvariant, foldMovements, isNegative } from "../src/stock";
 
 const mv = (itemId: string, quantityMilli: number) => ({ itemId, quantityMilli: quantityMilli });

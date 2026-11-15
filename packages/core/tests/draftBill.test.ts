@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { evaluateDraft, parsePercentBp, type DraftBill, type DraftLine } from "../src/draftBill";
 
 const line = (over: Partial<DraftLine> = {}): DraftLine => ({

@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { computeBill, computeLine, discountFromPercent } from "../src/billing";
 
 describe("billing", () => {

@@ -115,6 +115,30 @@ export default tseslint.config(
       ],
     },
   },
+  // Vitest globals (describe, it, expect, vi...) are on for tests (vitest.config.ts `globals: true`).
+  // The tsconfig that type-checks tests also covers src, so keep them out of app code here.
+  {
+    files: ["**/src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        ...[
+          "describe",
+          "it",
+          "test",
+          "expect",
+          "vi",
+          "beforeEach",
+          "afterEach",
+          "beforeAll",
+          "afterAll",
+        ].map((globalName) => ({
+          name: globalName,
+          message: "Vitest globals belong in tests only.",
+        })),
+      ],
+    },
+  },
   // Tests may be longer, and describe blocks are long functions by nature.
   {
     files: ["**/tests/**/*.ts", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"],

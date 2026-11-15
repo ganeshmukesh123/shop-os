@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import * as core from "../src/index";
 import { COMMAND_NAMES } from "../src/commands";
 
