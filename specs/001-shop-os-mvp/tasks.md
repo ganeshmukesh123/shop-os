@@ -220,6 +220,10 @@ Every schema task: edit `apps/desktop/src/main/db/schema.ts`, run `pnpm --filter
 
 - [X] T091 Before running a pending migration on start-up, take a backup with the online backup API; run `PRAGMA integrity_check` on start and offer restore on failure; tests in `apps/desktop/tests/integration/startupSafety.test.ts`. Must land before any rebuilt-table migration (T074 to T078) reaches the shop's database _(done 2026-11-15: `main/db/startupSafety.ts` and `main/app/startupRecovery.ts`; copies go to `pre-migration-backups/` beside the database, newest 5 kept; a damaged file raises `DATABASE_CORRUPT` and the app offers a backup to restore, then relaunches; 8 safety tests and 5 start-up tests. Disk-space check and the local log file from D15 are not part of this task)_
 
+### Dates (research D25; owner request 2026-11-15)
+
+- [ ] T092 Introduce Luxon in place of hand-written date code, as its own task and PR(s), separate from T079 and T080. Add `luxon` and `@types/luxon` (owner approved the package 2026-11-15; confirm `@types/luxon` is needed, open item). Tests first, then replace with behaviour kept the same: `packages/core/src/businessDate.ts` (built on `Intl.DateTimeFormat` in T079), `packages/core/src/numbering.ts` (`financialYear` with `getMonth() >= 3`), `apps/desktop/src/main/services/BillingService.ts` (local date text with `pad`), `BackupService.ts` and `main/db/startupSafety.ts` (backup file-name stamps), `renderer/screens/SettingsScreen.tsx` (`toLocaleString`). The T079 boundary tests (23:50 IST on 31 March against 00:10 IST on 1 April, device in another zone) must pass unchanged. Open item: add Luxon to the stack line in CLAUDE.md after the owner says yes
+
 **Checkpoint (M3b exit)**: T073 to T084 and T091 done; every existing test green on the new tables; the boundary and round-off tests pass. **Checkpoint (M5 design)**: T085 to T090 done; every screen checked in light and dark.
 
 ---
@@ -249,4 +253,4 @@ Every schema task: edit `apps/desktop/src/main/db/schema.ts`, run `pnpm --filter
 
 ## Format validation
 
-Every task starts with `- [ ]` or `- [X]`, has a sequential ID (T001 to T091), carries a story label only inside story phases, and names exact file paths.
+Every task starts with `- [ ]` or `- [X]`, has a sequential ID (T001 to T092), carries a story label only inside story phases, and names exact file paths.
