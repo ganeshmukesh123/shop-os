@@ -74,6 +74,7 @@ export const bill = sqliteTable(
     uniqueIndex("bill_client_bill_id_uq").on(tableColumns.shopId, tableColumns.clientBillId),
     index("bill_date_idx").on(tableColumns.billDate),
     index("bill_customer_idx").on(tableColumns.customerName),
+    check("bill_number_len", sql`length(${tableColumns.number}) <= 16`),
     check("bill_payment_mode", sql`${tableColumns.paymentMode} in ('cash','upi','card','unpaid')`),
     check("bill_status", sql`${tableColumns.status} in ('saved','cancelled')`),
     check(
