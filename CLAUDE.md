@@ -82,6 +82,17 @@ Screen --> typed API --> IPC handler --> Service --> Repository --> SQLite
 Example: save bill C1/26-27/000123  (2 pcs x ₹120 = ₹240)
 ```
 
+## Recommendations and verdicts
+
+Every verdict, recommendation or suggestion (code, design, process, tooling, specs, reviews) gives four things:
+
+1. **Why**: the reasoning, tied to this project (constitution, spec, the shop's data).
+2. **Trade-off**: what it costs, and the alternatives considered and rejected (a table for comparisons).
+3. **Industry practice**: what leading product companies do (for example Google, Meta, Uber, GitHub, Shopify). Say so when no reliable practice was found; do not invent one.
+4. **References**: links to the sources. Mark vendor blogs and secondhand summaries as such, and prefer primary sources (official docs, papers, the company's own engineering writing).
+
+Example: require CI checks before merging to `main`. Why: `main` becomes the counter's installer, and a mis-totalled bill must never ship (constitution VI). Trade-off: about 3 minutes per merge, against relying on memory. Practice: Google runs presubmit tests and reviews almost every change before commit. Reference: [Software Engineering at Google, ch. 9](https://abseil.io/resources/swe-book/html/ch09.html).
+
 ## Working with Spec Kit here
 
 1. One feature per spec. Order: `/speckit-specify`, `/speckit-clarify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-analyze`, `/speckit-implement`.
