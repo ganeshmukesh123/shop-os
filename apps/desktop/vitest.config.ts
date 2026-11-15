@@ -5,8 +5,26 @@ export default defineConfig({
   test: {
     // describe, it, expect, vi and the hooks are available in tests without importing them.
     globals: true,
-    include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
     testTimeout: 30000,
     coverage: buildCoverageOptions(["src/**/*.{ts,tsx}"]),
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "main",
+          include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
+        },
+      },
+      {
+        // The React renderer runs in a browser; jsdom stands in for it (spec 017 T027).
+        extends: true,
+        test: {
+          name: "renderer",
+          include: ["tests/renderer/**/*.test.{ts,tsx}"],
+          environment: "jsdom",
+          setupFiles: ["tests/setup/renderer.ts"],
+        },
+      },
+    ],
   },
 });
