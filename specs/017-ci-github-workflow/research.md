@@ -334,6 +334,67 @@ Per file, main process: `main/index.ts` 0 on all four; `main/ipc/index.ts` 0; `m
 
 Reading: the slice that matters is the main process (74% lines, 65% branches) and core (77% lines). The shortfalls are untested entry files (`main/index.ts`, `preload/index.ts`, `electronRenderer.ts`, `ipc/index.ts`), schema factory functions that vitest counts as functions, and untested branches. The renderer is a separate, later phase.
 
+### F10. M2 result: core and main process at 90% (2026-11-15)
+
+Measured with `pnpm test:coverage` (vitest 4.1.12, V8) on branch `test/coverage-core-main`; `COVERAGE_ENFORCE` stays `false` (the gate is switched on last, T036).
+
+| Area | Lines | Statements | Functions | Branches | Threshold check |
+|---|---|---|---|---|---|
+| `packages/core` | 100 | 100 | 100 | 99.21 | `COVERAGE_ENFORCE=true` run exits 0 |
+| desktop slice `src/main/**` + `src/preload/**` | 100 | 100 | 100 | 98.02 | enforced run on this slice (one-off config, same 90% thresholds) exits 0 |
+| desktop whole package (renderer still 0%) | 56.22 | 55.99 | 52.35 | 46.79 | below 90%: the renderer phase (T027 to T035) is next |
+
+Per file (the "after" column shows lines / functions / branches). New files from the refactor have no "before".
+
+| File | Before: lines / branches | After: lines / functions / branches |
+|---|---|---|
+| `core/billing.ts` | 100 / 100 | 100 / 100 / 100 |
+| `core/commands.ts` | 0 / 100 | 100 / 100 / 100 |
+| `core/draftBill.ts` | 96 / 85.1 | 100 / 100 / 97.87 |
+| `core/errors.ts` | 100 / 100 | 100 / 100 / 100 |
+| `core/index.ts` | 0 / 100 | 100 / 100 / 100 |
+| `core/money.ts` | 85.71 / 79.16 | 100 / 100 / 100 |
+| `core/numbering.ts` | 95.45 / 93.75 | 100 / 100 / 100 |
+| `core/quantity.ts` | 88.23 / 70.58 | 100 / 100 / 100 |
+| `core/stock.ts` | 100 / 87.5 | 100 / 100 / 100 |
+| `core/types.ts` | 0 / 100 | 100 / 100 / 100 |
+| `main/app/appConfig.ts` | new | 100 / 100 / 100 |
+| `main/app/appState.ts` | new | 100 / 100 / 100 |
+| `main/app/backupLifecycle.ts` | new | 100 / 100 / 100 |
+| `main/app/mainWindow.ts` | new | 100 / 100 / 100 |
+| `main/app/securityHeaders.ts` | new | 100 / 100 / 100 |
+| `main/app/shell.ts` | new | 100 / 100 / 100 |
+| `main/app/startApp.ts` | new | 100 / 100 / 100 |
+| `main/db/connection.ts` | 100 / 50 | 100 / 100 / 100 |
+| `main/db/ids.ts` | 100 / 100 | 100 / 100 / 100 |
+| `main/db/schema.ts` | 80 / 100 | 100 / 100 / 100 |
+| `main/db/seed.ts` | 60 / 25 | 100 / 100 / 100 |
+| `main/index.ts` | 0 / 0 | 100 / 100 / 100 |
+| `main/ipc/handlers.ts` | 55.55 / 75 | 100 / 100 / 100 |
+| `main/ipc/index.ts` | 0 / 0 | 100 / 100 / 100 |
+| `main/repositories/BillRepository.ts` | 100 / 100 | 100 / 100 / 100 |
+| `main/repositories/ItemRepository.ts` | 97.22 / 83.33 | 100 / 100 / 94.44 |
+| `main/repositories/SettingsRepository.ts` | 100 / 50 | 100 / 100 / 100 |
+| `main/repositories/StockRepository.ts` | 90 / 66.66 | 100 / 100 / 83.33 |
+| `main/services/BackupService.ts` | 98.61 / 90 | 100 / 100 / 95 |
+| `main/services/BillingService.ts` | 93.47 / 84.61 | 100 / 100 / 100 |
+| `main/services/InventoryService.ts` | 98 / 91.66 | 100 / 100 / 100 |
+| `main/services/PrintService.ts` | 100 / 81.81 | 100 / 100 / 100 |
+| `main/services/SettingsService.ts` | 100 / 100 | 100 / 100 / 100 |
+| `main/services/billHtml.ts` | 100 / 88.46 | 100 / 100 / 100 |
+| `main/services/electronRenderer.ts` | 0 / 0 | 100 / 100 / 100 |
+| `preload/bridge.ts` | new | 100 / 100 / 100 |
+| `preload/index.ts` | 0 / 0 | 100 / 100 / 100 |
+
+Left uncovered, with the reason (checked against the lcov report, not assumed):
+- `core/draftBill.ts` line 98 (one branch): the "not a CoreError" side of `caughtError instanceof CoreError ? ... : "Invalid line"`. Everything inside that `try` throws `CoreError`; reaching the other side needs a mock that makes a core rule throw a different error. Defensive; left.
+- `BackupService.ts` lines 37 and 112 (one branch each): `String(caughtError)` for a thrown value that is not an `Error`. better-sqlite3 and the file system only throw `Error`s. Defensive; left.
+- `ItemRepository.ts` lines 114 and 137, `StockRepository.ts` line 58 (one branch each): the `?? 0` after `.get()?.` on `count(*)` and `coalesce(sum(...), 0)` queries. SQLite always returns exactly one row for these, so the fallback cannot happen. Left.
+
+Defect found by the work: `evaluateDraft` documented "never throws" but threw `CoreError: amount too large` for a line with a huge quantity and rate, which would have crashed the New bill screen. Fixed test-first (commit `919beed`).
+
+Refactor for testability (behaviour unchanged, proven by the 3 end-to-end tests on the built app): `main/index.ts` (174 lines of top-level code) became a 22-line entry plus seven small modules in `main/app/`; `electronRenderer.ts` builds from a window factory; the preload bridge is a function (`preload/bridge.ts`). Security options are copied unchanged and pinned by tests (isolated, sandboxed, no Node; offscreen window also no JavaScript; Content-Security-Policy; window-open denied; navigation guard).
+
 ## Open items (unverified; each resolved by the task named)
 
 | # | Item | Resolved by |
