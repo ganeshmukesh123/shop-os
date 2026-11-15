@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StatusBadge } from "../../../src/renderer/shared/components/StatusBadge/StatusBadge";
