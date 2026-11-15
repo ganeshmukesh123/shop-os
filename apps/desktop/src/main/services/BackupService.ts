@@ -33,6 +33,9 @@ export function validateBackupFile(file: string): void {
     }
     // A backup taken before the item split (D18) still has `item`; the next start upgrades it.
     if (!names.has("item_variant") && !names.has("item")) throw new Error("missing table item");
+    // item_variant.family_id points at item_family; restoring one without the other breaks item creation.
+    if (names.has("item_variant") && !names.has("item_family"))
+      throw new Error("missing table item_family");
   } catch (caughtError) {
     throw new CoreError(
       "INVALID_BACKUP",

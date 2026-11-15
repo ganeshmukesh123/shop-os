@@ -30,6 +30,15 @@ describe("first-run seed", () => {
     expect(connection.db.select().from(shopProfile).all()).toHaveLength(1);
   });
 
+  it("leaves no shop profile behind when the shop floor location cannot be created", () => {
+    const connection = openEmptyDatabase();
+    connection.sqlite.exec("drop table location");
+
+    expect(() => ensureSeed(connection.db)).toThrow();
+
+    expect(connection.db.select().from(shopProfile).all()).toHaveLength(0);
+  });
+
   it("starts with the default shop profile", () => {
     const connection = openEmptyDatabase();
     ensureSeed(connection.db);

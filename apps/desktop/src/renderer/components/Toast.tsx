@@ -1,8 +1,16 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { Toast } from "radix-ui";
-import { Callout } from "@radix-ui/themes";
+import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
+import type { StatusRole } from "../shared/components/status.types";
+import { uiText } from "../strings";
 
 type Kind = "success" | "error";
+
+/** Each kind of toast is a status message, so it always opens with a word, never a colour alone. */
+const TOAST_STATUS: Record<Kind, { role: StatusRole; label: string }> = {
+  error: { role: "danger", label: uiText.status.error },
+  success: { role: "success", label: uiText.status.done },
+};
 interface Msg {
   id: number;
   kind: Kind;
@@ -27,6 +35,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {msgs.map((toastMessage) => (
           <Toast.Root
             key={toastMessage.id}
+            // Radix: "foreground" announces at once (errors), "background" waits for a pause (success).
+            type={toastMessage.kind === "error" ? "foreground" : "background"}
             duration={toastMessage.kind === "error" ? 10000 : 3500}
             onOpenChange={(isOpen) =>
               !isOpen &&
@@ -36,20 +46,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             }
             style={{ listStyle: "none" }}
           >
-            <Callout.Root
-              color={toastMessage.kind === "error" ? "red" : "green"}
-              size="2"
-              role={toastMessage.kind === "error" ? "alert" : "status"}
+            <StatusMessage
+              role={TOAST_STATUS[toastMessage.kind].role}
+              label={TOAST_STATUS[toastMessage.kind].label}
             >
-              <Callout.Text>
-                <Toast.Title style={{ fontWeight: 600 }}>
-                  {toastMessage.kind === "error" ? "Error: " : "Done: "}
-                </Toast.Title>
-                <Toast.Description asChild>
-                  <span>{toastMessage.text}</span>
-                </Toast.Description>
-              </Callout.Text>
-            </Callout.Root>
+              <Toast.Description asChild>
+                <span>{toastMessage.text}</span>
+              </Toast.Description>
+            </StatusMessage>
           </Toast.Root>
         ))}
         <Toast.Viewport
