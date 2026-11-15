@@ -7,6 +7,7 @@ import {
   paiseToInput,
   parseRupees,
   percentOfPaise,
+  roundBillTotal,
   subPaise,
 } from "../src/money";
 
@@ -109,5 +110,48 @@ describe("money edge cases", () => {
 
   it("returns null for a rupee amount too large to hold exactly", () => {
     expect(parseRupees("99999999999999999999")).toBeNull();
+  });
+});
+
+describe("roundBillTotal (FR-010a, research D20)", () => {
+  it("rounds 49 paise and below down, with a negative round-off", () => {
+    expect(roundBillTotal(84949, true)).toEqual({ roundOffPaise: -49, roundedTotalPaise: 84900 });
+  });
+
+  it("rounds 50 paise exactly up (half up)", () => {
+    expect(roundBillTotal(84950, true)).toEqual({ roundOffPaise: 50, roundedTotalPaise: 85000 });
+  });
+
+  it("rounds 60 paise up, with a positive round-off", () => {
+    expect(roundBillTotal(84960, true)).toEqual({ roundOffPaise: 40, roundedTotalPaise: 85000 });
+  });
+
+  it("changes nothing when the total is already whole rupees", () => {
+    const result = roundBillTotal(85000, true);
+    expect(result.roundedTotalPaise).toBe(85000);
+    expect(Object.is(result.roundOffPaise, 0)).toBe(true);
+  });
+
+  it("gives a round-off of 0 when rounding is off", () => {
+    expect(roundBillTotal(84960, false)).toEqual({ roundOffPaise: 0, roundedTotalPaise: 84960 });
+  });
+
+  it("handles a total of zero and a single paisa", () => {
+    expect(roundBillTotal(0, true).roundedTotalPaise).toBe(0);
+    expect(roundBillTotal(1, true)).toEqual({ roundOffPaise: -1, roundedTotalPaise: 0 });
+  });
+
+  it("always satisfies total + round-off = rounded total", () => {
+    for (let totalPaise = 0; totalPaise <= 300; totalPaise += 1) {
+      const { roundOffPaise, roundedTotalPaise } = roundBillTotal(totalPaise, true);
+      expect(totalPaise + roundOffPaise).toBe(roundedTotalPaise);
+      expect(roundedTotalPaise % 100).toBe(0);
+      expect(Math.abs(roundOffPaise)).toBeLessThanOrEqual(50);
+    }
+  });
+
+  it("rejects a negative or fractional total", () => {
+    expect(errorCodeOf(() => roundBillTotal(-1, true))).toBe("INVALID_AMOUNT");
+    expect(errorCodeOf(() => roundBillTotal(10.5, true))).toBe("INVALID_AMOUNT");
   });
 });
