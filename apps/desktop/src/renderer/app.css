@@ -14,6 +14,11 @@
   justify-content: flex-start;
 }
 
+/* Select that fills its column (ItemForm.tsx): Radix Select.Trigger has no width prop. */
+.shopos-full-width {
+  width: 100%;
+}
+
 /* Items list (ItemsScreen.tsx): an inactive item is shown dimmed, and also says "Inactive". */
 .shopos-row-inactive {
   opacity: 0.65;
