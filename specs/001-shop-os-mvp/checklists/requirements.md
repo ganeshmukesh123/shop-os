@@ -31,5 +31,6 @@
 
 ## Notes
 
-- Spec rewritten on 2026-11-13 to the reduced MVP: inventory entry plus a basic bill with no tax. The earlier large draft is replaced.
-- The architecture doc covers far more than this MVP (sync, tenancy, GST, rolls, etc.). At `/speckit-plan` time, build only the slice this spec needs and keep the rest as roadmap.
+- Spec rewritten on 2026-11-13 to the reduced MVP: inventory entry plus a basic bill with no tax.
+- Updated 2026-11-15 after the spec audit: SC-003 no longer names a technology (it did, so "No implementation details" was false before this date); PRD IDs corrected requirement by requirement; FR-007 deferred; FR-010a, FR-013b, FR-015a and FR-019a added for the owner's decisions (research D18 to D24). The key-entities list names the target tables (architecture section 8) because the owner chose that shape; that is a recorded decision, not an implementation leak.
+- Updated 2026-11-14 following spec review: re-promoted bill cancellation/reprint into scope (US3, FR-016..FR-018), enforced save idempotency (FR-013a), removed customer phone for DPDP compliance (FR-011), mapped all requirements to PRD requirement IDs, and verified against Constitution v1.4.0.

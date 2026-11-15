@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { evaluateDraft, parsePercentBp, type DraftBill, type DraftLine } from "../src/draftBill";
 
 const line = (over: Partial<DraftLine> = {}): DraftLine => ({
@@ -80,5 +79,60 @@ describe("evaluateDraft", () => {
   it("a zero rate is allowed (free item); discount may equal the amount", () => {
     expect(evaluateDraft(bill([line({ rate: "0" })])).valid).toBe(true);
     expect(evaluateDraft(bill([line({ disc: "100" })])).grandTotalPaise).toBe(0);
+  });
+});
+
+describe("evaluateDraft messages", () => {
+  it("flags a line percent discount above 100%", () => {
+    const evaluation = evaluateDraft(bill([line({ disc: "150", discMode: "percent" })]));
+    expect(evaluation.lines[0]?.error).toBe("Discount % must be 0 to 100");
+    expect(evaluation.valid).toBe(false);
+  });
+
+  it("flags a line discount that is not a rupee amount", () => {
+    const evaluation = evaluateDraft(bill([line({ disc: "abc" })]));
+    expect(evaluation.lines[0]?.error).toBe("Enter the discount in rupees");
+  });
+
+  it("flags a bill percent discount above 100%", () => {
+    const evaluation = evaluateDraft(bill([line()], { billDisc: "150", billDiscMode: "percent" }));
+    expect(evaluation.errors).toContain("Bill discount % must be 0 to 100");
+  });
+
+  it("flags a bill discount that is not a rupee amount", () => {
+    const evaluation = evaluateDraft(bill([line()], { billDisc: "abc" }));
+    expect(evaluation.errors).toContain("Enter the bill discount in rupees");
+  });
+
+  it("subtracts a valid rupee bill discount from the lines total", () => {
+    const evaluation = evaluateDraft(bill([line({ rate: "100" })], { billDisc: "10" }));
+    expect(evaluation.billDiscountPaise).toBe(1000);
+    expect(evaluation.grandTotalPaise).toBe(9000);
+    expect(evaluation.valid).toBe(true);
+  });
+
+  it("flags a bill discount larger than the lines total", () => {
+    const evaluation = evaluateDraft(bill([line({ rate: "100" })], { billDisc: "101" }));
+    expect(evaluation.errors).toContain("Bill discount cannot be more than the total");
+  });
+
+  it("asks for at least one item on an empty draft", () => {
+    const evaluation = evaluateDraft(bill([]));
+    expect(evaluation.errors).toContain("Add at least one item");
+    expect(evaluation.valid).toBe(false);
+  });
+
+  it("points at the lines to fix when any line is invalid", () => {
+    const evaluation = evaluateDraft(bill([line({ qty: "0" })]));
+    expect(evaluation.errors).toContain("Fix the highlighted lines");
+  });
+});
+
+describe("evaluateDraft never throws", () => {
+  it("reports an amount too large to hold as a line error instead of throwing", () => {
+    const hugeLine = line({ qty: "9000000000000", rate: "9000000000000" });
+    const evaluate = () => evaluateDraft(bill([hugeLine]));
+    expect(evaluate).not.toThrow();
+    expect(evaluate().valid).toBe(false);
   });
 });

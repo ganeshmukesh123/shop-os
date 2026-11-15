@@ -214,6 +214,187 @@ No change was needed to the better-sqlite3 driver import (`drizzle-orm/better-sq
 
 **Rollback**: restore `packages/core/package.json`, `apps/desktop/package.json` and `pnpm-lock.yaml` from the backups taken before each group (scratchpad `zod-backup/` and `drizzle-backup/`), restore `apps/desktop/src/main/db/schema.ts` from `drizzle-backup/schema.ts.before` and the two note lines in `CLAUDE.md` and the drizzle skill, then `pnpm install` and `node apps/desktop/scripts/ensure-electron-sqlite.mjs`. The migration files did not change, so nothing needs undoing in the database folder.
 
+### F8. Tooling upgrade (vitest, vite, electron-vite, electron-builder) (2026-11-14)
+
+Goal: clear the high and critical advisories left in build and test tooling so the CI "Dependency audit" job can pass. Baseline from `pnpm audit --json` on `main` (0aa3609): low 1, moderate 15, **high 11, critical 4**; `pnpm audit --prod --audit-level high` passes (no known vulnerabilities in shipped dependencies).
+
+| Package | Severity | Advisory ids (examples) | Patched in | Comes from |
+|---|---|---|---|---|
+| vitest | critical | GHSA-5xrq-8626-4rwp (Vitest UI server file read/exec) | 3.2.6 | our test runner |
+| tinypool | critical (2) | GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr (prototype pollution to RCE) | **2.1.2** (vulnerable `<2.1.2`) | vitest 2.x and 3.x (`tinypool ^1.1.1`) |
+| vite | high (1) | GHSA-587h-7wmj-h5pm (plus moderate/low launch-editor and fs.deny advisories) | 6.4.4 | vitest, electron-vite |
+| tar | critical 1, high 8 | GHSA-34x7-hfp2-rc4v and others | up to 7.5.21 | electron-builder > dmg-builder > app-builder-lib |
+| app-builder-lib | high | GHSA-7g7r-gx96-252g | 26.15.0 | electron-builder |
+| builder-util-runtime | high | GHSA-p2f4-r6v6-j797 | 9.7.0 | electron-builder |
+
+**Group order changed from the brief (coupling found, not assumed).** Vitest 4.1.12 declares `vite ^6 || ^7 || ^8` as a non-optional peer; desktop pins `vite` directly, so vitest resolved to desktop's vite 5.4.21 and the desktop test run failed at start-up (`ERR_PACKAGE_PATH_NOT_EXPORTED: './module-runner'`, observed). `electron-vite@2.3.0` caps vite at `^4 || ^5`. So vite and electron-vite had to move first, then vitest. Core alone ran 34/34 on vitest 4.1.12 (with vite 8) before this was understood.
+
+#### Group 1 (done first): vite 5.4 to 6.4.6 and electron-vite 2.3.0 to 3.1.0: VERIFIED locally (macOS arm64)
+
+Sources:
+- `npm view` (2026-11-14): vite 6.4.6 is the latest 6.x (engines `^18 || ^20 || >=22`); `electron-vite@3.1.0` peers `vite ^4 || ^5 || ^6`, engines `^18 || >=20`; `electron-vite@4.0.1` and later need Node `^20.19 || >=22.12` and (v4) Vite 7; `@vitejs/plugin-react@4.7.0` peers `vite ^4.2 || ^5 || ^6 || ^7`.
+- electron-vite CHANGELOG (raw.githubusercontent.com/alex8088/electron-vite/master/CHANGELOG.md): v3.0.0 only "feat: resolve conditions for preload"; v3.1.0 only a bytecode-plugin fix; **v4.0.0 breaking: Vite 7 and the CJS build removed** (not taken: the app ships a CommonJS main bundle); v5.0.0 breaking config restructuring (not taken). Electron targets listed: 3.0.0 adds Electron 32 to 34, 3.1.0 adds 35; Electron 43 has no table entry in any 3.x release, the same position as 2.3.0 had, and the build output is unchanged in shape.
+
+Chosen: vite `^6.4.6` (clears every vite advisory, all were `<=6.4.3`), electron-vite `^3.1.0` (smallest version supporting vite 6, no breaking changes listed).
+
+Changes: `apps/desktop/package.json`, 2 lines; no source or config changes needed (`electron.vite.config.ts` untouched).
+
+Results: `pnpm peers check`: no issues; `pnpm --filter @shopos/desktop build`: built, main bundle still CommonJS (`"use strict"; const fs = require(...)`); `pnpm test:e2e`: 3 of 3 pass; lint 0 errors (91 warnings, unchanged); typecheck 0 errors; `pnpm -r test`: core 34/34, desktop 65/65; `pnpm test:scripts`: 36/36; `pnpm test:coverage` exit 0 (core 67.22%, desktop 37.32% lines, unchanged); `pnpm check:migrations` in sync. Audit unchanged at high 11, critical 4: the one remaining vite advisory path is `@vitest/coverage-v8 > vitest > vite` (vitest 2.1.9's own vite 5), removed by the vitest group.
+
+#### Group 2: vitest 2.1.9 to 4.1.12 (and @vitest/coverage-v8 to 4.1.12): VERIFIED locally (macOS arm64)
+
+Why 4.x and not 3.x: vitest 3.2.7 (latest 3.x, clears GHSA-5xrq-8626-4rwp) still depends on `tinypool ^1.1.1`, and the tinypool advisories are vulnerable `<2.1.2`, so the two critical tinypool findings would remain. Vitest 4.1.12 has no tinypool dependency (the 4.0 migration guide: "Tinypool removed; pools rewritten without new dependencies") and also clears the moderate GHSA-82fw-gwwq-j7x9 (patched 4.1.11). Vitest 5.0 needs Node 22.12 or newer and Vite 6.4 or newer; 4.1.12 was chosen as the lowest line that clears everything.
+
+Sources: `npm view vitest@4.1.12` (dependencies, peers: `vite ^6 || ^7 || ^8` non-optional, engines `node ^20 || ^22 || >=24`), `npm view tinypool versions`, the audit JSON, and the official migration guide `https://v4.vitest.dev/guide/migration` (WebFetch 2026-11-14). Electron 43 bundles Node 24.22.1 (`ELECTRON_RUN_AS_NODE=1 electron -p process.versions.node`), which satisfies the engines range; the host Node is 25.6.1; CI uses `.nvmrc` 22.
+
+Breaking changes read, and whether they touch us:
+
+| 4.0 change | Touches us? |
+|---|---|
+| Vite 6 or newer required | **Yes**: this is why the vite group came first |
+| `coverage.all` and `coverage.extensions` removed; coverage includes only loaded files unless `coverage.include` is set | No: `config/coverage.ts` already sets `include`, which keeps counting untested files |
+| V8 coverage now AST-based remapping; reports may change | **Yes**: the measured numbers moved (below) |
+| Default `exclude` narrowed to node_modules and .git | No: our `include` globs are explicit |
+| `poolOptions`, `singleFork`, `maxThreads` removed; tinypool removed | No: not used in our configs |
+| `workspace` renamed `projects`; `environmentMatchGlobs` removed | No: not used |
+| Mock changes (`vi.fn`, `restoreAllMocks`, automock) | No: the repo uses no `vi.*` mocks (grep) |
+| `basic` reporter removed | No |
+
+Changes made: versions in `package.json` (root), `apps/desktop/package.json`, `packages/core/package.json`; coverage `include` narrowed from `src/**` to the code files (`src/**/*.ts`, and `src/**/*.{ts,tsx}` for desktop), because vitest 4 now parses every matched file and `renderer/index.html` produced a (non-fatal) "Failed to parse ... Excluding it from coverage" error. The comment in `config/coverage.ts` explains it.
+
+Runs inside Electron's Node: VERIFIED. `node scripts/vitest-electron.mjs run` starts, runs 65 tests, and `--coverage` works (same `ELECTRON_RUN_AS_NODE` mechanism as with vitest 2).
+
+Results: lint 0 errors (91 warnings, unchanged); typecheck 0 errors; core 34/34, desktop 65/65; scripts 36/36; build ok; `pnpm test:e2e` 3/3; `pnpm check:migrations` in sync; `COVERAGE_ENFORCE=true pnpm test:coverage` still fails both packages with "does not meet global threshold (90%)" (the switch works); `pnpm test:coverage` exits 0.
+
+**The coverage baseline restated (measurement change, not a code change).** Same code, same tests:
+
+| | vitest 2.1.9 (V8, line-based) | vitest 4.1.12 (V8, AST-based) |
+|---|---|---|
+| core lines / statements / branches / functions | 67.22 / 67.22 / 86.88 / 87.87 | 77.43 / 77.88 / 85.15 / 93.93 |
+| desktop lines / statements / branches / functions | 37.32 / 37.32 / 86.66 / 78.35 | 39.8 / 39.4 / **30.36** / 32.7 |
+
+Reading: AST remapping drops lines with no runtime code and counts every function and branch in files no test imports (the renderer), which v2 reported as 0 of 0. The desktop branch figure of 86.66% therefore overstated reality; 30.36% is the honest starting point for the 90% climb. Some files show lower numbers too (for example `schema.ts` 80%: the table-extras callbacks are never called in tests). The plan's baseline table (S2) is superseded by this one; the re-measure task T026 should start from these numbers.
+
+Audit after this group: low 0, moderate 6, **high 10, critical 1**; the only remaining high and critical advisories are `tar`, `app-builder-lib` and `builder-util-runtime`, all under electron-builder (next group). `pnpm audit --prod --audit-level high`: no known vulnerabilities.
+
+#### Group 3: electron-builder 25.1.8 to 26.15.7 (app-builder-lib, dmg-builder, builder-util-runtime, tar): VERIFIED locally (macOS arm64)
+
+Sources: `npm view electron-builder dist-tags/versions` (latest `26.18.0`, `v26` tag `26.18.1`); `npm view app-builder-lib@26.x dependencies` (`tar ^7.5.7`, `builder-util-runtime 9.7.0`); the GitHub release notes for every `electron-builder@26.x` tag up to 26.15.7 (GitHub API, read 2026-11-14); the electron.build changelog page (covers 27.0.0-alpha only). Advisories (audit JSON): app-builder-lib GHSA-7g7r-gx96-252g patched 26.15.0; builder-util-runtime GHSA-p2f4-r6v6-j797 patched 9.7.0; tar 12 advisories, newest GHSA-r292-9mhp-454m patched 7.5.21.
+
+Chosen: `electron-builder ~26.15.7` (the last patch of the first line that clears app-builder-lib and builder-util-runtime). Because app-builder-lib 26.15.x asks for `tar ^7.5.7`, pnpm resolved tar to **7.5.23**, above every patched version. `~` keeps the toolchain on 26.15.x; later 26.16 to 26.18 exist but were not tested.
+
+What the release notes say (none verified beyond reading): no entry is marked breaking in 26.0 to 26.15.7. Notable for us: 26.1.0 adds a dynamic-import helper; 26.3.3 "double check hoisted mode for each node module" (pnpm related); **26.15.0 replaces the Go binary `app-builder-bin` with a TypeScript implementation and replaces its node dependency-tree and rebuild helpers**, which is why the packaging dry run is the test that matters. The 25 to 26.0.0 release body itself could not be retrieved (no release object for that tag in the API listing).
+
+Changes: `apps/desktop/package.json` (1 line), `pnpm-workspace.yaml` (+2 lines: `electron-winstaller: false` with a comment; electron-builder 26 pulls in `electron-winstaller@5.4.0`, whose install script only copies a 7-Zip binary for Squirrel.Windows installers; our Windows target is NSIS, and pnpm 12 fails `pnpm install` with `ERR_PNPM_IGNORED_BUILDS` for an unreviewed build script, which would also fail `pnpm install --frozen-lockfile` in CI), and `electron-builder.yml` was **not** changed.
+
+Packaging dry run (`pnpm exec electron-builder --dir`, baseline on 25.1.8 first):
+
+| | 25.1.8 (baseline) | 26.15.7 |
+|---|---|---|
+| runtime | 5.6 s | 9.8 s (includes re-downloading the Electron zip) |
+| `app.asar` entries | 5,799 | 5,796 (3 fewer: a leftover `node-gyp` build folder from the old native rebuild) |
+| Resources tree | 72 entries | identical |
+| `better-sqlite3` unpacked outside the asar | yes | yes |
+| `drizzle/` migrations in Resources | yes | yes (all 3 migration files present) |
+| `@shopos/core` bundled | no | no (devDependency fix from F6 still holds) |
+| `.app` size | 347 MB | 338 MB |
+| new log noise | none | one warning "duplicate dependency references" listing react, react-dom and the radix packages (the redundant runtime dependency listing noted in F6); harmless in this run |
+
+Smoke test of the **packaged** app's native module: `ELECTRON_RUN_AS_NODE=1 "Shop OS.app/Contents/MacOS/Shop OS" -e "...require(.../app.asar.unpacked/node_modules/better-sqlite3)..."` printed `electron 43.8.10 node 24.22.1 sqlite 3.54.1`. The full app window was not launched here beyond the end-to-end run against the built bundle (3 of 3 pass).
+
+Results: lint 0 errors (91 warnings, unchanged); typecheck 0 errors; core 34/34, desktop 65/65; scripts 36/36; `pnpm test:coverage` exit 0 (core 77.43%, desktop 39.8% lines, as restated under group 2); `pnpm check:migrations` in sync; build ok; `pnpm test:e2e` 3/3; `pnpm install --frozen-lockfile` clean.
+
+#### Audit before and after (`pnpm audit`, run 2026-11-14)
+
+| Stage | low | moderate | high | critical | `audit --audit-level high` exit |
+|---|---|---|---|---|---|
+| Baseline (`main`, 0aa3609) | 1 | 15 | 11 | 4 | 1 |
+| After vite + electron-vite | 1 | 15 | 11 | 4 | 1 |
+| After vitest 4 | 0 | 6 | 10 | 1 | 1 |
+| After electron-builder 26.15.7 | **0** | **2** | **0** | **0** | **0** |
+
+`pnpm audit --prod --audit-level high` passes (no known vulnerabilities) at every stage. Remaining, both moderate and not required by the high-level gate: esbuild GHSA-67mh-4wv8-2f99 (patched 0.25.0) via `drizzle-kit > @esbuild-kit/esm-loader > @esbuild-kit/core-utils` (drizzle-kit's own deprecated loader; the newer esbuild is installed separately), and minimatch GHSA-g3hv-75wg-m249 (patched 11.0.1) via `typescript-eslint`. Neither is reachable from the shipped app; they are build-time tools.
+
+`.github/workflows/ci.yml`: the audit job is now a real check (name "Dependency audit", `continue-on-error` removed, header and comments updated) because `pnpm audit --audit-level high` exits 0. The secret-scan job stays informational. **Not verifiable here:** how that job behaves on GitHub; a new advisory can turn it red with no code change (the job comment says to upgrade or record a reviewed exception). This answers open item O4 differently from F4: the audit is now stable enough to keep as a check, with that caveat.
+
+### F9. Coverage baseline under vitest 4 (2026-11-14, before the M2 tests)
+
+Measured with `pnpm test:coverage` on branch `test/coverage-core-main` (vitest 4.1.12, V8 provider, report-only). The earlier S2 numbers (vitest 2) are **not comparable**: vitest 4 counts coverage from the AST, so untested files and branches now show up.
+
+| Area | Lines | Statements | Functions | Branches |
+|---|---|---|---|---|
+| `packages/core` (whole package) | 77.43 | 77.88 | 93.93 | 85.15 |
+| `apps/desktop` (whole package, renderer still 0%) | 39.80 | 39.40 | 32.70 | 30.36 |
+| desktop slice `src/main/**` | 74.16 | 73.31 | 67.53 | 64.52 |
+| desktop slice `src/preload/**` | 0 | 0 | 0 | 0 |
+
+Per file, `packages/core` (lines / statements / functions / branches): `commands.ts` 0/0/100/100, `index.ts` 0/0/100/100 and `types.ts` 0/0/100/100 (no core test imports them: the Zod schemas are only exercised through the desktop tests, which do not count for core); `money.ts` 85.7/84.2/90/79.2; `quantity.ts` 88.2/89.5/80/70.6; `draftBill.ts` 96/92.1/100/85.1; `numbering.ts` 95.5/95.8/100/93.8; `stock.ts` 100/100/100/87.5; `billing.ts` and `errors.ts` 100 on all four.
+
+Per file, main process: `main/index.ts` 0 on all four; `main/ipc/index.ts` 0; `main/ipc/handlers.ts` 55.6/57.9/50/75; `main/db/seed.ts` 60/54.5/50/25; `main/db/schema.ts` 80/80/63.6/100; `main/db/connection.ts` 100/85.7/100/50; `main/services/electronRenderer.ts` 0; `preload/index.ts` 0; repositories 90 to 100 lines but 50 to 83 branches (`SettingsRepository` 50, `StockRepository` 66.7, `ItemRepository` 83.3); services 91.8 to 100 lines, branches 81.8 to 100.
+
+Reading: the slice that matters is the main process (74% lines, 65% branches) and core (77% lines). The shortfalls are untested entry files (`main/index.ts`, `preload/index.ts`, `electronRenderer.ts`, `ipc/index.ts`), schema factory functions that vitest counts as functions, and untested branches. The renderer is a separate, later phase.
+
+### F10. M2 result: core and main process at 90% (2026-11-15)
+
+Measured with `pnpm test:coverage` (vitest 4.1.12, V8) on branch `test/coverage-core-main`; `COVERAGE_ENFORCE` stays `false` (the gate is switched on last, T036).
+
+| Area | Lines | Statements | Functions | Branches | Threshold check |
+|---|---|---|---|---|---|
+| `packages/core` | 100 | 100 | 100 | 99.21 | `COVERAGE_ENFORCE=true` run exits 0 |
+| desktop slice `src/main/**` + `src/preload/**` | 100 | 100 | 100 | 98.02 | enforced run on this slice (one-off config, same 90% thresholds) exits 0 |
+| desktop whole package (renderer still 0%) | 56.22 | 55.99 | 52.35 | 46.79 | below 90%: the renderer phase (T027 to T035) is next |
+
+Per file (the "after" column shows lines / functions / branches). New files from the refactor have no "before".
+
+| File | Before: lines / branches | After: lines / functions / branches |
+|---|---|---|
+| `core/billing.ts` | 100 / 100 | 100 / 100 / 100 |
+| `core/commands.ts` | 0 / 100 | 100 / 100 / 100 |
+| `core/draftBill.ts` | 96 / 85.1 | 100 / 100 / 97.87 |
+| `core/errors.ts` | 100 / 100 | 100 / 100 / 100 |
+| `core/index.ts` | 0 / 100 | 100 / 100 / 100 |
+| `core/money.ts` | 85.71 / 79.16 | 100 / 100 / 100 |
+| `core/numbering.ts` | 95.45 / 93.75 | 100 / 100 / 100 |
+| `core/quantity.ts` | 88.23 / 70.58 | 100 / 100 / 100 |
+| `core/stock.ts` | 100 / 87.5 | 100 / 100 / 100 |
+| `core/types.ts` | 0 / 100 | 100 / 100 / 100 |
+| `main/app/appConfig.ts` | new | 100 / 100 / 100 |
+| `main/app/appState.ts` | new | 100 / 100 / 100 |
+| `main/app/backupLifecycle.ts` | new | 100 / 100 / 100 |
+| `main/app/mainWindow.ts` | new | 100 / 100 / 100 |
+| `main/app/securityHeaders.ts` | new | 100 / 100 / 100 |
+| `main/app/shell.ts` | new | 100 / 100 / 100 |
+| `main/app/startApp.ts` | new | 100 / 100 / 100 |
+| `main/db/connection.ts` | 100 / 50 | 100 / 100 / 100 |
+| `main/db/ids.ts` | 100 / 100 | 100 / 100 / 100 |
+| `main/db/schema.ts` | 80 / 100 | 100 / 100 / 100 |
+| `main/db/seed.ts` | 60 / 25 | 100 / 100 / 100 |
+| `main/index.ts` | 0 / 0 | 100 / 100 / 100 |
+| `main/ipc/handlers.ts` | 55.55 / 75 | 100 / 100 / 100 |
+| `main/ipc/index.ts` | 0 / 0 | 100 / 100 / 100 |
+| `main/repositories/BillRepository.ts` | 100 / 100 | 100 / 100 / 100 |
+| `main/repositories/ItemRepository.ts` | 97.22 / 83.33 | 100 / 100 / 94.44 |
+| `main/repositories/SettingsRepository.ts` | 100 / 50 | 100 / 100 / 100 |
+| `main/repositories/StockRepository.ts` | 90 / 66.66 | 100 / 100 / 83.33 |
+| `main/services/BackupService.ts` | 98.61 / 90 | 100 / 100 / 95 |
+| `main/services/BillingService.ts` | 93.47 / 84.61 | 100 / 100 / 100 |
+| `main/services/InventoryService.ts` | 98 / 91.66 | 100 / 100 / 100 |
+| `main/services/PrintService.ts` | 100 / 81.81 | 100 / 100 / 100 |
+| `main/services/SettingsService.ts` | 100 / 100 | 100 / 100 / 100 |
+| `main/services/billHtml.ts` | 100 / 88.46 | 100 / 100 / 100 |
+| `main/services/electronRenderer.ts` | 0 / 0 | 100 / 100 / 100 |
+| `preload/bridge.ts` | new | 100 / 100 / 100 |
+| `preload/index.ts` | 0 / 0 | 100 / 100 / 100 |
+
+Left uncovered, with the reason (checked against the lcov report, not assumed):
+- `core/draftBill.ts` line 98 (one branch): the "not a CoreError" side of `caughtError instanceof CoreError ? ... : "Invalid line"`. Everything inside that `try` throws `CoreError`; reaching the other side needs a mock that makes a core rule throw a different error. Defensive; left.
+- `BackupService.ts` lines 37 and 112 (one branch each): `String(caughtError)` for a thrown value that is not an `Error`. better-sqlite3 and the file system only throw `Error`s. Defensive; left.
+- `ItemRepository.ts` lines 114 and 137, `StockRepository.ts` line 58 (one branch each): the `?? 0` after `.get()?.` on `count(*)` and `coalesce(sum(...), 0)` queries. SQLite always returns exactly one row for these, so the fallback cannot happen. Left.
+
+Defect found by the work: `evaluateDraft` documented "never throws" but threw `CoreError: amount too large` for a line with a huge quantity and rate, which would have crashed the New bill screen. Fixed test-first (commit `919beed`).
+
+Refactor for testability (behaviour unchanged, proven by the 3 end-to-end tests on the built app): `main/index.ts` (174 lines of top-level code) became a 22-line entry plus seven small modules in `main/app/`; `electronRenderer.ts` builds from a window factory; the preload bridge is a function (`preload/bridge.ts`). Security options are copied unchanged and pinned by tests (isolated, sandboxed, no Node; offscreen window also no JavaScript; Content-Security-Policy; window-open denied; navigation guard).
+
 ## Open items (unverified; each resolved by the task named)
 
 | # | Item | Resolved by |
@@ -221,6 +402,6 @@ No change was needed to the better-sqlite3 driver import (`drizzle-orm/better-sq
 | O1 | Linux runner needs a virtual display for Electron: `xvfb-run` or a display action; whether the app launches under it and whether Chromium sandbox flags are needed | T010 |
 | O2 | ~~Exact third-party action versions to pin~~ **Resolved 2026-11-14**: looked up and verified, see F1 | T008 |
 | O3 | Runner minutes: macOS and Windows runners cost more than Linux; confirm the account's allowance before the nightly smoke job | T040 |
-| O4 | **Answered (F4): not stable, stays non-required.** Was: whether `pnpm audit` is stable enough to be a required check (it can fail on advisories the project cannot fix) | T014 |
+| O4 | **Answered (F4): not stable, stays non-required.** *Updated 2026-11-14 (F8): after the tooling upgrades the high-level audit exits 0 and the job is no longer informational.* Was: whether `pnpm audit` is stable enough to be a required check (it can fail on advisories the project cannot fix) | T014 |
 | O5 | The repository is not on GitHub yet: hosting and the default branch name (`main`) | T006 (owner action) |
 | O6 | Branch coverage at 90% on UI code may be hard; decided by data after renderer tests exist | T034 |

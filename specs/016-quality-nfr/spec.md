@@ -1,6 +1,6 @@
 # Feature Specification: Cross-Cutting Quality Requirements
 
-**Feature Branch**: `016-quality-nfr` (no git repository yet; directory name only)
+**Feature Branch**: `016-quality-nfr`
 
 **Created**: 2026-11-13
 
@@ -121,8 +121,8 @@ A new counter staff member bills 5 lines unaided after 2 hours of training. Scre
 - **FR-009**: Consent records and access logs (at least 1 year) MUST be kept and a breach response plan MUST exist (NFR-009).
 - **FR-010**: A new counter staff member MUST bill 5 lines unaided after 2 hours of training (NFR-010).
 - **FR-011**: UI MUST use large tap targets, readable contrast and never rely on colour alone (NFR-011).
-- **FR-012**: Language support and Indian number format MUST follow feature 014 (NFR-012).
-- **FR-013**: Devices and printers MUST follow feature 015 (NFR-013).
+- **FR-012**: Every screen and print output MUST display monetary amounts using Indian numbering grouping (e.g. ₹1,00,000.00), enforce UTF-8 encoding throughout, and maintain user-facing strings separated from core logic for Hindi and regional language localization (NFR-012).
+- **FR-013**: The system MUST verify printer output formatting across standard 80 mm and 58 mm receipt widths and A4/A5 pages, support barcode scanners via standard keyboard emulation, and ensure hardware disconnections never prevent bill persistence (NFR-013).
 - **FR-014**: The system MUST handle 50,000 items, 5 counters, 5 locations, 500 bills a day and 10 years of data without slowing down (NFR-014).
 - **FR-015**: Every report number MUST trace to source documents in 3 taps or fewer (NFR-015).
 - **FR-016**: Rules (limits, rates, classes) MUST be changeable by the shop without a release and tax rates MUST carry effective dates (NFR-016).

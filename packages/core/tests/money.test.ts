@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { CoreError } from "../src/errors";
 import {
   addPaise,
   assertPaise,
   formatRupees,
   mulQtyRate,
+  paiseToInput,
   parseRupees,
   percentOfPaise,
   subPaise,
@@ -62,5 +63,51 @@ describe("money", () => {
     expect(parseRupees("abc")).toBeNull();
     expect(parseRupees("1.234")).toBeNull();
     expect(parseRupees("-5")).toBeNull();
+  });
+});
+
+/** The error code a rule throws, or "none" when it does not throw. */
+const errorCodeOf = (rule: () => unknown): string => {
+  try {
+    rule();
+    return "none";
+  } catch (caughtError) {
+    return caughtError instanceof CoreError ? caughtError.code : "other";
+  }
+};
+
+describe("money edge cases", () => {
+  it("rejects a negative or fractional percent in basis points", () => {
+    expect(errorCodeOf(() => percentOfPaise(100, -1))).toBe("INVALID_DISCOUNT");
+    expect(errorCodeOf(() => percentOfPaise(100, 12.5))).toBe("INVALID_DISCOUNT");
+  });
+
+  it("rejects a negative or fractional quantity when multiplying by a rate", () => {
+    expect(errorCodeOf(() => mulQtyRate(-1000, 100))).toBe("INVALID_QUANTITY");
+    expect(errorCodeOf(() => mulQtyRate(1.5, 100))).toBe("INVALID_QUANTITY");
+  });
+
+  it("rejects a negative rate and a fractional rate", () => {
+    expect(errorCodeOf(() => mulQtyRate(1000, -1))).toBe("INVALID_AMOUNT");
+    expect(errorCodeOf(() => mulQtyRate(1000, 0.5))).toBe("INVALID_AMOUNT");
+  });
+
+  it("rejects an amount too large to hold exactly", () => {
+    const largest = Number.MAX_SAFE_INTEGER;
+    expect(errorCodeOf(() => mulQtyRate(largest, largest))).toBe("INVALID_AMOUNT");
+  });
+
+  it("turns paise into a form-field string with two decimals", () => {
+    expect(paiseToInput(123450)).toBe("1234.50");
+    expect(paiseToInput(5)).toBe("0.05");
+    expect(paiseToInput(0)).toBe("0.00");
+  });
+
+  it("refuses fractional paise when making a form-field string", () => {
+    expect(errorCodeOf(() => paiseToInput(10.5))).toBe("INVALID_AMOUNT");
+  });
+
+  it("returns null for a rupee amount too large to hold exactly", () => {
+    expect(parseRupees("99999999999999999999")).toBeNull();
   });
 });

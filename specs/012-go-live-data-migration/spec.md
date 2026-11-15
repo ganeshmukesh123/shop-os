@@ -1,6 +1,6 @@
 # Feature Specification: Go-Live, Data Migration and Release Practice
 
-**Feature Branch**: `012-go-live-data-migration` (no git repository yet; directory name only)
+**Feature Branch**: `012-go-live-data-migration`
 
 **Created**: 2026-11-13
 

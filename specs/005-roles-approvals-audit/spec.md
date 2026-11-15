@@ -1,6 +1,6 @@
 # Feature Specification: Roles, Approvals, Audit Log and Cash Day-Close
 
-**Feature Branch**: `005-roles-approvals-audit` (no git repository yet; directory name only)
+**Feature Branch**: `005-roles-approvals-audit`
 
 **Created**: 2026-11-13
 

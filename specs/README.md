@@ -4,7 +4,7 @@ One folder per feature. Order is a proposal; dependencies are listed in each spe
 
 | # | Feature | PRD areas | Status |
 |---|---|---|---|
-| 001 | [MVP: inventory and basic bill](001-shop-os-mvp/spec.md) | ITM and BIL basics | spec, plan, tasks written; not built |
+| 001 | [MVP: inventory and basic bill](001-shop-os-mvp/spec.md) | ITM and BIL basics | US1 and US2 built and tested; US3 (bill list, cancel), the schema move and the 2026-11-15 decisions (tasks Phase 7) not built; real printer and packaged app not verified |
 | 002 | [Items: variants and tinting](002-items-variants-tinting/spec.md) | ITM, TNT | spec written |
 | 003 | [Advanced billing](003-advanced-billing/spec.md) | BIL | spec written |
 | 004 | [Parties and khata](004-parties-khata/spec.md) | KHA | spec written |
@@ -22,16 +22,31 @@ One folder per feature. Order is a proposal; dependencies are listed in each spe
 | 016 | [Cross-cutting quality requirements](016-quality-nfr/spec.md) | NFR-001 to 016 | spec written |
 | 017 | [GitHub workflow: CI and merge protection](017-ci-github-workflow/spec.md) | Constitution VI, PR rules | spec, plan, research, tasks written; packages installed; baseline measured |
 
-## Dependency sketch
+## Dependency Architecture (Strict DAG)
 
-- 001 first. 002 and 005 build directly on it.
-- 003 needs 002, 004 and 005 for tiers, credit and approvals; it can start earlier with the parts that do not.
-- 004 needs 001 and 005. 006 needs 003, 004, 005. 007 needs 002 and 005. 008 needs 002, 003, 004.
-- 009 needs 002, 004, 007, 008. 010 needs the counter features before sync is useful. 011 needs data from most others.
+To prevent circular dependencies, features are structured into a strict Directed Acyclic Graph (DAG) across layers:
 
-- 017 is the gate every other feature passes through; do it early, right after the repository is on GitHub.
-- 012 applies from the first trial of 001 and grows with the full MVP go-live. 013 needs 010 and a passed Gate 3. 014 and 015 start in 001 (text separation, first print test) and extend later. 016 applies to every feature as the release check.
+- **Layer 0 (Gates & Quality)**: `017` (CI & merge protection) gates all merges. `016` (Quality benchmarks) enforces speed, offline, and reliability checks across all releases.
+- **Layer 1 (Core Foundation)**: `001` (MVP: inventory, immutable movements, basic bill, local SQLite).
+- **Layer 2 (Domain Extensions)**: 
+  - `002` (Items: families, variants, tinting) depends on `001`.
+  - `005` (Roles, PINs, approvals, day-close) depends on `001`.
+  - `014` (Localization) and `015` (Hardware devices) extend `001`.
+- **Layer 3 (Ledgers & Tracking)**: 
+  - `004` (Parties and khata credit ledger) depends on `001` and `005`.
+  - `007` (Stock locations, rack counts, roll cutting) depends on `001`, `002`, and `005`.
+- **Layer 4 (Counter Workflows & Tax)**: 
+  - `003` (Advanced billing: tiers, credit sales, split payments, returns) depends on `001`, `002`, `004`, and `005`.
+  - `006` (Delivery: challans, driver cash) depends on `003`, `004`, and `005`. Its phone proof of delivery is an optional later step that waits for `010`; until then proof is entered at the counter, so `006` does not depend on `010`.
+  - `008` (GST compliance & scheme switching) depends on `001`, `002`, `003`, and `004`.
+- **Layer 5 (Supply Chain & Reporting)**: 
+  - `009` (Purchases, landed cost, warranty) depends on `002`, `004`, `007`, and `008`.
+  - `011` (Reports, expenses, CA export) depends on `001`, `004`, `005`, `007`, `008`, and `009`.
+- **Layer 6 (Multi-Device & Scale)**: 
+  - `010` (Owner app, godown app, sync hub) depends on counter features `001`–`009`.
+  - `012` (Data migration) accompanies go-live gates and now owns spreadsheet item import (PRD FR-ITM-012), moved out of `001` on 2026-11-15.
+  - `013` (Multi-shop & paid pilot) depends on `010` after Gate 3.
 
 ## Next for each spec
 
-Each still needs `/speckit-clarify`, `/speckit-plan` and `/speckit-tasks` when it is scheduled. Only 001 has a plan and tasks.
+Each feature proceeds through the Spec Kit workflow when scheduled: `/speckit-clarify` → `/speckit-checklist` → `/speckit-plan` → `/speckit-tasks` → `/speckit-analyze` → `/speckit-implement`. Currently, `001` and `017` have plans and tasks.

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import {
+  assertQuantity,
   defaultAllowsDecimal,
   formatQuantity,
   isValidQuantity,
@@ -47,5 +47,31 @@ describe("quantity", () => {
     expect(formatQuantity(1)).toBe("0.001");
     expect(formatQuantity(-1500)).toBe("-1.5");
     expect(formatQuantity(1234567)).toBe("1234.567");
+  });
+});
+
+describe("quantity edge cases", () => {
+  it("accepts a whole quantity for any unit and a thousandths quantity for decimal units", () => {
+    expect(() => assertQuantity(2000, false)).not.toThrow();
+    expect(() => assertQuantity(2500, true)).not.toThrow();
+  });
+
+  it("explains why a fraction is refused for a whole-number unit", () => {
+    expect(() => assertQuantity(1500, false)).toThrowError("this unit accepts whole numbers only");
+  });
+
+  it("explains why a non-integer thousandths value is refused for a decimal unit", () => {
+    expect(() => assertQuantity(1.5, true)).toThrowError(
+      "quantity must be a whole number of thousandths",
+    );
+  });
+
+  it("treats NaN and values beyond the safe integer range as invalid", () => {
+    expect(isValidQuantity(Number.NaN, true)).toBe(false);
+    expect(isValidQuantity(Number.MAX_SAFE_INTEGER + 2, true)).toBe(false);
+  });
+
+  it("returns null for a quantity text too large to hold exactly", () => {
+    expect(parseQuantity("99999999999999999")).toBeNull();
   });
 });

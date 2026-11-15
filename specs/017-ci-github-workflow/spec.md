@@ -1,6 +1,6 @@
 # Feature Specification: GitHub Workflow (Continuous Integration and Merge Protection)
 
-**Feature Branch**: `017-ci-github-workflow` (directory name only until the repository is on GitHub)
+**Feature Branch**: `017-ci-github-workflow`
 
 **Created**: 2026-11-14
 
@@ -10,7 +10,7 @@
 
 **Source documents**: `.specify/memory/constitution.md` (VI test-first, development workflow, change size), `docs/contributing/pull-requests.md`, `.github/pull_request_template.md`, skills `shopos-testing` and `shopos-feature-workflow`, `specs/016-quality-nfr` (release checks).
 
-**Depends on**: the project being hosted on GitHub (it has no remote today). Applies to every feature spec as the gate they all pass through.
+**Depends on**: the project being hosted on GitHub (remote `origin` added by 2026-11-15). Applies to every feature spec as the gate they all pass through.
 
 ## How it fits together
 
@@ -133,7 +133,7 @@ Beyond tests, the workflow enforces the PR rules already agreed: title format, s
 **Acceptance Scenarios**:
 
 1. **Given** a title not in `type(scope): summary` form, **Then** the title check fails.
-2. **Given** a PR over 800 changed lines (excluding generated files) without the `mechanical` label, **Then** the size check fails; 401 to 800 requires a "reason" line in the description.
+2. **Given** a PR over 800 changed lines (excluding generated files) without the `mechanical` label, **Then** the informational size check shows red while tests, build and end-to-end still run; 401 to 800 requires a "reason" line in the description.
 3. **Given** a committed secret or a dependency with a high-severity known vulnerability, **Then** the check fails.
 
 ---
@@ -155,14 +155,14 @@ Beyond tests, the workflow enforces the PR rules already agreed: title format, s
 
 **Triggers and protection**
 
-- **FR-001**: The workflow MUST run on every pull request into `main`, on every push to `main`, and on manual request.
+- **FR-001**: The workflow MUST run on every pull request (including stacked PRs that target another PR's branch), on every push to `main`, and on manual request. The PR size is measured against the PR's own target branch (owner decision 2026-11-15).
 - **FR-002**: `main` MUST be protected: direct pushes, force pushes and deletion refused; applies to administrators.
 - **FR-003**: A PR MUST NOT be mergeable until every required check passes and the branch is up to date with `main`. No approving review is required (solo project); the checks are the protection and the self-review checklist in the PR template is still completed.
 - **FR-004**: Merges MUST be squash merges so `main` has one commit per PR, titled with the PR title.
 
 **Checks, in order**
 
-- **FR-005**: Step 1 (quick checks) MUST run: formatting check, lint (zero errors; warnings reported), type check for all packages, migration-in-sync check (regenerating migrations produces no change), PR title format, PR size.
+- **FR-005**: Step 1 (quick checks) MUST run: formatting check, lint (zero errors; warnings reported), type check for all packages, migration-in-sync check (regenerating migrations produces no change), PR title format. PR size runs as its own informational job beside the pipeline: it shows red over 800 lines without the `mechanical` label, but no step waits on it and it is not a required check (owner decision 2026-11-15: a size warning must never skip the tests).
 - **FR-006**: Step 2 MUST run all unit and integration tests with coverage, using the same test command developers use, and MUST fail on any failing test.
 - **FR-007**: Step 3 MUST build the application bundle.
 - **FR-008**: Step 4 MUST run the end-to-end tests against the built app under a virtual display and MUST fail on any failing scenario.

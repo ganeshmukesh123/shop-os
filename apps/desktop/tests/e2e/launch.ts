@@ -25,6 +25,23 @@ export async function launch(
   return { app, page, dataDir };
 }
 
+/**
+ * Kill the app the way a power cut or crash would (exit code 1, no clean shutdown), and resolve only
+ * once the process has really gone. `app.exit` returns as soon as the request is sent; reading the
+ * database before the process ends fails with "database is locked" on slower machines (CI).
+ */
+export async function forceQuit(app: ElectronApplication): Promise<void> {
+  const appProcess = app.process();
+  const hasExited = appProcess.exitCode !== null || appProcess.signalCode !== null;
+  if (hasExited) {
+    return;
+  }
+  const exited = new Promise<void>((resolve) => appProcess.once("exit", () => resolve()));
+  // The page disappears mid-call, so the evaluate itself may reject; the exit event is what counts.
+  await app.evaluate(({ app: electronApp }) => electronApp.exit(1)).catch(() => {});
+  await exited;
+}
+
 export async function addItem(
   page: Page,
   itemInput: { name: string; unit?: string; price: string; qty?: string },

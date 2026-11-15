@@ -34,7 +34,7 @@ Limits (lint warnings): file 200 lines (tests 300), function 40, component 120, 
 
 ## Non-negotiable rules (full text in the constitution)
 
-- Never edit or delete a saved bill, bill line, stock movement or ledger entry. Fix with cancel or an opposite entry.
+- Never change or delete a saved bill version, bill line, stock movement or ledger entry. Fix with cancel, an opposite entry, or (same day, permitted role, from feature 005) a new logged bill version that keeps the number. Constitution v2.0.0.
 - Save bill + lines + stock movements in ONE transaction. Print and share only after the commit.
 - Money is integer paise; quantity is integer thousandths. No floats. Rounding lives in `packages/core/src/money.ts`.
 - Stock is the sum of movements. Never write item stock without a movement.
@@ -69,7 +69,7 @@ specs/                    one folder per feature
 - `pnpm test:e2e`: Playwright for Electron (run `pnpm build` first)
 - After changing `apps/desktop/src/main/db/schema.ts`: `pnpm --filter @shopos/desktop db:generate`
 
-Notes: the installed drizzle-orm is 0.45 (drizzle-kit 0.31), so table extras use the array form `(tableColumns) => [index(...), check(...)]`. better-sqlite3 has ONE native binary per install, and it must be the ELECTRON build (ABI 130 for Electron 33). The app, the Vitest integration tests and the Playwright specs all use it: `pnpm test` in `apps/desktop` runs Vitest inside Electron's Node (`ELECTRON_RUN_AS_NODE=1`, see `apps/desktop/scripts/vitest-electron.mjs`). `scripts/ensure-electron-sqlite.mjs` runs on `postinstall` and before `dev`, `test` and `test:e2e`, and downloads the matching prebuilt binary if the file is the wrong build. Do NOT run `pnpm rebuild better-sqlite3` (it builds for plain Node and breaks the app). Running `npx vitest` directly uses plain Node and fails with `NODE_MODULE_VERSION`; use `pnpm test` or `pnpm test:watch`. `packages/core` has no native code and still runs in plain Node. Playwright specs read the database with the `sqlite3` CLI. electron-builder rebuilds the module when packaging.
+Notes: the installed drizzle-orm is 0.45 (drizzle-kit 0.31), so table extras use the array form `(tableColumns) => [index(...), check(...)]`. better-sqlite3 has ONE native binary per install, and it must be the ELECTRON build (ABI 148 for Electron 43; see `specs/017-ci-github-workflow/research.md`). The app, the Vitest integration tests and the Playwright specs all use it: `pnpm test` in `apps/desktop` runs Vitest inside Electron's Node (`ELECTRON_RUN_AS_NODE=1`, see `apps/desktop/scripts/vitest-electron.mjs`). `apps/desktop/scripts/ensure-electron-sqlite.mjs` runs on `postinstall` and before `dev`, `test` and `test:e2e`, and downloads the matching prebuilt binary if the file is the wrong build. Do NOT run `pnpm rebuild better-sqlite3` (it builds for plain Node and breaks the app). Running `npx vitest` directly uses plain Node and fails with `NODE_MODULE_VERSION`; use `pnpm test` or `pnpm test:watch`. `packages/core` has no native code and still runs in plain Node. Playwright specs read the database with the `sqlite3` CLI. electron-builder rebuilds the module when packaging.
 
 ## Explaining (chat replies, docs, skills)
 
@@ -81,6 +81,17 @@ Screen --> typed API --> IPC handler --> Service --> Repository --> SQLite
                                            +--> @shopos/core (pure rules)
 Example: save bill C1/26-27/000123  (2 pcs x ₹120 = ₹240)
 ```
+
+## Recommendations and verdicts
+
+Every verdict, recommendation or suggestion (code, design, process, tooling, specs, reviews) gives four things:
+
+1. **Why**: the reasoning, tied to this project (constitution, spec, the shop's data).
+2. **Trade-off**: what it costs, and the alternatives considered and rejected (a table for comparisons).
+3. **Industry practice**: what leading product companies do (for example Google, Meta, Uber, GitHub, Shopify). Say so when no reliable practice was found; do not invent one.
+4. **References**: links to the sources. Mark vendor blogs and secondhand summaries as such, and prefer primary sources (official docs, papers, the company's own engineering writing).
+
+Example: require CI checks before merging to `main`. Why: `main` becomes the counter's installer, and a mis-totalled bill must never ship (constitution VI). Trade-off: about 3 minutes per merge, against relying on memory. Practice: Google runs presubmit tests and reviews almost every change before commit. Reference: [Software Engineering at Google, ch. 9](https://abseil.io/resources/swe-book/html/ch09.html).
 
 ## Working with Spec Kit here
 

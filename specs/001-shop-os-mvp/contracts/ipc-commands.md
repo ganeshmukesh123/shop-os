@@ -1,6 +1,6 @@
 # Contract: Renderer to main-process commands
 
-The UI (renderer) never touches the database. It calls these typed commands through the preload bridge. Every command returns `{ ok: true, data }` or `{ ok: false, code, message }`. Money is integer paise and quantity is integer thousandths on the wire. Validation uses the same Zod schemas in `shopos_core` on both sides.
+The UI (renderer) never touches the database. It calls these typed commands through the preload bridge. Every command returns `{ ok: true, data }` or `{ ok: false, code, message }`. Money is integer paise and quantity is integer thousandths on the wire. Validation uses the same Zod schemas in `@shopos/core` on both sides.
 
 | Command | Input | Result | Error codes |
 |---|---|---|---|
@@ -8,8 +8,6 @@ The UI (renderer) never touches the database. It calls these typed commands thro
 | `items.create` | `{ name, unit, allowsDecimal?, pricePaise, openingQtyMilli }` | `{ item }` | `DUPLICATE_NAME` (returns the matching items), `INVALID_QUANTITY` |
 | `items.update` | `{ id, name?, unit?, pricePaise?, active? }` | `{ item }` | `DUPLICATE_NAME`, `NOT_FOUND` |
 | `stock.adjust` | `{ itemId, mode: "add" or "set", quantityMilli, note }` | `{ item, movement }` | `INVALID_QUANTITY`, `NOTE_REQUIRED` |
-| `import.preview` | `{ filePath }` | `{ rows[], errors[], duplicates[] }` (nothing saved) | `UNREADABLE_FILE` |
-| `import.commit` | `{ previewId }` | `{ created }` | `PREVIEW_EXPIRED` |
 | `bills.draft.save` | `{ payload }` | `{}` | |
 | `bills.draft.load` | `{}` | `{ payload or null }` | |
 | `bills.save` | `{ clientBillId, customerName?, paymentMode, billDiscountPaise, lines[{ itemId, quantityMilli, ratePaise, lineDiscountPaise }] }` | `{ bill, negativeStockItems[] }` | `EMPTY_BILL`, `INVALID_QUANTITY`, `INVALID_DISCOUNT`, `ITEM_INACTIVE` |
@@ -21,7 +19,11 @@ The UI (renderer) never touches the database. It calls these typed commands thro
 | `settings.get` / `settings.update` | shop profile fields | shop profile | `INVALID_FIELD` |
 | `backup.run` | `{}` | `{ path, finishedAt }` | `BACKUP_FAILED` |
 | `backup.status` | `{}` | `{ lastOkAt, lastError? }` | |
-| `backup.restore` | `{ filePath }` | `{ restored }` (app restarts) | `INVALID_BACKUP` |
+| `backup.restore` | `{ filePath, lastIssuedBillNo? }` | `{ restored, nextBillNo, gapRecorded? }` (app restarts) | `INVALID_BACKUP`, `INVALID_FIELD` (bill number not in this series) |
+
+Not in this release: `import.preview` and `import.commit` moved to feature 012 (decision 2026-11-15).
+
+Status (2026-11-15): `bills.list` and `bills.cancel` are not yet in `packages/core/src/commands.ts` (tasks T067 to T069). `bills.save` returns `round_off_paise`, `doc_title` and `business_date` on the bill once T079 to T081 land; `settings.get` and `settings.update` gain `docTitle`, `roundBillTotal`, `timeZone` and `receiptWidth` (`58mm`, `80mm`, `a4`, `a5`).
 
 ## Guarantees
 

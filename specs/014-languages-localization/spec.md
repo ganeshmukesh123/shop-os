@@ -1,6 +1,6 @@
 # Feature Specification: Languages and Localization
 
-**Feature Branch**: `014-languages-localization` (no git repository yet; directory name only)
+**Feature Branch**: `014-languages-localization`
 
 **Created**: 2026-11-13
 

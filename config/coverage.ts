@@ -41,7 +41,7 @@ export function isCoverageEnforced(): boolean {
   return COVERAGE_ENFORCE || isEnforcedByEnvironment();
 }
 
-/** Vitest coverage options shared by every package. `sourceGlobs` says which files count (all of `src/`). */
+/** Vitest coverage options shared by every package. `sourceGlobs` says which files count (the code files under `src/`; vitest 4 parses every matched file, so non-code files such as HTML must not match). */
 export function buildCoverageOptions(sourceGlobs: string[]) {
   const thresholdOptions = {
     lines: COVERAGE_THRESHOLD_PERCENT,

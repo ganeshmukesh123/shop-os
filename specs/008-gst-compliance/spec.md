@@ -1,6 +1,6 @@
 # Feature Specification: GST, Bill Formats and Compliance
 
-**Feature Branch**: `008-gst-compliance` (no git repository yet; directory name only)
+**Feature Branch**: `008-gst-compliance`
 
 **Created**: 2026-11-13
 
@@ -92,7 +92,7 @@ A composition dealer cannot sell inter-state: such a sale is blocked with an exp
 1. **Given** composition and a delivery address outside the home state, **Then** the sale is blocked with an explanation (EC-16).
 2. **Given** a customer created, **Then** notice, consent tick and separate marketing consent are captured.
 3. **Given** consent withdrawn, **Then** marketing stops; transactional messages and bills remain (EC-17).
-4. **Given** an erasure request, **Then** personal data is removed except what GST law requires to keep.
+4. **Given** an erasure request, **Then** personal data is removed except what GST law requires to keep: the party record (phone, address, marketing consent) is blanked, and saved bills keep exactly what was printed on them for the retention period, never edited (spec 001 research D19; to confirm with counsel).
 
 ---
 
@@ -100,7 +100,7 @@ A composition dealer cannot sell inter-state: such a sale is blocked with an exp
 
 Bills and ledgers cannot be deleted and are kept at least 72 months from the annual return due date. Measuring tapes (every 24 months) and scales (every 12 months) have certificate dates with reminders (V2). CA export for CMP-08 and GSTR-4, purchases register and Tally-compatible format with reminders 7 days before due dates (V2, delivered in 011); regular-scheme GSTR-1 and GSTR-3B exports (V2, or earlier if the owner switches); GST simulator for regular versus composition over the last 12 months (V3).
 
-**Independent Test**: Written when each is scheduled.
+**Independent Test**: Verify that SQLite records older than 72 months remain queryable, verify certificate expiration reminder triggers 30 days before deadline, and generate a sample quarterly CMP-08 turnover summary.
 
 **Acceptance Scenarios**:
 

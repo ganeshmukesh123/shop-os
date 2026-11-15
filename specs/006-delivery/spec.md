@@ -1,6 +1,6 @@
 # Feature Specification: Delivery
 
-**Feature Branch**: `006-delivery` (no git repository yet; directory name only)
+**Feature Branch**: `006-delivery`
 
 **Created**: 2026-11-13
 
@@ -10,7 +10,7 @@
 
 **PRD source**: `docs/reference/PRD.md` section 6 Delivery (FR-DLV-001 to 008), FR-BIL-022, FR-BIL-023, EC-16, US-16.
 
-**Depends on**: 001/003 (bills), 004 (contractor sites for V2 site tagging), 005 (waive permission, day-close), 010 (phone app for proof of delivery). Until the phone app exists, proof can be entered at the counter.
+**Depends on**: 001/003 (bills), 004 (contractor sites for V2 site tagging), 005 (waive permission, day-close). Optional later: 010 (phone app for proof of delivery), not a dependency. Until the phone app exists, proof can be entered at the counter.
 
 ## User Scenarios & Testing *(mandatory)*
 

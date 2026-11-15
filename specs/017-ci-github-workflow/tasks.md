@@ -23,10 +23,10 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 
 - [X] T001 Install `@vitest/coverage-v8@2.1.9` in `packages/core` and `apps/desktop`, and `@testing-library/react`, `@testing-library/user-event`, `jsdom` in `apps/desktop` (approved 2026-11-14)
 - [X] T002 Spike: coverage runs inside Electron's Node via `node apps/desktop/scripts/vitest-electron.mjs run --coverage` (result: works; recorded in `research.md` S1)
-- [X] T003 Measure the baseline for core and desktop and record it in `specs/017-ci-github-workflow/research.md` S2 (core 67.2%, desktop 38.2% lines; renderer 0%)
+- [X] T003 Measure the baseline for core and desktop and record it in `specs/017-ci-github-workflow/research.md` S2 (vitest 2: core 67.2%, desktop 38.2% lines; renderer 0%). Re-measured under vitest 4 (the numbers are not comparable): core 77.4% lines / 85.2% branches, desktop 39.8% / 30.4%, main-process slice 74.2% / 64.5% (research F9)
 - [X] T004 Create `config/coverage.ts` exporting `COVERAGE_THRESHOLD_PERCENT = 90`, `COVERAGE_EXCLUDED_PATHS` (generated files, `*.d.ts`, test folders only) and `COVERAGE_ENFORCE = false`
 - [X] T005 Use `config/coverage.ts` in `packages/core/vitest.config.ts` and `apps/desktop/vitest.config.ts`: provider `v8`, reporters `text`, `lcov`, `json-summary`, `html`, include `src/**`, thresholds (lines, statements, functions, branches) applied only when `COVERAGE_ENFORCE` is true; add `test:coverage` scripts in root, core and desktop `package.json` _(verified: `pnpm test:coverage` runs core in Node and desktop through Electron's Node; report-only exits 0; with `COVERAGE_ENFORCE=true` both packages fail naming the 90% threshold. Root script uses `--no-bail --no-sort` because desktop depends on core and pnpm otherwise skips it when core fails.)_
-- [ ] T006 Owner action: push the repository to GitHub, confirm the default branch is `main`, and note whether the repository is private (affects runner minutes) (resolves O5)
+- [ ] T006 Owner action: push the repository to GitHub, confirm the default branch is `main`, and note whether the repository is private (affects runner minutes) (resolves O5) _(2026-11-15: pushed; `origin` is on GitHub and `origin/HEAD` points to `main`. Still to note: private or public.)_
 
 **Checkpoint**: `pnpm test:coverage` prints per-package coverage locally and fails nothing yet.
 
@@ -56,20 +56,20 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 
 ### Core (`packages/core`)
 
-- [ ] T016 [P] [US3] Write `packages/core/tests/types.test.ts` covering every Zod schema in `types.ts` with valid inputs, each invalid field, and boundary values (name length, UUID `clientBillId`, discount, quantity)
-- [ ] T017 [P] [US3] Write `packages/core/tests/commands.test.ts` covering the command map in `commands.ts` and the exports in `index.ts` (every command has an input schema and a result type)
-- [ ] T018 [P] [US3] Close the remaining gaps with tests: `money.ts` (parse and format edge cases), `quantity.ts` (unit and decimal rules), `draftBill.ts` (percent and error paths), `numbering.ts` (financial year boundary), `stock.ts`
-- [ ] T019 [US3] Confirm `packages/core` is at 90% on all four metrics; record it in `research.md`
+- [X] T016 [P] [US3] Write `packages/core/tests/types.test.ts` covering every Zod schema in `types.ts` with valid inputs, each invalid field, and boundary values (name length, UUID `clientBillId`, discount, quantity) (done: `packages/core/tests/types.test.ts`, 32 tests, zod 4 behaviour pinned)
+- [X] T017 [P] [US3] Write `packages/core/tests/commands.test.ts` covering the command map in `commands.ts` and the exports in `index.ts` (every command has an input schema and a result type) (done: `packages/core/tests/commands.test.ts`, contract list and package exports)
+- [X] T018 [P] [US3] Close the remaining gaps with tests: `money.ts` (parse and format edge cases), `quantity.ts` (unit and decimal rules), `draftBill.ts` (percent and error paths), `numbering.ts` (financial year boundary), `stock.ts` (done: edge cases in the money, quantity, numbering, stock and draftBill tests; the work found and fixed a real defect: `evaluateDraft` threw on a huge amount, commit 919beed)
+- [X] T019 [US3] Confirm `packages/core` is at 90% on all four metrics; record it in `research.md` (done 2026-11-14: core 100% lines/statements/functions, 99.21% branches; `COVERAGE_ENFORCE=true` run exits 0. One branch left: the defensive non-CoreError path in `draftBill.ts` line 98, unreachable without mocking)
 
 ### Main process (`apps/desktop/src/main`, `preload`)
 
-- [ ] T020 [P] [US3] Tests for `main/db/seed.ts` (first-run creates one business, one shop, a default profile; second run changes nothing) and the `connection.ts` branch
-- [ ] T021 [P] [US3] Tests for `main/ipc/index.ts` and the uncovered paths of `main/ipc/handlers.ts` (every command registered; unexpected error mapped to a safe result)
-- [ ] T022 [P] [US3] Tests for the uncovered paths in `BillRepository.ts`, `StockRepository.ts` and `ItemRepository.ts`
-- [ ] T023 [P] [US3] Refactor `main/services/electronRenderer.ts` to take the Electron window API as an argument, and test it with a fake window (print, PDF, failure, cancel)
-- [ ] T024 [US3] Refactor `main/index.ts` (174 lines) into small functions that take the Electron API as an argument (create window, register dialogs, register handlers, start backups, quit hook) and test each with fakes; keep any untestable line to a minimum and justify it in a comment
-- [ ] T025 [P] [US3] Refactor `preload/index.ts` so the bridge is built by a function from the command list, and test that it exposes exactly the contract commands and nothing else
-- [ ] T026 [US3] Confirm the main process is at 90% on all four metrics; re-measure the whole baseline (Step 2 of the sequence) and record it in `research.md`
+- [X] T020 [P] [US3] Tests for `main/db/seed.ts` (first-run creates one business, one shop, a default profile; second run changes nothing) and the `connection.ts` branch (done: `database.test.ts` covers seed, connection and the schema contract; `repositories.test.ts` the repository gaps)
+- [X] T021 [P] [US3] Tests for `main/ipc/index.ts` and the uncovered paths of `main/ipc/handlers.ts` (every command registered; unexpected error mapped to a safe result) (done: `handlers.commands.test.ts` and `ipcRegistration.test.ts`; every command and the unknown-command guard)
+- [X] T022 [P] [US3] Tests for the uncovered paths in `BillRepository.ts`, `StockRepository.ts` and `ItemRepository.ts` (done: repository gaps, partly in `repositories.test.ts` and `database.test.ts`)
+- [X] T023 [P] [US3] Refactor `main/services/electronRenderer.ts` to take the Electron window API as an argument, and test it with a fake window (print, PDF, failure, cancel) (done: `electronRenderer.ts` now builds from a window factory, `electronRenderer.test.ts`)
+- [X] T024 [US3] Refactor `main/index.ts` (174 lines) into small functions that take the Electron API as an argument (create window, register dialogs, register handlers, start backups, quit hook) and test each with fakes; keep any untestable line to a minimum and justify it in a comment (done: `main/index.ts` split into `main/app/*` modules taking the Electron objects as arguments; tests in `appConfig`, `mainWindow`, `securityHeaders`, `backupLifecycle`, `shell`, `startApp` and `mainEntry`; no line excluded)
+- [X] T025 [P] [US3] Refactor `preload/index.ts` so the bridge is built by a function from the command list, and test that it exposes exactly the contract commands and nothing else (done: `preload/bridge.ts` builds the api from the command list; `preload.test.ts` proves it exposes exactly the contract commands)
+- [X] T026 [US3] Confirm the main process is at 90% on all four metrics; re-measure the whole baseline (Step 2 of the sequence) and record it in `research.md` (done 2026-11-15: main process + preload 100% lines, statements and functions, 98.0% branches; enforced run on that slice exits 0; whole baseline re-measured in research F10; whole desktop package is still 56% because the renderer is untouched)
 
 **Checkpoint (M2 exit)**: core and main process at 90% on every metric.
 

@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   DEFAULT_NUMBER_TEMPLATE,
   financialYear,
@@ -42,5 +41,20 @@ describe("numbering", () => {
 
   it("throws when the sequence overflows the padded width", () => {
     expect(() => formatBillNumber("{seq}", "C1", "26-27", 1_000_000)).toThrow();
+  });
+});
+
+describe("numbering edge cases", () => {
+  it("refuses a sequence below 1 or a fractional sequence", () => {
+    const template = DEFAULT_NUMBER_TEMPLATE;
+    expect(() => formatBillNumber(template, "C1", "26-27", 0)).toThrowError(
+      "sequence must be 1 or more",
+    );
+    expect(() => formatBillNumber(template, "C1", "26-27", -3)).toThrowError(
+      "sequence must be 1 or more",
+    );
+    expect(() => formatBillNumber(template, "C1", "26-27", 2.5)).toThrowError(
+      "sequence must be 1 or more",
+    );
   });
 });

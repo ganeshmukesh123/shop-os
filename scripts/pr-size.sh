@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Prints how big a change is, excluding generated files, against the PR size limits.
 # Usage: pnpm pr:size [base-branch]   (default base: main; falls back to uncommitted changes if no commits differ)
+# For a stacked branch, pass its target: pnpm pr:size refactor/backup-lifecycle-shell
+# CI sets PR_BASE_SHA and PR_HEAD_SHA (and PR_BASE_LABEL) so the PR is measured against its own target branch.
 # Limits: up to 200 small, 201-400 normal, 401-800 large (needs a reason), over 800 split it.
 # See docs/contributing/pull-requests.md.
 set -euo pipefail
@@ -8,7 +10,19 @@ set -euo pipefail
 base_branch="${1:-main}"
 excluded_paths=(':!pnpm-lock.yaml' ':!apps/desktop/drizzle/meta/**' ':!*.snap')
 
-if git rev-parse --verify --quiet "$base_branch" >/dev/null && [ "$(git rev-parse HEAD)" != "$(git rev-parse "$base_branch")" ]; then
+pr_base_sha="${PR_BASE_SHA:-}"
+pr_head_sha="${PR_HEAD_SHA:-}"
+has_pr_range=false
+if [ -n "$pr_base_sha" ] && [ -n "$pr_head_sha" ]; then
+  has_pr_range=true
+fi
+
+if [ "$has_pr_range" = "true" ]; then
+  # CI: exactly what the PR's "Files changed" tab shows, the head against its own target branch.
+  # Stacked example: PR 2 targets feature-a, so only PR 2's lines count, not PR 1's.
+  diff_args=("$pr_base_sha...$pr_head_sha")
+  scope_label="this PR against its target branch ${PR_BASE_LABEL:-$pr_base_sha}"
+elif git rev-parse --verify --quiet "$base_branch" >/dev/null && [ "$(git rev-parse HEAD)" != "$(git rev-parse "$base_branch")" ]; then
   diff_args=("$base_branch...HEAD")
   scope_label="commits on this branch since $base_branch"
 else

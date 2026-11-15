@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { COMMAND_NAMES } from "@shopos/core";
 import { createHandlers, type Handlers } from "../../src/main/ipc/handlers";
 import { BackupService } from "../../src/main/services/BackupService";

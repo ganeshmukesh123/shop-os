@@ -8,11 +8,11 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/ipc-commands.md, contracts/bill-layout.md, quickstart.md
 
-**Implementation status**: Code for T001-T063 is written and the app has been run. Items marked [X] are verified by passing unit/integration tests, typecheck, lint, build, or the three Playwright specs (`pnpm test:e2e`) run against real Electron 33. Items still [ ] carry a status note: mainly the real printer, the packaged installer and a second person following the restore guide.
+**Implementation status**: Code for T001-T063 is written and the app has been run. Items marked [X] are verified by passing unit/integration tests, typecheck, lint, build, or the three Playwright specs (`pnpm test:e2e`) run against real Electron (now ^43.8). Items still [ ] carry a status note: mainly the real printer, the packaged installer and a second person following the restore guide. Revised 2026-11-15 after the spec audit: file paths corrected to the code as it is (the IPC handlers live in `main/ipc/handlers.ts` and `index.ts`, start-up in `main/app/*`, the bridge in `preload/bridge.ts`), and Phase 7 (T073 to T090) added for the owner's decisions (research D18 to D23) and the design-compliance gaps.
 
 **Tests**: Included. The plan commits to Vitest for core and service logic and Playwright for Electron end-to-end scenarios (quickstart.md), and the milestone exit criteria depend on them. Within each story, write the tests first and confirm they fail before implementing.
 
-**Organization**: MVP scope = US1 (inventory) + US2 (basic bill, saved, printed, PDF) + US3 (bill list, reprint, cancel; moved back into the first release on 2026-11-13, review B3) + automatic backup (FR-021) + a packaged build. Spreadsheet import (FR-007) and the formal shop trial remain deferred; the full 80-task list is kept in `tasks.full.md` for reference only. Milestone references (M0 to M6) are from plan.md.
+**Organization**: MVP scope = US1 (inventory) + US2 (basic bill, saved, printed, PDF) + US3 (bill list, reprint, cancel; moved back into the first release on 2026-11-13, review B3) + automatic backup (FR-021) + a packaged build. Spreadsheet import (FR-007) moved to feature 012 (owner decision 2026-11-15); the formal shop trial is M6. The old `tasks.full.md` has been removed; this file is the only task list. Milestone references (M0 to M6, M3b) are from plan.md.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -56,7 +56,7 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 - [X] T017 Implement `packages/core/src/billing.ts` to pass T012 (depends on T015, T016)
 - [X] T018 [P] Implement `packages/core/src/stock.ts` to pass T013
 - [X] T019 [P] Implement `packages/core/src/numbering.ts` to pass T014
-- [X] T020 [P] Define shared types and Zod schemas in `packages/core/src/types.ts` for every command in `specs/001-shop-os-mvp/contracts/ipc-commands.md` (inputs, results, error codes) and export everything from `packages/core/src/index.ts`
+- [X] T020 [P] Define shared types and Zod schemas in `packages/core/src/types.ts` for every command in `specs/001-shop-os-mvp/contracts/ipc-commands.md` (inputs, results, error codes) and export everything from `packages/core/src/index.ts` _(caveat 2026-11-15: done for every command except `bills.list` and `bills.cancel`, which are added in T069)_
 
 ### Database and plumbing
 
@@ -90,7 +90,7 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 - [X] T032 [P] [US1] Implement `ItemRepository` methods (create, update, get, search by partial name with prefix and substring matching, list with `includeInactive` and `needsCorrection`) in `apps/desktop/src/main/repositories/ItemRepository.ts`
 - [X] T033 [P] [US1] Implement `StockRepository.append(movement)` and `StockRepository.sumForItem(itemId)` in `apps/desktop/src/main/repositories/StockRepository.ts`; movements are insert-only, no update or delete method exists
 - [X] T034 [US1] Implement `InventoryService` in `apps/desktop/src/main/services/InventoryService.ts`: `createItem` (validate with core, check duplicates, insert item and `opening` movement in one transaction), `updateItem`, `adjustStock` (add or set; `set` writes the difference; note required), `listItems`; reuse core `quantity.ts` for decimal rules (depends on T032, T033)
-- [X] T035 [US1] Wire the commands `items.list`, `items.create`, `items.update`, `stock.adjust` in `apps/desktop/src/main/ipc/inventory.ts` (depends on T034)
+- [X] T035 [US1] Wire the commands `items.list`, `items.create`, `items.update`, `stock.adjust` in `apps/desktop/src/main/ipc/handlers.ts` (depends on T034)
 - [X] T036 [P] [US1] Build the Items screen in `apps/desktop/src/renderer/screens/ItemsScreen.tsx`: searchable table (name, unit, price, stock), filter "Needs correction" for negative stock, "Show inactive" toggle, stock shown with units and a text label (not colour only) for negative
 - [X] T037 [P] [US1] Build the Item form in `apps/desktop/src/renderer/screens/ItemForm.tsx`: name, unit picker with custom unit, decimal allowed (defaulted by unit), price in rupees converted to paise, opening quantity; shows the duplicate warning list before saving; keyboard friendly
 - [X] T038 [P] [US1] Build the Adjust stock dialog in `apps/desktop/src/renderer/components/AdjustStockDialog.tsx`: add or set, quantity, required note
@@ -117,8 +117,8 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 - [X] T043 [P] [US2] Implement `BillRepository.insertBill` and `insertLines` and `NumberCounter` increment in `apps/desktop/src/main/repositories/BillRepository.ts` (insert-only; no update or delete for saved bills except the cancel fields, added in US3)
 - [X] T044 [P] [US2] Implement `SettingsRepository` get and update for the shop profile in `apps/desktop/src/main/repositories/SettingsRepository.ts` (name required up to 80, address up to 200, phone up to 20, series code, number template, footer up to 200, receipt width `58mm` or `80mm`)
 - [X] T045 [US2] Implement `BillingService.saveBill` in `apps/desktop/src/main/services/BillingService.ts`: validate with core `billing.ts`, take the next sequence from `number_counter` for the series and financial year, build the number with core `numbering.ts`, insert bill, lines and `sale` movements, update cached item stock, all in one database transaction; return the saved bill and `negativeStockItems` (depends on T043, T044)
-- [X] T046 [US2] Implement draft handling (`bills.draft.save`, `bills.draft.load`, clear on save) in `apps/desktop/src/main/services/BillingService.ts` and `apps/desktop/src/main/ipc/billing.ts`
-- [X] T047 [US2] Wire `bills.save`, `settings.get`, `settings.update` in `apps/desktop/src/main/ipc/billing.ts` and `apps/desktop/src/main/ipc/settings.ts`
+- [X] T046 [US2] Implement draft handling (`bills.draft.save`, `bills.draft.load`, clear on save) in `apps/desktop/src/main/services/BillingService.ts` and `apps/desktop/src/main/ipc/handlers.ts`
+- [X] T047 [US2] Wire `bills.save`, `settings.get`, `settings.update` in `apps/desktop/src/main/ipc/handlers.ts` (settings through `apps/desktop/src/main/services/SettingsService.ts`)
 - [X] T048 [US2] Build the New bill screen in `apps/desktop/src/renderer/screens/NewBillScreen.tsx`: search box focused on open; 2+ characters shows matches; Enter adds the top match at quantity 1; editable quantity and rate per line; per-line and whole-bill discount as rupees or percent; running totals from core `billing.ts`; optional customer name; payment mode picker (cash, UPI, card, unpaid, label only); remove line; Save with Ctrl or Cmd+S
 - [X] T049 [P] [US2] Build the line editor in `apps/desktop/src/renderer/components/BillLineRow.tsx` with decimal rules from core `quantity.ts` and inline error text
 - [ ] T050 [P] [US2] Build the Settings screen in `apps/desktop/src/renderer/screens/SettingsScreen.tsx` for the shop profile fields and the bill number template with a live preview and a warning if the number could exceed 16 characters **(Status: code written, builds and typechecks; the Settings screen was not opened in a test)**
@@ -130,7 +130,7 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 - [X] T053 [P] [US2] Unit tests in `apps/desktop/tests/unit/billLayout.test.ts`: the rendered HTML for a bill contains the header, lines, totals and footer from `specs/001-shop-os-mvp/contracts/bill-layout.md`, shows no tax wording, hides zero discounts, and trims quantity decimals
 - [X] T054 [P] [US2] Implement the bill renderer in `apps/desktop/src/main/services/billHtml.ts` producing HTML from a bill, lines and shop profile per `contracts/bill-layout.md`, with print stylesheets for `58mm`, `80mm`, A4 and A5, using only snapshot values (`item_name_snapshot`, `unit_snapshot`) and core money formatting; makes T053 pass
 - [X] T055 [US2] Implement `PrintService` in `apps/desktop/src/main/services/PrintService.ts`: print through the OS dialog for the chosen target and export PDF with `printToPDF`; a failure returns `PRINT_FAILED` or `WRITE_FAILED` and never touches the saved bill (depends on T054)
-- [X] T056 [US2] Add `BillRepository.get` in `apps/desktop/src/main/repositories/BillRepository.ts` and wire `bills.get`, `bills.print` (`target`: receipt, a4, a5) and `bills.exportPdf` in `apps/desktop/src/main/ipc/billing.ts`
+- [X] T056 [US2] Add `BillRepository.get` in `apps/desktop/src/main/repositories/BillRepository.ts` and wire `bills.get`, `bills.print` (`target`: receipt, a4, a5) and `bills.exportPdf` in `apps/desktop/src/main/ipc/handlers.ts`
 - [ ] T057 [US2] Enable the Print and Save PDF buttons in `apps/desktop/src/renderer/screens/BillView.tsx`; if printing fails show an inline message and keep the bill saved (spec US2 scenario 7) **(Status: code written; the Print button and OS print dialog were never exercised; PDF export is proven through the command in tests/e2e/pdf.spec.ts)**
 - [ ] T058 [US2] Verify the 80 mm receipt on the real printer with a 5-line bill and a long item name (settings from spike T008); record the result and the timed 5-line bill (SC-002) in `specs/001-shop-os-mvp/quickstart.md` **(Status: NOT done: needs the real printer)**
 
@@ -144,7 +144,7 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 
 - [X] T059 [P] Integration tests in `apps/desktop/tests/integration/backup.test.ts`: backup produces a file that opens and contains the same items and bills; backup while a bill is being saved is consistent; retention keeps the last 30 daily copies; restore replaces the database with the chosen file; a corrupt file returns `INVALID_BACKUP`
 - [X] T060 Implement `BackupService` in `apps/desktop/src/main/services/BackupService.ts` using better-sqlite3 `db.backup()` (verify the exact call in the better-sqlite3 documentation first) to write timestamped copies to the configured second folder on app close and every 15 minutes while the app is open, record each attempt in `backup_log` (`path`, `started_at`, `finished_at`, `status` `ok` or `failed`, `error`), and prune to the last 30 daily copies
-- [ ] T061 Wire `backup.run`, `backup.status`, `backup.restore` in `apps/desktop/src/main/ipc/backup.ts` and add a Backup section (folder chooser, last good backup time, Run now, Restore from file, visible failure message) to `apps/desktop/src/renderer/screens/SettingsScreen.tsx` **(Status: backend and IPC tested; the Backup section of Settings was not opened in a test)**
+- [ ] T061 Wire `backup.run`, `backup.status`, `backup.restore` in `apps/desktop/src/main/ipc/handlers.ts` and add a Backup section (folder chooser, last good backup time, Run now, Restore from file, visible failure message) to `apps/desktop/src/renderer/screens/SettingsScreen.tsx` **(Status: backend and IPC tested; the Backup section of Settings was not opened in a test)**
 - [ ] T062 Configure packaging in `apps/desktop/electron-builder.yml` for macOS (unsigned with documented first-run steps if no Apple developer account), and verify the packaged app runs quickstart scenarios 1 to 4 on a clean machine with networking disabled **(Status: electron-builder.yml written; no installer built or run)**
 - [ ] T063 Write the owner-facing restore guide in `docs/restore-guide.md`: where the data and backups live, how to restore on a new computer, how to check the last backup; have someone other than the builder follow it once **(Status: docs/restore-guide.md written; not yet followed by a second person)**
 
@@ -168,12 +168,59 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 
 - [ ] T067 [P] [US3] Implement `BillRepository.list` (filter by number, date range, customer name, status; newest first; paging with a maximum page size) in `apps/desktop/src/main/repositories/BillRepository.ts`
 - [ ] T068 [US3] Implement `BillingService.cancelBill` in `apps/desktop/src/main/services/BillingService.ts`: one transaction that sets status `cancelled`, `cancel_reason` and `cancelled_at`, appends the reverse `sale_cancel` movements and restores cached item stock; refuse if already cancelled or the reason is empty (depends on T067)
-- [ ] T069 [US3] Wire `bills.list` and `bills.cancel` in `apps/desktop/src/main/ipc/billing.ts` with the Zod schemas in `packages/core/src/types.ts` (contract: `specs/001-shop-os-mvp/contracts/ipc-commands.md`)
+- [ ] T069 [US3] Add `bills.list` and `bills.cancel` to `packages/core/src/commands.ts` and the preload command list, and wire them in `apps/desktop/src/main/ipc/handlers.ts` with the Zod schemas in `packages/core/src/types.ts` (contract: `specs/001-shop-os-mvp/contracts/ipc-commands.md`)
 - [ ] T070 [P] [US3] Build the Bills screen in `apps/desktop/src/renderer/screens/BillsScreen.tsx`: search by number, date range and customer name; status shown as the word "Cancelled" (not colour alone); open a bill in the existing bill view
 - [ ] T071 [US3] Add the Cancel bill action with a required-reason dialog in `apps/desktop/src/renderer/components/CancelBillDialog.tsx`, show the CANCELLED banner in `apps/desktop/src/renderer/screens/BillView.tsx` and `apps/desktop/src/main/services/billHtml.ts`; saved bills show no edit or delete controls anywhere; make T064 to T066 pass
 - [ ] T072 [US3] Verify reprint is identical to the original and cancel restores stock on a real counter run; record the result in `specs/001-shop-os-mvp/quickstart.md` (scenario 5)
 
 **Checkpoint (US3 exit)**: Spec US3 scenarios 1 to 3 pass; a wrong bill can be cancelled and the stock comes back.
+
+---
+
+## Phase 7: Decisions of 2026-11-15 and design compliance (M3b, then M5)
+
+**Purpose**: apply the owner's answers to the spec audit (research D18 to D23) and close the constitution IX and X violations recorded in plan.md Complexity Tracking. Each task is one PR of 400 changed lines or fewer. Run T073 to T081 **before** US3 (T064 to T072) so cancel and the bill list are built on the new tables.
+
+### Schema in the architecture's shape (D18; spec FR-001, FR-003, Key Entities)
+
+Every schema task: edit `apps/desktop/src/main/db/schema.ts`, run `pnpm --filter @shopos/desktop db:generate`, read the SQL, re-create the immutability triggers for any rebuilt table in the same migration, migrate existing rows (never drop them), update `data-model.md` "Current schema", and keep `pnpm test` and `pnpm test:e2e` green.
+
+- [ ] T073 Tests first in `apps/desktop/tests/integration/schemaShape.test.ts`: the target tables and columns of `data-model.md` "Target shape" exist; triggers reject update and delete on `stock_movement`, `bill_line`, `bill_tender` and `bill_number_gap`; a bill can only move from `posted` to `cancelled`; rows from a database at migration 0004 survive the upgrade with the same totals and stock
+- [ ] T074 Items: split `item` into `item_family` and `item_variant` (one variant per family; `name` to `display_name`, `price_paise` to `selling_price_paise`, `unit` to `base_uom`, `active` to `is_active`, add `item_code`); update `ItemRepository.ts`, `InventoryService.ts` and their tests (depends on T073)
+- [ ] T075 Locations and movements: add `location` with the seeded "Shop floor" in `apps/desktop/src/main/db/seed.ts`; reshape `stock_movement` to `movement_type`, positive `qty_base_milli`, `from_location_id`/`to_location_id`, `doc_type`/`doc_id`, `variant_id`; update `StockRepository.ts` and `packages/core/src/stock.ts` (direction from the locations) with tests first in `packages/core/tests/stock.test.ts` (depends on T074)
+- [ ] T076 Bill header: rename `number` to `bill_no`, `saved` to `posted`, `lines_total_paise` to `subtotal_paise`, `grand_total_paise` to `total_paise`; add `device_id`, `counter_code`; update the `bill_only_cancel_update` trigger's column list, `BillRepository.ts`, `BillingService.ts`, `packages/core/src/types.ts` and the contract (depends on T073)
+- [ ] T077 Bill lines and tenders: `bill_line.item_id` to `variant_id`, `quantity_milli` to `qty_base_milli`, `rate_paise` to `unit_price_paise`; move `payment_mode` into a new append-only `bill_tender` row (`mode`, `amount_paise`, `status` `label`) written in the save transaction (depends on T076)
+- [ ] T078 Numbering and time columns: replace `number_counter` with `number_series` (adds `template`); change `created_at`, `updated_at`, `occurred_at`, `cancelled_at` to INTEGER epoch milliseconds through `apps/desktop/src/main/db/ids.ts` helpers; `bill_date` becomes `billed_at` (epoch ms) plus `business_date` (depends on T076)
+
+### Round-off, time zone, title (D20, D22, D23; spec FR-010a, FR-015a, FR-019a)
+
+- [ ] T079 [P] Tests first, then core: `packages/core/src/businessDate.ts` (business date and financial year from a UTC instant and a named zone; 23:50 IST on 31 March and 00:10 IST on 1 April fall in FY 26-27 and 27-28 with the device in another zone) and `roundBillTotal` in `packages/core/src/money.ts` (₹849.60 to ₹850.00 with +40 paise; ₹849.49 to ₹849.00 with -49; ₹849.50 to ₹850.00; off gives 0), in `packages/core/tests/businessDate.test.ts` and `money.test.ts`
+- [ ] T080 Shop settings: add `doc_title` (default "Estimate"), `round_bill_total` (default on), `time_zone` (default `Asia/Kolkata`) and `receipt_width` (`58mm`, `80mm` default, `a4`, `a5`) to `shop_profile`, `SettingsRepository.ts`, `SettingsService.ts`, the Zod schemas and `SettingsScreen.tsx`; store `doc_title` and `round_off_paise` on each bill in `BillingService.saveBill`; warn (never block) when the device zone differs from the shop zone or the clock is earlier than the last saved bill (depends on T078, T079)
+- [ ] T081 Print: show the stored `doc_title` and the signed round-off line in `apps/desktop/src/main/services/billHtml.ts` per `contracts/bill-layout.md`, with tests in `apps/desktop/tests/unit/billLayout.test.ts` (title "Estimate" by default, no tax wording, round-off hidden when zero) (depends on T080)
+
+### Restore never reuses a bill number (D21; spec FR-013b, EC-19)
+
+- [ ] T082 Tests first in `apps/desktop/tests/integration/restoreNumbering.test.ts`: after restoring a backup taken at seq 120 and confirming "last issued 126", the next bill is 127 and a `bill_number_gap` row 121 to 126 with reason `lost_in_restore` exists; without a confirmed number the series jumps 100 and records the block; a gap never reuses a cancelled number
+- [ ] T083 Implement the gap in `apps/desktop/src/main/services/BackupService.ts`, `BillRepository.ts` and `packages/core/src/numbering.ts`; `backup.restore` takes `lastIssuedBillNo?` (contract); make T082 pass (depends on T078)
+- [ ] T084 Restore screen asks for the last bill number issued, with the example; the bill list shows recorded gaps as "Lost in restore"; add the step and the retention note (research D19) to `docs/restore-guide.md` (depends on T083, T070)
+
+### Design compliance (constitution X; plan Complexity Tracking)
+
+- [ ] T085 [P] Theme preference System, Light or Dark in `apps/desktop/src/renderer/shared/theme/` (resolve System with `matchMedia("(prefers-color-scheme: dark)")` before first paint, pass `appearance` to `<Theme>` in `main.tsx`), a picker in Settings, and component tests
+- [ ] T086 [P] Shared `StatusMessage` and `StatusBadge` in `apps/desktop/src/renderer/shared/components/` (label, sentence, one action; status always has a word), replacing hand-built alerts
+- [ ] T087 Remove the inline `style` uses from `apps/desktop/src/renderer` (33 today) in favour of Radix props and tokens, one screen per PR; check every screen in light and dark against the new-screen checklist in `docs/design/design-guidelines.md`
+
+### Small, pure renderer (constitution IX; with spec 017 T030)
+
+- [ ] T088 Move the renderer to `app/`, `features/` and `shared/` per `shopos-react-components`, one folder per PR, tests green before and after
+- [ ] T089 Split `NewBillScreen.tsx` (472 lines) into `useBillForm`, `useBillSave`, `BillSearchBox`, `BillLinesTable`, `BillSummaryPanel` and `RecoverDraftDialog` (same work as spec 017 T030; do it once)
+- [ ] T090 Split `ItemForm.tsx` (230 lines) and `SettingsScreen.tsx` (233 lines) under the 120-line component limit
+
+### Operations (research D15; finding H5)
+
+- [X] T091 Before running a pending migration on start-up, take a backup with the online backup API; run `PRAGMA integrity_check` on start and offer restore on failure; tests in `apps/desktop/tests/integration/startupSafety.test.ts`. Must land before any rebuilt-table migration (T074 to T078) reaches the shop's database _(done 2026-11-15: `main/db/startupSafety.ts` and `main/app/startupRecovery.ts`; copies go to `pre-migration-backups/` beside the database, newest 5 kept; a damaged file raises `DATABASE_CORRUPT` and the app offers a backup to restore, then relaunches; 8 safety tests and 5 start-up tests. Disk-space check and the local log file from D15 are not part of this task)_
+
+**Checkpoint (M3b exit)**: T073 to T084 and T091 done; every existing test green on the new tables; the boundary and round-off tests pass. **Checkpoint (M5 design)**: T085 to T090 done; every screen checked in light and dark.
 
 ---
 
@@ -196,9 +243,10 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 1. Phases 1 and 2, then US1 and US2 including print (T001 to T058). Demo at the end of US2.
 2. Backup and packaging (T059 to T063), then use the app at the counter.
 3. US3 (T064 to T072): bill list, reprint and cancel. In the first release because, until cancel exists, a wrong bill cannot be undone in the app. Build it before the counter trial.
-4. Still deferred (descriptions in `tasks.full.md`, items T065 to T067 and T074 to T080 there): spreadsheet import (FR-007); accessibility and shortcut polish; the formal 2-week trial with SC-004/005/006/007 checks.
-5. Do not start tax, khata or other PRD modules before that.
+4. Phase 7 (T073 to T091): the schema move and safety first (T091, T073 to T078), then T079 to T084, then US3 on the new tables, then design compliance (T085 to T090).
+5. Still deferred: spreadsheet import (FR-007, feature 012); accessibility and shortcut polish; the formal 2-week trial with SC-001, SC-004 to SC-007 checks (M6).
+6. Do not start tax, khata or other PRD modules before that.
 
 ## Format validation
 
-Every task starts with `- [ ]`, has a sequential ID (T001 to T072), carries a story label only inside story phases, and names exact file paths.
+Every task starts with `- [ ]` or `- [X]`, has a sequential ID (T001 to T091), carries a story label only inside story phases, and names exact file paths.

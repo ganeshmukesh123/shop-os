@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { checkInvariant, foldMovements, isNegative } from "../src/stock";
 
 const mv = (itemId: string, quantityMilli: number) => ({ itemId, quantityMilli: quantityMilli });
@@ -32,5 +31,17 @@ describe("stock", () => {
     expect(checkInvariant(new Map([["z", 5]]), [])).toEqual([
       { itemId: "z", cached: 5, derived: 0 },
     ]);
+  });
+});
+
+describe("stock invariant edge cases", () => {
+  it("reports an item that has movements but no cached stock", () => {
+    const breaks = checkInvariant(new Map(), [mv("x", 500)]);
+    expect(breaks).toEqual([{ itemId: "x", cached: 0, derived: 500 }]);
+  });
+
+  it("reports an item with cached stock but no movements", () => {
+    const breaks = checkInvariant(new Map([["y", 700]]), []);
+    expect(breaks).toEqual([{ itemId: "y", cached: 700, derived: 0 }]);
   });
 });
