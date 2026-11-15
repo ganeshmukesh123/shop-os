@@ -7,9 +7,9 @@ const RENDERER_FOLDER = path.resolve(
   "../../src/renderer",
 );
 
-const INLINE_STYLE = /\bstyle=\{/;
+const INLINE_STYLE = /\bstyle\s*=\s*\{/;
 const HARD_CODED_COLOUR = /(["'`(\s:])#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/;
-const PIXEL_FONT_SIZE = /font-size:\s*\d+px/;
+const PIXEL_FONT_SIZE = /font-size:\s*(?:\d+\.?\d*|\.\d+)px/;
 
 function sourceFilesIn(folder: string): string[] {
   return fs.readdirSync(folder, { withFileTypes: true }).flatMap((entry) => {
@@ -44,4 +44,28 @@ describe("renderer style rules (design guidelines section 8, constitution X)", (
   it("has no pixel font size: sizes come from Radix size props", () => {
     expect(filesMatching(PIXEL_FONT_SIZE)).toEqual([]);
   });
+});
+
+describe("the style rule detectors", () => {
+  it.each([
+    "<div style={{ color: 1 }} />",
+    "<div style = {{ color: 1 }} />",
+    "<div style\n={{}} />",
+  ])("catch an inline style written as %j", (source) => {
+    expect(INLINE_STYLE.test(source)).toBe(true);
+  });
+
+  it.each(["font-size: 14px", "font-size: 14.5px", "font-size:.5px", "font-size: 0.5px"])(
+    "catch the pixel font size %j",
+    (source) => {
+      expect(PIXEL_FONT_SIZE.test(source)).toBe(true);
+    },
+  );
+
+  it.each(["font-size: var(--font-size-2)", "font-size: 1.5rem", "line-height: 14px"])(
+    "let %j through",
+    (source) => {
+      expect(PIXEL_FONT_SIZE.test(source) || INLINE_STYLE.test(source)).toBe(false);
+    },
+  );
 });
