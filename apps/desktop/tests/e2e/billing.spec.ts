@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
-import { addItem, launch } from "./launch";
+import { addItem, forceQuit, launch } from "./launch";
 
 async function addToBill(page: import("@playwright/test").Page, search: string) {
   await page.getByLabel(/Type 2 or more letters/).fill(search);
@@ -35,7 +35,7 @@ test("billing: totals, stock, negative stock, draft recovery, exactly-once save"
 
     // draft recovery: force-quit before saving, reopen
     await page.waitForTimeout(800);
-    await app.evaluate(({ app }) => app.exit(1));
+    await forceQuit(app);
     ({ app, page } = await launch(dataDir));
     await expect(page.getByText("Unsaved bill found")).toBeVisible();
     await page.getByRole("button", { name: "Continue bill" }).click();
@@ -46,10 +46,11 @@ test("billing: totals, stock, negative stock, draft recovery, exactly-once save"
     await expect(page.getByText(/Stock is now below zero/)).toBeVisible(); // negative stock flagged
 
     // force-quit right after save: the bill exists exactly once
-    await app.evaluate(({ app }) => app.exit(1));
+    await forceQuit(app);
     // The test process cannot load the Electron-built better-sqlite3, so read the file with the sqlite3 CLI.
+    // The 5 s busy timeout is a backstop; forceQuit already waits for the app to release the file.
     const queryDatabase = (sql: string) =>
-      execFileSync("sqlite3", [path.join(dataDir, "shopos.sqlite"), sql])
+      execFileSync("sqlite3", ["-cmd", ".timeout 5000", path.join(dataDir, "shopos.sqlite"), sql])
         .toString()
         .trim();
     expect(queryDatabase("select count(*) from bill")).toBe("1");
