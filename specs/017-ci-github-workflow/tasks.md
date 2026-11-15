@@ -79,7 +79,7 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 
 **Goal**: the React renderer at 90%, with the desktop total at 90%. Estimate to be revised after T029 (see plan).
 
-- [ ] T027 [US3] Renderer test setup: `apps/desktop/tests/setup/renderer.ts` (jsdom, Testing Library cleanup), a typed fake of `window.shopos`, a `renderWithTheme` helper wrapping Radix `Theme`; configure Vitest so `tests/renderer/**` runs under jsdom
+- [X] T027 [US3] Renderer test setup: `apps/desktop/tests/setup/renderer.ts` (jsdom, Testing Library cleanup), a typed fake of `window.shopos`, a `renderWithTheme` helper wrapping Radix `Theme`; configure Vitest so `tests/renderer/**` runs under jsdom _(done 2026-11-15, built with spec 001 T085: `vitest.config.ts` now has two projects, `main` and `renderer` (jsdom); `helpers/fakeShopos.ts` builds the fake through the real preload bridge so it uses the same command list; `helpers/fakeMatchMedia.ts` fakes the operating-system theme; `renderWithTheme.tsx`; `tests/renderer/rendererSetup.test.tsx`, 4 tests; the 221 existing tests still pass)_
 - [ ] T028 [P] [US3] Tests for `renderer/state/api.ts`, `billDraft.ts`, `items.ts` and `strings.ts` (command client success and failure, draft autosave and recovery, items list reload)
 - [ ] T029 [P] [US3] Tests for `renderer/components`: `Toast`, `AdjustStockDialog`, `BillLineRow` (render, keyboard, validation messages); then re-estimate M3 from the effort and coverage gained
 - [ ] T030 [US3] Split `NewBillScreen.tsx` (472 lines) following `shopos-react-components`: one extraction per PR (`useBillForm`, `useBillSave`, `BillSearchBox`, `BillLinesTable`, `BillSummaryPanel`, `RecoverDraftDialog`), tests green before and after each

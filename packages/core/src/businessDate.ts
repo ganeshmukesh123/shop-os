@@ -5,14 +5,20 @@ export const DEFAULT_TIME_ZONE = "Asia/Kolkata";
 
 const BUSINESS_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const APRIL_MONTH_NUMBER = 4;
+const MAX_DATE_INSTANT_MS = 8_640_000_000_000_000;
 
 function twoDigits(yearNumber: number): string {
   return String(yearNumber % 100).padStart(2, "0");
 }
 
 function assertInstant(instantMs: number): void {
-  if (!Number.isSafeInteger(instantMs)) {
-    throw new CoreError("INVALID_FIELD", "instant must be an integer number of milliseconds");
+  const isInvalidInstant =
+    !Number.isSafeInteger(instantMs) || Math.abs(instantMs) > MAX_DATE_INSTANT_MS;
+  if (isInvalidInstant) {
+    throw new CoreError(
+      "INVALID_FIELD",
+      "instant must be integer milliseconds within the supported Date range",
+    );
   }
 }
 
@@ -66,12 +72,25 @@ export function localIsoOf(instantMs: number, timeZone: string): string {
   return `${datePart}T${partValue("hour")}:${partValue("minute")}:${partValue("second")}`;
 }
 
+function daysInMonth(yearNumber: number, monthNumber: number): number {
+  const isLeapYear = yearNumber % 4 === 0 && (yearNumber % 100 !== 0 || yearNumber % 400 === 0);
+  const februaryDays = isLeapYear ? 29 : 28;
+  return [31, februaryDays, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][monthNumber - 1] ?? 0;
+}
+
 /** Indian financial year (1 April to 31 March) of a business date: 2027-04-01 -> "27-28". */
 export function financialYearOfBusinessDate(businessDate: string): string {
   const matchedParts = BUSINESS_DATE_PATTERN.exec(businessDate);
   const yearNumber = Number(matchedParts?.[1]);
   const monthNumber = Number(matchedParts?.[2]);
-  if (!matchedParts || monthNumber < 1 || monthNumber > 12) {
+  const dayNumber = Number(matchedParts?.[3]);
+  const isInvalidDate =
+    !matchedParts ||
+    monthNumber < 1 ||
+    monthNumber > 12 ||
+    dayNumber < 1 ||
+    dayNumber > daysInMonth(yearNumber, monthNumber);
+  if (isInvalidDate) {
     throw new CoreError("INVALID_FIELD", "business date must look like 2027-03-31");
   }
   const startYear = monthNumber >= APRIL_MONTH_NUMBER ? yearNumber : yearNumber - 1;

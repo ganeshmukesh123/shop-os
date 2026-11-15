@@ -104,6 +104,23 @@ export const uiText = {
     backupFailed: "Last backup failed",
     backupOk: "Backup complete",
   },
+  /** The word that opens a status message or badge (design guidelines 5.1). */
+  status: {
+    error: "Error",
+    done: "Done",
+    duplicate: "Duplicate name",
+    negativeStock: "Negative stock",
+    cancelled: "Cancelled",
+    draft: "Draft",
+  },
+  theme: {
+    title: "Appearance",
+    label: "Theme",
+    help: "System follows this computer's light or dark setting.",
+    system: "System",
+    light: "Light",
+    dark: "Dark",
+  },
   common: {
     loading: "Loading",
     error: "Something went wrong",

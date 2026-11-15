@@ -206,8 +206,8 @@ Every schema task: edit `apps/desktop/src/main/db/schema.ts`, run `pnpm --filter
 
 ### Design compliance (constitution X; plan Complexity Tracking)
 
-- [ ] T085 [P] Theme preference System, Light or Dark in `apps/desktop/src/renderer/shared/theme/` (resolve System with `matchMedia("(prefers-color-scheme: dark)")` before first paint, pass `appearance` to `<Theme>` in `main.tsx`), a picker in Settings, and component tests
-- [ ] T086 [P] Shared `StatusMessage` and `StatusBadge` in `apps/desktop/src/renderer/shared/components/` (label, sentence, one action; status always has a word), replacing hand-built alerts
+- [X] T085 [P] Theme preference System, Light or Dark in `apps/desktop/src/renderer/shared/theme/` (resolve System with `matchMedia("(prefers-color-scheme: dark)")` before first paint, pass `appearance` to `<Theme>` in `main.tsx`), a picker in Settings, and component tests _(done 2026-11-15: `shared/theme/` has `ThemeProvider` (reads the saved choice in the first render, `useSyncExternalStore` on the OS theme so it updates live, sets `color-scheme` in a layout effect), `ThemePicker` (a Radix `SegmentedControl` with the words System, Light, Dark), `useThemePreference`, pure `themePreference.ts`; `main.tsx` uses it; stored per device in local storage (design D6, still assumed). 22 renderer tests. Not verified: a real look at light and dark in the running app, and the tiny gap before the JavaScript runs, when the page edge is the browser default (an inline script is blocked by the CSP); Electron's `nativeTheme` for window chrome (optional) is not set)_
+- [X] T086 [P] Shared `StatusMessage` and `StatusBadge` in `apps/desktop/src/renderer/shared/components/` (label, sentence, one action; status always has a word), replacing hand-built alerts _(done 2026-11-15: `StatusMessage` (role, label, sentence, one action; alerts for danger and warning, polite status otherwise) and `StatusBadge` in `shared/components/`; every `Callout` and `Badge` in the renderer outside `shared/` now uses them: toast, Settings (backup failed, bad number format), item form (errors, duplicate name), bill view (negative stock, Cancelled), items list and nav badges, recovered-draft note; new words in `uiText.status`. Wording change to know: the negative-stock badges are now the warning role (orange) instead of red, as the design guidelines say; "Error:" and "Done:" lost their colon because the label is its own word. 19 renderer tests, the existing e2e sentences are unchanged but the e2e specs were not run)_
 - [ ] T087 Remove the inline `style` uses from `apps/desktop/src/renderer` (33 today) in favour of Radix props and tokens, one screen per PR; check every screen in light and dark against the new-screen checklist in `docs/design/design-guidelines.md`
 
 ### Small, pure renderer (constitution IX; with spec 017 T030)
@@ -219,6 +219,10 @@ Every schema task: edit `apps/desktop/src/main/db/schema.ts`, run `pnpm --filter
 ### Operations (research D15; finding H5)
 
 - [X] T091 Before running a pending migration on start-up, take a backup with the online backup API; run `PRAGMA integrity_check` on start and offer restore on failure; tests in `apps/desktop/tests/integration/startupSafety.test.ts`. Must land before any rebuilt-table migration (T074 to T078) reaches the shop's database _(done 2026-11-15: `main/db/startupSafety.ts` and `main/app/startupRecovery.ts`; copies go to `pre-migration-backups/` beside the database, newest 5 kept; a damaged file raises `DATABASE_CORRUPT` and the app offers a backup to restore, then relaunches; 8 safety tests and 5 start-up tests. Disk-space check and the local log file from D15 are not part of this task)_
+
+### Dates (research D25; owner request 2026-11-15)
+
+- [ ] T092 Introduce Luxon in place of hand-written date code (FR-019a, research D22 and D25), as its own task and PR(s), separate from T079 and T080. Add `luxon` and `@types/luxon` (owner approved the package 2026-11-15; confirm `@types/luxon` is needed, open item). Tests first, then replace with behaviour kept the same: `packages/core/src/businessDate.ts` (built on `Intl.DateTimeFormat` in T079), `packages/core/src/numbering.ts` (`financialYear` with `getMonth() >= 3`), `apps/desktop/src/main/services/BillingService.ts` (local date text with `pad`), `BackupService.ts` and `main/db/startupSafety.ts` (backup file-name stamps), `renderer/screens/SettingsScreen.tsx` (`toLocaleString`). The T079 boundary tests (23:50 IST on 31 March against 00:10 IST on 1 April, device in another zone) must pass unchanged. Open item: add Luxon to the stack line in CLAUDE.md after the owner says yes
 
 **Checkpoint (M3b exit)**: T073 to T084 and T091 done; every existing test green on the new tables; the boundary and round-off tests pass. **Checkpoint (M5 design)**: T085 to T090 done; every screen checked in light and dark.
 
@@ -249,4 +253,4 @@ Every schema task: edit `apps/desktop/src/main/db/schema.ts`, run `pnpm --filter
 
 ## Format validation
 
-Every task starts with `- [ ]` or `- [X]`, has a sequential ID (T001 to T091), carries a story label only inside story phases, and names exact file paths.
+Every task starts with `- [ ]` or `- [X]`, has a sequential ID (T001 to T092), carries a story label only inside story phases, and names exact file paths.

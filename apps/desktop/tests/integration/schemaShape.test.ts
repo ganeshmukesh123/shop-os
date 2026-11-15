@@ -82,7 +82,8 @@ describe("target shape: seed and time columns", () => {
 });
 
 describe("target shape: records can only be added, never changed (constitution I and II)", () => {
-  const isReady = SCHEMA_TASK_DONE.T078;
+  // insertTargetBill writes bill.doc_title and bill.round_off_paise, which arrive with T080.
+  const isReady = SCHEMA_TASK_DONE.T078 && SCHEMA_TASK_DONE.T080;
 
   it.skipIf(!isReady)("refuses to update or delete a stock movement", () => {
     const testDb = createTestDb();
@@ -136,7 +137,8 @@ describe("target shape: records can only be added, never changed (constitution I
       testDb.sqlite.prepare("update bill set total_paise = 1 where id = ?").run(ids.billId),
     );
 
-    expect(deleteError).not.toBe("");
+    expect(deleteError).toContain("bills cannot be deleted");
+    expect(deleteError).not.toMatch(/foreign key/i);
     expect(editError).not.toBe("");
   });
 
@@ -160,25 +162,50 @@ describe("target shape: records can only be added, never changed (constitution I
     expect(reopenError).not.toBe("");
   });
 
-  it.skipIf(!SCHEMA_TASK_DONE.T083)("refuses to update or delete a recorded number gap", () => {
-    const testDb = createTestDb();
-    const ids = insertTargetBill(testDb.sqlite, testDb.ctx);
-    const gapId = insertTargetNumberGap(testDb.sqlite, testDb.ctx, ids.numberSeriesId);
+  it.skipIf(!(SCHEMA_TASK_DONE.T083 && SCHEMA_TASK_DONE.T080))(
+    "refuses to update or delete a recorded number gap",
+    () => {
+      const testDb = createTestDb();
+      const ids = insertTargetBill(testDb.sqlite, testDb.ctx);
+      const gapId = insertTargetNumberGap(testDb.sqlite, testDb.ctx, ids.numberSeriesId);
 
-    const updateError = errorMessageOf(() =>
-      testDb.sqlite.prepare("update bill_number_gap set seq_to = 1 where id = ?").run(gapId),
-    );
-    const deleteError = errorMessageOf(() =>
-      testDb.sqlite.prepare("delete from bill_number_gap where id = ?").run(gapId),
-    );
+      const updateError = errorMessageOf(() =>
+        testDb.sqlite.prepare("update bill_number_gap set seq_to = 1 where id = ?").run(gapId),
+      );
+      const deleteError = errorMessageOf(() =>
+        testDb.sqlite.prepare("delete from bill_number_gap where id = ?").run(gapId),
+      );
 
-    expect(updateError).not.toBe("");
-    expect(deleteError).not.toBe("");
-  });
+      expect(updateError).toContain("append-only");
+      expect(deleteError).toContain("append-only");
+    },
+  );
 });
 
 describe("upgrading a database that is at migration 0004", () => {
   const isReady = SCHEMA_TASK_DONE.T078;
+
+  it.skipIf(!isReady)("migrates timestamp values to INTEGER epoch milliseconds", () => {
+    const sqlite = upgradeDatabaseWithOneBill({ cancelledAt: "2026-11-15T10:00:00.000Z" });
+
+    EPOCH_MS_COLUMNS.forEach(([tableName, columnName]) => {
+      const timeRows = sqlite
+        .prepare(
+          `select typeof(${columnName}) as storage_type, ${columnName} as epoch_millis from ${tableName}`,
+        )
+        .all() as { storage_type: string; epoch_millis: number }[];
+
+      expect(timeRows.length, `${tableName}.${columnName}`).toBeGreaterThan(0);
+      timeRows.forEach((timeRow) => {
+        expect(timeRow.storage_type).toBe("integer");
+        expect(timeRow.epoch_millis).toBeGreaterThanOrEqual(Date.UTC(2000, 0, 1));
+        expect(timeRow.epoch_millis).toBeLessThan(Date.UTC(2100, 0, 1));
+      });
+    });
+    expect(sqlite.prepare("select cancelled_at from bill").get()).toEqual({
+      cancelled_at: Date.parse("2026-11-15T10:00:00.000Z"),
+    });
+  });
 
   it.skipIf(!isReady)("keeps the bill, its total and its number", () => {
     const sqlite = upgradeDatabaseWithOneBill();
@@ -211,10 +238,10 @@ describe("upgrading a database that is at migration 0004", () => {
     const lineRow = sqlite
       .prepare("select qty_base_milli, unit_price_paise, amount_paise from bill_line")
       .get();
-    const tenderRow = sqlite.prepare("select mode, amount_paise from bill_tender").get();
+    const tenderRows = sqlite.prepare("select mode, amount_paise from bill_tender").all();
 
     expect(lineRow).toEqual({ qty_base_milli: 2000, unit_price_paise: 12000, amount_paise: 24000 });
-    expect(tenderRow).toEqual({ mode: "cash", amount_paise: 24000 });
+    expect(tenderRows).toEqual([{ mode: "cash", amount_paise: 24000 }]);
   });
 
   it.skipIf(!isReady)("keeps the next bill number, so the old number is never reused", () => {
