@@ -52,6 +52,25 @@ describe("upgrading stock movements from migration 0004 (research D18)", () => {
     });
   });
 
+  it("rejects a legacy sale with a null bill_id during upgrade", () => {
+    expect(() =>
+      upgradeDatabaseWithOneBill({
+        beforeUpgrade: (sqlite) => {
+          sqlite.exec(`insert into stock_movement
+            select 'orphan-sale', business_id, shop_id, created_at, updated_at, item_id,
+              quantity_milli, reason, note, null, occurred_at, device_id
+            from stock_movement where reason = 'sale'`);
+        },
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        cause: expect.objectContaining({
+          message: expect.stringMatching(/stock_movement_doc_pair/),
+        }),
+      }),
+    );
+  });
+
   it("keeps the stock invariant: the movements still add up to the item's stock", () => {
     const sqlite = upgradeDatabaseWithOneBill();
 
@@ -70,6 +89,9 @@ describe("upgrading stock movements from migration 0004 (research D18)", () => {
 
     expect(sqlite.pragma("foreign_key_check")).toEqual([]);
     expect(() => sqlite.prepare("delete from stock_movement").run()).toThrow(/append-only/);
+    expect(() => sqlite.prepare("update stock_movement set note = note").run()).toThrow(
+      /append-only/,
+    );
   });
 });
 
@@ -139,6 +161,27 @@ describe("stock_movement rules in the database", () => {
     expect(() => insertMovement({ movementType: "adjustment", note: "   " })).toThrow(
       /stock_movement_adjustment_note/,
     );
+  });
+
+  it.each(["sale", "sale_cancel"])("requires a bill document for %s", (movementType) => {
+    expect(() => insertMovement({ movementType })).toThrow(/stock_movement_doc_pair/);
+    expect(() => insertMovement({ movementType, docType: "bill", docId: "bill-1" })).not.toThrow();
+  });
+
+  it.each(["opening", "adjustment"])("refuses a bill document for %s", (movementType) => {
+    expect(() =>
+      insertMovement({ movementType, docType: "bill", docId: "bill-1", note: "Stock count" }),
+    ).toThrow(/stock_movement_doc_pair/);
+    expect(() => insertMovement({ movementType, note: "Stock count" })).not.toThrow();
+  });
+
+  it("refuses a document id without a type or a non-bill document", () => {
+    expect(() => insertMovement({ movementType: "sale", docId: "bill-1" })).toThrow(
+      /stock_movement_doc_pair/,
+    );
+    expect(() =>
+      insertMovement({ movementType: "sale", docType: "purchase", docId: "bill-1" }),
+    ).toThrow(/stock_movement_doc_pair/);
   });
 
   it("refuses a document type without a document id", () => {

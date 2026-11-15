@@ -57,6 +57,13 @@
       "when": 1794727688145,
       "tag": "0007_reshape_stock_movement",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1794772101183,
+      "tag": "0008_rare_king_bedlam",
+      "breakpoints": true
     }
   ]
 }
