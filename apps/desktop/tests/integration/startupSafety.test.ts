@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
-import { describe, expect, it } from "vitest";
 import { CoreError } from "@shopos/core";
 import { openDatabase } from "../../src/main/db/connection";
 import {

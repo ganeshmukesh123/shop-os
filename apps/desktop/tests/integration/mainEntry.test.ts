@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 const electronMocks = vi.hoisted(() => ({
   setPath: vi.fn(),

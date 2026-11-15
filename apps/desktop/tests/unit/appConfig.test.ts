@@ -1,5 +1,4 @@
 import path from "node:path";
-import { describe, expect, it, vi } from "vitest";
 import { applyUserDataOverride, readAppConfig } from "../../src/main/app/appConfig";
 
 const LOCATIONS = {

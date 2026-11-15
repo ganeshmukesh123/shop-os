@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { COMMAND_NAMES } from "@shopos/core";
 import { buildHandlersFixture } from "../helpers/handlersFixture";
 

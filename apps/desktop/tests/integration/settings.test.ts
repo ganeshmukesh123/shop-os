@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { SettingsService } from "../../src/main/services/SettingsService";
 import { createTestDb, type TestDb } from "../helpers/testDb";
 

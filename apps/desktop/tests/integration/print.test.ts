@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
 import { BillRepository } from "../../src/main/repositories/BillRepository";
 import { SettingsRepository } from "../../src/main/repositories/SettingsRepository";
 import { BillingService } from "../../src/main/services/BillingService";

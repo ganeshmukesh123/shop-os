@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   MOVEMENT_REASONS,
   PAYMENT_MODES,

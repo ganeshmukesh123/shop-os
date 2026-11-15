@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { contentSecurityPolicy, installSecurityHeaders } from "../../src/main/app/securityHeaders";
 
 type HeadersListener = (

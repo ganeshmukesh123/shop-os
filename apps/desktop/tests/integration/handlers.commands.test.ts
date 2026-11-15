@@ -3,7 +3,6 @@ import os from "node:os";
 import path from "node:path";
 import { ZodError, z } from "zod";
 import { CoreError } from "@shopos/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { toFailure } from "../../src/main/ipc/handlers";
 import {
   buildHandlersFixture,

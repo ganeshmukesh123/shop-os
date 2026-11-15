@@ -2,7 +2,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { getTableConfig } from "drizzle-orm/sqlite-core";
-import { describe, expect, it } from "vitest";
 import { openDatabase } from "../../src/main/db/connection";
 import { ensureSeed, loadCtx } from "../../src/main/db/seed";
 import {

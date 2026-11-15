@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import type { Bill, BillLine, ShopProfile } from "@shopos/core";
 import { renderBillHtml } from "../../src/main/services/billHtml";
 

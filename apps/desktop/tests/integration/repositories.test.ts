@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { ItemRepository } from "../../src/main/repositories/ItemRepository";
 import { StockRepository } from "../../src/main/repositories/StockRepository";
 import { createTestDb, type TestDb } from "../helpers/testDb";

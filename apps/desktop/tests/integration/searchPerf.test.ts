@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { InventoryService } from "../../src/main/services/InventoryService";
 import { createTestDb } from "../helpers/testDb";
 
