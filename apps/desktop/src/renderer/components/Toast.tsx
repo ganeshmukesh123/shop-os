@@ -42,7 +42,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 previousMessages.filter((otherMessage) => otherMessage.id !== toastMessage.id),
               )
             }
-            style={{ listStyle: "none" }}
+            className="shopos-toast"
           >
             <StatusMessage
               role={TOAST_STATUS[toastMessage.kind].role}
@@ -54,21 +54,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             </StatusMessage>
           </Toast.Root>
         ))}
-        <Toast.Viewport
-          style={{
-            position: "fixed",
-            bottom: 16,
-            right: 16,
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-            width: 380,
-            maxWidth: "90vw",
-            zIndex: 1000,
-            margin: 0,
-            padding: 0,
-          }}
-        />
+        <Toast.Viewport className="shopos-toast-viewport" />
       </Toast.Provider>
     </Ctx.Provider>
   );

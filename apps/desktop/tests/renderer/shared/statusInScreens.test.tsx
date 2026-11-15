@@ -67,6 +67,22 @@ describe("status words in the screens (design guidelines 5.1, PRD NFR-011)", () 
     expect((await screen.findByRole("alert")).textContent).toBe("Error Disk is full");
   });
 
+  it("toasts sit in the styled viewport, not in an inline-styled box", async () => {
+    renderWithTheme(
+      <ToastProvider>
+        <ToastButtons />
+      </ToastProvider>,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "fail" }));
+    await screen.findByRole("alert");
+
+    expect(document.querySelector(".shopos-toast-viewport")).not.toBeNull();
+    expect(document.querySelector(".shopos-toast")?.getAttribute("style") ?? "").not.toContain(
+      "list-style",
+    );
+  });
+
   it("a success toast opens with the word Done and is announced politely", async () => {
     renderWithTheme(
       <ToastProvider>

@@ -23,3 +23,22 @@
 .shopos-row-inactive {
   opacity: 0.65;
 }
+
+/* Toasts (components/Toast.tsx): bottom right, above everything, never wider than the window. */
+.shopos-toast {
+  list-style: none;
+}
+
+.shopos-toast-viewport {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 24rem;
+  max-width: 90vw;
+  margin: 0;
+  padding: 0;
+}
