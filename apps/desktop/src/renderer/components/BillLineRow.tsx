@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { Button, Flex, SegmentedControl, Table, Text, TextField } from "@radix-ui/themes";
 import { formatRupees, type DraftLine, type DraftLineResult } from "@shopos/core";
+import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import { uiText } from "../strings";
 
 interface Props {
@@ -88,9 +89,9 @@ export const BillLineRow = forwardRef<HTMLInputElement, Props>(function BillLine
       {result.error && (
         <Table.Row>
           <Table.Cell colSpan={6}>
-            <Text color="red" size="2" role="alert">
-              Error on {line.name}: {result.error}
-            </Text>
+            <StatusMessage role="danger" label={uiText.status.error}>
+              {line.name}: {result.error}
+            </StatusMessage>
           </Table.Cell>
         </Table.Row>
       )}

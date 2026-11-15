@@ -21,6 +21,7 @@ One folder per feature. Order is a proposal; dependencies are listed in each spe
 | 015 | [Devices, printing, scanning](015-devices-printing-scanning/spec.md) | NFR-013, BIL-015, ITM-013 | spec written |
 | 016 | [Cross-cutting quality requirements](016-quality-nfr/spec.md) | NFR-001 to 016 | spec written |
 | 017 | [GitHub workflow: CI and merge protection](017-ci-github-workflow/spec.md) | Constitution VI, PR rules | spec, plan, research, tasks written; packages installed; baseline measured |
+| 018 | [Electron hardening: security and performance](018-electron-hardening/spec.md) | NFR-008, NFR-002, NFR-007 | later feature; spec and research written (2026-11-15); no code |
 
 ## Dependency Architecture (Strict DAG)
 

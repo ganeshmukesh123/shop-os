@@ -37,12 +37,22 @@ function seedShopAtMigration0004(sqlite: Database.Database): Ctx {
  * The shop's database as it was at migration 0004, holding Pipe (opening 10 pcs) and one saved
  * bill of 2 pcs at 120.00, then opened with every migration so the upgrade runs on real rows.
  */
-export function upgradeDatabaseWithOneBill(): Database.Database {
+export function upgradeDatabaseWithOneBill(
+  options: { cancelledAt?: string } = {},
+): Database.Database {
   const databasePath = path.join(makeTempFolder("shopos-upgrade-"), "shopos.sqlite");
   const oldConnection = openDatabase(databasePath, {
     migrationsFolder: makeMigrationsFolderAtMigration0004(),
   });
   insertBillAtMigration0004(oldConnection.sqlite, seedShopAtMigration0004(oldConnection.sqlite));
+  const hasCancellation = options.cancelledAt !== undefined;
+  if (hasCancellation) {
+    oldConnection.sqlite
+      .prepare(
+        "update bill set status = 'cancelled', cancel_reason = 'wrong item', cancelled_at = ? where id = 'bill-1'",
+      )
+      .run(options.cancelledAt);
+  }
   oldConnection.sqlite.close();
   return openDatabase(databasePath, { migrationsFolder: MIGRATIONS }).sqlite;
 }
