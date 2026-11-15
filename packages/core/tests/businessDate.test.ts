@@ -34,6 +34,20 @@ describe("businessDateOf (FR-019a, research D22)", () => {
     expect(businessDateOf(Date.UTC(2026, 0, 5, 12), SHOP_ZONE)).toBe("2026-01-05");
   });
 
+  it.each([-8_640_000_000_000_000, 8_640_000_000_000_000])(
+    "accepts the Date range boundary %s",
+    (instantMs) => {
+      expect(() => businessDateOf(instantMs, "UTC")).not.toThrow();
+    },
+  );
+
+  it.each([-8_640_000_000_000_001, 8_640_000_000_000_001])(
+    "rejects an instant immediately outside the Date range: %s",
+    (instantMs) => {
+      expect(errorCodeOf(() => businessDateOf(instantMs, "UTC"))).toBe("INVALID_FIELD");
+    },
+  );
+
   it("refuses an unknown time zone", () => {
     expect(errorCodeOf(() => businessDateOf(0, "Mars/Olympus"))).toBe("INVALID_FIELD");
   });
@@ -61,6 +75,25 @@ describe("financialYearOfBusinessDate", () => {
     const afterMidnight = businessDateOf(Date.UTC(2027, 2, 31, 18, 40), SHOP_ZONE);
     expect(financialYearOfBusinessDate(beforeMidnight)).toBe("26-27");
     expect(financialYearOfBusinessDate(afterMidnight)).toBe("27-28");
+  });
+
+  it.each([
+    "2027-02-29",
+    "2028-02-30",
+    "2027-04-31",
+    "2027-01-00",
+    "2027-01-32",
+    "1900-02-29",
+    "2100-02-29",
+  ])("rejects the impossible calendar date %s", (businessDate) => {
+    expect(errorCodeOf(() => financialYearOfBusinessDate(businessDate))).toBe("INVALID_FIELD");
+  });
+
+  it.each([
+    ["2028-02-29", "27-28"],
+    ["2000-02-29", "99-00"],
+  ])("accepts leap day %s", (businessDate, financialYear) => {
+    expect(financialYearOfBusinessDate(businessDate)).toBe(financialYear);
   });
 
   it("refuses text that is not a YYYY-MM-DD date", () => {
