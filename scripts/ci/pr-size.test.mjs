@@ -75,6 +75,31 @@ describe("pr-size.sh", () => {
     assert.match(result.stdout, /Exempt/);
   });
 
+  it("measures a stacked PR against its target branch, not main", () => {
+    // main <- feature (900 lines, PR 1) <- feature-next (40 lines, PR 2 targets feature)
+    const repositoryPath = buildRepository(900);
+    runGit(repositoryPath, "checkout", "-q", "-b", "feature-next");
+    fs.writeFileSync(path.join(repositoryPath, "next.txt"), "line\n".repeat(40));
+    runGit(repositoryPath, "add", ".");
+    runGit(repositoryPath, "commit", "-q", "-m", "next");
+    const readSha = (reference) =>
+      execFileSync("git", ["rev-parse", reference], {
+        cwd: repositoryPath,
+        encoding: "utf8",
+      }).trim();
+
+    const result = runScript(repositoryPath, {
+      PR_BASE_SHA: readSha("feature"),
+      PR_HEAD_SHA: readSha("feature-next"),
+      PR_BASE_LABEL: "feature",
+      PR_SIZE_FAIL_OVER: "800",
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /Changed lines: 40 /);
+    assert.match(result.stdout, /target branch feature/);
+  });
+
   it("passes at exactly the limit", () => {
     assert.equal(runScript(buildRepository(800), { PR_SIZE_FAIL_OVER: "800" }).status, 0);
   });
