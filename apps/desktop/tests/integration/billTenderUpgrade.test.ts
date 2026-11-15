@@ -1,5 +1,6 @@
 import { CoreError } from "@shopos/core";
 import { BillRepository } from "../../src/main/repositories/BillRepository";
+import { insertTargetSeriesAndBill } from "../helpers/schemaRows";
 import { createTestDb } from "../helpers/testDb";
 import { upgradeDatabaseWithOneBill } from "../helpers/upgradeFixture";
 
@@ -71,12 +72,7 @@ describe("upgrading bill lines and tenders from migration 0004 (research D18)", 
 describe("tender rules in the database", () => {
   const insertTender = (overrides: Record<string, string | number>) => {
     const { sqlite, ctx } = createTestDb();
-    sqlite
-      .prepare(
-        `insert into bill (id, business_id, shop_id, created_at, updated_at, device_id, counter_code, bill_no, financial_year, seq, bill_date, subtotal_paise, bill_discount_paise, total_paise, status)
-         values ('bill-1', ?, ?, 'now', 'now', 'device-1', 'C1', 'C1/26-27/000001', '26-27', 1, '2026-11-15T10:00:00', 100, 0, 100, 'posted')`,
-      )
-      .run(ctx.businessId, ctx.shopId);
+    insertTargetSeriesAndBill(sqlite, ctx);
     sqlite
       .prepare(
         `insert into bill_tender (id, business_id, shop_id, created_at, updated_at, bill_id, mode, amount_paise, status)
@@ -107,12 +103,7 @@ describe("tender rules in the database", () => {
 describe("BillRepository and the tender", () => {
   it("fails loudly for a bill that has no payment record", () => {
     const { sqlite, db, ctx } = createTestDb();
-    sqlite
-      .prepare(
-        `insert into bill (id, business_id, shop_id, created_at, updated_at, device_id, counter_code, bill_no, financial_year, seq, bill_date, subtotal_paise, bill_discount_paise, total_paise, status)
-         values ('bill-1', ?, ?, 'now', 'now', 'device-1', 'C1', 'C1/26-27/000001', '26-27', 1, '2026-11-15T10:00:00', 100, 0, 100, 'posted')`,
-      )
-      .run(ctx.businessId, ctx.shopId);
+    insertTargetSeriesAndBill(sqlite, ctx);
 
     const readBill = () => new BillRepository(db, ctx).get("bill-1");
 

@@ -1,9 +1,9 @@
 import { and, asc, eq, sql } from "drizzle-orm";
-import { CoreError } from "@shopos/core";
+import { CoreError, DEFAULT_TIME_ZONE, localIsoOf } from "@shopos/core";
 import type { Bill, BillLine, PaymentMode } from "@shopos/core";
 import type { Handle } from "../db/connection";
 import { newId, nowIso } from "../db/ids";
-import { bill, billLine, billTender, draftBill, numberCounter } from "../db/schema";
+import { bill, billLine, billTender, draftBill, numberSeries } from "../db/schema";
 import type { Ctx } from "../db/seed";
 
 /** The payment mode is not on the bill row: it is the label on the bill's tender (D18). */
@@ -12,7 +12,7 @@ const toBill = (billRow: typeof bill.$inferSelect, paymentMode: PaymentMode): Bi
   number: billRow.billNo,
   seriesCode: billRow.counterCode,
   seq: billRow.seq,
-  billDate: billRow.billDate,
+  billDate: localIsoOf(billRow.billedAt, DEFAULT_TIME_ZONE),
   customerName: billRow.customerName,
   paymentMode,
   linesTotalPaise: billRow.subtotalPaise,
@@ -40,8 +40,12 @@ export interface NewBill {
   number: string;
   seriesCode: string;
   financialYear: string;
+  numberSeriesId: string;
   seq: number;
-  billDate: string;
+  /** The UTC instant of the save, epoch milliseconds. */
+  billedAt: number;
+  /** That instant's calendar date in the shop's time zone, YYYY-MM-DD. */
+  businessDate: string;
   customerName: string | null;
   clientBillId: string;
   paymentMode: PaymentMode;
@@ -79,19 +83,26 @@ export class BillRepository {
     };
   }
 
-  /** Increment and return the next sequence. Must run inside the bill-save transaction. */
-  nextSeq(seriesCode: string, financialYear: string): number {
+  /**
+   * Increment and return the next sequence of a series, with the series id the bill will point at.
+   * The series keeps the template last used with it. Must run inside the bill-save transaction.
+   */
+  nextSeq(
+    counterCode: string,
+    financialYear: string,
+    template: string,
+  ): { seq: number; numberSeriesId: string } {
     const now = nowIso();
     const row = this.databaseHandle
-      .insert(numberCounter)
-      .values({ ...this.base(), seriesCode, financialYear, lastSeq: 1 })
+      .insert(numberSeries)
+      .values({ ...this.base(), counterCode, financialYear, template, lastSeq: 1 })
       .onConflictDoUpdate({
-        target: [numberCounter.seriesCode, numberCounter.financialYear],
-        set: { lastSeq: sql`${numberCounter.lastSeq} + 1`, updatedAt: now },
+        target: [numberSeries.shopId, numberSeries.counterCode, numberSeries.financialYear],
+        set: { lastSeq: sql`${numberSeries.lastSeq} + 1`, template, updatedAt: now },
       })
-      .returning({ seq: numberCounter.lastSeq })
+      .returning({ seq: numberSeries.lastSeq, numberSeriesId: numberSeries.id })
       .get();
-    return row.seq;
+    return row;
   }
 
   /**
@@ -107,8 +118,10 @@ export class BillRepository {
         counterCode: newBill.seriesCode,
         billNo: newBill.number,
         financialYear: newBill.financialYear,
+        numberSeriesId: newBill.numberSeriesId,
         seq: newBill.seq,
-        billDate: newBill.billDate,
+        billedAt: newBill.billedAt,
+        businessDate: newBill.businessDate,
         customerName: newBill.customerName,
         clientBillId: newBill.clientBillId,
         subtotalPaise: newBill.linesTotalPaise,

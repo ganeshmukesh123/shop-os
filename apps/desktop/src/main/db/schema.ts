@@ -73,8 +73,15 @@ export const bill = sqliteTable(
     counterCode: text("counter_code").notNull(),
     billNo: text("bill_no").notNull(),
     financialYear: text("financial_year").notNull(),
+    // The series this bill's number came from (counter, financial year, template)
+    numberSeriesId: text("number_series_id")
+      .notNull()
+      .references(() => numberSeries.id),
     seq: integer("seq").notNull(),
-    billDate: text("bill_date").notNull(), // ISO-8601 local timestamp
+    // billed_at: the UTC instant the bill was saved, epoch milliseconds
+    billedAt: integer("billed_at").notNull(),
+    // business_date: that instant's calendar date in the shop's time zone (YYYY-MM-DD), worked out once
+    businessDate: text("business_date").notNull(),
     customerName: text("customer_name"),
     // Idempotency key from the screen that started the bill; unique per shop. Null only for bills saved before it existed.
     clientBillId: text("client_bill_id"),
@@ -94,9 +101,13 @@ export const bill = sqliteTable(
       tableColumns.seq,
     ),
     uniqueIndex("bill_client_bill_id_uq").on(tableColumns.shopId, tableColumns.clientBillId),
-    index("bill_date_idx").on(tableColumns.billDate),
+    index("bill_business_date_idx").on(tableColumns.businessDate),
     index("bill_customer_idx").on(tableColumns.customerName),
     check("bill_no_len", sql`length(${tableColumns.billNo}) <= 16`),
+    check(
+      "bill_business_date_format",
+      sql`${tableColumns.businessDate} glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'`,
+    ),
     check("bill_status", sql`${tableColumns.status} in ('posted','cancelled')`),
     check(
       "bill_cancel_reason_required",
@@ -248,16 +259,22 @@ export const shopProfile = sqliteTable(
   ],
 );
 
-export const numberCounter = sqliteTable(
-  "number_counter",
+export const numberSeries = sqliteTable(
+  "number_series",
   {
     ...base,
-    seriesCode: text("series_code").notNull(),
+    counterCode: text("counter_code").notNull(),
     financialYear: text("financial_year").notNull(),
+    // The bill number template last used with this series, for example {series}/{fy}/{seq}
+    template: text("template").notNull(),
     lastSeq: integer("last_seq").notNull(),
   },
   (tableColumns) => [
-    uniqueIndex("number_counter_uq").on(tableColumns.seriesCode, tableColumns.financialYear),
+    uniqueIndex("number_series_uq").on(
+      tableColumns.shopId,
+      tableColumns.counterCode,
+      tableColumns.financialYear,
+    ),
   ],
 );
 

@@ -42,6 +42,46 @@ function targetBase(ctx: Ctx, id: string): Record<string, ColumnValue> {
   };
 }
 
+/**
+ * A number series and one posted bill of 240.00 in it, with no line, tender or movement yet.
+ * (doc_title and round_off_paise arrive with task T080 and have defaults, so they are not set here.)
+ */
+export function insertTargetSeriesAndBill(
+  sqlite: Database.Database,
+  ctx: Ctx,
+  ids: Pick<ITargetBillIds, "billId" | "numberSeriesId"> = {
+    billId: "bill-1",
+    numberSeriesId: "series-1",
+  },
+): void {
+  insertRow(sqlite, "number_series", {
+    ...targetBase(ctx, ids.numberSeriesId),
+    counter_code: "C1",
+    financial_year: "26-27",
+    template: "{series}/{fy}/{seq}",
+    last_seq: 1,
+  });
+  insertRow(sqlite, "bill", {
+    ...targetBase(ctx, ids.billId),
+    device_id: "device-1",
+    counter_code: "C1",
+    bill_no: "C1/26-27/000001",
+    number_series_id: ids.numberSeriesId,
+    seq: 1,
+    financial_year: "26-27",
+    status: "posted",
+    business_date: "2026-11-15",
+    billed_at: EPOCH_MS,
+    customer_name: null,
+    client_bill_id: "client-bill-1",
+    subtotal_paise: 24000,
+    bill_discount_paise: 0,
+    total_paise: 24000,
+    cancel_reason: null,
+    cancelled_at: null,
+  });
+}
+
 /** One posted bill (2 pcs of Pipe at 120.00) with its line, cash tender, sale movement and series. */
 export function insertTargetBill(sqlite: Database.Database, ctx: Ctx): ITargetBillIds {
   const ids: ITargetBillIds = {
@@ -67,34 +107,7 @@ export function insertTargetBill(sqlite: Database.Database, ctx: Ctx): ITargetBi
     is_active: 1,
     stock_milli: -2000,
   });
-  insertRow(sqlite, "number_series", {
-    ...targetBase(ctx, ids.numberSeriesId),
-    counter_code: "C1",
-    financial_year: "26-27",
-    template: "{series}/{fy}/{seq}",
-    last_seq: 1,
-  });
-  insertRow(sqlite, "bill", {
-    ...targetBase(ctx, ids.billId),
-    device_id: "device-1",
-    counter_code: "C1",
-    bill_no: "C1/26-27/000001",
-    number_series_id: ids.numberSeriesId,
-    seq: 1,
-    financial_year: "26-27",
-    doc_title: "Estimate",
-    status: "posted",
-    business_date: "2026-11-15",
-    billed_at: EPOCH_MS,
-    customer_name: null,
-    client_bill_id: "client-bill-1",
-    subtotal_paise: 24000,
-    bill_discount_paise: 0,
-    round_off_paise: 0,
-    total_paise: 24000,
-    cancel_reason: null,
-    cancelled_at: null,
-  });
+  insertTargetSeriesAndBill(sqlite, ctx, ids);
   insertRow(sqlite, "bill_line", {
     ...targetBase(ctx, ids.lineId),
     bill_id: ids.billId,

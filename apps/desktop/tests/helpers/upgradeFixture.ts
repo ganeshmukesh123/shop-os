@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type Database from "better-sqlite3";
-import { openDatabase } from "../../src/main/db/connection";
+import { openDatabase, type Connection } from "../../src/main/db/connection";
 import { newId } from "../../src/main/db/ids";
 import type { Ctx } from "../../src/main/db/seed";
 import { makeTempFolder } from "./appStateFixture";
@@ -48,7 +48,11 @@ export function createDatabaseFileAtMigration0004WithOneBill(): string {
 }
 
 /** The same database, opened with every migration so the upgrade runs on real rows. */
-export function upgradeDatabaseWithOneBill(): Database.Database {
+export function upgradeConnectionWithOneBill(): Connection {
   const databasePath = createDatabaseFileAtMigration0004WithOneBill();
-  return openDatabase(databasePath, { migrationsFolder: MIGRATIONS }).sqlite;
+  return openDatabase(databasePath, { migrationsFolder: MIGRATIONS });
+}
+
+export function upgradeDatabaseWithOneBill(): Database.Database {
+  return upgradeConnectionWithOneBill().sqlite;
 }

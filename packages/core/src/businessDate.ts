@@ -1,5 +1,8 @@
 import { CoreError } from "./errors";
 
+/** The shop's time zone until it sets its own (research D22). IST has no daylight saving. */
+export const DEFAULT_TIME_ZONE = "Asia/Kolkata";
+
 const BUSINESS_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const APRIL_MONTH_NUMBER = 4;
 
@@ -7,17 +10,33 @@ function twoDigits(yearNumber: number): string {
   return String(yearNumber % 100).padStart(2, "0");
 }
 
-function formatterFor(timeZone: string): Intl.DateTimeFormat {
+function assertInstant(instantMs: number): void {
+  if (!Number.isSafeInteger(instantMs)) {
+    throw new CoreError("INVALID_FIELD", "instant must be an integer number of milliseconds");
+  }
+}
+
+function formatterFor(
+  timeZone: string,
+  timeOptions: Intl.DateTimeFormatOptions = {},
+): Intl.DateTimeFormat {
   try {
     return new Intl.DateTimeFormat("en-CA", {
       timeZone,
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
+      ...timeOptions,
     });
   } catch {
     throw new CoreError("INVALID_FIELD", `unknown time zone "${timeZone}"`);
   }
+}
+
+function partValueReader(formatter: Intl.DateTimeFormat, instantMs: number) {
+  const dateParts = formatter.formatToParts(new Date(instantMs));
+  return (partType: string) =>
+    dateParts.find((datePart) => datePart.type === partType)?.value ?? "";
 }
 
 /**
@@ -25,13 +44,26 @@ function formatterFor(timeZone: string): Intl.DateTimeFormat {
  * Works out once when a bill is saved; the device's own zone is never used (FR-019a).
  */
 export function businessDateOf(instantMs: number, timeZone: string): string {
-  if (!Number.isSafeInteger(instantMs)) {
-    throw new CoreError("INVALID_FIELD", "instant must be an integer number of milliseconds");
-  }
-  const dateParts = formatterFor(timeZone).formatToParts(new Date(instantMs));
-  const partValue = (partType: string) =>
-    dateParts.find((datePart) => datePart.type === partType)?.value ?? "";
+  assertInstant(instantMs);
+  const partValue = partValueReader(formatterFor(timeZone), instantMs);
   return `${partValue("year")}-${partValue("month")}-${partValue("day")}`;
+}
+
+/**
+ * The wall-clock time (YYYY-MM-DDTHH:mm:ss, no zone suffix) in the shop's zone at a UTC instant:
+ * what the shop's clock showed. Fractions of a second are dropped. Used to show a stored bill time.
+ */
+export function localIsoOf(instantMs: number, timeZone: string): string {
+  assertInstant(instantMs);
+  const formatter = formatterFor(timeZone, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+  const partValue = partValueReader(formatter, instantMs);
+  const datePart = `${partValue("year")}-${partValue("month")}-${partValue("day")}`;
+  return `${datePart}T${partValue("hour")}:${partValue("minute")}:${partValue("second")}`;
 }
 
 /** Indian financial year (1 April to 31 March) of a business date: 2027-04-01 -> "27-28". */
