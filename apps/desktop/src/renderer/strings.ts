@@ -104,6 +104,14 @@ export const uiText = {
     backupFailed: "Last backup failed",
     backupOk: "Backup complete",
   },
+  theme: {
+    title: "Appearance",
+    label: "Theme",
+    help: "System follows this computer's light or dark setting.",
+    system: "System",
+    light: "Light",
+    dark: "Dark",
+  },
   common: {
     loading: "Loading",
     error: "Something went wrong",

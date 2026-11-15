@@ -11,6 +11,8 @@ import {
 } from "@radix-ui/themes";
 import { validateNumberTemplate, type BackupStatus, type ShopProfile } from "@shopos/core";
 import { useToast } from "../components/Toast";
+import { ThemePicker } from "../shared/theme/ThemePicker";
+import { useThemePreference } from "../shared/theme/useThemePreference";
 import { uiText } from "../strings";
 import { call, messageOf } from "../state/api";
 
@@ -30,6 +32,7 @@ const field = (label: string, node: React.ReactNode, help?: string) => (
 
 export function SettingsScreen() {
   const toast = useToast();
+  const { preference: themePreference, setPreference: setThemePreference } = useThemePreference();
   const [shopProfile, setP] = useState<ShopProfile | null>(null);
   const [status, setStatus] = useState<BackupStatus | null>(null);
   const [busy, setBusy] = useState(false);
@@ -228,6 +231,10 @@ export function SettingsScreen() {
           {uiText.settings.restore}
         </Button>
       </Flex>
+
+      <Separator size="4" my="3" />
+      <Heading size="3">{uiText.theme.title}</Heading>
+      <ThemePicker preference={themePreference} onChange={setThemePreference} />
     </Flex>
   );
 }

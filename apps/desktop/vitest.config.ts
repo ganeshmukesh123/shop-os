@@ -20,7 +20,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: "renderer",
-          include: ["tests/renderer/**/*.test.tsx"],
+          include: ["tests/renderer/**/*.test.{ts,tsx}"],
           environment: "jsdom",
           setupFiles: ["tests/setup/renderer.ts"],
         },
