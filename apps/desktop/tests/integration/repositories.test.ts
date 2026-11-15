@@ -72,3 +72,60 @@ describe("StockRepository.sumForItem", () => {
     expect(stock.sumForItem(createItem("Pipe").id)).toBe(0);
   });
 });
+
+describe("ItemRepository: one family and one variant per item (research D18)", () => {
+  interface IVariantRow {
+    id: string;
+    family_id: string;
+    item_code: string;
+  }
+  const readVariants = () =>
+    testDb.sqlite
+      .prepare("select id, family_id, item_code from item_variant order by item_code")
+      .all() as IVariantRow[];
+
+  it("gives each new item its own family and the next item code", () => {
+    const pipe = createItem("Pipe");
+    const wire = createItem("Wire");
+
+    const variantRows = readVariants();
+
+    expect(variantRows.map((variantRow) => variantRow.item_code)).toEqual(["ITM-0001", "ITM-0002"]);
+    expect(variantRows.map((variantRow) => variantRow.id)).toEqual([pipe.id, wire.id]);
+    const familyNames = testDb.sqlite.prepare("select name from item_family order by name").all();
+    expect(familyNames).toEqual([{ name: "Pipe" }, { name: "Wire" }]);
+    expect(new Set(variantRows.map((variantRow) => variantRow.family_id)).size).toBe(2);
+  });
+
+  it("keeps counting after the highest code, past four digits", () => {
+    createItem("Pipe");
+    testDb.sqlite.prepare("update item_variant set item_code = 'ITM-9999'").run();
+
+    createItem("Wire");
+
+    expect(readVariants().map((variantRow) => variantRow.item_code)).toEqual([
+      "ITM-10000",
+      "ITM-9999",
+    ]);
+  });
+
+  it("renames the family together with the item", () => {
+    const pipe = createItem("Pipe");
+
+    items.update(pipe.id, { name: "PVC Pipe" });
+
+    expect(testDb.sqlite.prepare("select name from item_family").all()).toEqual([
+      { name: "PVC Pipe" },
+    ]);
+  });
+
+  it("refuses two variants with the same item code in one business", () => {
+    createItem("Pipe");
+    createItem("Wire");
+
+    const duplicateCode = () =>
+      testDb.sqlite.prepare("update item_variant set item_code = 'ITM-0001'").run();
+
+    expect(duplicateCode).toThrowError(/UNIQUE/);
+  });
+});

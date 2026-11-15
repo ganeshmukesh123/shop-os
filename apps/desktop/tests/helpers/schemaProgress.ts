@@ -6,7 +6,7 @@
  */
 export const SCHEMA_TASK_DONE = {
   /** item split into item_family and item_variant */
-  T074: false,
+  T074: true,
   /** location table, stock_movement reshaped */
   T075: false,
   /** bill header renamed (bill_no, posted, subtotal, total) */

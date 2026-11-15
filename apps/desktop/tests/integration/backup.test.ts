@@ -52,7 +52,9 @@ describe("backup", () => {
     const backupResult = await backup.run(new Date(2026, 11, 7, 10, 0, 0));
     expect(fs.existsSync(backupResult.path)).toBe(true);
     const copy = new Database(backupResult.path, { readonly: true });
-    expect(copy.prepare("select count(*) as rowCount from item").get()).toEqual({ rowCount: 1 });
+    expect(copy.prepare("select count(*) as rowCount from item_variant").get()).toEqual({
+      rowCount: 1,
+    });
     expect(copy.prepare("select count(*) as rowCount from bill").get()).toEqual({ rowCount: 1 });
     expect(copy.pragma("integrity_check", { simple: true })).toBe("ok");
     copy.close();
@@ -76,7 +78,7 @@ describe("backup", () => {
     expect(copy.pragma("integrity_check", { simple: true })).toBe("ok");
     const sums = copy
       .prepare(
-        "select (select stock_milli from item) cached, (select sum(quantity_milli) from stock_movement) derived",
+        "select (select stock_milli from item_variant) cached, (select sum(quantity_milli) from stock_movement) derived",
       )
       .get() as { cached: number; derived: number };
     expect(sums.cached).toBe(sums.derived);

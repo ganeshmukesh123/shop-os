@@ -1,0 +1,35 @@
+import fs from "node:fs";
+import path from "node:path";
+import type Database from "better-sqlite3";
+import { openDatabase } from "../../src/main/db/connection";
+import { ensureSeed } from "../../src/main/db/seed";
+import { makeTempFolder } from "./appStateFixture";
+import { insertBillAtMigration0004 } from "./schemaRows";
+import { MIGRATIONS } from "./testDb";
+
+const MIGRATION_COUNT_AT_0004 = 5; // migrations 0000 to 0004
+
+/** A copy of the real migrations folder holding only 0000 to 0004. */
+function makeMigrationsFolderAtMigration0004(): string {
+  const folder = makeTempFolder("shopos-migrations-0004-");
+  fs.cpSync(MIGRATIONS, folder, { recursive: true });
+  const journalFile = path.join(folder, "meta", "_journal.json");
+  const journal = JSON.parse(fs.readFileSync(journalFile, "utf8")) as { entries: unknown[] };
+  journal.entries = journal.entries.slice(0, MIGRATION_COUNT_AT_0004);
+  fs.writeFileSync(journalFile, JSON.stringify(journal));
+  return folder;
+}
+
+/**
+ * The shop's database as it was at migration 0004, holding Pipe (opening 10 pcs) and one saved
+ * bill of 2 pcs at 120.00, then opened with every migration so the upgrade runs on real rows.
+ */
+export function upgradeDatabaseWithOneBill(): Database.Database {
+  const databasePath = path.join(makeTempFolder("shopos-upgrade-"), "shopos.sqlite");
+  const oldConnection = openDatabase(databasePath, {
+    migrationsFolder: makeMigrationsFolderAtMigration0004(),
+  });
+  insertBillAtMigration0004(oldConnection.sqlite, ensureSeed(oldConnection.db));
+  oldConnection.sqlite.close();
+  return openDatabase(databasePath, { migrationsFolder: MIGRATIONS }).sqlite;
+}

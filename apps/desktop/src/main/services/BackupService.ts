@@ -28,9 +28,11 @@ export function validateBackupFile(file: string): void {
         db.prepare("select name from sqlite_master where type='table'").all() as { name: string }[]
       ).map((tableRow) => tableRow.name),
     );
-    for (const tableName of ["item", "bill", "bill_line", "stock_movement", "shop_profile"]) {
+    for (const tableName of ["bill", "bill_line", "stock_movement", "shop_profile"]) {
       if (!names.has(tableName)) throw new Error(`missing table ${tableName}`);
     }
+    // A backup taken before the item split (D18) still has `item`; the next start upgrades it.
+    if (!names.has("item_variant") && !names.has("item")) throw new Error("missing table item");
   } catch (caughtError) {
     throw new CoreError(
       "INVALID_BACKUP",
