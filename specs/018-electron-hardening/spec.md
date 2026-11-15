@@ -35,7 +35,7 @@ Every command from the screen to the database layer is accepted only when it com
 
 **Why this priority**: If a flaw ever let foreign content run inside the window, this check is what stops it from saving or cancelling bills (constitution I, NFR-008). It is a few lines, and the docs list it as baseline (Security item 17).
 
-**Independent Test**: Call the command handler with a fake event whose sender origin is wrong, missing or null, and confirm nothing is written.
+**Independent Test**: Call the command handler with a fake event whose sender is a foreign page, a missing frame, or a same-origin child frame, and confirm nothing is written.
 
 **Acceptance Scenarios**:
 
@@ -76,22 +76,25 @@ The window may show only the app's own page (and the dev server while developing
 2. **Given** another local file address, **Then** it is blocked.
 3. **Given** a dev-server look-alike (for example the allowed host followed by a dot and another domain), **Then** it is blocked, even in development.
 4. **Given** an address that cannot be parsed, **Then** it is blocked.
+5. **Given** an allowed address (the dev server in development) that redirects to a foreign address, **Then** the redirect is blocked.
 
 ---
 
 ### User Story 4 - A tampered or hijacked installed app refuses to run (Priority: P2)
 
-The packaged app cannot be launched as a plain Node interpreter, cannot be attached to by a debugger from the command line or environment, and refuses to start if its application bundle was altered after packaging.
+The packaged app cannot be launched as a plain Node interpreter, cannot be attached to by a debugger from the command line or environment, and, on macOS and Windows, refuses to start if the contents of its application archive (`app.asar`) were altered after packaging.
 
-**Why this priority**: The installer sits on the shop counter's PC. Fuses and ASAR integrity close the door on swapping code inside the bundle (Security item 19, ASAR integrity page). It is P2 because it needs a packaging change, not just code.
+**Scope of the promise**: fuses close abuse through Electron and Node flags; ASAR integrity detects changes to `app.asar` only. It does not cover the Linux AppImage, files outside the archive (the migration files in `extraResources`, the unpacked SQLite binary), or an actor who can rewrite the whole unsigned package. Signature verification (US5) is what addresses that last case.
 
-**Independent Test**: Package the app, then run the fuse reader against the result, and try to launch it with `ELECTRON_RUN_AS_NODE`, `NODE_OPTIONS` and `--inspect`; then modify the bundle and confirm it will not start.
+**Why this priority**: The installer sits on the shop counter's PC. Fuses and ASAR integrity close the door on running the app as a Node interpreter and on swapping code inside the archive (Security item 19, ASAR integrity page). It is P2 because it needs a packaging change, not just code.
+
+**Independent Test**: Package the app, run the fuse reader against the result, and try to launch it with `ELECTRON_RUN_AS_NODE`, `NODE_OPTIONS` and `--inspect`; then, on macOS or Windows, modify `app.asar` and confirm it will not start.
 
 **Acceptance Scenarios**:
 
 1. **Given** the packaged app, **Then** the fuse report shows run-as-node, node-options and node-inspect disabled, ASAR integrity and load-only-from-ASAR enabled.
 2. **Given** `ELECTRON_RUN_AS_NODE=1`, **Then** the packaged app does not act as Node.
-3. **Given** the bundle file changed after packaging, **Then** the app terminates at launch.
+3. **Given** the contents of `app.asar` changed after packaging, on macOS or Windows, **Then** the app terminates at launch.
 4. **Given** the development and test Electron binary, **Then** it is untouched, and `pnpm test` still runs (tests depend on run-as-node).
 5. **Given** the packaged app, **Then** the database still opens (the SQLite native binary stays outside the archive) and a bill still saves and prints.
 
@@ -156,9 +159,9 @@ Long jobs (large reports, imports, backups) run away from the main process so bi
 
 ### Functional Requirements
 
-- **FR-001** (US1): Every IPC command MUST be accepted only from the app's own page origin, and refused if the sender frame is missing. Refusals return the normal error envelope and call no service. (Security item 17; NFR-008)
+- **FR-001** (US1): Every IPC command MUST be accepted only from the app's main frame showing the app's own page, identified by scheme and location (never by a serialized origin, which is `"null"` for local files), and refused if the sender frame is missing or is any other frame, including a same-origin child frame. Refusals return the normal error envelope and call no service. (Security item 17; NFR-008)
 - **FR-002** (US2): Permission requests and permission checks MUST be denied by default, with each future exception named in code and tested. (Security item 5)
-- **FR-003** (US3): Navigation MUST be allowed only to the app's own page (and the dev server in development) using exact address parsing, never text-prefix matching. (Security item 13)
+- **FR-003** (US3): Navigation MUST be allowed only to the app's own page (and the dev server in development) using exact address parsing, never text-prefix matching, and redirect targets MUST pass the same check. (Security item 13)
 - **FR-004** (US4): The packaged app MUST disable run-as-node, node-options and node-inspect, and enable ASAR integrity and load-only-from-ASAR. (Security item 19; Fuses; ASAR integrity)
 - **FR-005** (US4): Fuses MUST be flipped only on packaged output, never on the development or test binary.
 - **FR-006** (US4): A CI or release check MUST read the fuse state of the packaged app and fail if it differs from FR-004.
@@ -182,7 +185,7 @@ None. This feature adds no tables and changes no bill, stock or ledger records.
 - **SC-001**: 100% of IPC commands from a wrong, missing or null sender are refused with zero writes, proven by tests.
 - **SC-002**: 0 permission requests are granted by default.
 - **SC-003**: Every address in the blocked-navigation table (look-alikes, other files, unparsable) is blocked; the app's own page is allowed.
-- **SC-004**: The packaged app's fuse report matches FR-004 on every release, and a modified bundle fails to launch.
+- **SC-004**: The packaged app's fuse report matches FR-004 on every release, and, on macOS and Windows (the platforms ASAR integrity supports), a modified `app.asar` fails to launch. Linux is an exception until a separate protection is chosen (research O12); files outside the archive are covered only if O13 is resolved.
 - **SC-005**: `pnpm test` and the end-to-end suite still pass unchanged on the development binary after PR B.
 - **SC-006**: After PR C, an arbitrary local file outside the bundle cannot be loaded by the screen.
 - **SC-007**: With a long report running, a bill still saves and prints in about 1 second (NFR-002).

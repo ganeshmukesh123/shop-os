@@ -17,9 +17,9 @@ Package: fuses + ASAR integrity  (packaged output only, never the dev binary)
 
 ## 1. Rules (main process)
 
-- **Sender check.** Every IPC handler first checks `event.senderFrame` against the app's own origin (compare `new URL(...).origin`, not a string prefix). A null frame or foreign origin returns the normal error envelope and calls no service. Wrap once, not per handler.
+- **Sender check.** Every IPC handler first checks `event.senderFrame`. Accept only the app's **main frame** (not a same-origin child frame) whose address is the app's own page. Do **not** compare serialized origins: for `file:` and unregistered custom schemes the origin is the text `"null"`, so a foreign page looks the same as ours. Compare the parsed scheme plus location instead (exact file location for `file:`, scheme and host for the custom protocol). A null frame, child frame or foreign page returns the normal error envelope and calls no service. Wrap once, not per handler. What Electron returns for `senderFrame.origin` on `file:` is unverified (research O11); test it.
 - **Permissions.** `session.setPermissionRequestHandler` and `setPermissionCheckHandler` deny everything. A feature that needs one (camera for a scanner, spec 015) adds a named, tested exception.
-- **Navigation.** In `will-navigate`, parse with `new URL()` and compare exactly with the app page (plus the dev server, only when `isDev`). Never `startsWith`: `https://allowed.com.evil.com` passes it. Unparsable means blocked.
+- **Navigation.** In `will-navigate`, parse with `new URL()` and compare exactly with the app page (plus the dev server, only when `isDev`). Never `startsWith`: `https://allowed.com.evil.com` passes it. Unparsable means blocked. Run the **same check on `will-redirect`** too, because a redirect from an allowed dev-server URL to a foreign one is a separate event; test it.
 - **New windows and links.** Keep `setWindowOpenHandler` returning `{ action: "deny" }`. Never pass renderer-supplied text to `shell.openExternal`; allow only fixed or verified URLs.
 - **Never relax**: `webSecurity`, `allowRunningInsecureContent`, `experimentalFeatures`, `enableBlinkFeatures`, `<webview>`, `nodeIntegration`, `--no-sandbox` (a test fails if any is relaxed).
 - **Bridge.** Never expose `ipcRenderer` or its `on` directly; wrap callbacks as `(_event, value) => callback(value)`. One narrow function per command.
@@ -27,6 +27,7 @@ Package: fuses + ASAR integrity  (packaged output only, never the dev binary)
 ## 2. Packaging
 
 - Fuses: disable `runAsNode`, `NODE_OPTIONS`, `nodeCliInspect`; enable ASAR integrity and `onlyLoadAppFromAsar`. Disable `grantFileProtocolExtraPrivileges` only once `file://` is gone.
+- **Know what is and is not protected.** Fuses stop abuse through Electron and Node flags. ASAR integrity detects changes to `app.asar` on **macOS and Windows only**; the Linux AppImage is an exception until a separate protection is chosen. Files outside the archive (`extraResources` such as the `drizzle` migrations, the unpacked `better-sqlite3`) are **not** covered. While the app is unsigned, someone who can write to the install folder can still replace it; signature verification is what closes that (spec 018 US5).
 - **Flip fuses on packaged output only.** Vitest runs inside Electron's Node (`ELECTRON_RUN_AS_NODE=1`); flipping the `node_modules` binary breaks `pnpm test`.
 - A release check reads the fuse state (`npx @electron/fuses read --app <path>`) and fails if it differs.
 - `better-sqlite3` stays unpacked outside the archive and is rebuilt for Electron after every Electron upgrade (see `shopos-database-drizzle`).
@@ -57,7 +58,8 @@ Table-driven navigation test (names say what they hold):
 
 ## 6. Checklist
 
-- [ ] Sender check on every command; null frame refused; test with wrong, missing and null origin
+- [ ] Sender check on every command; main frame only; null frame refused; tests for wrong page, missing frame and same-origin child frame
+- [ ] Redirects checked as well as navigation
 - [ ] Permissions denied by default (request and check)
 - [ ] Navigation by parsed URL, exact match
 - [ ] No new Electron or Node access in the renderer; no raw `ipcRenderer`

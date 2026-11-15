@@ -20,7 +20,7 @@ Source: official Electron docs read 2026-11-15 (links in `spec.md`) and an audit
 
 ### R1. IPC sender validation (US1)
 - **Why**: a foreign frame must never reach a service that writes bills (constitution I, NFR-008).
-- **Trade-off**: a few lines per handler wrapper. Under `file://` the origin is weak (`file://`), so the check is only as strong as the page source; PR C strengthens it with a private origin. Alternative rejected: trusting the context bridge alone; the docs say isolation "does not automatically mean that everything you do is safe".
+- **Trade-off**: a few lines per handler wrapper. Serialized origins are the text `"null"` for `file:` and unregistered custom schemes, so the check compares the parsed scheme and location of the sender's main frame instead (and rejects child frames); PR C strengthens it with a private protocol. What `senderFrame.origin` returns for `file:` is unverified (O11). Alternative rejected: trusting the context bridge alone; the docs say isolation "does not automatically mean that everything you do is safe".
 - **Industry practice**: the Electron security checklist lists it as item 17. No reliable public practice from a named company was found; not invented.
 - **References**: [Security](https://www.electronjs.org/docs/latest/tutorial/security), [Context isolation](https://www.electronjs.org/docs/latest/tutorial/context-isolation).
 
@@ -32,12 +32,12 @@ Source: official Electron docs read 2026-11-15 (links in `spec.md`) and an audit
 
 ### R3. Exact navigation (US3)
 - **Why**: the docs warn that `startsWith('https://example.com')` is bypassed by `https://example.com.attacker.com`; ours accepts every `file://` address.
-- **Trade-off**: dev-server URL handling must parse host and port. Alternative rejected: regex, which is easier to get wrong.
+- **Trade-off**: dev-server URL handling must parse host and port, and `will-redirect` needs the same check as `will-navigate`. Alternative rejected: regex, which is easier to get wrong.
 - **Industry practice**: Electron security item 13; no named-company source found.
 - **References**: [Security](https://www.electronjs.org/docs/latest/tutorial/security).
 
 ### R4 and R5. Fuses and ASAR integrity (US4)
-- **Why**: stops `ELECTRON_RUN_AS_NODE`, `NODE_OPTIONS` and `--inspect` abuse and bundle tampering on a PC that is not locked down.
+- **Why**: fuses stop abuse of the app through `ELECTRON_RUN_AS_NODE`, `NODE_OPTIONS` and `--inspect`; ASAR integrity detects changes to `app.asar` on macOS and Windows. They do **not** make the install tamper-proof: ASAR integrity does not apply to the Linux AppImage, does not cover files outside the archive (the `drizzle` migrations in `extraResources`, the unpacked `better-sqlite3`), and while the app is unsigned someone with write access to the install folder can replace the whole package.
 - **Trade-off**: a build step; never flip on the dev binary (tests use run-as-node). `embeddedAsarIntegrityValidation` adds a small read cost. The `loadBrowserProcessSpecificV8Snapshot` fuse is skipped for now because it slows main-process startup (counter startup matters); revisit with measurements.
 - **Industry practice**: the Electron docs recommend these for all apps. VS Code moved its renderers to sandboxed processes (Microsoft engineering blog, vendor-written); no company-level fuse data was found.
 - **References**: [Fuses](https://www.electronjs.org/docs/latest/tutorial/fuses), [ASAR integrity](https://www.electronjs.org/docs/latest/tutorial/asar-integrity).
@@ -75,6 +75,9 @@ Source: official Electron docs read 2026-11-15 (links in `spec.md`) and an audit
 - **O8**: which of Windows or Mac is the shop's main platform? Decides FR-009.
 - **O9**: Apple developer account cost and whether notarization is needed for a build installed by hand on the owner's own Mac.
 - **O10**: Windows-specific fuse and integrity behaviour (integrity needs Electron 30 or later on Windows; we use 43, so expected to work, not tested).
+- **O11**: what Electron's `senderFrame.origin` and `senderFrame.url` return for the app's `file:` page and for a custom protocol, and whether the main-frame test (`senderFrame === webContents.mainFrame`) works as intended. Test before relying on it.
+- **O12**: `electron-builder.yml` also builds a Linux AppImage, and ASAR integrity does not apply there. Decide whether Linux is an accepted exception or needs a separate protection (the shop's first use is Mac, NFR-013).
+- **O13**: the `drizzle` migrations are in `extraResources`, outside `app.asar`, and run against the shop database at start. Decide whether to bundle them inside the archive or protect them separately.
 
 ## Not adopted
 
