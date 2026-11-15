@@ -22,13 +22,26 @@ export interface OpenOptions {
   encryptionKey?: string;
 }
 
+/** WAL for files (not for in-memory test databases) and foreign keys on. */
+export function applyConnectionPragmas(sqlite: Database.Database): void {
+  // if (opts.encryptionKey) sqlite.pragma(`key='${opts.encryptionKey}'`); // SQLCipher builds only
+  const isFileDatabase = sqlite.memory === false;
+  if (isFileDatabase) {
+    sqlite.pragma("journal_mode = WAL");
+  }
+  sqlite.pragma("foreign_keys = ON");
+}
+
+/** Run pending migrations on an open SQLite handle and wrap it for Drizzle. */
+export function migrateConnection(sqlite: Database.Database, migrationsFolder: string): Connection {
+  const db = drizzle(sqlite, { schema });
+  migrate(db, { migrationsFolder });
+  return { sqlite, db };
+}
+
 /** Open (or create) the database, set WAL + foreign keys, and run pending migrations. */
 export function openDatabase(file: string, opts: OpenOptions): Connection {
   const sqlite = new Database(file);
-  // if (opts.encryptionKey) sqlite.pragma(`key='${opts.encryptionKey}'`); // SQLCipher builds only
-  if (file !== ":memory:") sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
-  const db = drizzle(sqlite, { schema });
-  migrate(db, { migrationsFolder: opts.migrationsFolder });
-  return { sqlite, db };
+  applyConnectionPragmas(sqlite);
+  return migrateConnection(sqlite, opts.migrationsFolder);
 }

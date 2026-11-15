@@ -14,6 +14,7 @@ export type ErrorCode =
   | "INVALID_FIELD"
   | "BACKUP_FAILED"
   | "INVALID_BACKUP"
+  | "DATABASE_CORRUPT"
   | "INTERNAL";
 
 export class CoreError extends Error {

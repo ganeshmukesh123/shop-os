@@ -218,7 +218,7 @@ Every schema task: edit `apps/desktop/src/main/db/schema.ts`, run `pnpm --filter
 
 ### Operations (research D15; finding H5)
 
-- [ ] T091 Before running a pending migration on start-up, take a backup with the online backup API; run `PRAGMA integrity_check` on start and offer restore on failure; tests in `apps/desktop/tests/integration/startupSafety.test.ts`. Must land before any rebuilt-table migration (T074 to T078) reaches the shop's database
+- [X] T091 Before running a pending migration on start-up, take a backup with the online backup API; run `PRAGMA integrity_check` on start and offer restore on failure; tests in `apps/desktop/tests/integration/startupSafety.test.ts`. Must land before any rebuilt-table migration (T074 to T078) reaches the shop's database _(done 2026-11-15: `main/db/startupSafety.ts` and `main/app/startupRecovery.ts`; copies go to `pre-migration-backups/` beside the database, newest 5 kept; a damaged file raises `DATABASE_CORRUPT` and the app offers a backup to restore, then relaunches; 8 safety tests and 5 start-up tests. Disk-space check and the local log file from D15 are not part of this task)_
 
 **Checkpoint (M3b exit)**: T073 to T084 and T091 done; every existing test green on the new tables; the boundary and round-off tests pass. **Checkpoint (M5 design)**: T085 to T090 done; every screen checked in light and dark.
 
