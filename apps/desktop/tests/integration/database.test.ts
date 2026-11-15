@@ -9,7 +9,8 @@ import {
   bill,
   billLine,
   draftBill,
-  item,
+  itemFamily,
+  itemVariant,
   numberCounter,
   shopProfile,
   stockMovement,
@@ -110,9 +111,14 @@ describe("schema contract", () => {
   });
 
   it("limits item and shop profile fields", () => {
-    expect(constraintNames(item)).toEqual(
-      expect.arrayContaining(["item_unit_len", "item_price_nonneg", "item_active_bool"]),
+    expect(constraintNames(itemVariant)).toEqual(
+      expect.arrayContaining([
+        "item_variant_uom_len",
+        "item_variant_price_nonneg",
+        "item_variant_active_bool",
+      ]),
     );
+    expect(indexNames(itemVariant)).toContain("item_variant_code_uq");
     expect(constraintNames(shopProfile)).toEqual(
       expect.arrayContaining(["shop_profile_name_len", "shop_profile_width"]),
     );
@@ -128,13 +134,15 @@ describe("schema contract", () => {
       getTableConfig(table)
         .foreignKeys.map((foreignKey) => getTableConfig(foreignKey.reference().foreignTable).name)
         .sort();
-    expect(referencedTables(billLine)).toEqual(["bill", "item"]);
-    expect(referencedTables(stockMovement)).toEqual(["bill", "item"]);
+    expect(referencedTables(billLine)).toEqual(["bill", "item_variant"]);
+    expect(referencedTables(stockMovement)).toEqual(["bill", "item_variant"]);
+    expect(referencedTables(itemVariant)).toEqual(["item_family"]);
   });
 
   it("names every table and column in snake_case", () => {
     const tables = [
-      item,
+      itemFamily,
+      itemVariant,
       bill,
       billLine,
       stockMovement,

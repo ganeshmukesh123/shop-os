@@ -5,18 +5,28 @@ import { createTestDb } from "../helpers/testDb";
 describe("search performance", () => {
   it("searches 5,000 items in under 0.5 s", () => {
     const testDb = createTestDb();
-    const insert = testDb.sqlite.prepare(
-      `insert into item (id, business_id, shop_id, created_at, updated_at, name, unit, allows_decimal, price_paise, stock_milli, active)
-       values (?, ?, ?, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z', ?, 'pcs', 0, 100, 1000, 1)`,
+    const insertFamily = testDb.sqlite.prepare(
+      `insert into item_family (id, business_id, shop_id, created_at, updated_at, name)
+       values (?, ?, ?, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z', ?)`,
+    );
+    const insertVariant = testDb.sqlite.prepare(
+      `insert into item_variant (id, business_id, shop_id, created_at, updated_at, family_id, item_code, display_name, base_uom, allow_decimal, selling_price_paise, stock_milli, is_active)
+       values (?, ?, ?, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z', ?, ?, ?, 'pcs', 0, 100, 1000, 1)`,
     );
     testDb.sqlite.transaction(() => {
-      for (let itemIndex = 0; itemIndex < 5000; itemIndex++)
-        insert.run(
+      for (let itemIndex = 0; itemIndex < 5000; itemIndex++) {
+        const itemName = `Item ${itemIndex} ${itemIndex % 7 === 0 ? "pipe" : "bolt"} size ${itemIndex % 40}`;
+        const { businessId, shopId } = testDb.ctx;
+        insertFamily.run(`family-${itemIndex}`, businessId, shopId, itemName);
+        insertVariant.run(
           `id-${itemIndex}`,
-          testDb.ctx.businessId,
-          testDb.ctx.shopId,
-          `Item ${itemIndex} ${itemIndex % 7 === 0 ? "pipe" : "bolt"} size ${itemIndex % 40}`,
+          businessId,
+          shopId,
+          `family-${itemIndex}`,
+          `ITM-${itemIndex + 1}`,
+          itemName,
         );
+      }
     })();
     const inv = new InventoryService(testDb.db, testDb.ctx);
     const started = performance.now();

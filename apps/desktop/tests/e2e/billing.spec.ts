@@ -54,7 +54,9 @@ test("billing: totals, stock, negative stock, draft recovery, exactly-once save"
         .toString()
         .trim();
     expect(queryDatabase("select count(*) from bill")).toBe("1");
-    expect(queryDatabase("select stock_milli from item where name='Glue'")).toBe("-3000");
+    expect(queryDatabase("select stock_milli from item_variant where display_name='Glue'")).toBe(
+      "-3000",
+    );
 
     ({ app, page } = await launch(dataDir));
     await page.getByRole("button", { name: /^Items/ }).click();

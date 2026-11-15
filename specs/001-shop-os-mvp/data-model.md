@@ -1,6 +1,6 @@
 # Data Model: Shop OS MVP
 
-> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0004) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
+> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0006; items moved in T074) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
 
 ## Target shape (research D18, architecture section 8)
 
@@ -33,23 +33,27 @@ Conventions for every table: `id` UUID v7 text primary key; `business_id` and `s
 
 ## Entities
 
-### Item (`item`)
-| Field | Rule |
+### Item family (`item_family`) and item variant (`item_variant`) (migrations 0005 and 0006, task T074)
+An item is one family with one variant for now; the code and screens still say "item" and see the variant's fields. The variant keeps the id the item had before the split, so older stock movements and bill lines point at the same row.
+
+| Field (`item_variant`) | Rule |
 |---|---|
-| name | text, not null, 1-120 characters, trimmed; unique per shop among active items, case-insensitive (duplicate gives a warning the user may override only by changing the name) |
-| unit | text, not null, one of `pcs`, `metre`, `kg`, `litre`, `box`, or a custom name up to 20 characters |
-| allows_decimal | integer 0 or 1, not null; derived default: 1 for metre/kg/litre, 0 otherwise; custom units choose at creation |
-| price_paise | integer, not null, 0 or more |
+| family_id | foreign key to `item_family`, not null; the family holds the same name |
+| item_code | text, not null, `ITM-0001`, `ITM-0002`, ...; unique per business; the next code is the highest number plus one |
+| display_name | text, not null, 1-120 characters, trimmed; unique per shop among active items, case-insensitive (duplicate gives a warning the user may override only by changing the name) |
+| base_uom | text, not null, one of `pcs`, `metre`, `kg`, `litre`, `box`, or a custom name up to 20 characters |
+| allow_decimal | integer 0 or 1, not null; derived default: 1 for metre/kg/litre, 0 otherwise; custom units choose at creation |
+| selling_price_paise | integer, not null, 0 or more |
 | stock_milli | integer, not null, cached sum of movements (may be negative) |
-| active | integer 0 or 1, not null, default 1; items are deactivated, never deleted |
+| is_active | integer 0 or 1, not null, default 1; items are deactivated, never deleted |
 | low_stock_flag | derived: stock_milli below 0 |
 
-Reserved but unused columns so later features need no migration: `hsn`, `gst_rate_bp`, `barcode` (all nullable, not shown in the UI).
+Reserved but unused columns so later features need no migration: `hsn_code`, `gst_rate_override_bp`, `barcode` (all nullable, not shown in the UI). `item_family` has only `name` (1-120 characters, trimmed) plus the base columns.
 
 ### Stock Movement (`stock_movement`)
 | Field | Rule |
 |---|---|
-| item_id | foreign key to item, not null |
+| item_id | foreign key to `item_variant`, not null (renamed `variant_id` in T075) |
 | quantity_milli | integer, not null, non-zero; positive adds stock, negative removes |
 | reason | one of `opening`, `adjustment`, `sale`, `sale_cancel`, not null |
 | note | text up to 200 characters, optional (required text for `adjustment`) |
@@ -145,7 +149,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 ## Indexes
 
-- `item(name)` collation NOCASE plus an FTS or prefix-search structure for partial-name search.
+- `item_variant(display_name)` collation NOCASE for partial-name search (no FTS needed: 5,000 items searched in about 4 ms); `item_variant(business_id, item_code)` unique.
 - `stock_movement(item_id, occurred_at)`.
 - `bill(number)` unique; `bill(bill_date)`; `bill(customer_name)`.
 - `bill_line(bill_id)`.
