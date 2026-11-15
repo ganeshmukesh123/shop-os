@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Badge, Button, Checkbox, Flex, Heading, Table, Text, TextField } from "@radix-ui/themes";
+import { Button, Checkbox, Flex, Heading, Table, Text, TextField } from "@radix-ui/themes";
+import { StatusBadge } from "../shared/components/StatusBadge/StatusBadge";
 import { formatQuantity, formatRupees, type Item } from "@shopos/core";
 import { AdjustStockDialog } from "../components/AdjustStockDialog";
 import { useToast } from "../components/Toast";
@@ -84,8 +85,8 @@ export function ItemsScreen() {
               <Table.Cell justify="end">{formatRupees(it.pricePaise)}</Table.Cell>
               <Table.Cell justify="end">{formatQuantity(it.stockMilli)}</Table.Cell>
               <Table.Cell>
-                {it.needsCorrection && <Badge color="red">{uiText.items.negative}</Badge>}{" "}
-                {!it.active && <Badge color="gray">{uiText.items.inactive}</Badge>}
+                {it.needsCorrection && <StatusBadge role="warning" label={uiText.items.negative} />}{" "}
+                {!it.active && <StatusBadge role="neutral" label={uiText.items.inactive} />}
               </Table.Cell>
               <Table.Cell>
                 <Flex gap="2" justify="end">

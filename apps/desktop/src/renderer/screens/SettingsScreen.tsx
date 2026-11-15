@@ -1,16 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  Button,
-  Callout,
-  Flex,
-  Heading,
-  RadioGroup,
-  Separator,
-  Text,
-  TextField,
-} from "@radix-ui/themes";
+import { Button, Flex, Heading, RadioGroup, Separator, Text, TextField } from "@radix-ui/themes";
 import { validateNumberTemplate, type BackupStatus, type ShopProfile } from "@shopos/core";
 import { useToast } from "../components/Toast";
+import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import { ThemePicker } from "../shared/theme/ThemePicker";
 import { useThemePreference } from "../shared/theme/useThemePreference";
 import { uiText } from "../strings";
@@ -154,9 +146,9 @@ export function SettingsScreen() {
           {uiText.settings.preview}: <b>{tpl.example}</b>
         </Text>
       ) : (
-        <Text size="2" color="red" role="alert">
-          Error: {tpl.reason}
-        </Text>
+        <StatusMessage role="danger" label={uiText.status.error}>
+          {tpl.reason}
+        </StatusMessage>
       )}
       {field(
         uiText.settings.footer,
@@ -212,11 +204,9 @@ export function SettingsScreen() {
         </b>
       </Text>
       {status?.lastError && (
-        <Callout.Root color="red" role="alert">
-          <Callout.Text>
-            <b>{uiText.settings.backupFailed}:</b> {status.lastError}
-          </Callout.Text>
-        </Callout.Root>
+        <StatusMessage role="danger" label={uiText.settings.backupFailed}>
+          {status.lastError}
+        </StatusMessage>
       )}
       <Flex gap="3">
         <Button

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Box,
   Button,
-  Callout,
   Dialog,
   Flex,
   Heading,
@@ -25,6 +25,7 @@ import {
 } from "@shopos/core";
 import { BillLineRow } from "../components/BillLineRow";
 import { useToast } from "../components/Toast";
+import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import { uiText } from "../strings";
 import { call, messageOf } from "../state/api";
 import {
@@ -432,12 +433,12 @@ export function NewBillScreen() {
           <Dialog.Content maxWidth="440px">
             <Dialog.Title>{uiText.bill.recoverTitle}</Dialog.Title>
             <Dialog.Description>{uiText.bill.recoverBody}</Dialog.Description>
-            <Callout.Root mt="3" size="1">
-              <Callout.Text>
+            <Box mt="3">
+              <StatusMessage role="neutral" label={uiText.status.draft}>
                 {recover.draft.lines.length} line{recover.draft.lines.length === 1 ? "" : "s"}:{" "}
                 {recover.draft.lines.map((draftLine) => draftLine.name).join(", ")}
-              </Callout.Text>
-            </Callout.Root>
+              </StatusMessage>
+            </Box>
             <Flex gap="3" mt="4" justify="end">
               <Button
                 variant="soft"
