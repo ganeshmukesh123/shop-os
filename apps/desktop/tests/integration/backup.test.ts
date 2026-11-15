@@ -129,6 +129,22 @@ describe("backup", () => {
     restored.close();
   });
 
+  it("refuses a backup that has item_variant but no item_family, before any live file is replaced", () => {
+    const brokenSplit = path.join(dir, "broken-split.sqlite");
+    const brokenDatabase = new Database(brokenSplit);
+    brokenDatabase.exec(
+      "create table bill(id); create table bill_line(id); create table stock_movement(id); create table shop_profile(id); create table item_variant(id)",
+    );
+    brokenDatabase.close();
+
+    expect(() => validateBackupFile(brokenSplit)).toThrowError(
+      expect.objectContaining({
+        code: "INVALID_BACKUP",
+        message: expect.stringMatching(/item_family/),
+      }),
+    );
+  });
+
   it("a corrupt or foreign file returns INVALID_BACKUP and leaves the live file alone", () => {
     const junk = path.join(dir, "junk.sqlite");
     fs.writeFileSync(junk, "hello world, not sqlite");
