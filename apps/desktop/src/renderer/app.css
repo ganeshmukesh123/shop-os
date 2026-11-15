@@ -1,0 +1,15 @@
+/*
+ * The few styles Radix Themes has no prop for. Rules for this file (design guidelines section 8):
+ * Radix tokens only, no hex or rgb colours, no pixel font sizes, and every colour comes from a
+ * token so it follows light and dark mode.
+ */
+
+/* App shell (App.tsx) */
+.shopos-nav {
+  border-right: 1px solid var(--gray-6);
+  background: var(--gray-2);
+}
+
+.shopos-nav-button {
+  justify-content: flex-start;
+}
