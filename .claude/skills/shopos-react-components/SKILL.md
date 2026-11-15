@@ -22,14 +22,18 @@ apps/desktop/src/renderer/
         types.ts                   IBillFormValues, IBillLineValues
         NewBillScreen.test.tsx
         components/
-          BillSearchBox/           BillSearchBox.tsx, .constants.ts, .types.ts
+          BillSearchBox/           BillSearchBox.tsx, constants.ts, types.ts, BillSearchBox.test.tsx
           BillLinesTable/
           BillSummaryPanel/
           PaymentModePicker/
           RecoverDraftDialog/
         hooks/
-          useBillForm.ts           state and updates (no JSX)
-          useBillSave.ts           calls the typed API, handles errors
+          useBillForm/
+            useBillForm.ts         state and updates (no JSX)
+            useBillForm.test.ts
+          useBillSave/
+            useBillSave.ts         calls the typed API, handles errors
+            useBillSave.test.ts
     inventory/  settings/  bills/
   shared/
     components/   StatusMessage, StatusBadge, PageHeader, EmptyState, MoneyText, QuantityText
