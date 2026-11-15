@@ -10,7 +10,6 @@ export const LAYOUT = {
   formColumnMinWidth: "320px",
   searchFieldWidth: "360px",
   seriesFieldWidth: "140px",
-  paymentSelectMinWidth: "160px",
   discountFieldWidth: "100px",
   lineDiscountFieldWidth: "90px",
   quantityColumnWidth: "110px",
