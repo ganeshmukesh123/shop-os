@@ -68,7 +68,7 @@ describe("PrintService", () => {
       code: "PRINT_FAILED",
     });
     expect(counts()).toEqual(before);
-    expect(new BillRepository(testDb.db, testDb.ctx).get(billId)!.bill.status).toBe("saved");
+    expect(new BillRepository(testDb.db, testDb.ctx).get(billId)!.bill.status).toBe("posted");
   });
 
   it("cancelling the print dialog is not an error", async () => {

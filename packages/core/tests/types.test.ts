@@ -212,8 +212,10 @@ describe("bill line input", () => {
 });
 
 describe("other bill commands", () => {
-  it("limits the bill list page to 1..500 and the status to saved or cancelled", () => {
-    expect(isAccepted(billsListInput, { limit: 500, offset: 0, status: "saved" })).toBe(true);
+  it("limits the bill list page to 1..500 and the status to posted or cancelled", () => {
+    expect(isAccepted(billsListInput, { limit: 500, offset: 0, status: "posted" })).toBe(true);
+    expect(isAccepted(billsListInput, { limit: 10, offset: 0, status: "cancelled" })).toBe(true);
+    expect(isAccepted(billsListInput, { limit: 10, offset: 0, status: "saved" })).toBe(false);
     expect(isAccepted(billsListInput, { limit: 501, offset: 0 })).toBe(false);
     expect(isAccepted(billsListInput, { limit: 10, offset: 0, status: "deleted" })).toBe(false);
   });

@@ -56,7 +56,7 @@ export const SCHEMA_STEPS: ISchemaStep[] = [
     presentColumns: {
       bill: ["bill_no", "device_id", "counter_code", "subtotal_paise", "total_paise"],
     },
-    absentColumns: { bill: ["number", "lines_total_paise", "grand_total_paise"] },
+    absentColumns: { bill: ["number", "series_code", "lines_total_paise", "grand_total_paise"] },
     removedTables: [],
   },
   {

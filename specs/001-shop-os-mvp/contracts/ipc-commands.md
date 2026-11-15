@@ -11,7 +11,7 @@ The UI (renderer) never touches the database. It calls these typed commands thro
 | `bills.draft.save` | `{ payload }` | `{}` | |
 | `bills.draft.load` | `{}` | `{ payload or null }` | |
 | `bills.save` | `{ clientBillId, customerName?, paymentMode, billDiscountPaise, lines[{ itemId, quantityMilli, ratePaise, lineDiscountPaise }] }` | `{ bill, negativeStockItems[] }` | `EMPTY_BILL`, `INVALID_QUANTITY`, `INVALID_DISCOUNT`, `ITEM_INACTIVE` |
-| `bills.list` | `{ number?, from?, to?, customer?, status?, limit, offset }` | `{ bills[], total }` | |
+| `bills.list` | `{ number?, from?, to?, customer?, status?, limit, offset }` | `{ bills[], total }` | `status` is `posted` or `cancelled` (T076; it was `saved`) |
 | `bills.get` | `{ id }` | `{ bill, lines[] }` | `NOT_FOUND` |
 | `bills.cancel` | `{ id, reason }` | `{ bill }` | `ALREADY_CANCELLED`, `REASON_REQUIRED` |
 | `bills.print` | `{ id, target: "receipt" or "a4" or "a5" }` | `{ printed }` | `PRINT_FAILED` (bill is unaffected) |

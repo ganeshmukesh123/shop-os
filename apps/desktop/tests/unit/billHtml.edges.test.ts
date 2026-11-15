@@ -23,7 +23,7 @@ const buildBill = (overrides: Partial<Bill> = {}): Bill => ({
   linesTotalPaise: 0,
   billDiscountPaise: 0,
   grandTotalPaise: 0,
-  status: "saved",
+  status: "posted",
   cancelReason: null,
   cancelledAt: null,
   ...overrides,

@@ -51,7 +51,7 @@ describe("billing", () => {
         customerName: "Ravi",
       }),
     );
-    expect(saveResult.bill.status).toBe("saved");
+    expect(saveResult.bill.status).toBe("posted");
     expect(saveResult.bill.linesTotalPaise).toBe(20000 + 12500);
     expect(saveResult.bill.grandTotalPaise).toBe(32500);
     expect(saveResult.bill.customerName).toBe("Ravi");
@@ -207,7 +207,7 @@ describe("billing", () => {
     expect(() =>
       testDb.sqlite
         .prepare(
-          "update bill set grand_total_paise = 1, bill_discount_paise = 0, lines_total_paise = 1 where id = ?",
+          "update bill set total_paise = 1, bill_discount_paise = 0, subtotal_paise = 1 where id = ?",
         )
         .run(saveResult.bill.id),
     ).toThrow();

@@ -1,6 +1,6 @@
 # Data Model: Shop OS MVP
 
-> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0007; items moved in T074, stock movements and locations in T075) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
+> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0008; items moved in T074, stock movements and locations in T075, the bill header in T076) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
 
 ## Target shape (research D18, architecture section 8)
 
@@ -68,21 +68,24 @@ Reserved but unused columns so later features need no migration: `hsn_code`, `gs
 
 Append-only. The signed change is `+qty` when `to_location_id` is set and `-qty` when `from_location_id` is set (`signedQuantityMilli` and `movementLocations` in `@shopos/core`); the repository still hands the app a signed `quantityMilli`. Invariant: variant.stock_milli equals the sum of the variant's signed movements.
 
-### Bill (`bill`)
+### Bill (`bill`) (migration 0008, task T076)
+The app and the screens still call these fields `number`, `seriesCode`, `linesTotalPaise` and `grandTotalPaise`; `BillRepository` maps them to the columns below.
+
 | Field | Rule |
 |---|---|
-| number | text, not null, unique per shop; formatted from series, financial year and counter |
-| series_code | text, not null (for example `C1`) |
+| device_id | text, not null: the device that saved the bill (the shop profile's device id on this release) |
+| counter_code | text, not null (for example `C1`); was `series_code` |
+| bill_no | text, not null, at most 16 characters, unique per shop; formatted from series, financial year and counter; was `number` |
 | client_bill_id | text, unique per shop (idempotency key from the screen that started the bill); null only for bills saved before it existed; never changes after save |
 | financial_year | text, not null (for example `26-27`; 1 April to 31 March, from the local bill date) |
-| seq | integer, not null, unique with series and financial year |
-| bill_date | ISO-8601 local timestamp, not null |
+| seq | integer, not null, unique with counter and financial year |
+| bill_date | ISO-8601 local timestamp, not null (becomes `billed_at` and `business_date` in T078) |
 | customer_name | text up to 80 characters, optional |
-| payment_mode | one of `cash`, `upi`, `card`, `unpaid`, not null |
-| lines_total_paise | integer, not null |
-| bill_discount_paise | integer, not null, 0 up to lines_total_paise |
-| grand_total_paise | integer, not null = lines_total_paise minus bill_discount_paise |
-| status | `saved` or `cancelled`, not null |
+| payment_mode | one of `cash`, `upi`, `card`, `unpaid`, not null (moves to `bill_tender` in T077) |
+| subtotal_paise | integer, not null; was `lines_total_paise` |
+| bill_discount_paise | integer, not null, 0 up to subtotal_paise |
+| total_paise | integer, not null = subtotal_paise minus bill_discount_paise (plus `round_off_paise` from T080); was `grand_total_paise` |
+| status | `posted` or `cancelled`, not null; a bill moves from `posted` to `cancelled` once and never back; was `saved` |
 | cancel_reason | text, required when status is `cancelled` |
 | cancelled_at | ISO-8601 UTC, set on cancel |
 
@@ -156,5 +159,5 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - `item_variant(display_name)` collation NOCASE for partial-name search (no FTS needed: 5,000 items searched in about 4 ms); `item_variant(business_id, item_code)` unique.
 - `stock_movement(variant_id, occurred_at)` and `stock_movement(doc_type, doc_id)`.
-- `bill(number)` unique; `bill(bill_date)`; `bill(customer_name)`.
+- `bill(shop_id, bill_no)` unique; `bill(counter_code, financial_year, seq)` unique; `bill(bill_date)`; `bill(customer_name)`.
 - `bill_line(bill_id)`.
