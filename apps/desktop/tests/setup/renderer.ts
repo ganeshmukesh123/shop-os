@@ -1,5 +1,4 @@
 import { cleanup } from "@testing-library/react";
-import { afterEach, beforeEach, vi } from "vitest";
 import { installFakeMatchMedia } from "../helpers/fakeMatchMedia";
 
 /** jsdom has no layout engine; Radix expects these browser APIs to exist. */
