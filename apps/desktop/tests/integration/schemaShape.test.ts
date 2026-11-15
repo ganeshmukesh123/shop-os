@@ -91,7 +91,8 @@ describe("target shape: seed and time columns", () => {
 });
 
 describe("target shape: records can only be added, never changed (constitution I and II)", () => {
-  const isReady = SCHEMA_TASK_DONE.T078;
+  // insertTargetBill writes bill.doc_title and bill.round_off_paise, which arrive with T080.
+  const isReady = SCHEMA_TASK_DONE.T078 && SCHEMA_TASK_DONE.T080;
 
   it.skipIf(!isReady)("refuses to update or delete a stock movement", () => {
     const testDb = createTestDb();
@@ -169,21 +170,24 @@ describe("target shape: records can only be added, never changed (constitution I
     expect(reopenError).not.toBe("");
   });
 
-  it.skipIf(!SCHEMA_TASK_DONE.T083)("refuses to update or delete a recorded number gap", () => {
-    const testDb = createTestDb();
-    const ids = insertTargetBill(testDb.sqlite, testDb.ctx);
-    const gapId = insertTargetNumberGap(testDb.sqlite, testDb.ctx, ids.numberSeriesId);
+  it.skipIf(!(SCHEMA_TASK_DONE.T083 && SCHEMA_TASK_DONE.T080))(
+    "refuses to update or delete a recorded number gap",
+    () => {
+      const testDb = createTestDb();
+      const ids = insertTargetBill(testDb.sqlite, testDb.ctx);
+      const gapId = insertTargetNumberGap(testDb.sqlite, testDb.ctx, ids.numberSeriesId);
 
-    const updateError = errorMessageOf(() =>
-      testDb.sqlite.prepare("update bill_number_gap set seq_to = 1 where id = ?").run(gapId),
-    );
-    const deleteError = errorMessageOf(() =>
-      testDb.sqlite.prepare("delete from bill_number_gap where id = ?").run(gapId),
-    );
+      const updateError = errorMessageOf(() =>
+        testDb.sqlite.prepare("update bill_number_gap set seq_to = 1 where id = ?").run(gapId),
+      );
+      const deleteError = errorMessageOf(() =>
+        testDb.sqlite.prepare("delete from bill_number_gap where id = ?").run(gapId),
+      );
 
-    expect(updateError).not.toBe("");
-    expect(deleteError).not.toBe("");
-  });
+      expect(updateError).not.toBe("");
+      expect(deleteError).not.toBe("");
+    },
+  );
 });
 
 describe("upgrading a database that is at migration 0004", () => {
