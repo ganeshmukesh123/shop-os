@@ -12,7 +12,7 @@ export const SCHEMA_TASK_DONE = {
   /** bill header renamed (bill_no, posted, subtotal, total) */
   T076: true,
   /** bill_line reshaped, bill_tender added */
-  T077: false,
+  T077: true,
   /** number_series, epoch-millisecond times, billed_at and business_date */
   T078: false,
   /** shop settings and the bill's doc_title and round_off_paise */

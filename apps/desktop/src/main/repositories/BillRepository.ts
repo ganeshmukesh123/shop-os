@@ -1,18 +1,20 @@
 import { and, asc, eq, sql } from "drizzle-orm";
+import { CoreError } from "@shopos/core";
 import type { Bill, BillLine, PaymentMode } from "@shopos/core";
 import type { Handle } from "../db/connection";
 import { newId, nowIso } from "../db/ids";
-import { bill, billLine, draftBill, numberCounter } from "../db/schema";
+import { bill, billLine, billTender, draftBill, numberCounter } from "../db/schema";
 import type { Ctx } from "../db/seed";
 
-const toBill = (billRow: typeof bill.$inferSelect): Bill => ({
+/** The payment mode is not on the bill row: it is the label on the bill's tender (D18). */
+const toBill = (billRow: typeof bill.$inferSelect, paymentMode: PaymentMode): Bill => ({
   id: billRow.id,
   number: billRow.billNo,
   seriesCode: billRow.counterCode,
   seq: billRow.seq,
   billDate: billRow.billDate,
   customerName: billRow.customerName,
-  paymentMode: billRow.paymentMode as PaymentMode,
+  paymentMode,
   linesTotalPaise: billRow.subtotalPaise,
   billDiscountPaise: billRow.billDiscountPaise,
   grandTotalPaise: billRow.totalPaise,
@@ -25,11 +27,11 @@ const toLine = (lineRow: typeof billLine.$inferSelect): BillLine => ({
   id: lineRow.id,
   billId: lineRow.billId,
   lineNo: lineRow.lineNo,
-  itemId: lineRow.itemId,
+  itemId: lineRow.variantId,
   itemNameSnapshot: lineRow.itemNameSnapshot,
   unitSnapshot: lineRow.unitSnapshot,
-  quantityMilli: lineRow.quantityMilli,
-  ratePaise: lineRow.ratePaise,
+  quantityMilli: lineRow.qtyBaseMilli,
+  ratePaise: lineRow.unitPricePaise,
   lineDiscountPaise: lineRow.lineDiscountPaise,
   amountPaise: lineRow.amountPaise,
 });
@@ -92,30 +94,41 @@ export class BillRepository {
     return row.seq;
   }
 
-  /** The domain names (number, seriesCode, ...) are stored as bill_no, counter_code, ... (D18). */
+  /**
+   * The domain names (number, seriesCode, ...) are stored as bill_no, counter_code, ... (D18).
+   * The payment mode is written as the bill's one tender, in the same transaction as the bill.
+   */
   insertBill(newBill: NewBill): Bill {
-    return toBill(
-      this.databaseHandle
-        .insert(bill)
-        .values({
-          ...this.base(),
-          deviceId: this.ctx.deviceId,
-          counterCode: newBill.seriesCode,
-          billNo: newBill.number,
-          financialYear: newBill.financialYear,
-          seq: newBill.seq,
-          billDate: newBill.billDate,
-          customerName: newBill.customerName,
-          clientBillId: newBill.clientBillId,
-          paymentMode: newBill.paymentMode,
-          subtotalPaise: newBill.linesTotalPaise,
-          billDiscountPaise: newBill.billDiscountPaise,
-          totalPaise: newBill.grandTotalPaise,
-          status: "posted",
-        })
-        .returning()
-        .get(),
-    );
+    const billRow = this.databaseHandle
+      .insert(bill)
+      .values({
+        ...this.base(),
+        deviceId: this.ctx.deviceId,
+        counterCode: newBill.seriesCode,
+        billNo: newBill.number,
+        financialYear: newBill.financialYear,
+        seq: newBill.seq,
+        billDate: newBill.billDate,
+        customerName: newBill.customerName,
+        clientBillId: newBill.clientBillId,
+        subtotalPaise: newBill.linesTotalPaise,
+        billDiscountPaise: newBill.billDiscountPaise,
+        totalPaise: newBill.grandTotalPaise,
+        status: "posted",
+      })
+      .returning()
+      .get();
+    this.databaseHandle
+      .insert(billTender)
+      .values({
+        ...this.base(),
+        billId: billRow.id,
+        mode: newBill.paymentMode,
+        amountPaise: billRow.totalPaise,
+        status: "label",
+      })
+      .run();
+    return toBill(billRow, newBill.paymentMode);
   }
 
   insertLines(billId: string, lines: NewLine[]): BillLine[] {
@@ -123,7 +136,18 @@ export class BillRepository {
       toLine(
         this.databaseHandle
           .insert(billLine)
-          .values({ ...this.base(), billId, ...newLine })
+          .values({
+            ...this.base(),
+            billId,
+            lineNo: newLine.lineNo,
+            variantId: newLine.itemId,
+            itemNameSnapshot: newLine.itemNameSnapshot,
+            unitSnapshot: newLine.unitSnapshot,
+            qtyBaseMilli: newLine.quantityMilli,
+            unitPricePaise: newLine.ratePaise,
+            lineDiscountPaise: newLine.lineDiscountPaise,
+            amountPaise: newLine.amountPaise,
+          })
           .returning()
           .get(),
       ),
@@ -140,6 +164,16 @@ export class BillRepository {
     return existingRow ? this.get(existingRow.id) : null;
   }
 
+  private tenderMode(billId: string): PaymentMode {
+    const tenderRow = this.databaseHandle
+      .select({ mode: billTender.mode })
+      .from(billTender)
+      .where(eq(billTender.billId, billId))
+      .get();
+    if (!tenderRow) throw new CoreError("INTERNAL", "This bill has no payment record");
+    return tenderRow.mode as PaymentMode;
+  }
+
   get(id: string): { bill: Bill; lines: BillLine[] } | null {
     const billRow = this.databaseHandle.select().from(bill).where(eq(bill.id, id)).get();
     if (!billRow) return null;
@@ -149,7 +183,7 @@ export class BillRepository {
       .where(eq(billLine.billId, id))
       .orderBy(asc(billLine.lineNo))
       .all();
-    return { bill: toBill(billRow), lines: lines.map(toLine) };
+    return { bill: toBill(billRow, this.tenderMode(id)), lines: lines.map(toLine) };
   }
 
   // ----- draft (crash recovery; not a financial record) -----

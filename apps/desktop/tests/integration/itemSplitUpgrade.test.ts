@@ -35,13 +35,13 @@ describe("upgrading items from migration 0004 (research D18)", () => {
     const sqlite = upgradeDatabaseWithOneBill();
 
     const lineRow = sqlite
-      .prepare("select item_id, quantity_milli, amount_paise from bill_line")
+      .prepare("select variant_id, qty_base_milli, amount_paise from bill_line")
       .get();
     const movementRows = sqlite
       .prepare("select variant_id, movement_type from stock_movement order by movement_type")
       .all();
 
-    expect(lineRow).toEqual({ item_id: "item-1", quantity_milli: 2000, amount_paise: 24000 });
+    expect(lineRow).toEqual({ variant_id: "item-1", qty_base_milli: 2000, amount_paise: 24000 });
     expect(movementRows).toEqual([
       { variant_id: "item-1", movement_type: "opening" },
       { variant_id: "item-1", movement_type: "sale" },

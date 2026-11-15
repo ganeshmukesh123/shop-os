@@ -78,8 +78,6 @@ export const bill = sqliteTable(
     customerName: text("customer_name"),
     // Idempotency key from the screen that started the bill; unique per shop. Null only for bills saved before it existed.
     clientBillId: text("client_bill_id"),
-    // payment_mode: one of cash, upi, card, unpaid
-    paymentMode: text("payment_mode").notNull(),
     subtotalPaise: integer("subtotal_paise").notNull(),
     billDiscountPaise: integer("bill_discount_paise").notNull(),
     totalPaise: integer("total_paise").notNull(),
@@ -99,7 +97,6 @@ export const bill = sqliteTable(
     index("bill_date_idx").on(tableColumns.billDate),
     index("bill_customer_idx").on(tableColumns.customerName),
     check("bill_no_len", sql`length(${tableColumns.billNo}) <= 16`),
-    check("bill_payment_mode", sql`${tableColumns.paymentMode} in ('cash','upi','card','unpaid')`),
     check("bill_status", sql`${tableColumns.status} in ('posted','cancelled')`),
     check(
       "bill_cancel_reason_required",
@@ -124,22 +121,44 @@ export const billLine = sqliteTable(
       .notNull()
       .references(() => bill.id),
     lineNo: integer("line_no").notNull(),
-    itemId: text("item_id")
+    variantId: text("variant_id")
       .notNull()
       .references(() => itemVariant.id),
     itemNameSnapshot: text("item_name_snapshot").notNull(),
     unitSnapshot: text("unit_snapshot").notNull(),
-    // quantity_milli: integer, not null, greater than 0
-    quantityMilli: integer("quantity_milli").notNull(),
-    ratePaise: integer("rate_paise").notNull(),
+    // qty_base_milli: integer, not null, greater than 0
+    qtyBaseMilli: integer("qty_base_milli").notNull(),
+    unitPricePaise: integer("unit_price_paise").notNull(),
     lineDiscountPaise: integer("line_discount_paise").notNull(),
     amountPaise: integer("amount_paise").notNull(),
   },
   (tableColumns) => [
     index("bill_line_bill_idx").on(tableColumns.billId),
-    check("bill_line_qty_pos", sql`${tableColumns.quantityMilli} > 0`),
-    check("bill_line_rate_nonneg", sql`${tableColumns.ratePaise} >= 0`),
+    check("bill_line_qty_pos", sql`${tableColumns.qtyBaseMilli} > 0`),
+    check("bill_line_price_nonneg", sql`${tableColumns.unitPricePaise} >= 0`),
     check("bill_line_discount_nonneg", sql`${tableColumns.lineDiscountPaise} >= 0`),
+  ],
+);
+
+// One row per bill in this release: how the customer paid, as a label only. Append-only.
+export const billTender = sqliteTable(
+  "bill_tender",
+  {
+    ...base,
+    billId: text("bill_id")
+      .notNull()
+      .references(() => bill.id),
+    // mode: one of cash, upi, card, unpaid
+    mode: text("mode").notNull(),
+    amountPaise: integer("amount_paise").notNull(),
+    // status: 'label' in this release (the shop records the mode, the app does not collect money)
+    status: text("status").notNull(),
+  },
+  (tableColumns) => [
+    index("bill_tender_bill_idx").on(tableColumns.billId),
+    check("bill_tender_mode", sql`${tableColumns.mode} in ('cash','upi','card','unpaid')`),
+    check("bill_tender_amount_nonneg", sql`${tableColumns.amountPaise} >= 0`),
+    check("bill_tender_status", sql`${tableColumns.status} in ('label')`),
   ],
 );
 
