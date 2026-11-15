@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { Item, ShopProfile } from "@shopos/core";
+import { Table } from "@radix-ui/themes";
+import type { DraftLine, Item, ShopProfile } from "@shopos/core";
+import { AdjustStockDialog } from "../../../src/renderer/components/AdjustStockDialog";
+import { BillLineRow } from "../../../src/renderer/components/BillLineRow";
 import { ToastProvider, useToast } from "../../../src/renderer/components/Toast";
 import { ItemsScreen } from "../../../src/renderer/screens/ItemsScreen";
 import { SettingsScreen } from "../../../src/renderer/screens/SettingsScreen";
@@ -28,6 +31,18 @@ const NEGATIVE_INACTIVE_ITEM: Item = {
   stockMilli: -3000,
   active: false,
   needsCorrection: true,
+};
+
+const BILL_LINE: DraftLine = {
+  key: "line-1",
+  itemId: "item-2",
+  name: "Pipe",
+  unit: "pcs",
+  allowsDecimal: false,
+  qty: "0",
+  rate: "120",
+  disc: "",
+  discMode: "rupees",
 };
 
 function ToastButtons() {
@@ -96,6 +111,38 @@ describe("status words in the screens (design guidelines 5.1, PRD NFR-011)", () 
 
     const templateAlert = await screen.findByRole("alert");
     expect(templateAlert.textContent).toMatch(/^Error Number could be \d+ characters/);
+  });
+
+  it("a bill line with a problem says Error, the item and the reason", () => {
+    renderWithTheme(
+      <Table.Root>
+        <Table.Body>
+          <BillLineRow
+            line={BILL_LINE}
+            result={{ amountPaise: null, error: "Quantity must be more than 0" }}
+            onChange={() => {}}
+            onRemove={() => {}}
+            onEnterQty={() => {}}
+          />
+        </Table.Body>
+      </Table.Root>,
+    );
+
+    expect(screen.getByRole("alert").textContent).toBe("Error Pipe: Quantity must be more than 0");
+  });
+
+  it("an adjustment without a note says Error and what is missing", async () => {
+    installFakeShopos();
+    renderWithTheme(
+      <ToastProvider>
+        <AdjustStockDialog item={NEGATIVE_INACTIVE_ITEM} onClose={() => {}} onDone={() => {}} />
+      </ToastProvider>,
+    );
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Quantity (pcs)" }), "5");
+    await userEvent.click(screen.getByRole("button", { name: "Save adjustment" }));
+
+    expect((await screen.findByRole("alert")).textContent).toBe("Error A note is required");
   });
 
   it("an item with negative stock and an inactive item each carry a word", async () => {

@@ -407,9 +407,9 @@ export function NewBillScreen() {
               (errorMessage) => !errorMessage.startsWith("Fix") && !errorMessage.startsWith("Add"),
             )
             .map((errorMessage) => (
-              <Text key={errorMessage} color="red" role="alert">
-                Error: {errorMessage}
-              </Text>
+              <StatusMessage key={errorMessage} role="danger" label={uiText.status.error}>
+                {errorMessage}
+              </StatusMessage>
             ))}
           <Flex gap="3">
             <Button
