@@ -2,7 +2,7 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { CoreError, movementLocations, signedQuantityMilli } from "@shopos/core";
 import type { MovementReason, StockMovement } from "@shopos/core";
 import type { Handle } from "../db/connection";
-import { newId, nowIso } from "../db/ids";
+import { isoOfMs, newId, nowMs } from "../db/ids";
 import { location, stockMovement } from "../db/schema";
 import type { Ctx } from "../db/seed";
 
@@ -21,7 +21,7 @@ const toMovement = (movementRow: Row): StockMovement => ({
   reason: movementRow.movementType as MovementReason,
   note: movementRow.note,
   billId: movementRow.docType === BILL_DOC_TYPE ? movementRow.docId : null,
-  occurredAt: movementRow.occurredAt,
+  occurredAt: isoOfMs(movementRow.occurredAt),
 });
 
 /** Insert-only: there is deliberately no update or delete method. */
@@ -53,7 +53,7 @@ export class StockRepository {
     note?: string | null;
     billId?: string | null;
   }): StockMovement {
-    const now = nowIso();
+    const now = nowMs();
     const billId = newMovement.billId ?? null;
     const row = this.databaseHandle
       .insert(stockMovement)

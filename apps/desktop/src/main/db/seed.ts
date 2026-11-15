@@ -1,5 +1,5 @@
 import type { DB } from "./connection";
-import { newId, nowIso } from "./ids";
+import { newId, nowMs } from "./ids";
 import { location, shopProfile } from "./schema";
 
 export const SHOP_FLOOR_NAME = "Shop floor";
@@ -24,7 +24,7 @@ export function ensureSeed(db: DB): Ctx {
     };
   }
   const ctx: Ctx = { businessId: newId(), shopId: newId(), deviceId: newId() };
-  const now = nowIso();
+  const now = nowMs();
   db.insert(shopProfile)
     .values({
       id: newId(),

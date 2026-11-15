@@ -4,7 +4,7 @@ import { desc, eq } from "drizzle-orm";
 import Database from "better-sqlite3";
 import { CoreError } from "@shopos/core";
 import type { DB } from "../db/connection";
-import { newId, nowIso } from "../db/ids";
+import { newId, nowIso, nowMs } from "../db/ids";
 import { backupLog } from "../db/schema";
 import type { Ctx } from "../db/seed";
 import { SettingsRepository } from "../repositories/SettingsRepository";
@@ -80,7 +80,7 @@ export class BackupService {
     status: "ok" | "failed";
     error?: string;
   }): void {
-    const now = nowIso();
+    const now = nowMs();
     this.db
       .insert(backupLog)
       .values({

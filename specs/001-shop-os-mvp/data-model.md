@@ -1,6 +1,6 @@
 # Data Model: Shop OS MVP
 
-> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0010; items moved in T074, stock movements and locations in T075, the bill header in T076, bill lines and tenders in T077, number series and bill times in the first half of T078) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
+> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0011; items moved in T074, stock movements and locations in T075, the bill header in T076, bill lines and tenders in T077, number series, bill times and epoch-millisecond times in T078) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
 
 ## Target shape (research D18, architecture section 8)
 
@@ -29,7 +29,7 @@ number_series 1--* bill            shop_profile (one row)
 
 ## Current schema (until T073 to T081)
 
-Conventions for every table: `id` UUID v7 text primary key; `business_id` and `shop_id` UUID text, not null; `created_at` and `updated_at` as ISO-8601 UTC text, not null. Money columns are integer paise; quantity columns are integer thousandths of the item's unit. Saved bills, bill lines and stock movements are never updated or deleted by the app.
+Conventions for every table: `id` UUID v7 text primary key; `business_id` and `shop_id` UUID text, not null; `created_at` and `updated_at` as INTEGER epoch milliseconds (UTC), not null. Money columns are integer paise; quantity columns are integer thousandths of the item's unit. Saved bills, bill lines and stock movements are never updated or deleted by the app.
 
 ## Entities
 
@@ -63,7 +63,7 @@ Reserved but unused columns so later features need no migration: `hsn_code`, `gs
 | doc_type, doc_id | `bill` and the bill's id for `sale` and `sale_cancel`; both null otherwise (checked as a pair) |
 | reason_code | text, optional, unused in this release |
 | note | text up to 200 characters, optional; required (not blank) for `adjustment` |
-| occurred_at | ISO-8601 UTC, not null |
+| occurred_at | integer epoch milliseconds (UTC), not null |
 | device_id | text, not null (the local device identifier) |
 
 Append-only. The signed change is `+qty` when `to_location_id` is set and `-qty` when `from_location_id` is set (`signedQuantityMilli` and `movementLocations` in `@shopos/core`); the repository still hands the app a signed `quantityMilli`. Invariant: variant.stock_milli equals the sum of the variant's signed movements.
@@ -88,7 +88,7 @@ The app and the screens still call these fields `number`, `seriesCode`, `linesTo
 | total_paise | integer, not null = subtotal_paise minus bill_discount_paise (plus `round_off_paise` from T080); was `grand_total_paise` |
 | status | `posted` or `cancelled`, not null; a bill moves from `posted` to `cancelled` once and never back; was `saved` |
 | cancel_reason | text, required when status is `cancelled` |
-| cancelled_at | ISO-8601 UTC, set on cancel |
+| cancelled_at | integer epoch milliseconds (UTC), set on cancel |
 
 ### Bill Line (`bill_line`) (migration 0009, task T077)
 The app still calls these `itemId`, `quantityMilli` and `ratePaise`; `BillRepository` maps them.
@@ -138,7 +138,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 ## Time
 
-- Timestamps in the audit-style columns (`created_at`, `updated_at`, `occurred_at`, `cancelled_at`) are ISO-8601 UTC.
+- Timestamps in the audit-style columns (`created_at`, `updated_at`, `occurred_at`, `cancelled_at`) are INTEGER epoch milliseconds (UTC) since migration 0011 (task T078); `ids.ts` has `nowMs()` and `isoOfMs()`. The repositories hand the app ISO-8601 text where the domain types are text (`StockMovement.occurredAt`, `Bill.cancelledAt`). Only `backup_log.started_at` and `finished_at` stay ISO text.
 - A bill stores `billed_at` (the UTC instant, epoch milliseconds) and `business_date` (the date in the shop's zone). The financial year and "same day" rules use `business_date`, never the device's zone. The app shows the bill's time as the wall-clock time in the shop's zone (`localIsoOf` in `@shopos/core`), so the domain `Bill.billDate` is still a local `YYYY-MM-DDTHH:mm:ss` string.
 - Migration 0010 converted the old `bill_date` (the device's local time, no zone) by assuming Asia/Kolkata, UTC+05:30: `billed_at` is that time minus 19,800 seconds and `business_date` is its date part.
 - Decided 2026-11-15 (research D22): the business time zone is the shop setting `time_zone` (default `Asia/Kolkata`), not the device's. Until task T079 lands, the code still uses the device's time zone.

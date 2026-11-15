@@ -1,7 +1,7 @@
 import { and, asc, eq, lt, sql, type SQL } from "drizzle-orm";
 import type { Item, ItemsListInput } from "@shopos/core";
 import type { Handle } from "../db/connection";
-import { newId, nowIso } from "../db/ids";
+import { newId, nowMs } from "../db/ids";
 import { itemFamily, itemVariant } from "../db/schema";
 import type { Ctx } from "../db/seed";
 
@@ -36,7 +36,7 @@ interface IItemPatch {
 /** Only the fields the caller gave; everything else on the variant stays as it is. */
 function toVariantChanges(
   patch: IItemPatch,
-  updatedAt: string,
+  updatedAt: number,
 ): Partial<typeof itemVariant.$inferInsert> {
   return {
     updatedAt,
@@ -78,7 +78,7 @@ export class ItemRepository {
     allowsDecimal: boolean;
     pricePaise: number;
   }): Item {
-    const now = nowIso();
+    const now = nowMs();
     const stamp = {
       businessId: this.ctx.businessId,
       shopId: this.ctx.shopId,
@@ -110,7 +110,7 @@ export class ItemRepository {
   }
 
   update(id: string, patch: IItemPatch): Item | null {
-    const updatedAt = nowIso();
+    const updatedAt = nowMs();
     const row = this.databaseHandle
       .update(itemVariant)
       .set(toVariantChanges(patch, updatedAt))
@@ -122,7 +122,7 @@ export class ItemRepository {
   }
 
   /** The family carries the item's name too (one family per item for now). */
-  private renameFamily(familyId: string, name: string, updatedAt: string): void {
+  private renameFamily(familyId: string, name: string, updatedAt: number): void {
     this.databaseHandle
       .update(itemFamily)
       .set({ name, updatedAt })
@@ -154,7 +154,7 @@ export class ItemRepository {
   addStockDelta(id: string, deltaMilli: number): void {
     this.databaseHandle
       .update(itemVariant)
-      .set({ stockMilli: sql`${itemVariant.stockMilli} + ${deltaMilli}`, updatedAt: nowIso() })
+      .set({ stockMilli: sql`${itemVariant.stockMilli} + ${deltaMilli}`, updatedAt: nowMs() })
       .where(eq(itemVariant.id, id))
       .run();
   }
