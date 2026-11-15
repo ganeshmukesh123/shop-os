@@ -1,0 +1,26 @@
+# CodeRabbit review settings. Advisory only: lint, tests and CI are the real gates.
+# Docs: https://docs.coderabbit.ai/configuration/path-instructions
+reviews:
+  profile: chill
+  path_filters:
+    - "!apps/desktop/drizzle/**"
+    - "!pnpm-lock.yaml"
+  path_instructions:
+    - path: "packages/core/**"
+      instructions: >-
+        Pure business rules. No Electron, database or UI imports.
+        Money is integer paise and quantity is integer thousandths. No floats.
+        Rounding lives only in money.ts.
+    - path: "apps/desktop/src/main/**"
+      instructions: >-
+        Saving a bill, its lines and its stock movements happens in ONE
+        transaction. Print and share only after the commit. Never edit or
+        delete a saved bill, bill line, stock movement or ledger entry; fix
+        with a cancel or an opposite entry. Never write item stock without a
+        movement. Back up only with the SQLite online backup API.
+    - path: "apps/desktop/src/renderer/**"
+      instructions: >-
+        The renderer never imports main-process, Node or database code; it
+        calls typed IPC commands. Use Radix tokens and component props only:
+        no hex colours and no inline style. Status needs a word as well as a
+        colour. No single-letter names.
