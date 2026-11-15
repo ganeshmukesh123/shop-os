@@ -185,7 +185,7 @@ None. This feature adds no tables and changes no bill, stock or ledger records.
 - **SC-001**: 100% of IPC commands from a wrong, missing or null sender are refused with zero writes, proven by tests.
 - **SC-002**: 0 permission requests are granted by default.
 - **SC-003**: Every address in the blocked-navigation table (look-alikes, other files, unparsable) is blocked; the app's own page is allowed.
-- **SC-004**: The packaged app's fuse report matches FR-004 on every release, and, on macOS and Windows (the platforms ASAR integrity supports), a changed `app.asar` header fails to launch. Linux is an exception until a separate protection is chosen (research O12); files outside the archive are covered only if O13 is resolved.
+- **SC-004**: On every release, an installed copy of the app cannot be turned into a general script runner, and on macOS and Windows an altered application archive will not start. Linux is an exception until a separate protection is chosen. The technical checks that prove this are FR-004 to FR-006; platform limits and open questions are in `research.md` (O12 to O15).
 - **SC-005**: `pnpm test` and the end-to-end suite still pass unchanged on the development binary after PR B.
 - **SC-006**: After PR C, an arbitrary local file outside the bundle cannot be loaded by the screen.
 - **SC-007**: With a long report running, a bill still saves and prints in about 1 second (NFR-002).
