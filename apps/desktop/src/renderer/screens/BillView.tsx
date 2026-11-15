@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Badge, Button, Callout, Flex, Heading, Select, Table, Text } from "@radix-ui/themes";
+import { Button, Flex, Heading, Select, Table, Text } from "@radix-ui/themes";
+import { StatusBadge } from "../shared/components/StatusBadge/StatusBadge";
+import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import {
   formatQuantity,
   formatRupees,
@@ -65,9 +67,7 @@ export function BillView({
           {uiText.bill.saved}: {bill.number}
         </Heading>
         {bill.status === "cancelled" && (
-          <Badge color="red" size="3">
-            Cancelled
-          </Badge>
+          <StatusBadge role="danger" label={uiText.status.cancelled} size="3" />
         )}
       </Flex>
       <Text color="gray">
@@ -75,15 +75,13 @@ export function BillView({
         {bill.customerName ? ` · ${bill.customerName}` : ""}
       </Text>
       {negativeStockItems.length > 0 && (
-        <Callout.Root color="orange" role="alert">
-          <Callout.Text>
-            <b>Warning:</b> {uiText.bill.negativeWarn}{" "}
-            {negativeStockItems
-              .map((item) => `${item.name} (${formatQuantity(item.stockMilli)} ${item.unit})`)
-              .join(", ")}
-            . Correct stock from the Items screen.
-          </Callout.Text>
-        </Callout.Root>
+        <StatusMessage role="warning" label={uiText.status.negativeStock}>
+          {uiText.bill.negativeWarn}{" "}
+          {negativeStockItems
+            .map((item) => `${item.name} (${formatQuantity(item.stockMilli)} ${item.unit})`)
+            .join(", ")}
+          . Correct stock from the Items screen.
+        </StatusMessage>
       )}
       <Table.Root variant="surface">
         <Table.Header>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Badge, Box, Button, Flex, Text } from "@radix-ui/themes";
+import { Box, Button, Flex, Text } from "@radix-ui/themes";
+import { StatusBadge } from "./shared/components/StatusBadge/StatusBadge";
 import { ItemsScreen } from "./screens/ItemsScreen";
 import { NewBillScreen } from "./screens/NewBillScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
@@ -62,9 +63,12 @@ export function App() {
             >
               {label}
               {navigationRoute === "items" && negatives > 0 && (
-                <Badge color="red" ml="2">
-                  {negatives} {uiText.items.needsCorrection}
-                </Badge>
+                <Box as="span" ml="2">
+                  <StatusBadge
+                    role="warning"
+                    label={`${negatives} ${uiText.items.needsCorrection}`}
+                  />
+                </Box>
               )}
             </Button>
           ))}
