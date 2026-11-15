@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import type { IThemeContextValue, ThemePreference } from "./theme.types";
 import {
   getBrowserStorage,
@@ -10,7 +10,7 @@ import { useSystemDarkMode } from "./useSystemDarkMode";
 
 /**
  * Owns the theme state: the saved choice (read in the first render, so the first paint is already
- * right), the light or dark it resolves to, and the page's colour scheme.
+ * right) and the light or dark it resolves to.
  */
 export function useThemeController(): IThemeContextValue {
   const [preference, setPreferenceState] = useState<ThemePreference>(() =>
@@ -18,11 +18,6 @@ export function useThemeController(): IThemeContextValue {
   );
   const isSystemDark = useSystemDarkMode();
   const appearance = resolveAppearance(preference, isSystemDark);
-
-  // Lets the browser colour the page edge and scrollbars to match. A layout effect runs before the paint.
-  useLayoutEffect(() => {
-    document.documentElement.style.colorScheme = appearance;
-  }, [appearance]);
 
   const setPreference = useCallback((nextPreference: ThemePreference) => {
     setPreferenceState(nextPreference);

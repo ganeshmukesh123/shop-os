@@ -31,12 +31,4 @@ describe("useThemeController (design guidelines section 3)", () => {
     expect(result.current).toMatchObject({ preference: "dark", appearance: "dark" });
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
   });
-
-  it("sets the browser's colour scheme to the shown appearance", () => {
-    window.localStorage.setItem(THEME_STORAGE_KEY, "dark");
-
-    renderHook(() => useThemeController());
-
-    expect(document.documentElement.style.colorScheme).toBe("dark");
-  });
 });
