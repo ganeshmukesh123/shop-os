@@ -155,7 +155,7 @@ Beyond tests, the workflow enforces the PR rules already agreed: title format, s
 
 **Triggers and protection**
 
-- **FR-001**: The workflow MUST run on every pull request into `main`, on every push to `main`, and on manual request.
+- **FR-001**: The workflow MUST run on every pull request (including stacked PRs that target another PR's branch), on every push to `main`, and on manual request. The PR size is measured against the PR's own target branch (owner decision 2026-11-15).
 - **FR-002**: `main` MUST be protected: direct pushes, force pushes and deletion refused; applies to administrators.
 - **FR-003**: A PR MUST NOT be mergeable until every required check passes and the branch is up to date with `main`. No approving review is required (solo project); the checks are the protection and the self-review checklist in the PR template is still completed.
 - **FR-004**: Merges MUST be squash merges so `main` has one commit per PR, titled with the PR title.

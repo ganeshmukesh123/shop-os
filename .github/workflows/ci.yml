@@ -13,8 +13,9 @@
 name: CI
 
 on:
+  # Every pull request, whatever its target, so stacked PRs (PR 2 targets PR 1's branch) are tested too.
+  # Branch protection on main is what decides merges; these runs only report.
   pull_request:
-    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
@@ -72,10 +73,14 @@ jobs:
           persist-credentials: false
       - name: PR size (red over 800 changed lines unless labelled "mechanical")
         env:
-          BASE_REF: ${{ github.base_ref }}
+          # The PR's own target branch and head commit (not the test-merge commit CI checks out),
+          # so a stacked PR is measured against the PR below it, as in its "Files changed" tab.
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_LABEL: ${{ github.base_ref }}
           PR_SIZE_FAIL_OVER: "800"
           PR_SIZE_EXEMPT: ${{ contains(github.event.pull_request.labels.*.name, 'mechanical') }}
-        run: bash scripts/pr-size.sh "origin/$BASE_REF" | tee -a "$GITHUB_STEP_SUMMARY"
+        run: bash scripts/pr-size.sh | tee -a "$GITHUB_STEP_SUMMARY"
 
   tests-and-coverage:
     name: Tests and coverage
