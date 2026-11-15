@@ -35,6 +35,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {msgs.map((toastMessage) => (
           <Toast.Root
             key={toastMessage.id}
+            // Radix: "foreground" announces at once (errors), "background" waits for a pause (success).
+            type={toastMessage.kind === "error" ? "foreground" : "background"}
             duration={toastMessage.kind === "error" ? 10000 : 3500}
             onOpenChange={(isOpen) =>
               !isOpen &&
