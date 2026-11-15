@@ -179,7 +179,11 @@ description: "MVP-only task list for Shop OS (Inventory + Basic Bill with print,
 
 ## Phase 7: Decisions of 2026-11-15 and design compliance (M3b, then M5)
 
-**Purpose**: apply the owner's answers to the spec audit (research D18 to D23) and close the constitution IX and X violations recorded in plan.md Complexity Tracking. Each task is one PR of 400 changed lines or fewer. Run T073 to T081 **before** US3 (T064 to T072) so cancel and the bill list are built on the new tables.
+**Purpose**: apply the owner's answers to the spec audit (research D18 to D23) and close the constitution IX and X violations recorded in plan.md Complexity Tracking. Each task is one PR of 400 changed lines or fewer. Run T073 to T081 **before** US3 (T064 to T072) so cancel and the bill list are built on the new tables. **T093 (folder per component and service) runs first of all** for the files not yet touched by an open PR, so later tasks edit files already in their final folders.
+
+### Folder per component and service (owner request 2026-11-15, do earliest)
+
+- [ ] T093 Move each renderer component, screen and hook, and each main-process service and helper module, into its own folder with its tests, styles, `constants.ts` and `types.ts` beside it (rule in `shopos-react-components` section 1 and `shopos-service-layer` section 2a). One folder or a few folders per PR, 400 changed lines or fewer each, using `git mv`, behaviour unchanged. First PR: widen the test `include` in `apps/desktop/vitest.config.ts` to also match `src/**/*.test.ts(x)`, and update lint and tsconfig paths if needed. Open items: `.scss` needs the `sass` package (owner approval first; use `.module.css` until then); whether to move repositories the same way; the constitution line that still names `<name>.constants.ts` and `<name>.types.ts` needs an owner-approved amendment
 
 ### Schema in the architecture's shape (D18; spec FR-001, FR-003, Key Entities)
 

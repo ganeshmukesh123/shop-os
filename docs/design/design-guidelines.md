@@ -191,7 +191,7 @@ Rules for the renderer (they extend the naming and structure rules in the consti
 
 1. **Tokens and props, not values.** Use Radix props (`size`, `color`, `variant`, `radius`) and tokens (`var(--gray-12)`). No hex or `rgb()` colours, no pixel font sizes.
 2. **No inline `style={{ }}`.** Allowed only for a value computed at run time that no token expresses (for example a column width from data). Put it in a small, named style object in the component's folder with a comment saying why.
-3. **One folder per component**, holding the component, its constants (`<name>.constants.ts`), its types and interfaces (`<name>.types.ts`) and its tests. Anything used by more than one folder lives in `shared/`.
+3. **One folder per component**, holding the component, its styles, its constants (`constants.ts`), its types and interfaces (`types.ts`) and its tests. Anything used by more than one folder lives in `shared/`.
 4. **Components are pure** and small: props and state in, markup out. Data fetching, formatting and business rules live elsewhere.
 5. **Constants** are `UPPER_SNAKE_CASE`, interfaces `I`-prefixed, enums `PascalCase` (constitution VIII).
 6. **Shared building blocks** (message, status badge, page header, empty state, money and quantity text, theme provider) live in `apps/desktop/src/renderer/shared/` and are used by every screen.
