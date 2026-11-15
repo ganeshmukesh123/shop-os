@@ -13,3 +13,8 @@
 .shopos-nav-button {
   justify-content: flex-start;
 }
+
+/* Items list (ItemsScreen.tsx): an inactive item is shown dimmed, and also says "Inactive". */
+.shopos-row-inactive {
+  opacity: 0.65;
+}
