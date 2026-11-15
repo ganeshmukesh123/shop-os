@@ -130,6 +130,14 @@ The audit report is in the 2026-11-15 conversation; its finding IDs (C1, C2, H2,
 ### D24. Receipt printer (owner question 10)
 - **Decision**: The shop uses an 80 mm thermal receipt printer. 80 mm is the default; receipt width stays a setting (58 mm, 80 mm, A4, A5). The exact model, driver behaviour with `@page { size: 80mm auto }`, and print timing are still unverified (tasks T008, T058).
 
+### D25. Luxon for date handling (owner request 2026-11-15)
+- **Decision**: Use Luxon instead of hand-written date code (`pad(getMonth() + 1)`, `getMonth() >= 3` and similar) and instead of raw `Intl.DateTimeFormat` plumbing. It is its own task (T092), separate from T079 and T080. Behaviour does not change in T092.
+- **Why**: the manual code uses the device's zone, which D22 forbids; a named zone and date maths are what Luxon is for, and hand-rolled padding is easy to get wrong.
+- **Trade-off**: a new package (size not measured; `@types/luxon` probably needed, unverified). Rejected: keeping built-in `Intl` (no package, but parsing and arithmetic stay hand-written); JS `Temporal` (Electron 43 support not verified); date-fns with its time-zone add-on (two packages for the same job).
+- **Industry practice**: the Moment.js project status page recommends Luxon among its successors (recalled, not re-read this session; vendor page). No named-company source found.
+- **References**: [Luxon docs](https://moment.github.io/luxon/), [Intl.DateTimeFormat (MDN)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat).
+- **Open**: add Luxon to the stack line in CLAUDE.md only after the owner says yes (CLAUDE.md rule 6).
+
 ### Same-day bill edit (owner question 1, finding C1)
 - **Decision**: Allowed, as a new logged version that keeps the bill number (constitution v2.0.0, principle I). Built in feature 003 with feature 005 (roles, audit log). Not in this release: 001 keeps cancel-and-rebill.
 
