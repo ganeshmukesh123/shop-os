@@ -23,6 +23,7 @@ Project skills in `.claude/skills/` hold the coding standards. Use them.
 | Business rules in `packages/core` | `shopos-core-domain` |
 | Schema, migrations, queries, backups | `shopos-database-drizzle` |
 | Main process, preload, IPC commands, printing | `shopos-electron-ipc` |
+| Electron security and performance hardening (fuses, permissions, navigation, packaging) | `shopos-electron-hardening` |
 | Services, repositories, layering | `shopos-service-layer` |
 | Tests | `shopos-testing` |
 | Starting or finishing a feature or task | `shopos-feature-workflow` |
