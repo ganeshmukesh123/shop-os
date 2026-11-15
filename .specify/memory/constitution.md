@@ -1,6 +1,6 @@
 <!--
 Sync Impact Report
-Version change: 2.0.0 -> 2.0.1 (Technical Constraints "Code layout": plain `constants.ts` and `types.ts` in each folder, and the folder rule now covers main-process services as well as components; PATCH, owner decision 2026-11-15, task T093).
+Version change: 2.0.0 -> 2.1.0 (Technical Constraints "Code layout": plain `constants.ts` and `types.ts` in each folder, and the folder rule now covers main-process services as well as components, a new obligation for a whole layer; MINOR, owner decision 2026-11-15, task T093).
 Earlier version change: 1.4.0 -> 2.0.0 (Principle I redefined: a same-day edit by a permitted role creates a new version; MAJOR). Owner decision 2026-11-15, audit finding C1, PRD FR-BIL-017.
 Modified principles: I. Never Lose or Alter a Bill -> I. Never Lose or Alter a Saved Bill Version
 Added sections: none
@@ -98,4 +98,4 @@ This constitution supersedes other practices and conversation habits. Every plan
 
 **Runtime guidance** for day-to-day work lives in `CLAUDE.md`.
 
-**Version**: 2.0.1 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-15
+**Version**: 2.1.0 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-15
