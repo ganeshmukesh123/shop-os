@@ -150,6 +150,17 @@ describe("roundBillTotal (FR-010a, research D20)", () => {
     }
   });
 
+  it("rejects rounding that exceeds the safe integer limit", () => {
+    expect(errorCodeOf(() => roundBillTotal(Number.MAX_SAFE_INTEGER, true))).toBe("INVALID_AMOUNT");
+  });
+
+  it("preserves the maximum safe total when rounding is off", () => {
+    expect(roundBillTotal(Number.MAX_SAFE_INTEGER, false)).toEqual({
+      roundOffPaise: 0,
+      roundedTotalPaise: Number.MAX_SAFE_INTEGER,
+    });
+  });
+
   it("rejects a negative or fractional total", () => {
     expect(errorCodeOf(() => roundBillTotal(-1, true))).toBe("INVALID_AMOUNT");
     expect(errorCodeOf(() => roundBillTotal(10.5, true))).toBe("INVALID_AMOUNT");

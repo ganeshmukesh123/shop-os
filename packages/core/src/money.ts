@@ -71,7 +71,7 @@ export function roundBillTotal(totalPaise: Paise, isRoundingOn: boolean): IRound
   const roundsUp = leftoverPaise >= HALF_RUPEE_PAISE;
   const roundOffPaise = roundsUp ? PAISE_PER_RUPEE - leftoverPaise : 0 - leftoverPaise;
   return isRoundingOn
-    ? { roundOffPaise, roundedTotalPaise: totalPaise + roundOffPaise }
+    ? { roundOffPaise, roundedTotalPaise: assertPaise(totalPaise + roundOffPaise, "rounded total") }
     : { roundOffPaise: 0, roundedTotalPaise: totalPaise };
 }
 
