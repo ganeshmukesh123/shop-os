@@ -38,13 +38,13 @@ describe("upgrading items from migration 0004 (research D18)", () => {
       .prepare("select item_id, quantity_milli, amount_paise from bill_line")
       .get();
     const movementRows = sqlite
-      .prepare("select item_id, quantity_milli, reason from stock_movement order by quantity_milli")
+      .prepare("select variant_id, movement_type from stock_movement order by movement_type")
       .all();
 
     expect(lineRow).toEqual({ item_id: "item-1", quantity_milli: 2000, amount_paise: 24000 });
     expect(movementRows).toEqual([
-      { item_id: "item-1", quantity_milli: -2000, reason: "sale" },
-      { item_id: "item-1", quantity_milli: 10000, reason: "opening" },
+      { variant_id: "item-1", movement_type: "opening" },
+      { variant_id: "item-1", movement_type: "sale" },
     ]);
   });
 
@@ -53,7 +53,7 @@ describe("upgrading items from migration 0004 (research D18)", () => {
     const attempts = [
       "update bill_line set amount_paise = 1",
       "delete from bill_line",
-      "update stock_movement set quantity_milli = 5",
+      "update stock_movement set qty_base_milli = 5",
       "delete from stock_movement",
     ];
 

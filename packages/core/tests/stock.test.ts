@@ -1,4 +1,11 @@
-import { checkInvariant, foldMovements, isNegative } from "../src/stock";
+import { CoreError } from "../src/errors";
+import {
+  checkInvariant,
+  foldMovements,
+  isNegative,
+  movementLocations,
+  signedQuantityMilli,
+} from "../src/stock";
 
 const mv = (itemId: string, quantityMilli: number) => ({ itemId, quantityMilli: quantityMilli });
 
@@ -43,5 +50,73 @@ describe("stock invariant edge cases", () => {
   it("reports an item with cached stock but no movements", () => {
     const breaks = checkInvariant(new Map([["y", 700]]), []);
     expect(breaks).toEqual([{ itemId: "y", cached: 700, derived: 0 }]);
+  });
+});
+
+const SHOP_FLOOR = "location-shop-floor";
+
+function errorCodeOf(action: () => unknown): string | undefined {
+  try {
+    action();
+  } catch (error) {
+    return error instanceof CoreError ? error.code : "NOT_A_CORE_ERROR";
+  }
+  return undefined;
+}
+
+describe("movement direction comes from the locations (data-model: stock_movement)", () => {
+  it("stock in is a positive quantity with only a 'to' location", () => {
+    expect(movementLocations(25500, SHOP_FLOOR)).toEqual({
+      qtyBaseMilli: 25500,
+      fromLocationId: null,
+      toLocationId: SHOP_FLOOR,
+    });
+  });
+
+  it("stock out is a positive quantity with only a 'from' location", () => {
+    expect(movementLocations(-2000, SHOP_FLOOR)).toEqual({
+      qtyBaseMilli: 2000,
+      fromLocationId: SHOP_FLOOR,
+      toLocationId: null,
+    });
+  });
+
+  it("refuses a movement of zero, a fraction, or an unsafe number", () => {
+    expect(errorCodeOf(() => movementLocations(0, SHOP_FLOOR))).toBe("INVALID_QUANTITY");
+    expect(errorCodeOf(() => movementLocations(1.5, SHOP_FLOOR))).toBe("INVALID_QUANTITY");
+    expect(errorCodeOf(() => movementLocations(Number.MAX_SAFE_INTEGER + 2, SHOP_FLOOR))).toBe(
+      "INVALID_QUANTITY",
+    );
+  });
+
+  it("reads the signed quantity back from the locations", () => {
+    const stockIn = { qtyBaseMilli: 10000, fromLocationId: null, toLocationId: SHOP_FLOOR };
+    const stockOut = { qtyBaseMilli: 2000, fromLocationId: SHOP_FLOOR, toLocationId: null };
+
+    expect(signedQuantityMilli(stockIn)).toBe(10000);
+    expect(signedQuantityMilli(stockOut)).toBe(-2000);
+  });
+
+  it("round-trips: a sale and its cancel add up to nothing", () => {
+    const sale = movementLocations(-3000, SHOP_FLOOR);
+    const saleCancel = movementLocations(3000, SHOP_FLOOR);
+
+    expect(signedQuantityMilli(sale) + signedQuantityMilli(saleCancel)).toBe(0);
+  });
+
+  it("refuses a movement with both locations or neither (transfers come with feature 007)", () => {
+    const transfer = { qtyBaseMilli: 100, fromLocationId: "a-rack", toLocationId: "b-rack" };
+    const nowhere = { qtyBaseMilli: 100, fromLocationId: null, toLocationId: null };
+
+    expect(errorCodeOf(() => signedQuantityMilli(transfer))).toBe("INVALID_FIELD");
+    expect(errorCodeOf(() => signedQuantityMilli(nowhere))).toBe("INVALID_FIELD");
+  });
+
+  it("refuses a stored quantity that is not positive", () => {
+    const zero = { qtyBaseMilli: 0, fromLocationId: null, toLocationId: SHOP_FLOOR };
+    const negative = { qtyBaseMilli: -5, fromLocationId: null, toLocationId: SHOP_FLOOR };
+
+    expect(errorCodeOf(() => signedQuantityMilli(zero))).toBe("INVALID_QUANTITY");
+    expect(errorCodeOf(() => signedQuantityMilli(negative))).toBe("INVALID_QUANTITY");
   });
 });

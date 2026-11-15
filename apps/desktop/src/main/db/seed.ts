@@ -1,6 +1,8 @@
 import type { DB } from "./connection";
 import { newId, nowIso } from "./ids";
-import { shopProfile } from "./schema";
+import { location, shopProfile } from "./schema";
+
+export const SHOP_FLOOR_NAME = "Shop floor";
 
 export interface Ctx {
   businessId: string;
@@ -37,6 +39,17 @@ export function ensureSeed(db: DB): Ctx {
       footer: "",
       receiptWidth: "80mm",
       backupFolder: "",
+    })
+    .run();
+  db.insert(location)
+    .values({
+      id: newId(),
+      businessId: ctx.businessId,
+      shopId: ctx.shopId,
+      createdAt: now,
+      updatedAt: now,
+      name: SHOP_FLOOR_NAME,
+      kind: "shop_floor",
     })
     .run();
   return ctx;

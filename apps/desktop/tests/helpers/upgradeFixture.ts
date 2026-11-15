@@ -2,7 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import type Database from "better-sqlite3";
 import { openDatabase } from "../../src/main/db/connection";
-import { ensureSeed } from "../../src/main/db/seed";
+import { newId } from "../../src/main/db/ids";
+import type { Ctx } from "../../src/main/db/seed";
 import { makeTempFolder } from "./appStateFixture";
 import { insertBillAtMigration0004 } from "./schemaRows";
 import { MIGRATIONS } from "./testDb";
@@ -20,6 +21,18 @@ function makeMigrationsFolderAtMigration0004(): string {
   return folder;
 }
 
+/** The first-run seed as it was at migration 0004: a shop profile only (no location yet). */
+function seedShopAtMigration0004(sqlite: Database.Database): Ctx {
+  const ctx = { businessId: newId(), shopId: newId(), deviceId: newId() };
+  sqlite
+    .prepare(
+      `insert into shop_profile (id, business_id, shop_id, created_at, updated_at, name, device_id)
+       values (?, ?, ?, '2026-11-15T09:00:00.000Z', '2026-11-15T09:00:00.000Z', 'My Shop', ?)`,
+    )
+    .run(newId(), ctx.businessId, ctx.shopId, ctx.deviceId);
+  return ctx;
+}
+
 /**
  * The shop's database as it was at migration 0004, holding Pipe (opening 10 pcs) and one saved
  * bill of 2 pcs at 120.00, then opened with every migration so the upgrade runs on real rows.
@@ -29,7 +42,7 @@ export function upgradeDatabaseWithOneBill(): Database.Database {
   const oldConnection = openDatabase(databasePath, {
     migrationsFolder: makeMigrationsFolderAtMigration0004(),
   });
-  insertBillAtMigration0004(oldConnection.sqlite, ensureSeed(oldConnection.db));
+  insertBillAtMigration0004(oldConnection.sqlite, seedShopAtMigration0004(oldConnection.sqlite));
   oldConnection.sqlite.close();
   return openDatabase(databasePath, { migrationsFolder: MIGRATIONS }).sqlite;
 }

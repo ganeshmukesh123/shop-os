@@ -269,11 +269,11 @@ describe("inventory", () => {
     });
     expect(() =>
       testDb.sqlite
-        .prepare("update stock_movement set quantity_milli = 5 where item_id = ?")
+        .prepare("update stock_movement set qty_base_milli = 5 where variant_id = ?")
         .run(item.id),
     ).toThrow(/append-only/);
     expect(() =>
-      testDb.sqlite.prepare("delete from stock_movement where item_id = ?").run(item.id),
+      testDb.sqlite.prepare("delete from stock_movement where variant_id = ?").run(item.id),
     ).toThrow(/append-only/);
   });
 });

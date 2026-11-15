@@ -1,3 +1,41 @@
+import { CoreError } from "./errors";
+
+/** A stored movement: a positive quantity, and the direction told by which location is set. */
+export interface IMovementLocations {
+  qtyBaseMilli: number;
+  fromLocationId: string | null;
+  toLocationId: string | null;
+}
+
+/** Signed stock change -> the stored form: stock in has only `to`, stock out only `from`. */
+export function movementLocations(quantityMilli: number, locationId: string): IMovementLocations {
+  if (!Number.isSafeInteger(quantityMilli) || quantityMilli === 0) {
+    throw new CoreError("INVALID_QUANTITY", "a stock movement must be a non-zero whole number");
+  }
+  const isStockIn = quantityMilli > 0;
+  return {
+    qtyBaseMilli: Math.abs(quantityMilli),
+    fromLocationId: isStockIn ? null : locationId,
+    toLocationId: isStockIn ? locationId : null,
+  };
+}
+
+/** The stored form -> the signed stock change (plus for stock in, minus for stock out). */
+export function signedQuantityMilli(movement: IMovementLocations): number {
+  if (!Number.isSafeInteger(movement.qtyBaseMilli) || movement.qtyBaseMilli <= 0) {
+    throw new CoreError("INVALID_QUANTITY", "a stored movement quantity must be above zero");
+  }
+  const hasFrom = movement.fromLocationId !== null;
+  const hasTo = movement.toLocationId !== null;
+  if (hasFrom === hasTo) {
+    throw new CoreError(
+      "INVALID_FIELD",
+      "a movement needs exactly one of from and to (transfers come with feature 007)",
+    );
+  }
+  return hasTo ? movement.qtyBaseMilli : -movement.qtyBaseMilli;
+}
+
 export interface MovementLike {
   itemId: string;
   quantityMilli: number;
