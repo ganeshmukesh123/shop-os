@@ -41,7 +41,7 @@ const statusLabel = isCancelled ? "Cancelled" : "Saved";
 {hasError && <ErrorMessage text={errorText} />}
 const onEscape = (keyboardEvent) => keyboardEvent.key === "Escape" && closeDialog();
 // Not as a bare statement: `isOpen && closeDialog();` is rejected by ESLint no-unused-expressions.
-// In statement position use an if or a guard clause: if (isOpen) closeDialog();
+// In statement position use an if or a guard clause, on its own lines (see "Conditions").
 
 // Many cases: a lookup table, not an else-if chain
 const LABEL_BY_PAYMENT_MODE: Record<PaymentMode, string> = { cash: "Cash", upi: "UPI", card: "Card", unpaid: "Unpaid" };
@@ -66,6 +66,24 @@ for (const entry of entries) {
 
 // Good: filter, then act
 entries.filter(hasNameMatch).filter(isRecent).forEach((entry) => keep.add(entry.fileName));
+```
+
+### Conditions
+
+- **Compute, then test the name.** Put the condition in a named boolean (`isXxx`, `hasXxx`, `canXxx`) on the line above. The `if` holds only that name: no operators, no `!`.
+- **No negation, no double negation.** Name what is true (`isLoaded`), never `!isLoaded` or `!isNotLoaded`. If the failing case is the one you act on, name it directly (`isStockShort`, `isOverCreditLimit`).
+- **No single-line `if`.** Always braces, body on its own lines.
+
+```ts
+// Bad
+if (bill.lines.length > 0 && bill.status === BillStatus.Draft) saveBill(bill);
+if (!isNotLoaded) { showItems(items); }
+
+// Good: ₹240 bill against a ₹100 credit limit
+const isOverCreditLimit = billTotalPaise > creditLimitPaise;
+if (isOverCreditLimit) {
+    showCreditError();
+}
 ```
 
 ## 4. Functions and purity

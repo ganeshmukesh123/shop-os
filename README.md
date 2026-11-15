@@ -282,7 +282,7 @@ IDE test buttons (for example the VS Code Vitest extension) use plain Node and w
 4. Update `specs/001-shop-os-mvp/data-model.md` and add or adjust tests.
 
 Gotchas:
-- This project uses **drizzle-orm 0.36**: table constraints use the object form `(t) => ({ name: index(...) })`, not the array form.
+- This project uses **drizzle-orm 0.45** (drizzle-kit 0.31): table constraints use the array form `(tableColumns) => [index(...), check(...)]`; the old object form is deprecated.
 - If SQLite has to **rebuild a table** (for example when dropping a column), the migration drops that table's **triggers**. Re-create the immutability triggers in the same migration, as `0002` does for `bill`.
 - Never change an existing migration file that has already been applied anywhere; add a new one.
 
@@ -372,7 +372,7 @@ This runs the build and then electron-builder (configuration in `apps/desktop/el
 
 ## Verification status
 
-Last full run on macOS 26 (Apple Silicon), Electron 33.4.11:
+Last full run on macOS 26 (Apple Silicon), Electron 33.4.11 (before the upgrade to Electron 43; re-run and update this table):
 
 | Check | Result |
 |---|---|

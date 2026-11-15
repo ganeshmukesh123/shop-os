@@ -9,7 +9,7 @@ Authority: constitution I, V and the Technical Constraints (Electron security). 
 
 ## 1. Security defaults (never relax)
 
-- `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`; a restrictive Content-Security-Policy in `index.html`.
+- `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`; a restrictive Content-Security-Policy in `index.html` and as response headers (`apps/desktop/src/main/app/securityHeaders.ts`).
 - The renderer **never** touches the database, the file system, Node or Electron APIs. It calls typed commands through `window.shopos`.
 - The preload exposes **only** the commands in the contract, as plain functions. No generic `invoke(channel)`, no `ipcRenderer` leaked.
 - Block navigation and new windows (`will-navigate`, `setWindowOpenHandler`).
@@ -25,7 +25,7 @@ The contract is a single map so the compiler checks every layer.
 | 2. Input and result types, Zod schema | `packages/core/src/types.ts` |
 | 3. Register in the command map | `packages/core/src/commands.ts` |
 | 4. Handler: validate, call a service, return the envelope | `apps/desktop/src/main/ipc/handlers.ts` (or a feature file it imports) |
-| 5. Bridge and typed client | `apps/desktop/src/preload/index.ts` and `apps/desktop/src/renderer/state/api.ts` |
+| 5. Bridge and typed client | `apps/desktop/src/preload/bridge.ts` (builds the bridge from the command list; `preload/index.ts` only exposes it) and `apps/desktop/src/renderer/state/api.ts` |
 
 Then: a test that calls the handler (`tests/integration/ipc.test.ts` style) for success, a domain error and bad input.
 

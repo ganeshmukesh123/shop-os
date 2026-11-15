@@ -9,7 +9,7 @@ Authority: constitution (Development Workflow and Quality Gates). Specs live in 
 
 ## 1. Order of work
 
-1. `/speckit-specify` (what and why, with PRD requirement IDs), `/speckit-clarify`, `/speckit-plan` (how, with the architecture), `/speckit-tasks`, `/speckit-analyze`, then `/speckit-implement`. One feature per spec. No code before spec, plan and tasks exist.
+1. `/speckit-specify` (what and why, with PRD requirement IDs), `/speckit-clarify`, `/speckit-checklist`, `/speckit-plan` (how, with the architecture), `/speckit-tasks`, `/speckit-analyze`, then `/speckit-implement`. One feature per spec. No code before spec, plan and tasks exist. When code has run ahead of the documents, `/speckit-converge` appends the missing work to `tasks.md`.
 2. Check the plan against the constitution (Constitution Check table) before and after design.
 3. Work **one task at a time** from `tasks.md`, in dependency order. Tick the box only when the task's tests pass.
 4. If the spec, plan or contract is wrong or missing something, **fix the document first** and say so; do not build around it.

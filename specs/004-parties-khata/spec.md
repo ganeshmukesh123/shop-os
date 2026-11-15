@@ -1,6 +1,6 @@
 # Feature Specification: Parties and Khata (Credit)
 
-**Feature Branch**: `004-parties-khata` (no git repository yet; directory name only)
+**Feature Branch**: `004-parties-khata`
 
 **Created**: 2026-11-13
 
@@ -10,7 +10,7 @@
 
 **PRD source**: `docs/reference/PRD.md` section 8 (FR-KHA-001 to 014), US-05, US-08, US-15, US-16, EC-06, EC-14, EC-17, BO-2.
 
-**Depends on**: 001 (bills), 003 (credit sales), 005 (approvals), 008 (consent rules). Distributors in the party list are used by 009.
+**Depends on**: 001 (bills foundation), 005 (approvals for credit limits). (Note: provides party records and credit limit checks to downstream 003 for credit billing, and distributor parties to downstream 009).
 
 ## User Scenarios & Testing *(mandatory)*
 

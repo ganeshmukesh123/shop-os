@@ -53,6 +53,7 @@ Review as a staff engineer who must maintain this code for years. Report finding
 - [ ] File 200 lines or less (tests 300); function 40 or less; component 120 or less; complexity 10 or less; at most 4 parameters; nesting depth at most 2
 - [ ] No single-letter names; names say what they hold or do; booleans read as questions; units in names
 - [ ] Control flow: ternary for choosing a value, `&&` for guarded output, no `continue`, no nested ternary, guard clauses instead of deep else
+- [ ] Conditions: computed into a named boolean first, `if` holds only that name; no `!`, no double negation (`!isNotX`); no single-line `if`
 - [ ] Constants `UPPER_SNAKE_CASE`; interfaces `I...`; enums PascalCase
 - [ ] Constants and types in the component folder or `shared/`; no dead or commented-out code
 

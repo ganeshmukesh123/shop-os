@@ -4,6 +4,10 @@
 >
 > **Reading guide**: IDs such as FR-BIL-012 mean functional requirement, Billing area, number 12. Areas: ITM items, TNT tinting, BIL billing, DLV delivery, STK stock, KHA khata and payments, PUR purchases and warranty, CTL control, OWN owner app, RPT reports, CMP compliance. US = user story, EC = edge case. Priority: M must, S should, C could. Release: MVP, V2, V3, Later.
 >
+> **Checked 2026-11-15**: the owner confirmed the live PRD has not changed since this copy.
+>
+> **Decision log (2026-11-15)**: FR-BIL-017 (same-day edit) is confirmed: the edit saves a new version that keeps the number and is logged; the constitution was amended to v2.0.0 to allow it. FR-ITM-012 (import) is out of the first build (`specs/001-shop-os-mvp`) and owned by `specs/012-go-live-data-migration`. Defaults to confirm with the CA and counsel are in `specs/001-shop-os-mvp/research.md` D19 to D23.
+>
 > **Scope note (2026-11-13)**: the first build (`specs/001-shop-os-mvp`) is narrower than the PRD's MVP: inventory entry and a basic no-tax bill only. Everything else here is split into later feature specs.
 
 ## 1. Product overview

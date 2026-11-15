@@ -40,7 +40,7 @@ apps/desktop/src/renderer/
     text/         uiText (all user-facing strings)
 ```
 
-Existing screens (`screens/`, `components/`, `state/`) move into this layout when they are next touched, not all at once.
+This is the **target** layout. Today the renderer still has `screens/`, `components/`, `state/` and `strings.ts` (which holds `uiText`); they move into this layout when next touched, one folder per PR (spec 001 tasks T088 to T090), not all at once.
 
 ## 2. Rules
 

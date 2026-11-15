@@ -19,7 +19,7 @@ Authority: constitution I, II, III, IV. Architecture: `docs/reference/architectu
 ## 2. Immutable records (constitution I and II)
 
 - `stock_movement`, `bill_line`: no update, no delete (triggers `RAISE(ABORT)`).
-- `bill`: no delete; update only for `saved` to `cancelled` with every other column unchanged (`bill_only_cancel_update`). **Any new column on `bill` must be added to that trigger's "unchanged" list in the same migration.**
+- `bill`: no delete; update only for `saved` to `cancelled` (`posted` to `cancelled` after spec 001 T076) with every other column unchanged (`bill_only_cancel_update`). A same-day edit (constitution v2.0.0, feature 003) inserts a new bill version row; it never updates the old one. **Any new column on `bill` must be added to that trigger's "unchanged" list in the same migration.**
 - Corrections are new rows (reverse movement, cancel), never edits.
 
 ## 3. Migrations
@@ -56,7 +56,7 @@ Audit-style timestamps are UTC ISO-8601. `bill_date` is the local business time 
 ## 7. Backup and the native module
 
 - Back up with SQLite's online backup API (`db.backup()`), never by copying the live file. Prove a backup with a real restore.
-- better-sqlite3 is a native module with ONE binary per install, and it must be the **Electron** build: the app, the integration tests (run inside Electron's Node by `pnpm test`) and Playwright all use it. Never run `pnpm rebuild better-sqlite3` (that builds for plain Node). `scripts/ensure-electron-sqlite.mjs` repairs a wrong binary; electron-builder rebuilds it when packaging.
+- better-sqlite3 is a native module with ONE binary per install, and it must be the **Electron** build: the app, the integration tests (run inside Electron's Node by `pnpm test`) and Playwright all use it. Never run `pnpm rebuild better-sqlite3` (that builds for plain Node). `apps/desktop/scripts/ensure-electron-sqlite.mjs` repairs a wrong binary (or run `pnpm --filter @shopos/desktop ensure:sqlite`); electron-builder rebuilds it when packaging.
 
 ## 8. Checklist
 
