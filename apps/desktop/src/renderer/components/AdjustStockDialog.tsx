@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, Dialog, Flex, RadioGroup, Text, TextArea, TextField } from "@radix-ui/themes";
 import { formatQuantity, parseQuantity, type Item } from "@shopos/core";
+import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import { uiText } from "../strings";
 import { call, messageOf } from "../state/api";
 import { useToast } from "./Toast";
@@ -87,9 +88,9 @@ export function AdjustStockDialog({
             />
           </label>
           {error && (
-            <Text color="red" role="alert">
-              Error: {error}
-            </Text>
+            <StatusMessage role="danger" label={uiText.status.error}>
+              {error}
+            </StatusMessage>
           )}
         </Flex>
         <Flex gap="3" mt="4" justify="end">

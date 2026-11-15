@@ -73,6 +73,8 @@ describe("upgrading stock movements from migration 0004 (research D18)", () => {
   });
 });
 
+const SHOP_FLOOR_LOCATION = "shop-floor-location";
+
 describe("stock_movement rules in the database", () => {
   function insertMovement(overrides: Record<string, string | number | null>): void {
     const { sqlite, ctx } = createTestDb();
@@ -101,7 +103,17 @@ describe("stock_movement rules in the database", () => {
       docId: null,
       note: null,
       ...overrides,
+      ...resolveShopFloor(overrides, shopFloor.id),
     });
+  }
+
+  /** Lets a test point an endpoint at the real shop floor location without knowing its id. */
+  function resolveShopFloor(
+    overrides: Record<string, string | number | null>,
+    shopFloorId: string,
+  ): Record<string, string> {
+    const entries = Object.entries(overrides).filter(([, value]) => value === SHOP_FLOOR_LOCATION);
+    return Object.fromEntries(entries.map(([column]) => [column, shopFloorId]));
   }
 
   it("accepts stock in with only a 'to' location", () => {
@@ -109,8 +121,8 @@ describe("stock_movement rules in the database", () => {
   });
 
   it("refuses a movement with both locations, or none", () => {
-    expect(() => insertMovement({ fromLocationId: "x" })).toThrow(
-      /stock_movement_one_direction|FOREIGN/,
+    expect(() => insertMovement({ fromLocationId: SHOP_FLOOR_LOCATION })).toThrow(
+      /stock_movement_one_direction/,
     );
     expect(() => insertMovement({ toLocationId: null })).toThrow(/stock_movement_one_direction/);
   });

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Button, Callout, Checkbox, Dialog, Flex, Select, Text, TextField } from "@radix-ui/themes";
+import { Button, Checkbox, Dialog, Flex, Select, Text, TextField } from "@radix-ui/themes";
+import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import {
   defaultAllowsDecimal,
   formatQuantity,
@@ -193,27 +194,21 @@ export function ItemForm({
               {uiText.items.adjust}” to change stock.
             </Text>
           )}
-          {errors.length > 0 && (
-            <Text color="red" role="alert" as="div">
-              {errors.map((errorMessage) => (
-                <div key={errorMessage}>Error: {errorMessage}</div>
-              ))}
-            </Text>
-          )}
+          {errors.map((errorMessage) => (
+            <StatusMessage key={errorMessage} role="danger" label={uiText.status.error}>
+              {errorMessage}
+            </StatusMessage>
+          ))}
           {dupes.length > 0 && (
-            <Callout.Root color="orange" role="alert">
-              <Callout.Text>
-                <b>Warning: {uiText.form.duplicateTitle}.</b> {uiText.form.duplicateHelp}
-                <ul style={{ margin: "4px 0 0 16px" }}>
-                  {dupes.map((duplicateItem) => (
-                    <li key={duplicateItem.id}>
-                      {duplicateItem.name} ({formatQuantity(duplicateItem.stockMilli)}{" "}
-                      {duplicateItem.unit} in stock)
-                    </li>
-                  ))}
-                </ul>
-              </Callout.Text>
-            </Callout.Root>
+            <StatusMessage role="warning" label={uiText.status.duplicate}>
+              {uiText.form.duplicateTitle}. {uiText.form.duplicateHelp}{" "}
+              {dupes
+                .map(
+                  (duplicateItem) =>
+                    `${duplicateItem.name} (${formatQuantity(duplicateItem.stockMilli)} ${duplicateItem.unit} in stock)`,
+                )
+                .join("; ")}
+            </StatusMessage>
           )}
         </Flex>
         <Flex gap="3" mt="4" justify="end">
