@@ -94,6 +94,14 @@ describe("status words in the screens (design guidelines 5.1, PRD NFR-011)", () 
 
     const toastStatus = await screen.findAllByRole("status");
     expect(toastStatus.some((element) => element.textContent === "Done Settings saved")).toBe(true);
+    const announcement = await waitFor(() => {
+      const matchingAnnouncement = Array.from(document.querySelectorAll("[aria-live]")).find(
+        (element) => element.textContent?.includes("Done Settings saved"),
+      );
+      expect(matchingAnnouncement).toBeDefined();
+      return matchingAnnouncement;
+    });
+    expect(announcement?.getAttribute("aria-live")).toBe("polite");
   });
 
   it("a success toast is announced politely and a failure toast assertively", async () => {
