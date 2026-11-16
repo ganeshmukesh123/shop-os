@@ -14,6 +14,14 @@ pnpm test         # core and data-layer tests (Vitest)
 pnpm test:e2e     # Playwright for Electron scenarios below
 ```
 
+### Against the packaged app (task T062)
+```bash
+pnpm --filter @shopos/desktop package            # builds release/ (installer plus unpacked app)
+pnpm --filter @shopos/desktop test:e2e:packaged  # the same specs, run against the packaged binary
+pnpm --filter @shopos/desktop test:e2e:packaged --offline   # macOS: also denies the app all non-loopback network
+```
+The specs cover scenarios 1 to 4 below and the PDF export. They use a throwaway data folder (`SHOPOS_USER_DATA`), so the owner's real data is never touched. What they cannot show: a second, clean computer, a real printer (scenario 2 print step, 5) and a restore drill by another person. Those stay manual.
+
 ## Scenarios
 
 ### 1. Inventory (after M2; spec US1)

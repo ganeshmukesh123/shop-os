@@ -9,6 +9,7 @@
     "package": "electron-vite build && electron-builder",
     "test": "node scripts/vitest-electron.mjs run",
     "test:e2e": "playwright test",
+    "test:e2e:packaged": "node scripts/e2e-packaged.mjs",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "ensure:sqlite": "node scripts/ensure-electron-sqlite.mjs",

@@ -34,9 +34,17 @@ Open **Settings > Backup**. "Last good backup" should show today's date and a re
 
 If you choose a file that is not a Shop OS backup, the app refuses it and changes nothing.
 
-## First run on a Mac (unsigned build)
+## First run on a Mac (the build is not notarised)
 
-If macOS says the app "cannot be opened because the developer cannot be verified": right-click the app, choose **Open**, then **Open** again. You only need to do this once.
+Shop OS is signed on the builder's computer without an Apple developer account, so macOS shows "cannot be opened because the developer cannot be verified" (or "Apple could not verify..."). Do this once, after dragging **Shop OS** into **Applications**:
+
+1. Try to open the app, then click **Done** (not Move to Bin).
+2. Open **System Settings > Privacy & Security**, scroll down to the line about "Shop OS" and click **Open Anyway**. Enter your Mac password.
+3. Open the app again and click **Open**.
+
+On older macOS (14 and earlier) right-clicking the app and choosing **Open** also works. If neither works, open Terminal and run: `xattr -dr com.apple.quarantine "/Applications/Shop OS.app"`, then open the app.
+
+_(Written from how the build behaves on the builder's Mac; the exact wording of these steps is still to be confirmed on a second Mac, see task T062.)_
 
 ## Disk encryption
 
