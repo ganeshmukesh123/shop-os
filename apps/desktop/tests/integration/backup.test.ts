@@ -78,7 +78,7 @@ describe("backup", () => {
     expect(copy.pragma("integrity_check", { simple: true })).toBe("ok");
     const sums = copy
       .prepare(
-        "select (select stock_milli from item_variant) cached, (select sum(quantity_milli) from stock_movement) derived",
+        "select (select stock_milli from item_variant) cached, (select sum(case when to_location_id is not null then qty_base_milli else -qty_base_milli end) from stock_movement) derived",
       )
       .get() as { cached: number; derived: number };
     expect(sums.cached).toBe(sums.derived);

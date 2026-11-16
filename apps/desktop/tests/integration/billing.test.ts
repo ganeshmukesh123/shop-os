@@ -116,7 +116,7 @@ describe("billing", () => {
     const firstItem = mk("A");
     const secondItem = mk("B");
     testDb.sqlite.exec(`create trigger boom before insert on stock_movement
-      when new.reason = 'sale' and new.item_id = '${secondItem.id}' begin select raise(abort, 'boom'); end;`);
+      when new.movement_type = 'sale' and new.variant_id = '${secondItem.id}' begin select raise(abort, 'boom'); end;`);
     expect(() => billing.saveBill(bill([line(firstItem.id), line(secondItem.id)]))).toThrow(/boom/);
     expect(testDb.sqlite.prepare("select count(*) as rowCount from bill").get()).toEqual({
       rowCount: 0,
@@ -126,7 +126,7 @@ describe("billing", () => {
     });
     expect(
       testDb.sqlite
-        .prepare("select count(*) as rowCount from stock_movement where reason='sale'")
+        .prepare("select count(*) as rowCount from stock_movement where movement_type='sale'")
         .get(),
     ).toEqual({ rowCount: 0 });
     expect(testDb.sqlite.prepare("select count(*) as rowCount from number_counter").get()).toEqual({
@@ -247,7 +247,7 @@ describe("billing", () => {
     });
     expect(
       testDb.sqlite
-        .prepare("select count(*) as rowCount from stock_movement where reason = 'sale'")
+        .prepare("select count(*) as rowCount from stock_movement where movement_type = 'sale'")
         .get(),
     ).toEqual({ rowCount: 1 });
     expect(

@@ -1,6 +1,6 @@
 # Data Model: Shop OS MVP
 
-> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0006; items moved in T074) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
+> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0007; items moved in T074, stock movements and locations in T075) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
 
 ## Target shape (research D18, architecture section 8)
 
@@ -50,18 +50,23 @@ An item is one family with one variant for now; the code and screens still say "
 
 Reserved but unused columns so later features need no migration: `hsn_code`, `gst_rate_override_bp`, `barcode` (all nullable, not shown in the UI). `item_family` has only `name` (1-120 characters, trimmed) plus the base columns.
 
-### Stock Movement (`stock_movement`)
+### Location (`location`) (migration 0007, task T075)
+`name` (1-80 characters) and `kind` (`shop_floor` or `godown`). Each shop has one seeded row, "Shop floor" (`shop_floor`); feature 007 adds more. The seed creates it on first run, and migration 0007 creates it for a shop that already exists.
+
+### Stock Movement (`stock_movement`) (migration 0007, task T075)
 | Field | Rule |
 |---|---|
-| item_id | foreign key to `item_variant`, not null (renamed `variant_id` in T075) |
-| quantity_milli | integer, not null, non-zero; positive adds stock, negative removes |
-| reason | one of `opening`, `adjustment`, `sale`, `sale_cancel`, not null |
-| note | text up to 200 characters, optional (required text for `adjustment`) |
-| bill_id | foreign key to bill, set for `sale` and `sale_cancel`, else null |
+| variant_id | foreign key to `item_variant`, not null |
+| movement_type | one of `opening`, `adjustment`, `sale`, `sale_cancel`, not null |
+| qty_base_milli | integer, not null, always above 0 |
+| from_location_id, to_location_id | foreign keys to `location`; exactly one is set: stock in has only `to`, stock out only `from` (transfers, with both set, come with feature 007) |
+| doc_type, doc_id | `bill` and the bill's id for `sale` and `sale_cancel`; both null otherwise (checked as a pair) |
+| reason_code | text, optional, unused in this release |
+| note | text up to 200 characters, optional; required (not blank) for `adjustment` |
 | occurred_at | ISO-8601 UTC, not null |
 | device_id | text, not null (the local device identifier) |
 
-Append-only. Invariant: item.stock_milli equals the sum of the item's movements.
+Append-only. The signed change is `+qty` when `to_location_id` is set and `-qty` when `from_location_id` is set (`signedQuantityMilli` and `movementLocations` in `@shopos/core`); the repository still hands the app a signed `quantityMilli`. Invariant: variant.stock_milli equals the sum of the variant's signed movements.
 
 ### Bill (`bill`)
 | Field | Rule |
@@ -134,7 +139,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 ## Relationships
 
-- Item 1 to many Stock Movement; Bill 1 to many Bill Line and Bill 1 to many Stock Movement (via bill_id); Bill Line many to 1 Item.
+- Item variant 1 to many Stock Movement; Location 1 to many Stock Movement (from or to); Bill 1 to many Bill Line and Bill 1 to many Stock Movement (via doc_type `bill` and doc_id); Bill Line many to 1 Item variant.
 - Business 1 to many Shop; every table above carries both ids (single business and shop at launch).
 
 ## State transitions
@@ -150,6 +155,6 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 ## Indexes
 
 - `item_variant(display_name)` collation NOCASE for partial-name search (no FTS needed: 5,000 items searched in about 4 ms); `item_variant(business_id, item_code)` unique.
-- `stock_movement(item_id, occurred_at)`.
+- `stock_movement(variant_id, occurred_at)` and `stock_movement(doc_type, doc_id)`.
 - `bill(number)` unique; `bill(bill_date)`; `bill(customer_name)`.
 - `bill_line(bill_id)`.

@@ -1,6 +1,8 @@
-import type { DB } from "./connection";
+import type { DB, Handle } from "./connection";
 import { newId, nowIso } from "./ids";
-import { shopProfile } from "./schema";
+import { location, shopProfile } from "./schema";
+
+export const SHOP_FLOOR_NAME = "Shop floor";
 
 export interface Ctx {
   businessId: string;
@@ -22,8 +24,14 @@ export function ensureSeed(db: DB): Ctx {
     };
   }
   const ctx: Ctx = { businessId: newId(), shopId: newId(), deviceId: newId() };
+  // One transaction: a half-seeded shop (profile without a shop floor) would block every stock write.
+  db.transaction((tx) => insertFirstRunRows(tx, ctx));
+  return ctx;
+}
+
+function insertFirstRunRows(tx: Handle, ctx: Ctx): void {
   const now = nowIso();
-  db.insert(shopProfile)
+  tx.insert(shopProfile)
     .values({
       id: newId(),
       ...ctx,
@@ -39,7 +47,17 @@ export function ensureSeed(db: DB): Ctx {
       backupFolder: "",
     })
     .run();
-  return ctx;
+  tx.insert(location)
+    .values({
+      id: newId(),
+      businessId: ctx.businessId,
+      shopId: ctx.shopId,
+      createdAt: now,
+      updatedAt: now,
+      name: SHOP_FLOOR_NAME,
+      kind: "shop_floor",
+    })
+    .run();
 }
 
 export function loadCtx(db: DB): Ctx {

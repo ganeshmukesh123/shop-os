@@ -29,6 +29,15 @@ describe("first-run seed", () => {
     expect(connection.db.select().from(shopProfile).all()).toHaveLength(1);
   });
 
+  it("leaves no shop profile behind when the shop floor location cannot be created", () => {
+    const connection = openEmptyDatabase();
+    connection.sqlite.exec("drop table location");
+
+    expect(() => ensureSeed(connection.db)).toThrow();
+
+    expect(connection.db.select().from(shopProfile).all()).toHaveLength(0);
+  });
+
   it("starts with the default shop profile", () => {
     const connection = openEmptyDatabase();
     ensureSeed(connection.db);
@@ -99,7 +108,13 @@ describe("schema contract", () => {
   });
 
   it("keeps stock and line amounts sane", () => {
-    expect(constraintNames(stockMovement)).toContain("stock_movement_nonzero");
+    expect(constraintNames(stockMovement)).toEqual(
+      expect.arrayContaining([
+        "stock_movement_qty_pos",
+        "stock_movement_one_direction",
+        "stock_movement_adjustment_note",
+      ]),
+    );
     expect(constraintNames(billLine)).toEqual(
       expect.arrayContaining([
         "bill_line_qty_pos",
@@ -107,7 +122,7 @@ describe("schema contract", () => {
         "bill_line_discount_nonneg",
       ]),
     );
-    expect(indexNames(stockMovement)).toContain("stock_movement_item_idx");
+    expect(indexNames(stockMovement)).toContain("stock_movement_variant_idx");
   });
 
   it("limits item and shop profile fields", () => {
@@ -135,7 +150,7 @@ describe("schema contract", () => {
         .foreignKeys.map((foreignKey) => getTableConfig(foreignKey.reference().foreignTable).name)
         .sort();
     expect(referencedTables(billLine)).toEqual(["bill", "item_variant"]);
-    expect(referencedTables(stockMovement)).toEqual(["bill", "item_variant"]);
+    expect(referencedTables(stockMovement)).toEqual(["item_variant", "location", "location"]);
     expect(referencedTables(itemVariant)).toEqual(["item_family"]);
   });
 
