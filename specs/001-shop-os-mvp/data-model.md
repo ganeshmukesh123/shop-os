@@ -118,7 +118,13 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - `stock_movement`: update and delete are rejected ("append-only").
 - `bill_line`: update and delete are rejected.
-- `bill`: delete is rejected (also the key `client_bill_id` is protected); update is allowed only for the change `status` `saved` to `cancelled` (with its cancel fields) while every other column stays identical.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:a653a6c71cd3957f52050d00eac469ff0dc40e4249e250bfa6b10553f61d42ef -->
+
+- `bill`: delete is rejected (also the key `client_bill_id` is protected); update is allowed only for the change `status` `posted` to `cancelled` (with its cancel fields) while every other column stays identical.
+
+<!-- /coderabbit-ai-generated:v1 -->
 - Consequence: the optional `customer_name` on a saved bill cannot be edited or erased later. Customer phone was removed from the bill (migration `0002`, 2026-11-13) so this release holds no contact details. When contact details arrive (features 004 and 008) they live in a separate, erasable party record referenced by id (review B6).
 
 ## Rounding (implemented in `packages/core/src/money.ts`)
@@ -147,7 +153,13 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 ## State transitions
 
-- Bill: `saved` to `cancelled` only, once, with a reason. Cancelled is terminal. A cancel inserts one `sale_cancel` movement per line (the exact reverse of the sale) in one transaction.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:d9907936504fe9333dd3f43a5ab3379567305dca2c8a4673e9f590fa92f08117 -->
+
+- Bill: `posted` to `cancelled` only, once, with a reason. Cancelled is terminal. A cancel inserts one `sale_cancel` movement per line (the exact reverse of the sale) in one transaction.
+
+<!-- /coderabbit-ai-generated:v1 -->
 - Item: `active` to inactive and back; inactive items cannot be added to new bills but remain on old bills.
 
 ## Derived values (computed in `@shopos/core`)

@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { openDatabase } from "../../src/main/db/connection";
+import { migrateConnection, openDatabase } from "../../src/main/db/connection";
 import { MIGRATIONS } from "../helpers/testDb";
 import {
   createDatabaseFileAtMigration0004WithOneBill,
@@ -103,10 +103,20 @@ describe("opening a database with foreign keys on or off (connection.ts)", () =>
          select 'orphan-movement', business_id, shop_id, 'now', 'now', 'no-such-item', 500, 'opening', 'now', device_id from shop_profile`,
       )
       .run();
-    damaged.close();
-
-    expect(() => openDatabase(databasePath, { migrationsFolder: MIGRATIONS })).toThrow(
-      /broken reference/,
-    );
+    const beforeSchema = damaged.prepare("SELECT * FROM sqlite_master ORDER BY name").all();
+    const beforeJournal = damaged.prepare("SELECT * FROM __drizzle_migrations").all();
+    const beforeBills = damaged.prepare("SELECT * FROM bill").all();
+    try {
+      expect(() => migrateConnection(damaged, MIGRATIONS)).toThrow(/broken reference/);
+      expect(damaged.prepare("SELECT * FROM sqlite_master ORDER BY name").all()).toEqual(
+        beforeSchema,
+      );
+      expect(damaged.prepare("SELECT * FROM __drizzle_migrations").all()).toEqual(beforeJournal);
+      expect(damaged.prepare("SELECT * FROM bill").all()).toEqual(beforeBills);
+      expect(damaged.inTransaction).toBe(false);
+      expect(damaged.pragma("foreign_keys", { simple: true })).toBe(1);
+    } finally {
+      damaged.close();
+    }
   });
 });
