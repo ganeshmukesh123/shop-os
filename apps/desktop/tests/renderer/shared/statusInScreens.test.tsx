@@ -78,9 +78,9 @@ describe("status words in the screens (design guidelines 5.1, PRD NFR-011)", () 
     await screen.findByRole("alert");
 
     expect(document.querySelector(".shopos-toast-viewport")).not.toBeNull();
-    expect(document.querySelector(".shopos-toast")?.getAttribute("style") ?? "").not.toContain(
-      "list-style",
-    );
+    const toast = document.querySelector(".shopos-toast");
+    expect(toast).not.toBeNull();
+    expect(toast!.getAttribute("style") ?? "").not.toContain("list-style");
   });
 
   it("a success toast opens with the word Done and is announced politely", async () => {
