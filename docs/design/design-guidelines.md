@@ -234,5 +234,5 @@ Before a screen is marked done:
 | D3 | Warning colour `orange` or `amber` in dark mode | Open |
 | D4 | Contrast ratios measured and recorded | Not done |
 | D5 | Brand colour from the shop's logo, if any | None given; keeping indigo and slate |
-| D6 | Theme preference stored in local storage or in the database settings | Open (a per-device local setting is assumed) |
-| D7 | Existing screens brought in line (5 screens, 3 components, 32 inline styles at 2026-11-14) | Not started |
+| D6 | Theme preference stored in local storage or in the database settings | Built as a per-device local-storage setting (T085, 2026-11-15); still open whether it should move to the database |
+| D7 | Existing screens brought in line (5 screens, 3 components, 32 inline styles at 2026-11-14) | Code done 2026-11-15 (T085 to T087): no inline styles, shared StatusMessage and StatusBadge, theme picker. Light and dark not yet checked by eye in the running app |
