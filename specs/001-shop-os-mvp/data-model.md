@@ -1,6 +1,6 @@
 # Data Model: Shop OS MVP
 
-> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0008; items moved in T074, stock movements and locations in T075, the bill header in T076) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
+> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0009; items moved in T074, stock movements and locations in T075, the bill header in T076) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
 
 ## Target shape (research D18, architecture section 8)
 
@@ -68,7 +68,7 @@ Reserved but unused columns so later features need no migration: `hsn_code`, `gs
 
 Append-only. The signed change is `+qty` when `to_location_id` is set and `-qty` when `from_location_id` is set (`signedQuantityMilli` and `movementLocations` in `@shopos/core`); the repository still hands the app a signed `quantityMilli`. Invariant: variant.stock_milli equals the sum of the variant's signed movements.
 
-### Bill (`bill`) (migration 0008, task T076)
+### Bill (`bill`) (migration 0009, task T076)
 The app and the screens still call these fields `number`, `seriesCode`, `linesTotalPaise` and `grandTotalPaise`; `BillRepository` maps them to the columns below.
 
 | Field | Rule |

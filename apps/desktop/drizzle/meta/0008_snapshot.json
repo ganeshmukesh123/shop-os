@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "3a9be160-dd33-4eab-bdb1-110c1b1f8f8b",
+  "id": "51996df1-3bd9-447a-b5ec-21b3a54bb552",
   "prevId": "033ba205-236e-4048-b6f8-3f1067fab2da",
   "tables": {
     "backup_log": {
@@ -127,22 +127,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "device_id": {
-          "name": "device_id",
+        "number": {
+          "name": "number",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "counter_code": {
-          "name": "counter_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "bill_no": {
-          "name": "bill_no",
+        "series_code": {
+          "name": "series_code",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -190,8 +183,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "subtotal_paise": {
-          "name": "subtotal_paise",
+        "lines_total_paise": {
+          "name": "lines_total_paise",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -204,8 +197,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "total_paise": {
-          "name": "total_paise",
+        "grand_total_paise": {
+          "name": "grand_total_paise",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -234,18 +227,18 @@
         }
       },
       "indexes": {
-        "bill_no_uq": {
-          "name": "bill_no_uq",
+        "bill_number_uq": {
+          "name": "bill_number_uq",
           "columns": [
             "shop_id",
-            "bill_no"
+            "number"
           ],
           "isUnique": true
         },
-        "bill_counter_fy_seq_uq": {
-          "name": "bill_counter_fy_seq_uq",
+        "bill_series_fy_seq_uq": {
+          "name": "bill_series_fy_seq_uq",
           "columns": [
-            "counter_code",
+            "series_code",
             "financial_year",
             "seq"
           ],
@@ -278,9 +271,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {
-        "bill_no_len": {
-          "name": "bill_no_len",
-          "value": "length(\"bill\".\"bill_no\") <= 16"
+        "bill_number_len": {
+          "name": "bill_number_len",
+          "value": "length(\"bill\".\"number\") <= 16"
         },
         "bill_payment_mode": {
           "name": "bill_payment_mode",
@@ -288,7 +281,7 @@
         },
         "bill_status": {
           "name": "bill_status",
-          "value": "\"bill\".\"status\" in ('posted','cancelled')"
+          "value": "\"bill\".\"status\" in ('saved','cancelled')"
         },
         "bill_cancel_reason_required": {
           "name": "bill_cancel_reason_required",
@@ -296,11 +289,11 @@
         },
         "bill_discount_range": {
           "name": "bill_discount_range",
-          "value": "\"bill\".\"bill_discount_paise\" >= 0 and \"bill\".\"bill_discount_paise\" <= \"bill\".\"subtotal_paise\""
+          "value": "\"bill\".\"bill_discount_paise\" >= 0 and \"bill\".\"bill_discount_paise\" <= \"bill\".\"lines_total_paise\""
         },
         "bill_total_eq": {
           "name": "bill_total_eq",
-          "value": "\"bill\".\"total_paise\" = \"bill\".\"subtotal_paise\" - \"bill\".\"bill_discount_paise\""
+          "value": "\"bill\".\"grand_total_paise\" = \"bill\".\"lines_total_paise\" - \"bill\".\"bill_discount_paise\""
         }
       }
     },
@@ -1216,7 +1209,7 @@
         },
         "stock_movement_doc_pair": {
           "name": "stock_movement_doc_pair",
-          "value": "(\"stock_movement\".\"doc_type\" is null) = (\"stock_movement\".\"doc_id\" is null) and (\"stock_movement\".\"doc_type\" is null or \"stock_movement\".\"doc_type\" = 'bill')"
+          "value": "(\"stock_movement\".\"doc_type\" is null) = (\"stock_movement\".\"doc_id\" is null) and (\"stock_movement\".\"doc_type\" is null or \"stock_movement\".\"doc_type\" = 'bill') and (\"stock_movement\".\"doc_id\" is not null) = (\"stock_movement\".\"movement_type\" in ('sale','sale_cancel'))"
         },
         "stock_movement_adjustment_note": {
           "name": "stock_movement_adjustment_note",

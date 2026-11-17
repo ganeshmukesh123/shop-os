@@ -9,15 +9,24 @@ export interface Launched {
   dataDir: string;
 }
 
-/** Start the built app (run `pnpm build` first) against a throwaway data folder. */
+/**
+ * Start the built app (run `pnpm build` first) against a throwaway data folder.
+ * Set SHOPOS_E2E_EXECUTABLE to the packaged app's binary (see `pnpm test:e2e:packaged`) to run the
+ * same scenarios against the installer's output instead of `out/main/index.js`.
+ */
 export async function launch(
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "shopos-e2e-")),
 ): Promise<Launched> {
   // CI on Linux may need Chromium's sandbox switched off (open item O1 in specs/017.../research.md);
   // off by default so local runs keep the real sandbox.
   const sandboxArguments = process.env.SHOPOS_E2E_NO_SANDBOX === "1" ? ["--no-sandbox"] : [];
+  const packagedExecutable = process.env.SHOPOS_E2E_EXECUTABLE;
   const app = await electron.launch({
-    args: [...sandboxArguments, path.resolve(__dirname, "../../out/main/index.js")],
+    executablePath: packagedExecutable,
+    args: [
+      ...sandboxArguments,
+      ...(packagedExecutable ? [] : [path.resolve(__dirname, "../../out/main/index.js")]),
+    ],
     env: { ...process.env, SHOPOS_USER_DATA: dataDir },
   });
   const page = await app.firstWindow();

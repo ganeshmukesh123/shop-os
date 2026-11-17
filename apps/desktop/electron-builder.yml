@@ -5,7 +5,7 @@ directories:
 files:
   - out/**
   - package.json
-# Generated SQL migrations are read from disk at startup (see src/main/index.ts).
+# Generated SQL migrations are read from disk at startup (see src/main/app/appConfig.ts).
 extraResources:
   - from: drizzle
     to: drizzle
@@ -16,8 +16,11 @@ npmRebuild: true
 mac:
   category: public.app-category.business
   target: [dmg]
-  # Unsigned unless an Apple developer account is available; see docs/restore-guide.md for first-run steps.
-  identity: null
+  # No Apple developer account: sign ad hoc ("-") so the whole bundle has one consistent signature.
+  # With `identity: null` the bundle is left half-signed (codesign --verify fails) and a downloaded
+  # copy can be reported as "damaged". Ad hoc still shows the "unidentified developer" prompt; the
+  # first-run steps are in docs/restore-guide.md.
+  identity: "-"
 win:
   target: [nsis]
 linux:

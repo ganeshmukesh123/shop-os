@@ -6,7 +6,7 @@ import {
   upgradeDatabaseWithOneBill,
 } from "../helpers/upgradeFixture";
 
-/** Task T076 (migration 0008): the bill header takes the target names and keeps every bill. */
+/** Task T076 (migration 0009): the bill header takes the target names and keeps every bill. */
 describe("upgrading the bill header from migration 0004 (research D18)", () => {
   it("keeps the bill under its new column names, and posted instead of saved", () => {
     const sqlite = upgradeDatabaseWithOneBill();

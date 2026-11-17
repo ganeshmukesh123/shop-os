@@ -97,8 +97,9 @@ if (isOverCreditLimit) {
 ## 5. Types and constants
 
 - No `any`. `unknown` plus narrowing at boundaries; Zod validates data from outside (IPC, files).
-- Magic numbers and strings become named constants in the component folder (`<name>.constants.ts`) or `shared/constants`.
-- A type used in one component lives beside it (`<name>.types.ts`); used in two folders, it moves to `shared/`.
+- Magic numbers and strings become named constants in the component folder (`constants.ts`) or `shared/constants`.
+- A type used in one component lives in its folder (`types.ts`); used in two folders, it moves to `shared/`.
+- **One folder per component and per service.** Its code, tests, styles, constants and types all live in that folder (see `shopos-react-components` section 1 and `shopos-service-layer` section 2a). Never put a component's test in a far-away `tests/` tree or its styles in a global file.
 
 ## 6. Comments and dead code
 
