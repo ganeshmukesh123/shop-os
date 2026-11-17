@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Box, Button, Checkbox, Flex, Heading, Table, Text, TextField } from "@radix-ui/themes";
-import { LAYOUT } from "../shared/constants/layout";
-import { StatusBadge } from "../shared/components/StatusBadge/StatusBadge";
+import { LAYOUT } from "../../../shared/constants/layout";
+import { StatusBadge } from "../../../shared/components/StatusBadge/StatusBadge";
 import { formatQuantity, formatRupees, type Item } from "@shopos/core";
-import { AdjustStockDialog } from "../components/AdjustStockDialog";
-import { useToast } from "../shared/components/Toast";
-import { uiText } from "../shared/text/strings";
-import { call, messageOf } from "../shared/api/api";
-import { useItems } from "../state/items";
-import { ItemForm } from "./ItemForm";
+import { AdjustStockDialog } from "../AdjustStockDialog";
+import { useToast } from "../../../shared/components/Toast";
+import { uiText } from "../../../shared/text/strings";
+import { call, messageOf } from "../../../shared/api/api";
+import { useItems } from "../hooks/useItems";
+import { ItemForm } from "../ItemForm";
 
 export function ItemsScreen() {
   const toast = useToast();
