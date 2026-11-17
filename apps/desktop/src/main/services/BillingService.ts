@@ -2,8 +2,10 @@ import {
   CoreError,
   assertQuantity,
   billsSaveInput,
+  DEFAULT_TIME_ZONE,
+  businessDateOf,
   computeBill,
-  financialYear,
+  financialYearOfBusinessDate,
   formatBillNumber,
   type Bill,
   type BillLine,
@@ -16,11 +18,6 @@ import { BillRepository } from "../repositories/BillRepository";
 import { ItemRepository } from "../repositories/ItemRepository";
 import { SettingsRepository } from "../repositories/SettingsRepository";
 import { StockRepository } from "../repositories/StockRepository";
-
-const pad = (numberValue: number) => String(numberValue).padStart(2, "0");
-/** Local timestamp without zone, e.g. 2026-12-07T14:05:09 (data-model: bill_date is local). */
-export const localIso = (date: Date) =>
-  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 
 export class BillingService {
   constructor(
@@ -69,8 +66,15 @@ export class BillingService {
         return catalogItem;
       });
 
-      const billFinancialYear = financialYear(now);
-      const seq = bills.nextSeq(profile.seriesCode, billFinancialYear);
+      // The bill's date and financial year come from the shop's zone, never the device's (FR-019a).
+      const billedAt = now.getTime();
+      const businessDate = businessDateOf(billedAt, DEFAULT_TIME_ZONE);
+      const billFinancialYear = financialYearOfBusinessDate(businessDate);
+      const { seq, numberSeriesId } = bills.nextSeq(
+        profile.seriesCode,
+        billFinancialYear,
+        profile.numberTemplate,
+      );
       const number = formatBillNumber(
         profile.numberTemplate,
         profile.seriesCode,
@@ -82,8 +86,10 @@ export class BillingService {
         number,
         seriesCode: profile.seriesCode,
         financialYear: billFinancialYear,
+        numberSeriesId,
         seq,
-        billDate: localIso(now),
+        billedAt,
+        businessDate,
         customerName: input.customerName?.trim() || null,
         clientBillId: input.clientBillId,
         paymentMode: input.paymentMode,

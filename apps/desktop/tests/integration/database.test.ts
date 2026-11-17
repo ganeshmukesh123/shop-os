@@ -12,7 +12,7 @@ import {
   draftBill,
   itemFamily,
   itemVariant,
-  numberCounter,
+  numberSeries,
   shopProfile,
   stockMovement,
 } from "../../src/main/db/schema";
@@ -150,7 +150,7 @@ describe("schema contract", () => {
   });
 
   it("allows one counter per series and financial year, and only ok or failed backups", () => {
-    expect(indexNames(numberCounter)).toContain("number_counter_uq");
+    expect(indexNames(numberSeries)).toContain("number_series_uq");
     expect(constraintNames(backupLog)).toContain("backup_log_status");
   });
 
@@ -174,7 +174,7 @@ describe("schema contract", () => {
       billTender,
       stockMovement,
       shopProfile,
-      numberCounter,
+      numberSeries,
       draftBill,
       backupLog,
     ];

@@ -6,6 +6,12 @@ import { BillRepository } from "../../src/main/repositories/BillRepository";
 import { StockRepository } from "../../src/main/repositories/StockRepository";
 import { createTestDb, type TestDb } from "../helpers/testDb";
 
+// Explicit UTC instants: the bill's date and financial year come from the shop's zone (IST), so the
+// tests must not depend on the zone of the machine running them. 10:00 UTC is 15:30 IST.
+const WORKING_DAY = new Date(Date.UTC(2026, 11, 7, 10, 0));
+const LAST_DAY_OF_FINANCIAL_YEAR = new Date(Date.UTC(2027, 2, 31, 10, 0));
+const FIRST_DAY_OF_NEXT_YEAR = new Date(Date.UTC(2027, 3, 1, 10, 0));
+
 let testDb: TestDb;
 let inv: InventoryService;
 let billing: BillingService;
@@ -151,7 +157,7 @@ describe("billing", () => {
         .prepare("select count(*) as rowCount from stock_movement where movement_type='sale'")
         .get(),
     ).toEqual({ rowCount: 0 });
-    expect(testDb.sqlite.prepare("select count(*) as rowCount from number_counter").get()).toEqual({
+    expect(testDb.sqlite.prepare("select count(*) as rowCount from number_series").get()).toEqual({
       rowCount: 0,
     });
     expect(
@@ -164,7 +170,7 @@ describe("billing", () => {
     const firstItem = mk("A", "pcs", 100, 1_000_000);
     const nums = Array.from(
       { length: 50 },
-      () => billing.saveBill(bill([line(firstItem.id)]), new Date(2026, 11, 7)).bill.number,
+      () => billing.saveBill(bill([line(firstItem.id)]), WORKING_DAY).bill.number,
     );
     expect(new Set(nums).size).toBe(50);
     expect(nums[0]).toBe("C1/26-27/000001");
@@ -173,9 +179,65 @@ describe("billing", () => {
 
   it("restarts the sequence in a new financial year", () => {
     const firstItem = mk("A", "pcs", 100, 100000);
-    billing.saveBill(bill([line(firstItem.id)]), new Date(2027, 2, 31));
-    const next = billing.saveBill(bill([line(firstItem.id)]), new Date(2027, 3, 1));
+    billing.saveBill(bill([line(firstItem.id)]), LAST_DAY_OF_FINANCIAL_YEAR);
+    const next = billing.saveBill(bill([line(firstItem.id)]), FIRST_DAY_OF_NEXT_YEAR);
     expect(next.bill.number).toBe("C1/27-28/000001");
+  });
+
+  it("takes the date and financial year from the shop's zone: 23:50 IST is still 31 March", () => {
+    const firstItem = mk("A", "pcs", 100, 100000);
+    const beforeMidnight = new Date(Date.UTC(2027, 2, 31, 18, 20)); // 23:50 IST
+
+    const saveResult = billing.saveBill(bill([line(firstItem.id)]), beforeMidnight);
+
+    expect(saveResult.bill.number).toBe("C1/26-27/000001");
+    expect(saveResult.bill.billDate).toBe("2027-03-31T23:50:00");
+    expect(
+      testDb.sqlite.prepare("select billed_at, business_date, financial_year from bill").get(),
+    ).toEqual({
+      billed_at: beforeMidnight.getTime(),
+      business_date: "2027-03-31",
+      financial_year: "26-27",
+    });
+  });
+
+  it("starts the new financial year at 00:10 IST on 1 April", () => {
+    const firstItem = mk("A", "pcs", 100, 100000);
+    const afterMidnight = new Date(Date.UTC(2027, 2, 31, 18, 40)); // 00:10 IST, 1 April
+
+    const saveResult = billing.saveBill(bill([line(firstItem.id)]), afterMidnight);
+
+    expect(saveResult.bill.number).toBe("C1/27-28/000001");
+    expect(saveResult.bill.billDate).toBe("2027-04-01T00:10:00");
+    expect(testDb.sqlite.prepare("select business_date from bill").get()).toEqual({
+      business_date: "2027-04-01",
+    });
+  });
+
+  it("keeps each bill's series, with its template and last sequence", () => {
+    const firstItem = mk("A", "pcs", 100, 100000);
+
+    const first = billing.saveBill(bill([line(firstItem.id)]), WORKING_DAY);
+    const second = billing.saveBill(bill([line(firstItem.id)]), WORKING_DAY);
+
+    const seriesRows = testDb.sqlite
+      .prepare("select id, counter_code, financial_year, template, last_seq from number_series")
+      .all() as { id: string }[];
+    expect(seriesRows).toHaveLength(1);
+    expect(seriesRows[0]).toMatchObject({
+      counter_code: "C1",
+      financial_year: "26-27",
+      template: "{series}/{fy}/{seq}",
+      last_seq: 2,
+    });
+    const billSeriesIds = testDb.sqlite
+      .prepare("select number_series_id from bill order by seq")
+      .all();
+    expect(billSeriesIds).toEqual([
+      { number_series_id: seriesRows[0]!.id },
+      { number_series_id: seriesRows[0]!.id },
+    ]);
+    expect([first.bill.number, second.bill.number]).toEqual(["C1/26-27/000001", "C1/26-27/000002"]);
   });
 
   it("uses the configured series and template", () => {

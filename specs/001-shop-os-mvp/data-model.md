@@ -1,6 +1,6 @@
 # Data Model: Shop OS MVP
 
-> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0010; items moved in T074, stock movements and locations in T075, the bill header in T076, bill lines and tenders in T077) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
+> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0011; items moved in T074, stock movements and locations in T075, the bill header in T076, bill lines and tenders in T077, number series and bill times in the first half of T078) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
 
 ## Target shape (research D18, architecture section 8)
 
@@ -79,7 +79,9 @@ The app and the screens still call these fields `number`, `seriesCode`, `linesTo
 | client_bill_id | text, unique per shop (idempotency key from the screen that started the bill); null only for bills saved before it existed; never changes after save |
 | financial_year | text, not null (for example `26-27`; 1 April to 31 March, from the local bill date) |
 | seq | integer, not null, unique with counter and financial year |
-| bill_date | ISO-8601 local timestamp, not null (becomes `billed_at` and `business_date` in T078) |
+| number_series_id | foreign key to `number_series`, not null: the series (counter, financial year, template) the number came from |
+| billed_at | integer, not null: the UTC instant the bill was saved, epoch milliseconds (replaces `bill_date`) |
+| business_date | text `YYYY-MM-DD`, not null: that instant's calendar date in the shop's time zone, worked out once when saved and never recomputed |
 | customer_name | text up to 80 characters, optional |
 | subtotal_paise | integer, not null; was `lines_total_paise` |
 | bill_discount_paise | integer, not null, 0 up to subtotal_paise |
@@ -111,8 +113,8 @@ One row per bill in this release, written in the bill's save transaction: `bill_
 ### Shop Profile (`shop_profile`)
 One row: name (required, up to 80), address (up to 200), phone (up to 20), bill series code, bill number template, bill footer text (up to 200), receipt width (`58mm` or `80mm`), backup folder path.
 
-### Number Counter (`number_counter`)
-`series_code`, `financial_year`, `last_seq`; incremented in the same transaction as the bill insert.
+### Number Series (`number_series`) (migration 0011, task T078)
+`counter_code`, `financial_year`, `template` (the bill number template last used with the series) and `last_seq`; unique per shop, counter and financial year; `last_seq` is incremented in the same transaction as the bill insert. Replaces `number_counter`; each bill points at its series with `number_series_id`.
 
 ### Draft Bill (`draft_bill`)
 `payload` JSON of an unsaved bill, written on every edit and cleared on save or discard; supports crash recovery. Not a financial record.
@@ -143,8 +145,15 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 ## Time
 
 - Timestamps in the audit-style columns (`created_at`, `updated_at`, `occurred_at`, `cancelled_at`) are ISO-8601 UTC.
-- `bill_date` is the device's local time as ISO-8601 text; the financial year and "same day" rules use that local date.
-- Decided 2026-11-15 (research D22): the business time zone is the shop setting `time_zone` (default `Asia/Kolkata`), not the device's. Until task T079 lands, the code still uses the device's time zone.
+- A bill stores `billed_at` (the UTC instant, epoch milliseconds) and `business_date` (the date in the shop's zone). The financial year and "same day" rules use `business_date`, never the device's zone. The app shows the bill's time as the wall-clock time in the shop's zone (`localIsoOf` in `@shopos/core`), so the domain `Bill.billDate` is still a local `YYYY-MM-DDTHH:mm:ss` string.
+- Migration 0011 converted the old `bill_date` (the device's local time, no zone) by assuming Asia/Kolkata, UTC+05:30: `billed_at` is that time minus 19,800 seconds and `business_date` is its date part.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:95fed621413d6e3d4ba5100ff38990ee55d3c8f0fc166601de6afc3fadd1ec8c -->
+
+- Research D22 (decided 2026-11-15) specifies a shop `time_zone` setting with `Asia/Kolkata` as its default. Until the setting is implemented in T080, billing uses the fixed `Asia/Kolkata` default.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Rounding of the bill total (research D20, target)
 
@@ -177,5 +186,5 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - `item_variant(display_name)` collation NOCASE for partial-name search (no FTS needed: 5,000 items searched in about 4 ms); `item_variant(business_id, item_code)` unique.
 - `stock_movement(variant_id, occurred_at)` and `stock_movement(doc_type, doc_id)`.
-- `bill(shop_id, bill_no)` unique; `bill(counter_code, financial_year, seq)` unique; `bill(bill_date)`; `bill(customer_name)`.
+- `bill(shop_id, bill_no)` unique; `bill(counter_code, financial_year, seq)` unique; `bill(business_date)`; `bill(customer_name)`.
 - `bill_line(bill_id)`; `bill_tender(bill_id)`.

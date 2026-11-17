@@ -1,5 +1,10 @@
 import { CoreError } from "../src/errors";
-import { businessDateOf, financialYearOfBusinessDate } from "../src/businessDate";
+import {
+  DEFAULT_TIME_ZONE,
+  businessDateOf,
+  financialYearOfBusinessDate,
+  localIsoOf,
+} from "../src/businessDate";
 
 const SHOP_ZONE = "Asia/Kolkata";
 
@@ -100,5 +105,45 @@ describe("financialYearOfBusinessDate", () => {
     expect(errorCodeOf(() => financialYearOfBusinessDate("31/03/2027"))).toBe("INVALID_FIELD");
     expect(errorCodeOf(() => financialYearOfBusinessDate("2027-13-01"))).toBe("INVALID_FIELD");
     expect(errorCodeOf(() => financialYearOfBusinessDate(""))).toBe("INVALID_FIELD");
+  });
+});
+
+describe("the default shop time zone (research D22)", () => {
+  it("is Asia/Kolkata until the shop sets its own", () => {
+    expect(DEFAULT_TIME_ZONE).toBe("Asia/Kolkata");
+  });
+});
+
+describe("localIsoOf: the wall-clock time in the shop's zone", () => {
+  it("shows 23:50 on 31 March in India for 18:20 UTC", () => {
+    expect(localIsoOf(Date.UTC(2027, 2, 31, 18, 20), SHOP_ZONE)).toBe("2027-03-31T23:50:00");
+  });
+
+  it("shows 00:10 on 1 April in India for 18:40 UTC", () => {
+    expect(localIsoOf(Date.UTC(2027, 2, 31, 18, 40), SHOP_ZONE)).toBe("2027-04-01T00:10:00");
+  });
+
+  it("shows midnight as 00, never 24", () => {
+    expect(localIsoOf(Date.UTC(2027, 2, 31, 18, 30), SHOP_ZONE)).toBe("2027-04-01T00:00:00");
+  });
+
+  it("depends on the zone given, and drops fractions of a second", () => {
+    const instantMs = Date.UTC(2027, 2, 31, 18, 40, 7, 999);
+
+    expect(localIsoOf(instantMs, "UTC")).toBe("2027-03-31T18:40:07");
+    expect(localIsoOf(instantMs, "America/Los_Angeles")).toBe("2027-03-31T11:40:07");
+  });
+
+  it("starts with the business date for the same instant", () => {
+    const instantMs = Date.UTC(2026, 10, 15, 9, 30, 15);
+
+    expect(localIsoOf(instantMs, SHOP_ZONE).slice(0, 10)).toBe(
+      businessDateOf(instantMs, SHOP_ZONE),
+    );
+  });
+
+  it("refuses an unknown zone or a fractional instant", () => {
+    expect(errorCodeOf(() => localIsoOf(0, "Mars/Olympus"))).toBe("INVALID_FIELD");
+    expect(errorCodeOf(() => localIsoOf(0.5, SHOP_ZONE))).toBe("INVALID_FIELD");
   });
 });
