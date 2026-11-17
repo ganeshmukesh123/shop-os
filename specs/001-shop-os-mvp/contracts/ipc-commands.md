@@ -23,7 +23,7 @@ The UI (renderer) never touches the database. It calls these typed commands thro
 
 Not in this release: `import.preview` and `import.commit` moved to feature 012 (decision 2026-11-15).
 
-Status (2026-11-15): `bills.list` and `bills.cancel` are not yet in `packages/core/src/commands.ts` (tasks T067 to T069). `bills.save` returns `round_off_paise`, `doc_title` and `business_date` on the bill once T079 to T081 land; `settings.get` and `settings.update` gain `docTitle`, `roundBillTotal`, `timeZone` and `receiptWidth` (`58mm`, `80mm`, `a4`, `a5`).
+Status (2026-11-15): `bills.list` and `bills.cancel` are not yet in `packages/core/src/commands.ts` (tasks T067 to T069). `bills.save` returns `round_off_paise`, `doc_title` and `business_date` on the bill once T079 to T081 land; `settings.get` and `settings.update` gain `docTitle` (1 to 30 characters), `roundBillTotal` and `timeZone` (a named zone the platform knows, else `INVALID_FIELD`) and `receiptWidth` (`58mm`, `80mm`, `a4`, `a5`). Built in T080 (2026-11-16): the bill now carries `docTitle` and `roundOffPaise`, and `grandTotalPaise` is the rounded total.
 
 ## Guarantees
 

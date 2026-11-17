@@ -85,7 +85,9 @@ The app and the screens still call these fields `number`, `seriesCode`, `linesTo
 | customer_name | text up to 80 characters, optional |
 | subtotal_paise | integer, not null; was `lines_total_paise` |
 | bill_discount_paise | integer, not null, 0 up to subtotal_paise |
-| total_paise | integer, not null = subtotal_paise minus bill_discount_paise (plus `round_off_paise` from T080); was `grand_total_paise` |
+| round_off_paise | integer, not null, default 0, `abs(round_off_paise) <= 50`: the signed difference to the nearest rupee (migration 0013, T080) |
+| total_paise | integer, not null = subtotal_paise minus bill_discount_paise plus round_off_paise (check `bill_total_eq`); was `grand_total_paise` |
+| doc_title | text, not null, 1 to 30 characters, default `Estimate`: the heading printed on this bill, copied from the shop setting when saved so a reprint is identical (migration 0013, T080). Bills saved before it get `Estimate` |
 | status | `posted` or `cancelled`, not null; a bill moves from `posted` to `cancelled` once and never back; was `saved` |
 | cancel_reason | text, required when status is `cancelled` |
 | cancelled_at | integer epoch milliseconds (UTC), set on cancel |
@@ -111,7 +113,7 @@ Append-only (triggers).
 One row per bill in this release, written in the bill's save transaction: `bill_id` (foreign key), `mode` (`cash`, `upi`, `card` or `unpaid`), `amount_paise` (the bill's whole total, 0 or more) and `status` (`label`: the shop records how the customer paid; the app does not collect money). Append-only (triggers). The payment mode the app shows is read from this row; the bill itself no longer has a `payment_mode` column. Migration 0009 gave every existing bill one tender from its old payment mode.
 
 ### Shop Profile (`shop_profile`)
-One row: name (required, up to 80), address (up to 200), phone (up to 20), bill series code, bill number template, bill footer text (up to 200), receipt width (`58mm` or `80mm`), backup folder path.
+One row: name (required, up to 80), address (up to 200), phone (up to 20), bill series code, bill number template, bill footer text (up to 200), receipt width (`58mm`, `80mm`, `a4` or `a5`), backup folder path, and since migration 0013 (T080): `doc_title` (1 to 30 characters, default `Estimate`), `round_bill_total` (0 or 1, default 1) and `time_zone` (a named zone the platform knows, default `Asia/Kolkata`).
 
 ### Number Series (`number_series`) (migration 0011, task T078)
 `counter_code`, `financial_year`, `template` (the bill number template last used with the series) and `last_seq`; unique per shop, counter and financial year; `last_seq` is incremented in the same transaction as the bill insert. Replaces `number_counter`; each bill points at its series with `number_series_id`.
@@ -151,7 +153,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 <!-- coderabbit-ai-generated-section:v1:95fed621413d6e3d4ba5100ff38990ee55d3c8f0fc166601de6afc3fadd1ec8c -->
 
-- Research D22 (decided 2026-11-15) specifies a shop `time_zone` setting with `Asia/Kolkata` as its default. Until the setting is implemented in T080, billing uses the fixed `Asia/Kolkata` default.
+- Research D22 (decided 2026-11-15) specifies a shop `time_zone` setting with `Asia/Kolkata` as its default. Since migration 0013 (T080) the setting exists and billing reads it: the business date and financial year of a new bill, and the time shown for a stored bill, use the shop's zone. A bill's stored `billed_at` and `business_date` never change when the zone setting changes later; only the displayed clock time follows the current setting.
 
 <!-- /coderabbit-ai-generated:v1 -->
 

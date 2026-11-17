@@ -10,6 +10,9 @@ const PROFILE: ShopProfile = {
   footer: "",
   receiptWidth: "80mm",
   backupFolder: "",
+  docTitle: "Estimate",
+  roundBillTotal: true,
+  timeZone: "Asia/Kolkata",
 };
 
 const buildBill = (overrides: Partial<Bill> = {}): Bill => ({
@@ -19,9 +22,11 @@ const buildBill = (overrides: Partial<Bill> = {}): Bill => ({
   seq: 1,
   billDate: "2026-12-07T14:05:09",
   customerName: null,
+  docTitle: "Estimate",
   paymentMode: "cash",
   linesTotalPaise: 0,
   billDiscountPaise: 0,
+  roundOffPaise: 0,
   grandTotalPaise: 0,
   status: "posted",
   cancelReason: null,

@@ -3,20 +3,26 @@ import { CoreError, DEFAULT_TIME_ZONE, localIsoOf } from "@shopos/core";
 import type { Bill, BillLine, PaymentMode } from "@shopos/core";
 import type { Handle } from "../db/connection";
 import { isoOfMs, newId, nowMs } from "../db/ids";
-import { bill, billLine, billTender, draftBill, numberSeries } from "../db/schema";
+import { bill, billLine, billTender, draftBill, numberSeries, shopProfile } from "../db/schema";
 import type { Ctx } from "../db/seed";
 
 /** The payment mode is not on the bill row: it is the label on the bill's tender (D18). */
-const toBill = (billRow: typeof bill.$inferSelect, paymentMode: PaymentMode): Bill => ({
+const toBill = (
+  billRow: typeof bill.$inferSelect,
+  paymentMode: PaymentMode,
+  timeZone: string,
+): Bill => ({
   id: billRow.id,
   number: billRow.billNo,
   seriesCode: billRow.counterCode,
   seq: billRow.seq,
-  billDate: localIsoOf(billRow.billedAt, DEFAULT_TIME_ZONE),
+  billDate: localIsoOf(billRow.billedAt, timeZone),
   customerName: billRow.customerName,
+  docTitle: billRow.docTitle,
   paymentMode,
   linesTotalPaise: billRow.subtotalPaise,
   billDiscountPaise: billRow.billDiscountPaise,
+  roundOffPaise: billRow.roundOffPaise,
   grandTotalPaise: billRow.totalPaise,
   status: billRow.status as Bill["status"],
   cancelReason: billRow.cancelReason,
@@ -48,9 +54,14 @@ export interface NewBill {
   businessDate: string;
   customerName: string | null;
   clientBillId: string;
+  /** The shop's document title when the bill was saved; stored so a reprint is identical. */
+  docTitle: string;
   paymentMode: PaymentMode;
   linesTotalPaise: number;
   billDiscountPaise: number;
+  /** Signed difference to the nearest rupee, 0 when rounding is off. */
+  roundOffPaise: number;
+  /** The final total: lines total - discount + round-off. */
   grandTotalPaise: number;
 }
 
@@ -126,7 +137,9 @@ export class BillRepository {
         clientBillId: newBill.clientBillId,
         subtotalPaise: newBill.linesTotalPaise,
         billDiscountPaise: newBill.billDiscountPaise,
+        roundOffPaise: newBill.roundOffPaise,
         totalPaise: newBill.grandTotalPaise,
+        docTitle: newBill.docTitle,
         status: "posted",
       })
       .returning()
@@ -141,7 +154,17 @@ export class BillRepository {
         status: "label",
       })
       .run();
-    return toBill(billRow, newBill.paymentMode);
+    return toBill(billRow, newBill.paymentMode, this.shopTimeZone());
+  }
+
+  /** The shop's named time zone, which a stored bill time is shown in (FR-019a). */
+  private shopTimeZone(): string {
+    const profileRow = this.databaseHandle
+      .select({ timeZone: shopProfile.timeZone })
+      .from(shopProfile)
+      .where(eq(shopProfile.shopId, this.ctx.shopId))
+      .get();
+    return profileRow?.timeZone ?? DEFAULT_TIME_ZONE;
   }
 
   insertLines(billId: string, lines: NewLine[]): BillLine[] {
@@ -196,7 +219,10 @@ export class BillRepository {
       .where(eq(billLine.billId, id))
       .orderBy(asc(billLine.lineNo))
       .all();
-    return { bill: toBill(billRow, this.tenderMode(id)), lines: lines.map(toLine) };
+    return {
+      bill: toBill(billRow, this.tenderMode(id), this.shopTimeZone()),
+      lines: lines.map(toLine),
+    };
   }
 
   // ----- draft (crash recovery; not a financial record) -----

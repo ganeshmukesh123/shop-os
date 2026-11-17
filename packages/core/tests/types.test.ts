@@ -46,6 +46,9 @@ const buildSettings = (overrides: object = {}) => ({
   footer: "Thank you",
   receiptWidth: "80mm",
   backupFolder: "/Volumes/Backup",
+  docTitle: "Estimate",
+  roundBillTotal: true,
+  timeZone: "Asia/Kolkata",
   ...overrides,
 });
 const isAccepted = (
@@ -269,8 +272,40 @@ describe("settings.update input", () => {
     );
   });
 
-  it("accepts receipt widths 58mm and 80mm only", () => {
+  it("accepts receipt widths 58mm, 80mm, a4 and a5 only", () => {
     expect(isAccepted(settingsUpdateInput, buildSettings({ receiptWidth: "58mm" }))).toBe(true);
+    expect(isAccepted(settingsUpdateInput, buildSettings({ receiptWidth: "a4" }))).toBe(true);
+    expect(isAccepted(settingsUpdateInput, buildSettings({ receiptWidth: "a5" }))).toBe(true);
     expect(isAccepted(settingsUpdateInput, buildSettings({ receiptWidth: "100mm" }))).toBe(false);
+  });
+
+  it("returns the document title, the rounding switch and the time zone (FR-010a, FR-015a, FR-019a)", () => {
+    const parsed = settingsUpdateInput.parse(buildSettings({ docTitle: "  Cash Memo  " }));
+
+    expect(parsed.docTitle).toBe("Cash Memo");
+    expect(parsed.roundBillTotal).toBe(true);
+    expect(parsed.timeZone).toBe("Asia/Kolkata");
+  });
+
+  it("requires a document title of 1 to 30 characters", () => {
+    expect(isAccepted(settingsUpdateInput, buildSettings({ docTitle: "  " }))).toBe(false);
+    expect(isAccepted(settingsUpdateInput, buildSettings({ docTitle: "t".repeat(31) }))).toBe(
+      false,
+    );
+    expect(isAccepted(settingsUpdateInput, buildSettings({ docTitle: "t".repeat(30) }))).toBe(true);
+  });
+
+  it("refuses a time zone the platform does not know", () => {
+    expect(isAccepted(settingsUpdateInput, buildSettings({ timeZone: "Mars/Olympus" }))).toBe(
+      false,
+    );
+  });
+
+  it("refuses a profile that leaves out the document title, rounding or time zone", () => {
+    expect(isAccepted(settingsUpdateInput, buildSettings({ docTitle: undefined }))).toBe(false);
+    expect(isAccepted(settingsUpdateInput, buildSettings({ roundBillTotal: undefined }))).toBe(
+      false,
+    );
+    expect(isAccepted(settingsUpdateInput, buildSettings({ timeZone: undefined }))).toBe(false);
   });
 });

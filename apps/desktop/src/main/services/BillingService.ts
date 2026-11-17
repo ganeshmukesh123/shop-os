@@ -2,11 +2,11 @@ import {
   CoreError,
   assertQuantity,
   billsSaveInput,
-  DEFAULT_TIME_ZONE,
   businessDateOf,
   computeBill,
   financialYearOfBusinessDate,
   formatBillNumber,
+  roundBillTotal,
   type Bill,
   type BillLine,
   type BillsSaveInput,
@@ -68,7 +68,7 @@ export class BillingService {
 
       // The bill's date and financial year come from the shop's zone, never the device's (FR-019a).
       const billedAt = now.getTime();
-      const businessDate = businessDateOf(billedAt, DEFAULT_TIME_ZONE);
+      const businessDate = businessDateOf(billedAt, profile.timeZone);
       const billFinancialYear = financialYearOfBusinessDate(businessDate);
       const { seq, numberSeriesId } = bills.nextSeq(
         profile.seriesCode,
@@ -82,6 +82,9 @@ export class BillingService {
         seq,
       );
 
+      // Lines keep exact paise; only the grand total is rounded, and the difference is kept apart (FR-010a).
+      const rounded = roundBillTotal(totals.grandTotalPaise, profile.roundBillTotal);
+
       const saved = bills.insertBill({
         number,
         seriesCode: profile.seriesCode,
@@ -92,10 +95,12 @@ export class BillingService {
         businessDate,
         customerName: input.customerName?.trim() || null,
         clientBillId: input.clientBillId,
+        docTitle: profile.docTitle,
         paymentMode: input.paymentMode,
         linesTotalPaise: totals.linesTotalPaise,
         billDiscountPaise: totals.billDiscountPaise,
-        grandTotalPaise: totals.grandTotalPaise,
+        roundOffPaise: rounded.roundOffPaise,
+        grandTotalPaise: rounded.roundedTotalPaise,
       });
       const lines = bills.insertLines(
         saved.id,

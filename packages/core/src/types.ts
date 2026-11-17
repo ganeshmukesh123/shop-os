@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidTimeZone } from "./businessDate";
 import type { ErrorCode } from "./errors";
 
 /** Wire format: money = integer paise, quantity = integer thousandths. */
@@ -15,7 +16,9 @@ export type MovementReason = (typeof MOVEMENT_REASONS)[number];
 
 /** A bill moves from posted to cancelled once, and never back (data-model.md). */
 export type BillStatus = "posted" | "cancelled";
-export type ReceiptWidth = "58mm" | "80mm";
+/** The shop's default paper: a thermal roll (58 or 80 mm) or a sheet (A4, A5). */
+export const RECEIPT_WIDTHS = ["58mm", "80mm", "a4", "a5"] as const;
+export type ReceiptWidth = (typeof RECEIPT_WIDTHS)[number];
 export type PrintTarget = "receipt" | "a4" | "a5";
 
 // ---------- entities ----------
@@ -47,9 +50,13 @@ export interface Bill {
   seq: number;
   billDate: string;
   customerName: string | null;
+  /** The document title printed on this bill, stored when it was saved (FR-015a). */
+  docTitle: string;
   paymentMode: PaymentMode;
   linesTotalPaise: number;
   billDiscountPaise: number;
+  /** Signed difference to the nearest rupee: +40 for 849.60, -49 for 849.49, 0 when off (FR-010a). */
+  roundOffPaise: number;
   grandTotalPaise: number;
   status: BillStatus;
   cancelReason: string | null;
@@ -78,6 +85,12 @@ export interface ShopProfile {
   footer: string;
   receiptWidth: ReceiptWidth;
   backupFolder: string;
+  /** Heading printed on every bill; "Estimate" until feature 008 (research D23). */
+  docTitle: string;
+  /** Round the grand total to the nearest rupee (FR-010a). */
+  roundBillTotal: boolean;
+  /** Named zone for the business date and financial year (FR-019a), for example Asia/Kolkata. */
+  timeZone: string;
 }
 
 // ---------- command inputs ----------
@@ -171,8 +184,11 @@ export const settingsUpdateInput = z.object({
   seriesCode: z.string().trim().min(1).max(8),
   numberTemplate: z.string().trim().min(1).max(40),
   footer: z.string().trim().max(200),
-  receiptWidth: z.enum(["58mm", "80mm"]),
+  receiptWidth: z.enum(RECEIPT_WIDTHS),
   backupFolder: z.string().max(1000),
+  docTitle: z.string().trim().min(1, "Document title is required").max(30),
+  roundBillTotal: z.boolean(),
+  timeZone: z.string().refine(isValidTimeZone, "Unknown time zone"),
 });
 export type SettingsUpdateInput = z.infer<typeof settingsUpdateInput>;
 

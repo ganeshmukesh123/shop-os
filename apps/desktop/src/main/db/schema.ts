@@ -88,7 +88,11 @@ export const bill = sqliteTable(
     clientBillId: text("client_bill_id"),
     subtotalPaise: integer("subtotal_paise").notNull(),
     billDiscountPaise: integer("bill_discount_paise").notNull(),
+    // round_off_paise: signed difference to the nearest rupee, 0 when rounding is off (FR-010a)
+    roundOffPaise: integer("round_off_paise").notNull().default(0),
     totalPaise: integer("total_paise").notNull(),
+    // doc_title: the heading printed on this bill, stored so a reprint is identical (FR-015a)
+    docTitle: text("doc_title").notNull().default("Estimate"),
     // status: posted or cancelled
     status: text("status").notNull(),
     cancelReason: text("cancel_reason"),
@@ -118,10 +122,12 @@ export const bill = sqliteTable(
       "bill_discount_range",
       sql`${tableColumns.billDiscountPaise} >= 0 and ${tableColumns.billDiscountPaise} <= ${tableColumns.subtotalPaise}`,
     ),
+    check("bill_round_off_range", sql`abs(${tableColumns.roundOffPaise}) <= 50`),
     check(
       "bill_total_eq",
-      sql`${tableColumns.totalPaise} = ${tableColumns.subtotalPaise} - ${tableColumns.billDiscountPaise}`,
+      sql`${tableColumns.totalPaise} = ${tableColumns.subtotalPaise} - ${tableColumns.billDiscountPaise} + ${tableColumns.roundOffPaise}`,
     ),
+    check("bill_doc_title_len", sql`length(trim(${tableColumns.docTitle})) between 1 and 30`),
   ],
 );
 
@@ -250,13 +256,25 @@ export const shopProfile = sqliteTable(
     receiptWidth: text("receipt_width").notNull().default("80mm"),
     backupFolder: text("backup_folder").notNull().default(""),
     deviceId: text("device_id").notNull(),
+    // The heading printed on every bill (FR-015a, research D23)
+    docTitle: text("doc_title").notNull().default("Estimate"),
+    // 1 = round the grand total to the nearest rupee (FR-010a, research D20)
+    roundBillTotal: integer("round_bill_total").notNull().default(1),
+    // The shop's named time zone for business dates (FR-019a, research D22)
+    timeZone: text("time_zone").notNull().default("Asia/Kolkata"),
   },
   (tableColumns) => [
     check("shop_profile_name_len", sql`length(${tableColumns.name}) between 1 and 80`),
     check("shop_profile_address_len", sql`length(${tableColumns.address}) <= 200`),
     check("shop_profile_phone_len", sql`length(${tableColumns.phone}) <= 20`),
     check("shop_profile_footer_len", sql`length(${tableColumns.footer}) <= 200`),
-    check("shop_profile_width", sql`${tableColumns.receiptWidth} in ('58mm','80mm')`),
+    check("shop_profile_width", sql`${tableColumns.receiptWidth} in ('58mm','80mm','a4','a5')`),
+    check(
+      "shop_profile_doc_title_len",
+      sql`length(trim(${tableColumns.docTitle})) between 1 and 30`,
+    ),
+    check("shop_profile_round_bool", sql`${tableColumns.roundBillTotal} in (0, 1)`),
+    check("shop_profile_time_zone_len", sql`length(${tableColumns.timeZone}) between 1 and 64`),
   ],
 );
 
