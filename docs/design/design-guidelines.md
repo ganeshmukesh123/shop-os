@@ -191,7 +191,7 @@ Rules for the renderer (they extend the naming and structure rules in the consti
 
 1. **Tokens and props, not values.** Use Radix props (`size`, `color`, `variant`, `radius`) and tokens (`var(--gray-12)`). No hex or `rgb()` colours, no pixel font sizes.
 2. **No inline `style={{ }}`.** Allowed only for a value computed at run time that no token expresses (for example a column width from data). Put it in a small, named style object in the component's folder with a comment saying why.
-3. **One folder per component**, holding the component, its constants (`<name>.constants.ts`), its types and interfaces (`<name>.types.ts`) and its tests. Anything used by more than one folder lives in `shared/`.
+3. **One folder per component**, holding the component, its styles, its constants (`constants.ts`), its types and interfaces (`types.ts`) and its tests. Anything used by more than one folder lives in `shared/`.
 4. **Components are pure** and small: props and state in, markup out. Data fetching, formatting and business rules live elsewhere.
 5. **Constants** are `UPPER_SNAKE_CASE`, interfaces `I`-prefixed, enums `PascalCase` (constitution VIII).
 6. **Shared building blocks** (message, status badge, page header, empty state, money and quantity text, theme provider) live in `apps/desktop/src/renderer/shared/` and are used by every screen.
@@ -234,5 +234,5 @@ Before a screen is marked done:
 | D3 | Warning colour `orange` or `amber` in dark mode | Open |
 | D4 | Contrast ratios measured and recorded | Not done |
 | D5 | Brand colour from the shop's logo, if any | None given; keeping indigo and slate |
-| D6 | Theme preference stored in local storage or in the database settings | Open (a per-device local setting is assumed) |
-| D7 | Existing screens brought in line (5 screens, 3 components, 32 inline styles at 2026-11-14) | Not started |
+| D6 | Theme preference stored in local storage or in the database settings | Built as a per-device local-storage setting (T085, 2026-11-15); still open whether it should move to the database |
+| D7 | Existing screens brought in line (5 screens, 3 components, 32 inline styles at 2026-11-14) | Code done 2026-11-15 (T085 to T087): no inline styles, shared StatusMessage and StatusBadge, theme picker. Light and dark not yet checked by eye in the running app |

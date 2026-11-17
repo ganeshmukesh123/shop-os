@@ -25,6 +25,7 @@ import {
 } from "@shopos/core";
 import { BillLineRow } from "../components/BillLineRow";
 import { useToast } from "../components/Toast";
+import { LAYOUT } from "../layout";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import { uiText } from "../strings";
 import { call, messageOf } from "../state/api";
@@ -205,10 +206,10 @@ export function NewBillScreen() {
   }
 
   return (
-    <Flex direction="column" gap="3" style={{ maxWidth: 1000 }}>
+    <Flex direction="column" gap="3" maxWidth={LAYOUT.pageWide}>
       <Heading size="6">{uiText.bill.title}</Heading>
 
-      <div style={{ position: "relative" }}>
+      <Box position="relative">
         <TextField.Root
           ref={searchRef}
           size="3"
@@ -233,25 +234,9 @@ export function NewBillScreen() {
           }}
         />
         {query.trim().length >= 2 && (
-          <ul
-            role="listbox"
-            aria-label="Matching items"
-            style={{
-              position: "absolute",
-              zIndex: 10,
-              left: 0,
-              right: 0,
-              margin: 0,
-              padding: 4,
-              listStyle: "none",
-              background: "var(--color-panel-solid)",
-              border: "1px solid var(--gray-6)",
-              borderRadius: 8,
-              boxShadow: "var(--shadow-4)",
-            }}
-          >
+          <ul role="listbox" aria-label="Matching items" className="shopos-search-results">
             {matches.length === 0 && (
-              <li style={{ padding: 8 }}>
+              <li className="shopos-search-empty">
                 <Text color="gray">{uiText.bill.noMatch}</Text>
               </li>
             )}
@@ -265,14 +250,7 @@ export function NewBillScreen() {
                   addItem(matchingItem);
                 }}
                 onMouseEnter={() => setHi(listIndex)}
-                style={{
-                  padding: "8px 10px",
-                  cursor: "pointer",
-                  borderRadius: 6,
-                  background: listIndex === hi ? "var(--accent-4)" : undefined,
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
+                className="shopos-search-result"
               >
                 <span>
                   {matchingItem.name}{" "}
@@ -289,7 +267,7 @@ export function NewBillScreen() {
             ))}
           </ul>
         )}
-      </div>
+      </Box>
 
       {form.draft.lines.length === 0 ? (
         <Text color="gray">{uiText.bill.empty}</Text>
@@ -329,7 +307,7 @@ export function NewBillScreen() {
       )}
 
       <Flex gap="4" wrap="wrap" align="start">
-        <Flex direction="column" gap="3" style={{ flex: 1, minWidth: 320 }}>
+        <Flex direction="column" gap="3" flexGrow="1" minWidth={LAYOUT.formColumnMinWidth}>
           <label>
             <Text as="div" size="2" weight="bold" mb="1">
               {uiText.bill.customerName}
@@ -359,7 +337,7 @@ export function NewBillScreen() {
                 }))
               }
             >
-              <Select.Trigger aria-labelledby="pay-label" style={{ minWidth: 160 }} />
+              <Select.Trigger aria-labelledby="pay-label" className="shopos-payment-select" />
               <Select.Content>
                 {PAYMENT_MODES.map((paymentMode) => (
                   <Select.Item key={paymentMode} value={paymentMode}>
@@ -370,7 +348,7 @@ export function NewBillScreen() {
             </Select.Root>
           </div>
         </Flex>
-        <Flex direction="column" gap="2" align="end" style={{ minWidth: 320 }}>
+        <Flex direction="column" gap="2" align="end" minWidth={LAYOUT.formColumnMinWidth}>
           <Text>
             {uiText.bill.total}: <b>{formatRupees(ev.linesTotalPaise)}</b>
           </Text>
@@ -378,14 +356,15 @@ export function NewBillScreen() {
             <Text size="2" weight="bold">
               {uiText.bill.billDiscount}
             </Text>
-            <TextField.Root
-              size="3"
-              style={{ width: 100 }}
-              inputMode="decimal"
-              aria-label={uiText.bill.billDiscount}
-              value={form.draft.billDisc}
-              onChange={(changeEvent) => setDraft({ billDisc: changeEvent.target.value })}
-            />
+            <Box width={LAYOUT.discountFieldWidth}>
+              <TextField.Root
+                size="3"
+                inputMode="decimal"
+                aria-label={uiText.bill.billDiscount}
+                value={form.draft.billDisc}
+                onChange={(changeEvent) => setDraft({ billDisc: changeEvent.target.value })}
+              />
+            </Box>
             <SegmentedControl.Root
               size="2"
               value={form.draft.billDiscMode}

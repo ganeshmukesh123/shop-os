@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button, Flex, Heading, Select, Table, Text } from "@radix-ui/themes";
+import { LAYOUT } from "../layout";
 import { StatusBadge } from "../shared/components/StatusBadge/StatusBadge";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import {
@@ -61,7 +62,7 @@ export function BillView({
   }
 
   return (
-    <Flex direction="column" gap="3" style={{ maxWidth: 900 }}>
+    <Flex direction="column" gap="3" maxWidth={LAYOUT.pageMedium}>
       <Flex align="center" gap="3">
         <Heading size="6">
           {uiText.bill.saved}: {bill.number}

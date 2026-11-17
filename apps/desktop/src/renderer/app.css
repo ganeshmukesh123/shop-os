@@ -1,0 +1,81 @@
+/*
+ * The few styles Radix Themes has no prop for. Rules for this file (design guidelines section 8):
+ * Radix tokens only, no hex or rgb colours, no pixel font sizes, and every colour comes from a
+ * token so it follows light and dark mode.
+ */
+
+/* App shell (App.tsx) */
+.shopos-nav {
+  border-right: 1px solid var(--gray-6);
+  background: var(--gray-2);
+}
+
+.shopos-nav-button {
+  justify-content: flex-start;
+}
+
+/* Select that fills its column (ItemForm.tsx): Radix Select.Trigger has no width prop. */
+.shopos-full-width {
+  width: 100%;
+}
+
+/* Items list (ItemsScreen.tsx): an inactive item is shown dimmed, and also says "Inactive". */
+.shopos-row-inactive {
+  opacity: 0.65;
+}
+
+/* Item search on the bill screen (NewBillScreen.tsx): a dropdown under the search field. */
+.shopos-search-results {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  background: var(--color-panel-solid);
+  border: 1px solid var(--gray-6);
+  border-radius: var(--radius-3);
+  box-shadow: var(--shadow-4);
+}
+
+.shopos-search-empty {
+  padding: var(--space-2);
+}
+
+.shopos-search-result {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-2);
+  cursor: pointer;
+}
+
+/* The highlighted match also has aria-selected, so the keyboard choice is not colour alone. */
+.shopos-search-result[aria-selected="true"] {
+  background: var(--accent-4);
+}
+
+/* Payment select keeps a readable width (Radix Select.Trigger has no width prop). */
+.shopos-payment-select {
+  min-width: 10rem;
+}
+
+/* Toasts (components/Toast.tsx): bottom right, above everything, never wider than the window. */
+.shopos-toast {
+  list-style: none;
+}
+
+.shopos-toast-viewport {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 24rem;
+  max-width: 90vw;
+  margin: 0;
+  padding: 0;
+}

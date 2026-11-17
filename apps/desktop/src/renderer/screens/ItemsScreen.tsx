@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Button, Checkbox, Flex, Heading, Table, Text, TextField } from "@radix-ui/themes";
+import { Box, Button, Checkbox, Flex, Heading, Table, Text, TextField } from "@radix-ui/themes";
+import { LAYOUT } from "../layout";
 import { StatusBadge } from "../shared/components/StatusBadge/StatusBadge";
 import { formatQuantity, formatRupees, type Item } from "@shopos/core";
 import { AdjustStockDialog } from "../components/AdjustStockDialog";
@@ -36,14 +37,15 @@ export function ItemsScreen() {
         </Button>
       </Flex>
       <Flex gap="4" align="center" wrap="wrap">
-        <TextField.Root
-          size="3"
-          style={{ width: 360 }}
-          placeholder={uiText.items.search}
-          aria-label={uiText.items.search}
-          value={query}
-          onChange={(changeEvent) => setQuery(changeEvent.target.value)}
-        />
+        <Box width={LAYOUT.searchFieldWidth}>
+          <TextField.Root
+            size="3"
+            placeholder={uiText.items.search}
+            aria-label={uiText.items.search}
+            value={query}
+            onChange={(changeEvent) => setQuery(changeEvent.target.value)}
+          />
+        </Box>
         <Text as="label" size="2">
           <Flex gap="2" align="center">
             <Checkbox
@@ -79,7 +81,7 @@ export function ItemsScreen() {
         </Table.Header>
         <Table.Body>
           {items.map((it) => (
-            <Table.Row key={it.id} style={it.active ? undefined : { opacity: 0.65 }}>
+            <Table.Row key={it.id} className={it.active ? undefined : "shopos-row-inactive"}>
               <Table.RowHeaderCell>{it.name}</Table.RowHeaderCell>
               <Table.Cell>{it.unit}</Table.Cell>
               <Table.Cell justify="end">{formatRupees(it.pricePaise)}</Table.Cell>

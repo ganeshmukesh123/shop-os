@@ -63,7 +63,7 @@ describe("StockRepository.sumForItem", () => {
     const pipe = createItem("Pipe");
     const wire = createItem("Wire");
     stock.append({ itemId: pipe.id, quantityMilli: 10000, reason: "opening" });
-    stock.append({ itemId: pipe.id, quantityMilli: -2500, reason: "sale" });
+    stock.append({ itemId: pipe.id, quantityMilli: -2500, reason: "sale", billId: "bill-1" });
     stock.append({ itemId: wire.id, quantityMilli: 999, reason: "opening" });
     expect(stock.sumForItem(pipe.id)).toBe(7500);
   });

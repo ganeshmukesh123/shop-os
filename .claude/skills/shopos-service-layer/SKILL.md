@@ -34,6 +34,21 @@ Screens (React)  ->  typed API  ->  IPC handlers  ->  Services (use cases)  ->  
 - Time and ids are injected (`now: Date = new Date()` as a parameter with default at the edge only), so tests are deterministic.
 - Throw `CoreError` with a code; never return half results.
 
+## 2a. One folder per service
+
+Each service (and each helper module such as `billHtml` or `electronRenderer`) has its own folder, and its test, constants and types live in it. Cross-service integration tests (for example IPC) stay in `apps/desktop/tests/integration`.
+
+```
+main/services/BillingService/
+  BillingService.ts
+  constants.ts
+  types.ts
+  BillingService.test.ts      integration test: success, each failure code, atomicity
+  index.ts                    re-exports the service
+```
+
+Example: `main/services/BillingService.ts` becomes `main/services/BillingService/BillingService.ts`; its tests move from `tests/integration/billing.test.ts` beside it. The test runner's include pattern must match the co-located tests (task T093). Migration is task T093, done earliest.
+
 ## 3. Ports and adapters
 
 - Anything outside our control (printer, file dialogs, clock, WhatsApp, UPI) is a small interface (`HtmlRenderer`, `Shell`) defined where it is used, with a real adapter and a fake for tests.
