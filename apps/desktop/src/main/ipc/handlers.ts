@@ -2,8 +2,10 @@ import { ZodError, type ZodTypeAny } from "zod";
 import {
   CoreError,
   backupRestoreInput,
+  billsCancelInput,
   billsExportPdfInput,
   billsGetInput,
+  billsListInput,
   billsPrintInput,
   billsSaveInput,
   draftSaveInput,
@@ -111,8 +113,14 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
     "bills.save": cmd<"bills.save">(billsSaveInput, (commandInput) =>
       services.billing.saveBill(commandInput),
     ),
+    "bills.list": cmd<"bills.list">(billsListInput, (commandInput) =>
+      services.billing.listBills(commandInput),
+    ),
     "bills.get": cmd<"bills.get">(billsGetInput, (commandInput: { id: string }) =>
       services.billing.getBill(commandInput.id),
+    ),
+    "bills.cancel": cmd<"bills.cancel">(billsCancelInput, (commandInput) =>
+      services.billing.cancelBill(commandInput),
     ),
     "bills.print": cmd<"bills.print">(
       billsPrintInput,

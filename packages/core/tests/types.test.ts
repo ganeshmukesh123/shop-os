@@ -220,6 +220,34 @@ describe("other bill commands", () => {
     expect(isAccepted(billsListInput, { limit: 10, offset: 0, status: "deleted" })).toBe(false);
   });
 
+  it("takes the bill list's day range as YYYY-MM-DD text, either end optional", () => {
+    const page = { limit: 10, offset: 0 };
+    expect(isAccepted(billsListInput, { ...page, from: "2026-12-07", to: "2026-12-09" })).toBe(
+      true,
+    );
+    expect(isAccepted(billsListInput, { ...page, from: "2026-12-07" })).toBe(true);
+    expect(isAccepted(billsListInput, { ...page, from: "07/12/2026" })).toBe(false);
+    expect(isAccepted(billsListInput, { ...page, to: "2026-13-01" })).toBe(false);
+    expect(isAccepted(billsListInput, { ...page, from: "2026-12-7" })).toBe(false);
+    expect(isAccepted(billsListInput, { ...page, to: "" })).toBe(false);
+  });
+
+  it("limits the bill list's search text: number 40 characters, customer 80", () => {
+    const page = { limit: 10, offset: 0 };
+    expect(isAccepted(billsListInput, { ...page, number: "n".repeat(40) })).toBe(true);
+    expect(isAccepted(billsListInput, { ...page, number: "n".repeat(41) })).toBe(false);
+    expect(isAccepted(billsListInput, { ...page, customer: "c".repeat(80) })).toBe(true);
+    expect(isAccepted(billsListInput, { ...page, customer: "c".repeat(81) })).toBe(false);
+  });
+
+  it("limits a cancel reason to 200 characters and leaves 'empty' to the domain rule", () => {
+    expect(isAccepted(billsCancelInput, { id: "b1", reason: "r".repeat(200) })).toBe(true);
+    expect(isAccepted(billsCancelInput, { id: "b1", reason: "r".repeat(201) })).toBe(false);
+    expect(isAccepted(billsCancelInput, { id: "b1", reason: "" })).toBe(true); // REASON_REQUIRED
+    expect(isAccepted(billsCancelInput, { id: "", reason: "wrong item" })).toBe(false);
+    expect(isAccepted(billsCancelInput, { id: "b1" })).toBe(false);
+  });
+
   it("needs a bill id to get, cancel, print or export", () => {
     expect(isAccepted(billsGetInput, { id: "b1" })).toBe(true);
     expect(isAccepted(billsGetInput, { id: "" })).toBe(false);

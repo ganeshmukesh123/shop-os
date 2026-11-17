@@ -113,6 +113,88 @@ describe("bill commands", () => {
     });
   });
 
+  it("lists the saved bills with the total (their order is tested on the repository)", async () => {
+    const fixture = buildHandlersFixture();
+    const firstBillId = await saveOneBill(fixture);
+    const secondBillId = await saveOneBill(fixture, "Cable");
+
+    const result = await fixture.handlers["bills.list"]({ limit: 10, offset: 0 });
+
+    expect(result).toMatchObject({ ok: true, data: { total: 2 } });
+    const listedIds = result.ok ? result.data.bills.map((listedBill) => listedBill.id) : [];
+    expect(listedIds.sort()).toEqual([firstBillId, secondBillId].sort());
+  });
+
+  it("finds a bill by part of its number and by status", async () => {
+    const fixture = buildHandlersFixture();
+    const billId = await saveOneBill(fixture);
+
+    const byNumber = await fixture.handlers["bills.list"]({
+      number: "000001",
+      limit: 10,
+      offset: 0,
+    });
+    const cancelledOnly = await fixture.handlers["bills.list"]({
+      status: "cancelled",
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(byNumber).toMatchObject({ ok: true, data: { total: 1, bills: [{ id: billId }] } });
+    expect(cancelledOnly).toEqual({ ok: true, data: { bills: [], total: 0 } });
+  });
+
+  it("refuses a bill list request with a date that is not YYYY-MM-DD", async () => {
+    const { handlers } = buildHandlersFixture();
+
+    const result = await handlers["bills.list"]({ from: "yesterday", limit: 10, offset: 0 });
+
+    expect(result).toMatchObject({ ok: false, code: "INVALID_FIELD" });
+  });
+
+  it("cancels a bill: it comes back Cancelled, stays in the list and the stock returns", async () => {
+    const fixture = buildHandlersFixture();
+    const billId = await saveOneBill(fixture);
+
+    const cancelled = await fixture.handlers["bills.cancel"]({ id: billId, reason: "Wrong item" });
+
+    expect(cancelled).toMatchObject({
+      ok: true,
+      data: { bill: { id: billId, status: "cancelled", cancelReason: "Wrong item" } },
+    });
+    const cancelledList = await fixture.handlers["bills.list"]({
+      status: "cancelled",
+      limit: 10,
+      offset: 0,
+    });
+    expect(cancelledList).toMatchObject({ ok: true, data: { total: 1, bills: [{ id: billId }] } });
+    const items = await fixture.handlers["items.list"]({ limit: 10, offset: 0 });
+    expect(items).toMatchObject({ ok: true, data: { items: [{ stockMilli: 10000 }] } });
+  });
+
+  it("answers REASON_REQUIRED, ALREADY_CANCELLED and NOT_FOUND with their codes", async () => {
+    const fixture = buildHandlersFixture();
+    const billId = await saveOneBill(fixture);
+
+    const withoutReason = await fixture.handlers["bills.cancel"]({ id: billId, reason: "  " });
+    await fixture.handlers["bills.cancel"]({ id: billId, reason: "Wrong item" });
+    const secondCancel = await fixture.handlers["bills.cancel"]({ id: billId, reason: "Again" });
+    const unknownBill = await fixture.handlers["bills.cancel"]({ id: "missing", reason: "Any" });
+
+    expect(withoutReason).toMatchObject({ ok: false, code: "REASON_REQUIRED" });
+    expect(secondCancel).toMatchObject({ ok: false, code: "ALREADY_CANCELLED" });
+    expect(unknownBill).toMatchObject({ ok: false, code: "NOT_FOUND" });
+  });
+
+  it("refuses a cancel request with a reason over 200 characters", async () => {
+    const fixture = buildHandlersFixture();
+    const billId = await saveOneBill(fixture);
+
+    const result = await fixture.handlers["bills.cancel"]({ id: billId, reason: "r".repeat(201) });
+
+    expect(result).toMatchObject({ ok: false, code: "INVALID_FIELD" });
+  });
+
   it("prints a bill and reports that it printed", async () => {
     const fixture = buildHandlersFixture();
     const billId = await saveOneBill(fixture);
