@@ -1,10 +1,10 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ThemePicker } from "../../../src/renderer/shared/theme/ThemePicker";
-import { ThemeProvider } from "../../../src/renderer/shared/theme/ThemeProvider";
-import { THEME_STORAGE_KEY } from "../../../src/renderer/shared/theme/theme.constants";
-import { useThemePreference } from "../../../src/renderer/shared/theme/useThemePreference";
-import { installFakeMatchMedia } from "../../helpers/fakeMatchMedia";
+import { ThemePicker } from "../ThemePicker/ThemePicker";
+import { ThemeProvider } from "./ThemeProvider";
+import { THEME_STORAGE_KEY } from "../constants";
+import { useThemePreference } from "../useThemePreference/useThemePreference";
+import { installFakeMatchMedia } from "../../../../../tests/helpers/fakeMatchMedia";
 
 /** The same wiring Settings uses: the hook feeds the pure picker. */
 function ThemeSetting() {

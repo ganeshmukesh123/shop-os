@@ -1,4 +1,4 @@
-import type { ThemePreference } from "./theme.types";
+import type { ThemePreference } from "./types";
 
 /** Kept per device in the browser's local storage (design guidelines D6, assumed). */
 export const THEME_STORAGE_KEY = "shopos.themePreference";

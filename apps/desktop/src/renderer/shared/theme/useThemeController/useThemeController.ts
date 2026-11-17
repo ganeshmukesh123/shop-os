@@ -1,12 +1,12 @@
 import { useCallback, useState } from "react";
-import type { IThemeContextValue, ThemePreference } from "./theme.types";
+import type { IThemeContextValue, ThemePreference } from "../types";
 import {
   getBrowserStorage,
   readStoredPreference,
   resolveAppearance,
   writeStoredPreference,
-} from "./themePreference";
-import { useSystemDarkMode } from "./useSystemDarkMode";
+} from "../themePreference/themePreference";
+import { useSystemDarkMode } from "../useSystemDarkMode/useSystemDarkMode";
 
 /**
  * Owns the theme state: the saved choice (read in the first render, so the first paint is already
