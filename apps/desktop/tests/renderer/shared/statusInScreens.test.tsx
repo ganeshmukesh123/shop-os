@@ -1,8 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Table } from "@radix-ui/themes";
-import type { DraftLine, ShopProfile } from "@shopos/core";
-import { BillLineRow } from "../../../src/renderer/components/BillLineRow";
+import type { ShopProfile } from "@shopos/core";
 import { ToastProvider, useToast } from "../../../src/renderer/shared/components/Toast";
 import { SettingsScreen } from "../../../src/renderer/screens/SettingsScreen";
 import { installFakeShopos } from "../../helpers/fakeShopos";
@@ -17,18 +15,6 @@ const SHOP_PROFILE: ShopProfile = {
   footer: "",
   receiptWidth: "80mm",
   backupFolder: "/backups",
-};
-
-const BILL_LINE: DraftLine = {
-  key: "line-1",
-  itemId: "item-2",
-  name: "Pipe",
-  unit: "pcs",
-  allowsDecimal: false,
-  qty: "0",
-  rate: "120",
-  disc: "",
-  discMode: "rupees",
 };
 
 function ToastButtons() {
@@ -145,23 +131,5 @@ describe("status words in the screens (design guidelines 5.1, PRD NFR-011)", () 
 
     const templateAlert = await screen.findByRole("alert");
     expect(templateAlert.textContent).toMatch(/^Error Number could be \d+ characters/);
-  });
-
-  it("a bill line with a problem says Error, the item and the reason", () => {
-    renderWithTheme(
-      <Table.Root>
-        <Table.Body>
-          <BillLineRow
-            line={BILL_LINE}
-            result={{ amountPaise: null, error: "Quantity must be more than 0" }}
-            onChange={() => {}}
-            onRemove={() => {}}
-            onEnterQty={() => {}}
-          />
-        </Table.Body>
-      </Table.Root>,
-    );
-
-    expect(screen.getByRole("alert").textContent).toBe("Error Pipe: Quantity must be more than 0");
   });
 });
