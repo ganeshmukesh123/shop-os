@@ -112,6 +112,25 @@ describe("billing", () => {
     expect(code(() => billing.saveBill(bill([line("missing")])))).toBe("NOT_FOUND");
   });
 
+  it("records the payment mode as the bill's one tender, for the whole total", () => {
+    const firstItem = mk("A");
+
+    const saveResult = billing.saveBill({
+      ...bill([line(firstItem.id, 2000)]),
+      paymentMode: "upi",
+    });
+
+    const tenderRows = testDb.sqlite
+      .prepare("select bill_id, mode, amount_paise, status from bill_tender")
+      .all();
+    expect(tenderRows).toEqual([
+      { bill_id: saveResult.bill.id, mode: "upi", amount_paise: 20000, status: "label" },
+    ]);
+    expect(
+      new BillRepository(testDb.db, testDb.ctx).get(saveResult.bill.id)!.bill.paymentMode,
+    ).toBe("upi");
+  });
+
   it("a failure mid-save leaves nothing behind", () => {
     const firstItem = mk("A");
     const secondItem = mk("B");
@@ -122,6 +141,9 @@ describe("billing", () => {
       rowCount: 0,
     });
     expect(testDb.sqlite.prepare("select count(*) as rowCount from bill_line").get()).toEqual({
+      rowCount: 0,
+    });
+    expect(testDb.sqlite.prepare("select count(*) as rowCount from bill_tender").get()).toEqual({
       rowCount: 0,
     });
     expect(
@@ -216,7 +238,7 @@ describe("billing", () => {
     ).toThrow(/cannot be deleted/);
     expect(() =>
       testDb.sqlite
-        .prepare("update bill_line set rate_paise = 1 where bill_id = ?")
+        .prepare("update bill_line set unit_price_paise = 1 where bill_id = ?")
         .run(saveResult.bill.id),
     ).toThrow(/immutable/);
     expect(() =>

@@ -1,6 +1,6 @@
 # Data Model: Shop OS MVP
 
-> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0009; items moved in T074, stock movements and locations in T075, the bill header in T076) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
+> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0010; items moved in T074, stock movements and locations in T075, the bill header in T076, bill lines and tenders in T077) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
 
 ## Target shape (research D18, architecture section 8)
 
@@ -81,7 +81,6 @@ The app and the screens still call these fields `number`, `seriesCode`, `linesTo
 | seq | integer, not null, unique with counter and financial year |
 | bill_date | ISO-8601 local timestamp, not null (becomes `billed_at` and `business_date` in T078) |
 | customer_name | text up to 80 characters, optional |
-| payment_mode | one of `cash`, `upi`, `card`, `unpaid`, not null (moves to `bill_tender` in T077) |
 | subtotal_paise | integer, not null; was `lines_total_paise` |
 | bill_discount_paise | integer, not null, 0 up to subtotal_paise |
 | total_paise | integer, not null = subtotal_paise minus bill_discount_paise (plus `round_off_paise` from T080); was `grand_total_paise` |
@@ -89,18 +88,25 @@ The app and the screens still call these fields `number`, `seriesCode`, `linesTo
 | cancel_reason | text, required when status is `cancelled` |
 | cancelled_at | ISO-8601 UTC, set on cancel |
 
-### Bill Line (`bill_line`)
+### Bill Line (`bill_line`) (migration 0010, task T077)
+The app still calls these `itemId`, `quantityMilli` and `ratePaise`; `BillRepository` maps them.
+
 | Field | Rule |
 |---|---|
 | bill_id | foreign key, not null |
 | line_no | integer, not null, from 1 |
-| item_id | foreign key, not null |
+| variant_id | foreign key to `item_variant`, not null; was `item_id` |
 | item_name_snapshot | text, not null (name at time of sale so reprints stay identical) |
 | unit_snapshot | text, not null |
-| quantity_milli | integer, not null, greater than 0; whole thousands only when the item does not allow decimals |
-| rate_paise | integer, not null, 0 or more |
-| line_discount_paise | integer, not null, 0 up to quantity times rate |
-| amount_paise | integer, not null = quantity times rate (rounded half up) minus line_discount_paise |
+| qty_base_milli | integer, not null, greater than 0; whole thousands only when the item does not allow decimals; was `quantity_milli` |
+| unit_price_paise | integer, not null, 0 or more; was `rate_paise` |
+| line_discount_paise | integer, not null, 0 up to quantity times price |
+| amount_paise | integer, not null = quantity times price (rounded half up) minus line_discount_paise |
+
+Append-only (triggers).
+
+### Bill Tender (`bill_tender`) (migration 0010, task T077)
+One row per bill in this release, written in the bill's save transaction: `bill_id` (foreign key), `mode` (`cash`, `upi`, `card` or `unpaid`), `amount_paise` (the bill's whole total, 0 or more) and `status` (`label`: the shop records how the customer paid; the app does not collect money). Append-only (triggers). The payment mode the app shows is read from this row; the bill itself no longer has a `payment_mode` column. Migration 0009 gave every existing bill one tender from its old payment mode.
 
 ### Shop Profile (`shop_profile`)
 One row: name (required, up to 80), address (up to 200), phone (up to 20), bill series code, bill number template, bill footer text (up to 200), receipt width (`58mm` or `80mm`), backup folder path.
@@ -172,4 +178,4 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 - `item_variant(display_name)` collation NOCASE for partial-name search (no FTS needed: 5,000 items searched in about 4 ms); `item_variant(business_id, item_code)` unique.
 - `stock_movement(variant_id, occurred_at)` and `stock_movement(doc_type, doc_id)`.
 - `bill(shop_id, bill_no)` unique; `bill(counter_code, financial_year, seq)` unique; `bill(bill_date)`; `bill(customer_name)`.
-- `bill_line(bill_id)`.
+- `bill_line(bill_id)`; `bill_tender(bill_id)`.

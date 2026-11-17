@@ -8,6 +8,7 @@ import {
   backupLog,
   bill,
   billLine,
+  billTender,
   draftBill,
   itemFamily,
   itemVariant,
@@ -89,14 +90,23 @@ describe("schema contract", () => {
   const indexNames = (table: Parameters<typeof getTableConfig>[0]) =>
     getTableConfig(table).indexes.map((index) => index.config.name);
 
-  it("guards the bill's payment mode, status, cancel reason, discount and total", () => {
+  it("guards the bill's status, cancel reason, discount and total", () => {
     expect(constraintNames(bill)).toEqual(
       expect.arrayContaining([
-        "bill_payment_mode",
         "bill_status",
         "bill_cancel_reason_required",
         "bill_discount_range",
         "bill_total_eq",
+      ]),
+    );
+  });
+
+  it("guards the bill's tender: mode, amount and status", () => {
+    expect(constraintNames(billTender)).toEqual(
+      expect.arrayContaining([
+        "bill_tender_mode",
+        "bill_tender_amount_nonneg",
+        "bill_tender_status",
       ]),
     );
   });
@@ -118,7 +128,7 @@ describe("schema contract", () => {
     expect(constraintNames(billLine)).toEqual(
       expect.arrayContaining([
         "bill_line_qty_pos",
-        "bill_line_rate_nonneg",
+        "bill_line_price_nonneg",
         "bill_line_discount_nonneg",
       ]),
     );
@@ -152,6 +162,7 @@ describe("schema contract", () => {
     expect(referencedTables(billLine)).toEqual(["bill", "item_variant"]);
     expect(referencedTables(stockMovement)).toEqual(["item_variant", "location", "location"]);
     expect(referencedTables(itemVariant)).toEqual(["item_family"]);
+    expect(referencedTables(billTender)).toEqual(["bill"]);
   });
 
   it("names every table and column in snake_case", () => {
@@ -160,6 +171,7 @@ describe("schema contract", () => {
       itemVariant,
       bill,
       billLine,
+      billTender,
       stockMovement,
       shopProfile,
       numberCounter,
