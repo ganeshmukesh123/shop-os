@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { migrateValidated } from "./migrateValidated";
 import * as schema from "./schema";
 
 export type DB = BetterSQLite3Database<typeof schema>;
@@ -35,7 +35,7 @@ export function applyConnectionPragmas(sqlite: Database.Database): void {
 /** Run pending migrations on an open SQLite handle and wrap it for Drizzle. */
 export function migrateConnection(sqlite: Database.Database, migrationsFolder: string): Connection {
   const db = drizzle(sqlite, { schema });
-  migrate(db, { migrationsFolder });
+  migrateWithForeignKeysOff(sqlite, migrationsFolder);
   return { sqlite, db };
 }
 
@@ -44,4 +44,19 @@ export function openDatabase(file: string, opts: OpenOptions): Connection {
   const sqlite = new Database(file);
   applyConnectionPragmas(sqlite);
   return migrateConnection(sqlite, opts.migrationsFolder);
+}
+
+/**
+ * Rebuilding a table that other tables reference (SQLite's create-copy-drop-rename) is only safe
+ * with foreign keys off, and `PRAGMA foreign_keys` does nothing inside a transaction. Drizzle runs
+ * every pending migration in one transaction, so the switch is made here, before it begins. A
+ * foreign key check before Drizzle commits rejects broken references and rolls back the upgrade.
+ */
+function migrateWithForeignKeysOff(sqlite: Database.Database, migrationsFolder: string): void {
+  sqlite.pragma("foreign_keys = OFF");
+  try {
+    migrateValidated(sqlite, migrationsFolder);
+  } finally {
+    sqlite.pragma("foreign_keys = ON");
+  }
 }

@@ -22,7 +22,7 @@ const bill: Bill = {
   linesTotalPaise: 10000000 + 12500,
   billDiscountPaise: 2500,
   grandTotalPaise: 10010000,
-  status: "saved",
+  status: "posted",
   cancelReason: null,
   cancelledAt: null,
 };

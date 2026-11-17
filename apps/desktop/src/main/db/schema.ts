@@ -67,8 +67,11 @@ export const bill = sqliteTable(
   "bill",
   {
     ...base,
-    number: text("number").notNull(),
-    seriesCode: text("series_code").notNull(),
+    // The id of the device that saved the bill (the shop profile's device id on this release)
+    deviceId: text("device_id").notNull(),
+    // counter_code: the counter or series the bill was made at, for example C1
+    counterCode: text("counter_code").notNull(),
+    billNo: text("bill_no").notNull(),
     financialYear: text("financial_year").notNull(),
     seq: integer("seq").notNull(),
     billDate: text("bill_date").notNull(), // ISO-8601 local timestamp
@@ -77,38 +80,38 @@ export const bill = sqliteTable(
     clientBillId: text("client_bill_id"),
     // payment_mode: one of cash, upi, card, unpaid
     paymentMode: text("payment_mode").notNull(),
-    linesTotalPaise: integer("lines_total_paise").notNull(),
+    subtotalPaise: integer("subtotal_paise").notNull(),
     billDiscountPaise: integer("bill_discount_paise").notNull(),
-    grandTotalPaise: integer("grand_total_paise").notNull(),
-    // status: saved or cancelled
+    totalPaise: integer("total_paise").notNull(),
+    // status: posted or cancelled
     status: text("status").notNull(),
     cancelReason: text("cancel_reason"),
     cancelledAt: text("cancelled_at"),
   },
   (tableColumns) => [
-    uniqueIndex("bill_number_uq").on(tableColumns.shopId, tableColumns.number),
-    uniqueIndex("bill_series_fy_seq_uq").on(
-      tableColumns.seriesCode,
+    uniqueIndex("bill_no_uq").on(tableColumns.shopId, tableColumns.billNo),
+    uniqueIndex("bill_counter_fy_seq_uq").on(
+      tableColumns.counterCode,
       tableColumns.financialYear,
       tableColumns.seq,
     ),
     uniqueIndex("bill_client_bill_id_uq").on(tableColumns.shopId, tableColumns.clientBillId),
     index("bill_date_idx").on(tableColumns.billDate),
     index("bill_customer_idx").on(tableColumns.customerName),
-    check("bill_number_len", sql`length(${tableColumns.number}) <= 16`),
+    check("bill_no_len", sql`length(${tableColumns.billNo}) <= 16`),
     check("bill_payment_mode", sql`${tableColumns.paymentMode} in ('cash','upi','card','unpaid')`),
-    check("bill_status", sql`${tableColumns.status} in ('saved','cancelled')`),
+    check("bill_status", sql`${tableColumns.status} in ('posted','cancelled')`),
     check(
       "bill_cancel_reason_required",
       sql`${tableColumns.status} <> 'cancelled' or (${tableColumns.cancelReason} is not null and length(trim(${tableColumns.cancelReason})) > 0)`,
     ),
     check(
       "bill_discount_range",
-      sql`${tableColumns.billDiscountPaise} >= 0 and ${tableColumns.billDiscountPaise} <= ${tableColumns.linesTotalPaise}`,
+      sql`${tableColumns.billDiscountPaise} >= 0 and ${tableColumns.billDiscountPaise} <= ${tableColumns.subtotalPaise}`,
     ),
     check(
       "bill_total_eq",
-      sql`${tableColumns.grandTotalPaise} = ${tableColumns.linesTotalPaise} - ${tableColumns.billDiscountPaise}`,
+      sql`${tableColumns.totalPaise} = ${tableColumns.subtotalPaise} - ${tableColumns.billDiscountPaise}`,
     ),
   ],
 );

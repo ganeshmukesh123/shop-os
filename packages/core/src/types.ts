@@ -13,7 +13,8 @@ export type PaymentMode = z.infer<typeof paymentModeSchema>;
 export const MOVEMENT_REASONS = ["opening", "adjustment", "sale", "sale_cancel"] as const;
 export type MovementReason = (typeof MOVEMENT_REASONS)[number];
 
-export type BillStatus = "saved" | "cancelled";
+/** A bill moves from posted to cancelled once, and never back (data-model.md). */
+export type BillStatus = "posted" | "cancelled";
 export type ReceiptWidth = "58mm" | "80mm";
 export type PrintTarget = "receipt" | "a4" | "a5";
 
@@ -147,7 +148,7 @@ export const billsListInput = z.object({
   from: z.string().optional(),
   to: z.string().optional(),
   customer: z.string().optional(),
-  status: z.enum(["saved", "cancelled"]).optional(),
+  status: z.enum(["posted", "cancelled"]).optional(),
   limit: z.number().int().min(1).max(500),
   offset: z.number().int().min(0),
 });

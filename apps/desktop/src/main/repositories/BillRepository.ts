@@ -7,15 +7,15 @@ import type { Ctx } from "../db/seed";
 
 const toBill = (billRow: typeof bill.$inferSelect): Bill => ({
   id: billRow.id,
-  number: billRow.number,
-  seriesCode: billRow.seriesCode,
+  number: billRow.billNo,
+  seriesCode: billRow.counterCode,
   seq: billRow.seq,
   billDate: billRow.billDate,
   customerName: billRow.customerName,
   paymentMode: billRow.paymentMode as PaymentMode,
-  linesTotalPaise: billRow.linesTotalPaise,
+  linesTotalPaise: billRow.subtotalPaise,
   billDiscountPaise: billRow.billDiscountPaise,
-  grandTotalPaise: billRow.grandTotalPaise,
+  grandTotalPaise: billRow.totalPaise,
   status: billRow.status as Bill["status"],
   cancelReason: billRow.cancelReason,
   cancelledAt: billRow.cancelledAt,
@@ -92,11 +92,27 @@ export class BillRepository {
     return row.seq;
   }
 
+  /** The domain names (number, seriesCode, ...) are stored as bill_no, counter_code, ... (D18). */
   insertBill(newBill: NewBill): Bill {
     return toBill(
       this.databaseHandle
         .insert(bill)
-        .values({ ...this.base(), ...newBill, status: "saved" })
+        .values({
+          ...this.base(),
+          deviceId: this.ctx.deviceId,
+          counterCode: newBill.seriesCode,
+          billNo: newBill.number,
+          financialYear: newBill.financialYear,
+          seq: newBill.seq,
+          billDate: newBill.billDate,
+          customerName: newBill.customerName,
+          clientBillId: newBill.clientBillId,
+          paymentMode: newBill.paymentMode,
+          subtotalPaise: newBill.linesTotalPaise,
+          billDiscountPaise: newBill.billDiscountPaise,
+          totalPaise: newBill.grandTotalPaise,
+          status: "posted",
+        })
         .returning()
         .get(),
     );

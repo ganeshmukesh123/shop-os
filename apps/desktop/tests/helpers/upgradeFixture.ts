@@ -34,12 +34,12 @@ function seedShopAtMigration0004(sqlite: Database.Database): Ctx {
 }
 
 /**
- * The shop's database as it was at migration 0004, holding Pipe (opening 10 pcs) and one saved
- * bill of 2 pcs at 120.00, then opened with every migration so the upgrade runs on real rows.
+ * The shop's database file as it was at migration 0004, holding Pipe (opening 10 pcs) and one
+ * saved bill of 2 pcs at 120.00. Not yet upgraded: open it with every migration to upgrade it.
  */
-export function upgradeDatabaseWithOneBill(
+export function createDatabaseFileAtMigration0004WithOneBill(
   options: { cancelledAt?: string; beforeUpgrade?: (sqlite: Database.Database) => void } = {},
-): Database.Database {
+): string {
   const databasePath = path.join(makeTempFolder("shopos-upgrade-"), "shopos.sqlite");
   const oldConnection = openDatabase(databasePath, {
     migrationsFolder: makeMigrationsFolderAtMigration0004(),
@@ -55,5 +55,13 @@ export function upgradeDatabaseWithOneBill(
   }
   options.beforeUpgrade?.(oldConnection.sqlite);
   oldConnection.sqlite.close();
+  return databasePath;
+}
+
+/** The same database, opened with every migration so the upgrade runs on real rows. */
+export function upgradeDatabaseWithOneBill(
+  options: { cancelledAt?: string; beforeUpgrade?: (sqlite: Database.Database) => void } = {},
+): Database.Database {
+  const databasePath = createDatabaseFileAtMigration0004WithOneBill(options);
   return openDatabase(databasePath, { migrationsFolder: MIGRATIONS }).sqlite;
 }

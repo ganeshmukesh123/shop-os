@@ -103,7 +103,7 @@ describe("schema contract", () => {
 
   it("stops duplicate bill numbers, duplicate sequence numbers and duplicate saves", () => {
     expect(indexNames(bill)).toEqual(
-      expect.arrayContaining(["bill_number_uq", "bill_series_fy_seq_uq", "bill_client_bill_id_uq"]),
+      expect.arrayContaining(["bill_no_uq", "bill_counter_fy_seq_uq", "bill_client_bill_id_uq"]),
     );
   });
 
