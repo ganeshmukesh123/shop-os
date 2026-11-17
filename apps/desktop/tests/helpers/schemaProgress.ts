@@ -14,7 +14,7 @@ export const SCHEMA_TASK_DONE = {
   /** bill_line reshaped, bill_tender added */
   T077: true,
   /** number_series, epoch-millisecond times, billed_at and business_date */
-  T078: false, // switched on by the second half (epoch-millisecond times)
+  T078: true,
   /** shop settings and the bill's doc_title and round_off_paise */
   T080: false,
   /** bill_number_gap */

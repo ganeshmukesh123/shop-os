@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import type { ReceiptWidth, ShopProfile } from "@shopos/core";
 import type { Handle } from "../db/connection";
-import { nowIso } from "../db/ids";
+import { nowMs } from "../db/ids";
 import { shopProfile } from "../db/schema";
 import type { Ctx } from "../db/seed";
 
@@ -33,7 +33,7 @@ export class SettingsRepository {
   update(newProfile: ShopProfile): ShopProfile {
     this.databaseHandle
       .update(shopProfile)
-      .set({ ...newProfile, updatedAt: nowIso() })
+      .set({ ...newProfile, updatedAt: nowMs() })
       .where(eq(shopProfile.shopId, this.ctx.shopId))
       .run();
     return this.get();

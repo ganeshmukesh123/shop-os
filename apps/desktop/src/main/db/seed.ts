@@ -1,5 +1,5 @@
 import type { DB, Handle } from "./connection";
-import { newId, nowIso } from "./ids";
+import { newId, nowMs } from "./ids";
 import { location, shopProfile } from "./schema";
 
 export const SHOP_FLOOR_NAME = "Shop floor";
@@ -30,7 +30,7 @@ export function ensureSeed(db: DB): Ctx {
 }
 
 function insertFirstRunRows(tx: Handle, ctx: Ctx): void {
-  const now = nowIso();
+  const now = nowMs();
   tx.insert(shopProfile)
     .values({
       id: newId(),

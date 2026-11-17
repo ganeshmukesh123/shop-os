@@ -1,12 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import { desc, eq } from "drizzle-orm";
 import Database from "better-sqlite3";
 import { CoreError } from "@shopos/core";
 import type { DB } from "../db/connection";
-import { newId, nowIso } from "../db/ids";
-import { backupLog } from "../db/schema";
+import { nowIso } from "../db/ids";
 import type { Ctx } from "../db/seed";
+import { BackupLogRepository } from "../repositories/BackupLogRepository";
 import { SettingsRepository } from "../repositories/SettingsRepository";
 
 const KEEP_DAYS = 30;
@@ -62,40 +61,20 @@ export function restoreBackup(backupFile: string, liveDbPath: string): void {
 
 export class BackupService {
   private readonly settings: SettingsRepository;
+  private readonly backupLog: BackupLogRepository;
 
   constructor(
     private readonly sqlite: Database.Database,
-    private readonly db: DB,
-    private readonly ctx: Ctx,
+    db: DB,
+    ctx: Ctx,
     private readonly getFolder?: () => string,
   ) {
     this.settings = new SettingsRepository(db, ctx);
+    this.backupLog = new BackupLogRepository(db, ctx);
   }
 
   private folder(): string {
     return (this.getFolder ? this.getFolder() : this.settings.get().backupFolder).trim();
-  }
-
-  private log(entry: {
-    path: string;
-    startedAt: string;
-    finishedAt: string;
-    status: "ok" | "failed";
-    error?: string;
-  }): void {
-    const now = nowIso();
-    this.db
-      .insert(backupLog)
-      .values({
-        id: newId(),
-        businessId: this.ctx.businessId,
-        shopId: this.ctx.shopId,
-        createdAt: now,
-        updatedAt: now,
-        ...entry,
-        error: entry.error ?? null,
-      })
-      .run();
   }
 
   /** Online backup through SQLite's backup API (never a file copy of the live database). */
@@ -110,14 +89,14 @@ export class BackupService {
       await this.sqlite.backup(target);
       validateBackupFile(target);
       const finishedAt = nowIso();
-      this.log({ path: target, startedAt, finishedAt, status: "ok" });
+      this.backupLog.append({ path: target, startedAt, finishedAt, status: "ok" });
       this.prune(now);
       return { path: target, finishedAt };
     } catch (caughtError) {
       const message = caughtError instanceof Error ? caughtError.message : String(caughtError);
       try {
         if (target) fs.rmSync(target, { force: true });
-        this.log({
+        this.backupLog.append({
           path: target || folder,
           startedAt,
           finishedAt: nowIso(),
@@ -166,17 +145,8 @@ export class BackupService {
   }
 
   status(): { lastOkAt: string | null; lastError: string | null; folder: string } {
-    const lastOk = this.db
-      .select()
-      .from(backupLog)
-      .where(eq(backupLog.status, "ok"))
-      .orderBy(desc(backupLog.createdAt), desc(backupLog.id))
-      .get();
-    const last = this.db
-      .select()
-      .from(backupLog)
-      .orderBy(desc(backupLog.createdAt), desc(backupLog.id))
-      .get();
+    const lastOk = this.backupLog.lastSucceeded();
+    const last = this.backupLog.lastAttempt();
     return {
       lastOkAt: lastOk?.finishedAt ?? null,
       lastError: last && last.status === "failed" ? last.error : null,

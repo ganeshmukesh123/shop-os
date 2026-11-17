@@ -6,8 +6,9 @@ const base = {
   id: text("id").primaryKey(), // UUID v7
   businessId: text("business_id").notNull(),
   shopId: text("shop_id").notNull(),
-  createdAt: text("created_at").notNull(), // ISO-8601 UTC
-  updatedAt: text("updated_at").notNull(),
+  // UTC instants as epoch milliseconds (integer), never text
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
 };
 
 export const itemFamily = sqliteTable(
@@ -91,7 +92,7 @@ export const bill = sqliteTable(
     // status: posted or cancelled
     status: text("status").notNull(),
     cancelReason: text("cancel_reason"),
-    cancelledAt: text("cancelled_at"),
+    cancelledAt: integer("cancelled_at"),
   },
   (tableColumns) => [
     uniqueIndex("bill_no_uq").on(tableColumns.shopId, tableColumns.billNo),
@@ -206,7 +207,7 @@ export const stockMovement = sqliteTable(
     docId: text("doc_id"),
     reasonCode: text("reason_code"),
     note: text("note"),
-    occurredAt: text("occurred_at").notNull(),
+    occurredAt: integer("occurred_at").notNull(),
     deviceId: text("device_id").notNull(),
   },
   (tableColumns) => [

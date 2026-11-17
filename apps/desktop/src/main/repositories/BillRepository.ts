@@ -2,7 +2,7 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { CoreError, DEFAULT_TIME_ZONE, localIsoOf } from "@shopos/core";
 import type { Bill, BillLine, PaymentMode } from "@shopos/core";
 import type { Handle } from "../db/connection";
-import { newId, nowIso } from "../db/ids";
+import { isoOfMs, newId, nowMs } from "../db/ids";
 import { bill, billLine, billTender, draftBill, numberSeries } from "../db/schema";
 import type { Ctx } from "../db/seed";
 
@@ -20,7 +20,7 @@ const toBill = (billRow: typeof bill.$inferSelect, paymentMode: PaymentMode): Bi
   grandTotalPaise: billRow.totalPaise,
   status: billRow.status as Bill["status"],
   cancelReason: billRow.cancelReason,
-  cancelledAt: billRow.cancelledAt,
+  cancelledAt: billRow.cancelledAt === null ? null : isoOfMs(billRow.cancelledAt),
 });
 
 const toLine = (lineRow: typeof billLine.$inferSelect): BillLine => ({
@@ -73,7 +73,7 @@ export class BillRepository {
   ) {}
 
   private base() {
-    const now = nowIso();
+    const now = nowMs();
     return {
       id: newId(),
       businessId: this.ctx.businessId,
@@ -92,7 +92,7 @@ export class BillRepository {
     financialYear: string,
     template: string,
   ): { seq: number; numberSeriesId: string } {
-    const now = nowIso();
+    const now = nowMs();
     const row = this.databaseHandle
       .insert(numberSeries)
       .values({ ...this.base(), counterCode, financialYear, template, lastSeq: 1 })

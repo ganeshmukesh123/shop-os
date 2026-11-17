@@ -85,6 +85,13 @@
       "when": 1794772400000,
       "tag": "0011_number_series_and_billed_at",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1794772500000,
+      "tag": "0012_epoch_millisecond_times",
+      "breakpoints": true
     }
   ]
 }
