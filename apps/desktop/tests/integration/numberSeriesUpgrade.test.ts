@@ -5,7 +5,7 @@ import {
   upgradeDatabaseWithOneBill,
 } from "../helpers/upgradeFixture";
 
-/** Task T078, first half (migration 0010): number_series and the billed_at / business_date split. */
+/** Task T078, first half (migration 0011): number_series and the billed_at / business_date split. */
 describe("upgrading numbering and bill times from migration 0004 (research D18, D22)", () => {
   it("turns the old counter into a series that keeps the next number and the shop's template", () => {
     const sqlite = upgradeDatabaseWithOneBill();

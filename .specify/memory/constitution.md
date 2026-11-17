@@ -1,6 +1,7 @@
 <!--
 Sync Impact Report
-Version change: 1.4.0 -> 2.0.0 (Principle I redefined: a same-day edit by a permitted role creates a new version; MAJOR). Owner decision 2026-11-15, audit finding C1, PRD FR-BIL-017.
+Version change: 2.0.0 -> 2.1.0 (Technical Constraints "Code layout": plain `constants.ts` and `types.ts` in each folder, and the folder rule now covers main-process services as well as components, a new obligation for a whole layer; MINOR, owner decision 2026-11-15, task T093).
+Earlier version change: 1.4.0 -> 2.0.0 (Principle I redefined: a same-day edit by a permitted role creates a new version; MAJOR). Owner decision 2026-11-15, audit finding C1, PRD FR-BIL-017.
 Modified principles: I. Never Lose or Alter a Bill -> I. Never Lose or Alter a Saved Bill Version
 Added sections: none
 Templates reviewed: no change needed. Follow-up: spec 003 FR-014 builds the edit; spec 001 stays cancel-and-rebill (no roles or audit log yet).
@@ -69,7 +70,7 @@ Every screen follows `docs/design/design-guidelines.md`. Both light and dark mod
 
 ## Technical and Compliance Constraints
 
-- **Code layout**: each React component has its own folder holding the component, its styles, its constants (`<name>.constants.ts`), its types and interfaces (`<name>.types.ts`) and its tests; cross-folder code lives in `shared/` (renderer: `apps/desktop/src/renderer/shared/`; rules: `packages/core`).
+- **Code layout**: each React component and each main-process service has its own folder holding its code, its styles, its constants (`constants.ts`), its types and interfaces (`types.ts`) and its tests; cross-folder code lives in `shared/` (renderer: `apps/desktop/src/renderer/shared/`; rules: `packages/core`).
 - **Stack**: TypeScript (strict) throughout; Electron + React + Radix UI for the desktop app; SQLite with Drizzle for local data. A later server uses Node.js and PostgreSQL as set out in the architecture reference. Changing the stack requires an amendment.
 - **Electron security**: renderer runs with `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`; a narrow typed preload bridge; a restrictive Content-Security-Policy; the database is never touched from the renderer. Keep Electron updated.
 - **Database**: WAL mode, foreign keys on, schema changes only through generated migrations, backups only through SQLite's online backup API (never by copying the live file), and every backup is proven by a real restore.
@@ -97,4 +98,4 @@ This constitution supersedes other practices and conversation habits. Every plan
 
 **Runtime guidance** for day-to-day work lives in `CLAUDE.md`.
 
-**Version**: 2.0.0 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-15
+**Version**: 2.1.0 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-15

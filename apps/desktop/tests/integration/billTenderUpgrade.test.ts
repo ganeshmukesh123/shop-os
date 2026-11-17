@@ -4,7 +4,7 @@ import { insertTargetSeriesAndBill } from "../helpers/schemaRows";
 import { createTestDb } from "../helpers/testDb";
 import { upgradeDatabaseWithOneBill } from "../helpers/upgradeFixture";
 
-/** Task T077 (migration 0009): the payment mode becomes a tender row; lines take the target names. */
+/** Task T077 (migration 0010): the payment mode becomes a tender row; lines take the target names. */
 describe("upgrading bill lines and tenders from migration 0004 (research D18)", () => {
   it("gives the old bill one tender: its payment mode, the whole total, as a label", () => {
     const sqlite = upgradeDatabaseWithOneBill();

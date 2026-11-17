@@ -18,7 +18,7 @@ const TIME_COLUMNS_BY_TABLE = [
   "number_series",
 ];
 
-/** Task T078, second half (migration 0011): times are INTEGER epoch milliseconds, exact. */
+/** Task T078, second half (migration 0012): times are INTEGER epoch milliseconds, exact. */
 describe("upgrading times from ISO text to epoch milliseconds (research D18)", () => {
   /** The 0004 database with a few times changed to ones that have milliseconds, before upgrading. */
   function upgradeWithMillisecondTimes(): { sqlite: Database.Database; billId: string } {

@@ -224,7 +224,7 @@ export const stockMovement = sqliteTable(
     ),
     check(
       "stock_movement_doc_pair",
-      sql`(${tableColumns.docType} is null) = (${tableColumns.docId} is null) and (${tableColumns.docType} is null or ${tableColumns.docType} = 'bill')`,
+      sql`(${tableColumns.docType} is null) = (${tableColumns.docId} is null) and (${tableColumns.docType} is null or ${tableColumns.docType} = 'bill') and (${tableColumns.docId} is not null) = (${tableColumns.movementType} in ('sale','sale_cancel'))`,
     ),
     check(
       "stock_movement_adjustment_note",

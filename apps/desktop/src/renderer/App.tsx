@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, Button, Flex, Text } from "@radix-ui/themes";
+import { LAYOUT } from "./layout";
 import { StatusBadge } from "./shared/components/StatusBadge/StatusBadge";
 import { ItemsScreen } from "./screens/ItemsScreen";
 import { NewBillScreen } from "./screens/NewBillScreen";
@@ -40,14 +41,8 @@ export function App() {
     ["settings", uiText.nav.settings],
   ];
   return (
-    <Flex style={{ height: "100vh" }}>
-      <Flex
-        direction="column"
-        gap="2"
-        p="3"
-        style={{ width: 200, borderRight: "1px solid var(--gray-6)", background: "var(--gray-2)" }}
-        asChild
-      >
+    <Flex height="100vh">
+      <Flex direction="column" gap="2" p="3" width={LAYOUT.navWidth} className="shopos-nav" asChild>
         <nav aria-label="Main">
           <Text size="5" weight="bold" mb="3">
             {uiText.appName}
@@ -59,7 +54,7 @@ export function App() {
               variant={route === navigationRoute ? "solid" : "soft"}
               onClick={() => setRoute(navigationRoute)}
               aria-current={route === navigationRoute ? "page" : undefined}
-              style={{ justifyContent: "flex-start" }}
+              className="shopos-nav-button"
             >
               {label}
               {navigationRoute === "items" && negatives > 0 && (
@@ -74,7 +69,7 @@ export function App() {
           ))}
         </nav>
       </Flex>
-      <Box flexGrow="1" p="4" style={{ overflow: "auto" }} asChild>
+      <Box flexGrow="1" p="4" overflow="auto" asChild>
         <main>
           {route === "items" && <ItemsScreen />}
           {route === "bill" && <NewBillScreen />}

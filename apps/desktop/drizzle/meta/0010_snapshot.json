@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "62c675ee-6065-4ea9-979b-66a8965d5552",
-  "prevId": "039daba3-e230-4539-821b-491bc2cb3b9e",
+  "id": "217e0a10-bbfb-4d5e-99d5-17d3769c98d8",
+  "prevId": "9645a39d-503d-4afc-a17f-c4ee57f0107a",
   "tables": {
     "backup_log": {
       "name": "backup_log",
@@ -155,13 +155,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "number_series_id": {
-          "name": "number_series_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "seq": {
           "name": "seq",
           "type": "integer",
@@ -169,15 +162,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "billed_at": {
-          "name": "billed_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "business_date": {
-          "name": "business_date",
+        "bill_date": {
+          "name": "bill_date",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -266,10 +252,10 @@
           ],
           "isUnique": true
         },
-        "bill_business_date_idx": {
-          "name": "bill_business_date_idx",
+        "bill_date_idx": {
+          "name": "bill_date_idx",
           "columns": [
-            "business_date"
+            "bill_date"
           ],
           "isUnique": false
         },
@@ -281,31 +267,13 @@
           "isUnique": false
         }
       },
-      "foreignKeys": {
-        "bill_number_series_id_number_series_id_fk": {
-          "name": "bill_number_series_id_number_series_id_fk",
-          "tableFrom": "bill",
-          "tableTo": "number_series",
-          "columnsFrom": [
-            "number_series_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {
         "bill_no_len": {
           "name": "bill_no_len",
           "value": "length(\"bill\".\"bill_no\") <= 16"
-        },
-        "bill_business_date_format": {
-          "name": "bill_business_date_format",
-          "value": "\"bill\".\"business_date\" glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'"
         },
         "bill_status": {
           "name": "bill_status",
@@ -942,8 +910,8 @@
         }
       }
     },
-    "number_series": {
-      "name": "number_series",
+    "number_counter": {
+      "name": "number_counter",
       "columns": {
         "id": {
           "name": "id",
@@ -980,8 +948,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "counter_code": {
-          "name": "counter_code",
+        "series_code": {
+          "name": "series_code",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -989,13 +957,6 @@
         },
         "financial_year": {
           "name": "financial_year",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "template": {
-          "name": "template",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -1010,11 +971,10 @@
         }
       },
       "indexes": {
-        "number_series_uq": {
-          "name": "number_series_uq",
+        "number_counter_uq": {
+          "name": "number_counter_uq",
           "columns": [
-            "shop_id",
-            "counter_code",
+            "series_code",
             "financial_year"
           ],
           "isUnique": true
@@ -1353,7 +1313,7 @@
         },
         "stock_movement_doc_pair": {
           "name": "stock_movement_doc_pair",
-          "value": "(\"stock_movement\".\"doc_type\" is null) = (\"stock_movement\".\"doc_id\" is null) and (\"stock_movement\".\"doc_type\" is null or \"stock_movement\".\"doc_type\" = 'bill')"
+          "value": "(\"stock_movement\".\"doc_type\" is null) = (\"stock_movement\".\"doc_id\" is null) and (\"stock_movement\".\"doc_type\" is null or \"stock_movement\".\"doc_type\" = 'bill') and (\"stock_movement\".\"doc_id\" is not null) = (\"stock_movement\".\"movement_type\" in ('sale','sale_cancel'))"
         },
         "stock_movement_adjustment_note": {
           "name": "stock_movement_adjustment_note",

@@ -242,7 +242,7 @@ CREATE TABLE `__new_stock_movement` (
 	CONSTRAINT "stock_movement_qty_pos" CHECK("__new_stock_movement"."qty_base_milli" > 0),
 	CONSTRAINT "stock_movement_type" CHECK("__new_stock_movement"."movement_type" in ('opening','adjustment','sale','sale_cancel')),
 	CONSTRAINT "stock_movement_one_direction" CHECK(("__new_stock_movement"."from_location_id" is null) <> ("__new_stock_movement"."to_location_id" is null)),
-	CONSTRAINT "stock_movement_doc_pair" CHECK(("__new_stock_movement"."doc_type" is null) = ("__new_stock_movement"."doc_id" is null) and ("__new_stock_movement"."doc_type" is null or "__new_stock_movement"."doc_type" = 'bill')),
+	CONSTRAINT "stock_movement_doc_pair" CHECK(("__new_stock_movement"."doc_type" is null) = ("__new_stock_movement"."doc_id" is null) and ("__new_stock_movement"."doc_type" is null or "__new_stock_movement"."doc_type" = 'bill') and ("__new_stock_movement"."doc_id" is not null) = ("__new_stock_movement"."movement_type" in ('sale','sale_cancel'))),
 	CONSTRAINT "stock_movement_adjustment_note" CHECK("__new_stock_movement"."movement_type" <> 'adjustment' or ("__new_stock_movement"."note" is not null and length(trim("__new_stock_movement"."note")) > 0)),
 	CONSTRAINT "stock_movement_note_len" CHECK("__new_stock_movement"."note" is null or length("__new_stock_movement"."note") <= 200)
 );
