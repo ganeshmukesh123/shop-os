@@ -147,7 +147,13 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 - Timestamps in the audit-style columns (`created_at`, `updated_at`, `occurred_at`, `cancelled_at`) are ISO-8601 UTC.
 - A bill stores `billed_at` (the UTC instant, epoch milliseconds) and `business_date` (the date in the shop's zone). The financial year and "same day" rules use `business_date`, never the device's zone. The app shows the bill's time as the wall-clock time in the shop's zone (`localIsoOf` in `@shopos/core`), so the domain `Bill.billDate` is still a local `YYYY-MM-DDTHH:mm:ss` string.
 - Migration 0011 converted the old `bill_date` (the device's local time, no zone) by assuming Asia/Kolkata, UTC+05:30: `billed_at` is that time minus 19,800 seconds and `business_date` is its date part.
-- Decided 2026-11-15 (research D22): the business time zone is the shop setting `time_zone` (default `Asia/Kolkata`), not the device's. Until task T079 lands, the code still uses the device's time zone.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:95fed621413d6e3d4ba5100ff38990ee55d3c8f0fc166601de6afc3fadd1ec8c -->
+
+- Research D22 (decided 2026-11-15) specifies a shop `time_zone` setting with `Asia/Kolkata` as its default. Until the setting is implemented in T080, billing uses the fixed `Asia/Kolkata` default.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Rounding of the bill total (research D20, target)
 
