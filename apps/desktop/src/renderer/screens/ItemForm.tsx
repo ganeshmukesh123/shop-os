@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Checkbox, Dialog, Flex, Select, Text, TextField } from "@radix-ui/themes";
+import { Box, Button, Checkbox, Dialog, Flex, Select, Text, TextField } from "@radix-ui/themes";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import {
   defaultAllowsDecimal,
@@ -117,40 +117,44 @@ export function ItemForm({
             />
           </label>
           <Flex gap="3">
-            <label style={{ flex: 1 }}>
-              <Text as="div" size="2" weight="bold" mb="1">
-                {uiText.form.unit} *
-              </Text>
-              <Select.Root
-                value={unitSel}
-                onValueChange={(selectedUnit) => {
-                  setUnitSel(selectedUnit);
-                  setDecimalOverride(null);
-                }}
-              >
-                <Select.Trigger style={{ width: "100%" }} aria-label={uiText.form.unit} />
-                <Select.Content>
-                  {UNITS.map((unitOption) => (
-                    <Select.Item key={unitOption} value={unitOption}>
-                      {unitOption}
-                    </Select.Item>
-                  ))}
-                  <Select.Item value={CUSTOM}>Custom…</Select.Item>
-                </Select.Content>
-              </Select.Root>
-            </label>
-            {unitSel === CUSTOM && (
-              <label style={{ flex: 1 }}>
+            <Box flexGrow="1" asChild>
+              <label>
                 <Text as="div" size="2" weight="bold" mb="1">
-                  {uiText.form.customUnit}
+                  {uiText.form.unit} *
                 </Text>
-                <TextField.Root
-                  size="3"
-                  maxLength={20}
-                  value={custom}
-                  onChange={(changeEvent) => setCustom(changeEvent.target.value)}
-                />
+                <Select.Root
+                  value={unitSel}
+                  onValueChange={(selectedUnit) => {
+                    setUnitSel(selectedUnit);
+                    setDecimalOverride(null);
+                  }}
+                >
+                  <Select.Trigger className="shopos-full-width" aria-label={uiText.form.unit} />
+                  <Select.Content>
+                    {UNITS.map((unitOption) => (
+                      <Select.Item key={unitOption} value={unitOption}>
+                        {unitOption}
+                      </Select.Item>
+                    ))}
+                    <Select.Item value={CUSTOM}>Custom…</Select.Item>
+                  </Select.Content>
+                </Select.Root>
               </label>
+            </Box>
+            {unitSel === CUSTOM && (
+              <Box flexGrow="1" asChild>
+                <label>
+                  <Text as="div" size="2" weight="bold" mb="1">
+                    {uiText.form.customUnit}
+                  </Text>
+                  <TextField.Root
+                    size="3"
+                    maxLength={20}
+                    value={custom}
+                    onChange={(changeEvent) => setCustom(changeEvent.target.value)}
+                  />
+                </label>
+              </Box>
             )}
           </Flex>
           <Text as="label" size="2">

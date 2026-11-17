@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { Button, Flex, Heading, RadioGroup, Separator, Text, TextField } from "@radix-ui/themes";
+import {
+  Box,
+  Button,
+  Flex,
+  Heading,
+  RadioGroup,
+  Separator,
+  Text,
+  TextField,
+} from "@radix-ui/themes";
 import { validateNumberTemplate, type BackupStatus, type ShopProfile } from "@shopos/core";
 import { useToast } from "../components/Toast";
+import { LAYOUT } from "../layout";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import { ThemePicker } from "../shared/theme/ThemePicker";
 import { useThemePreference } from "../shared/theme/useThemePreference";
@@ -86,7 +96,7 @@ export function SettingsScreen() {
   }
 
   return (
-    <Flex direction="column" gap="3" style={{ maxWidth: 640 }}>
+    <Flex direction="column" gap="3" maxWidth={LAYOUT.pageNarrow}>
       <Heading size="6">{uiText.settings.title}</Heading>
       <Heading size="3">{uiText.settings.shop}</Heading>
       {field(
@@ -117,7 +127,7 @@ export function SettingsScreen() {
         />,
       )}
       <Flex gap="3">
-        <div style={{ width: 140 }}>
+        <Box width={LAYOUT.seriesFieldWidth}>
           {field(
             uiText.settings.series,
             <TextField.Root
@@ -127,8 +137,8 @@ export function SettingsScreen() {
               onChange={(changeEvent) => set({ seriesCode: changeEvent.target.value })}
             />,
           )}
-        </div>
-        <div style={{ flex: 1 }}>
+        </Box>
+        <Box flexGrow="1">
           {field(
             uiText.settings.template,
             <TextField.Root
@@ -139,7 +149,7 @@ export function SettingsScreen() {
             />,
             uiText.settings.templateHelp,
           )}
-        </div>
+        </Box>
       </Flex>
       {tpl.ok ? (
         <Text size="2">
@@ -185,13 +195,14 @@ export function SettingsScreen() {
       {field(
         uiText.settings.backupFolder,
         <Flex gap="2">
-          <TextField.Root
-            size="3"
-            style={{ flex: 1 }}
-            readOnly
-            value={shopProfile.backupFolder}
-            placeholder="No folder chosen"
-          />
+          <Box flexGrow="1">
+            <TextField.Root
+              size="3"
+              readOnly
+              value={shopProfile.backupFolder}
+              placeholder="No folder chosen"
+            />
+          </Box>
           <Button size="3" variant="soft" onClick={() => void chooseFolder()}>
             {uiText.settings.choose}
           </Button>
