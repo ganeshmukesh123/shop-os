@@ -1,6 +1,6 @@
 # Data Model: Shop OS MVP
 
-> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0010; items moved in T074, stock movements and locations in T075, the bill header in T076, bill lines and tenders in T077, number series and bill times in the first half of T078) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
+> **Two shapes in this file (2026-11-15).** "Target shape" below is the decided schema (research D18), built by tasks T073 to T081. The sections after it ("Entities" onward) describe the schema in the code today (migrations 0000 to 0011; items moved in T074, stock movements and locations in T075, the bill header in T076, bill lines and tenders in T077, number series and bill times in the first half of T078) until those tasks land; each is replaced as its table moves. The `bill_number_len` check (number at most 16 characters, migration 0004) is in force.
 
 ## Target shape (research D18, architecture section 8)
 
@@ -68,7 +68,7 @@ Reserved but unused columns so later features need no migration: `hsn_code`, `gs
 
 Append-only. The signed change is `+qty` when `to_location_id` is set and `-qty` when `from_location_id` is set (`signedQuantityMilli` and `movementLocations` in `@shopos/core`); the repository still hands the app a signed `quantityMilli`. Invariant: variant.stock_milli equals the sum of the variant's signed movements.
 
-### Bill (`bill`) (migration 0008, task T076)
+### Bill (`bill`) (migration 0009, task T076)
 The app and the screens still call these fields `number`, `seriesCode`, `linesTotalPaise` and `grandTotalPaise`; `BillRepository` maps them to the columns below.
 
 | Field | Rule |
@@ -90,7 +90,7 @@ The app and the screens still call these fields `number`, `seriesCode`, `linesTo
 | cancel_reason | text, required when status is `cancelled` |
 | cancelled_at | ISO-8601 UTC, set on cancel |
 
-### Bill Line (`bill_line`) (migration 0009, task T077)
+### Bill Line (`bill_line`) (migration 0010, task T077)
 The app still calls these `itemId`, `quantityMilli` and `ratePaise`; `BillRepository` maps them.
 
 | Field | Rule |
@@ -107,13 +107,13 @@ The app still calls these `itemId`, `quantityMilli` and `ratePaise`; `BillReposi
 
 Append-only (triggers).
 
-### Bill Tender (`bill_tender`) (migration 0009, task T077)
+### Bill Tender (`bill_tender`) (migration 0010, task T077)
 One row per bill in this release, written in the bill's save transaction: `bill_id` (foreign key), `mode` (`cash`, `upi`, `card` or `unpaid`), `amount_paise` (the bill's whole total, 0 or more) and `status` (`label`: the shop records how the customer paid; the app does not collect money). Append-only (triggers). The payment mode the app shows is read from this row; the bill itself no longer has a `payment_mode` column. Migration 0009 gave every existing bill one tender from its old payment mode.
 
 ### Shop Profile (`shop_profile`)
 One row: name (required, up to 80), address (up to 200), phone (up to 20), bill series code, bill number template, bill footer text (up to 200), receipt width (`58mm` or `80mm`), backup folder path.
 
-### Number Series (`number_series`) (migration 0010, task T078)
+### Number Series (`number_series`) (migration 0011, task T078)
 `counter_code`, `financial_year`, `template` (the bill number template last used with the series) and `last_seq`; unique per shop, counter and financial year; `last_seq` is incremented in the same transaction as the bill insert. Replaces `number_counter`; each bill points at its series with `number_series_id`.
 
 ### Draft Bill (`draft_bill`)
@@ -126,7 +126,13 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - `stock_movement`: update and delete are rejected ("append-only").
 - `bill_line`: update and delete are rejected.
-- `bill`: delete is rejected (also the key `client_bill_id` is protected); update is allowed only for the change `status` `saved` to `cancelled` (with its cancel fields) while every other column stays identical.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:a653a6c71cd3957f52050d00eac469ff0dc40e4249e250bfa6b10553f61d42ef -->
+
+- `bill`: delete is rejected (also the key `client_bill_id` is protected); update is allowed only for the change `status` `posted` to `cancelled` (with its cancel fields) while every other column stays identical.
+
+<!-- /coderabbit-ai-generated:v1 -->
 - Consequence: the optional `customer_name` on a saved bill cannot be edited or erased later. Customer phone was removed from the bill (migration `0002`, 2026-11-13) so this release holds no contact details. When contact details arrive (features 004 and 008) they live in a separate, erasable party record referenced by id (review B6).
 
 ## Rounding (implemented in `packages/core/src/money.ts`)
@@ -140,7 +146,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - Timestamps in the audit-style columns (`created_at`, `updated_at`, `occurred_at`, `cancelled_at`) are ISO-8601 UTC.
 - A bill stores `billed_at` (the UTC instant, epoch milliseconds) and `business_date` (the date in the shop's zone). The financial year and "same day" rules use `business_date`, never the device's zone. The app shows the bill's time as the wall-clock time in the shop's zone (`localIsoOf` in `@shopos/core`), so the domain `Bill.billDate` is still a local `YYYY-MM-DDTHH:mm:ss` string.
-- Migration 0010 converted the old `bill_date` (the device's local time, no zone) by assuming Asia/Kolkata, UTC+05:30: `billed_at` is that time minus 19,800 seconds and `business_date` is its date part.
+- Migration 0011 converted the old `bill_date` (the device's local time, no zone) by assuming Asia/Kolkata, UTC+05:30: `billed_at` is that time minus 19,800 seconds and `business_date` is its date part.
 - Decided 2026-11-15 (research D22): the business time zone is the shop setting `time_zone` (default `Asia/Kolkata`), not the device's. Until task T079 lands, the code still uses the device's time zone.
 
 ## Rounding of the bill total (research D20, target)
@@ -156,7 +162,13 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 ## State transitions
 
-- Bill: `saved` to `cancelled` only, once, with a reason. Cancelled is terminal. A cancel inserts one `sale_cancel` movement per line (the exact reverse of the sale) in one transaction.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:d9907936504fe9333dd3f43a5ab3379567305dca2c8a4673e9f590fa92f08117 -->
+
+- Bill: `posted` to `cancelled` only, once, with a reason. Cancelled is terminal. A cancel inserts one `sale_cancel` movement per line (the exact reverse of the sale) in one transaction.
+
+<!-- /coderabbit-ai-generated:v1 -->
 - Item: `active` to inactive and back; inactive items cannot be added to new bills but remain on old bills.
 
 ## Derived values (computed in `@shopos/core`)

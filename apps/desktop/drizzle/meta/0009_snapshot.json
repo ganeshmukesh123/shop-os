@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "039daba3-e230-4539-821b-491bc2cb3b9e",
-  "prevId": "3a9be160-dd33-4eab-bdb1-110c1b1f8f8b",
+  "id": "9645a39d-503d-4afc-a17f-c4ee57f0107a",
+  "prevId": "51996df1-3bd9-447a-b5ec-21b3a54bb552",
   "tables": {
     "backup_log": {
       "name": "backup_log",
@@ -183,6 +183,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "payment_mode": {
+          "name": "payment_mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "subtotal_paise": {
           "name": "subtotal_paise",
           "type": "integer",
@@ -275,6 +282,10 @@
           "name": "bill_no_len",
           "value": "length(\"bill\".\"bill_no\") <= 16"
         },
+        "bill_payment_mode": {
+          "name": "bill_payment_mode",
+          "value": "\"bill\".\"payment_mode\" in ('cash','upi','card','unpaid')"
+        },
         "bill_status": {
           "name": "bill_status",
           "value": "\"bill\".\"status\" in ('posted','cancelled')"
@@ -345,8 +356,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "variant_id": {
-          "name": "variant_id",
+        "item_id": {
+          "name": "item_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -366,15 +377,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "qty_base_milli": {
-          "name": "qty_base_milli",
+        "quantity_milli": {
+          "name": "quantity_milli",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "unit_price_paise": {
-          "name": "unit_price_paise",
+        "rate_paise": {
+          "name": "rate_paise",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -418,12 +429,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "bill_line_variant_id_item_variant_id_fk": {
-          "name": "bill_line_variant_id_item_variant_id_fk",
+        "bill_line_item_id_item_variant_id_fk": {
+          "name": "bill_line_item_id_item_variant_id_fk",
           "tableFrom": "bill_line",
           "tableTo": "item_variant",
           "columnsFrom": [
-            "variant_id"
+            "item_id"
           ],
           "columnsTo": [
             "id"
@@ -437,123 +448,15 @@
       "checkConstraints": {
         "bill_line_qty_pos": {
           "name": "bill_line_qty_pos",
-          "value": "\"bill_line\".\"qty_base_milli\" > 0"
+          "value": "\"bill_line\".\"quantity_milli\" > 0"
         },
-        "bill_line_price_nonneg": {
-          "name": "bill_line_price_nonneg",
-          "value": "\"bill_line\".\"unit_price_paise\" >= 0"
+        "bill_line_rate_nonneg": {
+          "name": "bill_line_rate_nonneg",
+          "value": "\"bill_line\".\"rate_paise\" >= 0"
         },
         "bill_line_discount_nonneg": {
           "name": "bill_line_discount_nonneg",
           "value": "\"bill_line\".\"line_discount_paise\" >= 0"
-        }
-      }
-    },
-    "bill_tender": {
-      "name": "bill_tender",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "business_id": {
-          "name": "business_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "shop_id": {
-          "name": "shop_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "bill_id": {
-          "name": "bill_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "mode": {
-          "name": "mode",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "amount_paise": {
-          "name": "amount_paise",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "bill_tender_bill_idx": {
-          "name": "bill_tender_bill_idx",
-          "columns": [
-            "bill_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "bill_tender_bill_id_bill_id_fk": {
-          "name": "bill_tender_bill_id_bill_id_fk",
-          "tableFrom": "bill_tender",
-          "tableTo": "bill",
-          "columnsFrom": [
-            "bill_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "bill_tender_mode": {
-          "name": "bill_tender_mode",
-          "value": "\"bill_tender\".\"mode\" in ('cash','upi','card','unpaid')"
-        },
-        "bill_tender_amount_nonneg": {
-          "name": "bill_tender_amount_nonneg",
-          "value": "\"bill_tender\".\"amount_paise\" >= 0"
-        },
-        "bill_tender_status": {
-          "name": "bill_tender_status",
-          "value": "\"bill_tender\".\"status\" in ('label')"
         }
       }
     },
@@ -1313,7 +1216,7 @@
         },
         "stock_movement_doc_pair": {
           "name": "stock_movement_doc_pair",
-          "value": "(\"stock_movement\".\"doc_type\" is null) = (\"stock_movement\".\"doc_id\" is null) and (\"stock_movement\".\"doc_type\" is null or \"stock_movement\".\"doc_type\" = 'bill')"
+          "value": "(\"stock_movement\".\"doc_type\" is null) = (\"stock_movement\".\"doc_id\" is null) and (\"stock_movement\".\"doc_type\" is null or \"stock_movement\".\"doc_type\" = 'bill') and (\"stock_movement\".\"doc_id\" is not null) = (\"stock_movement\".\"movement_type\" in ('sale','sale_cancel'))"
         },
         "stock_movement_adjustment_note": {
           "name": "stock_movement_adjustment_note",

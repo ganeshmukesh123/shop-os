@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
-import { Button, Flex, SegmentedControl, Table, Text, TextField } from "@radix-ui/themes";
+import { Box, Button, Flex, SegmentedControl, Table, Text, TextField } from "@radix-ui/themes";
 import { formatRupees, type DraftLine, type DraftLineResult } from "@shopos/core";
+import { LAYOUT } from "../layout";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import { uiText } from "../strings";
 
@@ -26,7 +27,7 @@ export const BillLineRow = forwardRef<HTMLInputElement, Props>(function BillLine
             {line.unit}
           </Text>
         </Table.RowHeaderCell>
-        <Table.Cell style={{ width: 110 }}>
+        <Table.Cell width={LAYOUT.quantityColumnWidth}>
           <TextField.Root
             ref={qtyRef}
             size="3"
@@ -38,7 +39,7 @@ export const BillLineRow = forwardRef<HTMLInputElement, Props>(function BillLine
             onKeyDown={(keyboardEvent) => keyboardEvent.key === "Enter" && onEnterQty()}
           />
         </Table.Cell>
-        <Table.Cell style={{ width: 130 }}>
+        <Table.Cell width={LAYOUT.rateColumnWidth}>
           <TextField.Root
             size="3"
             inputMode="decimal"
@@ -48,16 +49,17 @@ export const BillLineRow = forwardRef<HTMLInputElement, Props>(function BillLine
             onChange={(changeEvent) => onChange({ rate: changeEvent.target.value })}
           />
         </Table.Cell>
-        <Table.Cell style={{ width: 230 }}>
+        <Table.Cell width={LAYOUT.discountColumnWidth}>
           <Flex gap="2" align="center">
-            <TextField.Root
-              size="3"
-              style={{ width: 90 }}
-              inputMode="decimal"
-              aria-label={`${uiText.bill.discount} ${line.name}`}
-              value={line.disc}
-              onChange={(changeEvent) => onChange({ disc: changeEvent.target.value })}
-            />
+            <Box width={LAYOUT.lineDiscountFieldWidth}>
+              <TextField.Root
+                size="3"
+                inputMode="decimal"
+                aria-label={`${uiText.bill.discount} ${line.name}`}
+                value={line.disc}
+                onChange={(changeEvent) => onChange({ disc: changeEvent.target.value })}
+              />
+            </Box>
             <SegmentedControl.Root
               size="2"
               value={line.discMode}
@@ -71,10 +73,12 @@ export const BillLineRow = forwardRef<HTMLInputElement, Props>(function BillLine
             </SegmentedControl.Root>
           </Flex>
         </Table.Cell>
-        <Table.Cell justify="end" style={{ width: 130, fontWeight: 600 }}>
-          {result.amountPaise === null ? "–" : formatRupees(result.amountPaise)}
+        <Table.Cell justify="end" width={LAYOUT.amountColumnWidth}>
+          <Text weight="bold">
+            {result.amountPaise === null ? "–" : formatRupees(result.amountPaise)}
+          </Text>
         </Table.Cell>
-        <Table.Cell style={{ width: 90 }}>
+        <Table.Cell width={LAYOUT.actionColumnWidth}>
           <Button
             size="2"
             variant="soft"
