@@ -82,13 +82,13 @@ bill_line 1--* bill_line_serial     bill_line --> warranty_register (projection)
 
 ## Changed tables
 
-- `stock_movement.movement_type` adds `purchase`, `purchase_return`; `doc_type` adds `purchase_receipt`, `purchase_return` (one rebuild, triggers re-created).
+- Lookup rows only, no table rebuild (002 research D17; this feature runs after go-live, so every migration must be additive for 012's rollback rule): `movement_type` `purchase` (in, doc) and `purchase_return` (out, doc); `movement_doc_type` `purchase_receipt`, `purchase_return`; `ledger_entry_type` and `cash_entry_kind` rows below; `doc_kind` rows `receipt_in`, `purchase_return`, `debit_note`; `exception_kind` rows below.
 - `party_ledger_entry.entry_type` adds `purchase_bill` (negative), `debit_note` (positive), `payment_out` (positive), `payment_out_reverse` (negative).
-- `payment.direction` adds `out`; `ledger_allocation` links `payment_out` entries to `purchase_bill` entries.
+- `payment.direction` gets `out`; `ledger_allocation` links `payment_out` and `debit_note` entries (settling) to `purchase_bill` entries (settled) with 004's absolute bounds, so a negative purchase bill allocates like a positive customer bill.
 - `cash_entry.kind` adds `cash_purchase` (negative).
 - `category` adds `target_margin_bp` (nullable, 0 to 9000) and `requires_isi` (0 or 1, seeded unverified).
 - `exception_event.kind` adds `price_rise`, `missing_isi`, `unbilled_cash_purchase`, `duplicate_supplier_invoice`.
-- `number_series.doc_kind` adds `receipt_in`, `purchase_return`, `debit_note`.
+- `number_series` uses the `doc_kind` rows above.
 
 ## Derived values (in `@shopos/core`)
 

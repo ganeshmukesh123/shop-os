@@ -34,7 +34,7 @@ description: "Task list for feature 009: purchases, distributors, price history,
 - [ ] T007 [P] Write tests in `core/tests/warranty/warrantyEnd.test.ts`: sold 31 Jan plus 1 month ends 28 or 29 Feb (end of month rule, using Luxon from 001 D25)
 - [ ] T008 Implement `core/src/purchasing/*.ts` and `core/src/warranty/*.ts` to pass T003 to T007
 - [ ] T009 Add the tables of `data-model.md` to `desktop/src/main/db/schema.ts` (receipt status trigger blocking changes after `posted`; append-only triggers on bills, links, price history, returns, debit notes and events, serials; `UNIQUE(party_id, supplier_invoice_no, financial_year)` for non-cash bills; unique `receipt_id` in `purchase_bill_receipt`) and generate the migration
-- [ ] T010 Rebuild `stock_movement` for `purchase` and `purchase_return` and the new `doc_type` values; add the enum values to `party_ledger_entry`, `payment.direction`, `cash_entry`, `exception_event`, `number_series`; add `category.target_margin_bp` and `requires_isi`; seed the permission `payment.pay`
+- [ ] T010 Insert the lookup rows of `data-model.md` (movement types `purchase` and `purchase_return`, document types, ledger entry types with their signs, `cash_purchase`, exception kinds, document kinds) with no table rebuild (002 research D17), and add `payment.direction` `out`; test that the migration is additive (012 D10); add `category.target_margin_bp` and `requires_isi`; seed the permission `payment.pay`
 - [ ] T011 Write `desktop/tests/integration/migrations009.test.ts`: migrations on a database with all earlier features; nothing existing changes; triggers hold
 
 ---
@@ -51,7 +51,7 @@ description: "Task list for feature 009: purchases, distributors, price history,
 ## Phase 4: User Story 2 - Purchase bill and distributor ledger (M3, 18 to 24 Oct; P1)
 
 - [ ] T016 [P] [US2] Write tests in `desktop/src/main/services/purchasing/PurchaseBillService.test.ts`: a bill linked to two receipts posts one negative `purchase_bill` entry and the due date; a receipt billed twice refused; a total that does not add up refused; mismatch with receipt lines reported; unbilled cash purchase writes the bill, a `payment_out` in cash and a `cash_purchase` cash entry in one transaction and raises an exception
-- [ ] T017 [P] [US2] Write tests in `desktop/src/main/services/purchasing/PayablesService.test.ts`: `payments.pay` allocates oldest first to purchase bills; ageing of payables; due this week; 004's `ledger.verify` passes for distributors (SC-004)
+- [ ] T017 [P] [US2] Write tests in `desktop/src/main/services/purchasing/PayablesService.test.ts`: `payments.pay` allocates oldest first to purchase bills (negative entries, allocated with 004's absolute bounds: a ₹5,000 payment against bills of -₹3,000 and -₹4,000 settles the first and ₹2,000 of the second); ageing of payables; due this week; 004's `ledger.verify` passes for distributors (SC-004)
 - [ ] T018 [US2] Implement `PurchaseBillService.ts`, `PayablesService.ts` and `PurchaseBillRepository.ts` to pass T016 and T017 (reuse 004's `LedgerService` and allocation); register `purchaseBills.*`, `payables.*`, `payments.pay`
 - [ ] T019 [P] [US2] Build `desktop/src/renderer/features/purchasing/PurchaseBill/` (pick receipts, invoice totals, mismatch shown) and `Payables/` (per distributor, ageing, due this week, pay)
 - [ ] T020 [US2] Write the e2e spec `desktop/tests/e2e/purchaseBills.spec.ts` for quickstart 2
