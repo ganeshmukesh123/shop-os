@@ -5,6 +5,7 @@ import type { Handle } from "../db/connection";
 import { isoOfMs, newId, nowMs } from "../db/ids";
 import { bill, billLine, billTender, draftBill, numberSeries, shopProfile } from "../db/schema";
 import type { Ctx } from "../db/seed";
+import type { INewBill, INewLine } from "./newBillTypes";
 
 /** The payment mode is not on the bill row: it is the label on the bill's tender (D18). */
 const toBill = (
@@ -41,40 +42,6 @@ const toLine = (lineRow: typeof billLine.$inferSelect): BillLine => ({
   lineDiscountPaise: lineRow.lineDiscountPaise,
   amountPaise: lineRow.amountPaise,
 });
-
-export interface NewBill {
-  number: string;
-  seriesCode: string;
-  financialYear: string;
-  numberSeriesId: string;
-  seq: number;
-  /** The UTC instant of the save, epoch milliseconds. */
-  billedAt: number;
-  /** That instant's calendar date in the shop's time zone, YYYY-MM-DD. */
-  businessDate: string;
-  customerName: string | null;
-  clientBillId: string;
-  /** The shop's document title when the bill was saved; stored so a reprint is identical. */
-  docTitle: string;
-  paymentMode: PaymentMode;
-  linesTotalPaise: number;
-  billDiscountPaise: number;
-  /** Signed difference to the nearest rupee, 0 when rounding is off. */
-  roundOffPaise: number;
-  /** The final total: lines total - discount + round-off. */
-  grandTotalPaise: number;
-}
-
-export interface NewLine {
-  lineNo: number;
-  itemId: string;
-  itemNameSnapshot: string;
-  unitSnapshot: string;
-  quantityMilli: number;
-  ratePaise: number;
-  lineDiscountPaise: number;
-  amountPaise: number;
-}
 
 /** Saved bills are insert-only here; the database triggers also forbid edits and deletes. */
 export class BillRepository {
@@ -120,7 +87,7 @@ export class BillRepository {
    * The domain names (number, seriesCode, ...) are stored as bill_no, counter_code, ... (D18).
    * The payment mode is written as the bill's one tender, in the same transaction as the bill.
    */
-  insertBill(newBill: NewBill): Bill {
+  insertBill(newBill: INewBill): Bill {
     const billRow = this.databaseHandle
       .insert(bill)
       .values({
@@ -167,7 +134,7 @@ export class BillRepository {
     return profileRow?.timeZone ?? DEFAULT_TIME_ZONE;
   }
 
-  insertLines(billId: string, lines: NewLine[]): BillLine[] {
+  insertLines(billId: string, lines: INewLine[]): BillLine[] {
     return lines.map((newLine) =>
       toLine(
         this.databaseHandle

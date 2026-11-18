@@ -141,7 +141,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - Line amount = quantity (thousandths) times rate (paise) divided by 1000, rounded half up, then minus the line discount. Rounding happens once per line.
 - Percent discounts are held in basis points (12.5% = 1250), converted to paise by rounding half up, and stored as paise; only paise are saved.
-- Bill discount is applied to the lines total after line rounding; grand total = lines total minus bill discount (no further rounding).
+- Bill discount is applied to the lines total after line rounding; total before rounding = lines total minus bill discount. The stored grand total (`total_paise`) adds `round_off_paise` to that: see "Rounding of the bill total" below (since migration 0013, T080).
 - Amounts above the safe integer limit are rejected.
 
 ## Time
@@ -157,7 +157,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 <!-- /coderabbit-ai-generated:v1 -->
 
-## Rounding of the bill total (research D20, target)
+## Rounding of the bill total (research D20)
 
 - Grand total before rounding = lines total minus bill discount.
 - When `round_bill_total` is on: round to the nearest 100 paise, 50 paise and above up; `round_off_paise` = rounded minus unrounded (between -49 and +50). Example: ₹849.60 gives round-off +₹0.40, total ₹850.00; ₹849.49 gives -₹0.49, total ₹849.00.

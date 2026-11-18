@@ -68,6 +68,18 @@ describe("upgrading a database for round-off, document title and time zone (FR-0
       .run();
     expect(sqlite.prepare("select status from bill").get()).toEqual({ status: "cancelled" });
   });
+
+  it.each([
+    ["the title", "doc_title = 'Cash Memo'"],
+    ["the round-off", "round_off_paise = 10"],
+  ])("refuses a cancellation that also changes %s", (_fieldLabel, fieldChange) => {
+    const sqlite = upgradeDatabaseWithOneBill();
+    const cancelAndChange = `update bill set status = 'cancelled', cancel_reason = 'wrong item',
+                             cancelled_at = 1, ${fieldChange}`;
+
+    expect(() => sqlite.prepare(cancelAndChange).run()).toThrow(/can only be cancelled/);
+    expect(sqlite.prepare("select status from bill").get()).toEqual({ status: "posted" });
+  });
 });
 
 describe("the bill's round-off rules in the database", () => {
