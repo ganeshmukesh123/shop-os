@@ -1,4 +1,5 @@
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import type { App } from "electron";
 
 export const BACKUP_EVERY_MILLISECONDS = 15 * 60 * 1000;
@@ -49,4 +50,14 @@ export function readAppConfig(
     preloadPath: path.join(locations.baseDirectory, "../preload/index.js"),
     rendererHtmlPath: path.join(locations.baseDirectory, "../renderer/index.html"),
   };
+}
+
+/** The only pages allowed to send commands: the app's own page, or the dev server while developing. */
+export function listTrustedPageUrls(
+  config: Pick<IAppConfig, "isDev" | "rendererUrl" | "rendererHtmlPath">,
+): string[] {
+  const isDevServerTrusted = config.isDev && config.rendererUrl !== undefined;
+  return isDevServerTrusted
+    ? [config.rendererUrl as string]
+    : [pathToFileURL(config.rendererHtmlPath).href];
 }

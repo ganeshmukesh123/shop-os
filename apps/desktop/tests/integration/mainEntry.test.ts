@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const electronMocks = vi.hoisted(() => ({
   setPath: vi.fn(),
@@ -63,6 +64,15 @@ afterAll(() => {
   delete process.env["SHOPOS_USER_DATA"];
 });
 
+/** An IPC event from the page the app loaded into its window, as Electron would deliver it. */
+function eventFromAppPage(): unknown {
+  const appWindow = electronMocks.constructedWindows[0] as {
+    loadFile: { mock: { calls: string[][] } };
+  };
+  const mainFrame = { url: pathToFileURL(String(appWindow.loadFile.mock.calls[0]?.[0])).href };
+  return { senderFrame: mainFrame, sender: { mainFrame } };
+}
+
 describe("main entry file", () => {
   it("points the app at the test data folder", () => {
     expect(electronMocks.setPath).toHaveBeenCalledWith(
@@ -108,7 +118,7 @@ describe("main entry file", () => {
       name: string,
       input: unknown,
     ) => Promise<unknown>;
-    const result = await listener({}, "system.pickFolder", {});
+    const result = await listener(eventFromAppPage(), "system.pickFolder", {});
     expect(electronMocks.showOpenDialog.mock.calls[0]?.[0]).toBe(focused);
     expect(result).toEqual({ ok: true, data: { path: null } });
   });
@@ -121,7 +131,7 @@ describe("main entry file", () => {
       name: string,
       input: unknown,
     ) => Promise<unknown>;
-    await listener({}, "system.pickFolder", {});
+    await listener(eventFromAppPage(), "system.pickFolder", {});
     expect(electronMocks.showOpenDialog.mock.calls[0]?.[0]).toBeUndefined();
   });
 });
