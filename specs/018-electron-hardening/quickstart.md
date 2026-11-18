@@ -39,5 +39,5 @@ pnpm test && pnpm test:e2e      # dev binary untouched (SC-005)
 |---|---|
 | Every screen in System, Light, Dark | renders; fonts and icons load |
 | Request `../` path outside the bundle | refused (SC-006) |
-| Theme preference after upgrade | kept, or re-asked once, as decided in the spike (O7) |
+| Theme preference after upgrade | kept: it lives in the database before the switch (T035) |
 | Fuse report | file-protocol extra privileges off |

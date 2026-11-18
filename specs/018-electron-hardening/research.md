@@ -26,7 +26,7 @@ Source: official Electron docs read 2026-11-15 (links in `spec.md`) and an audit
 
 ### R2. Deny all permissions (US2)
 - **Why**: Electron auto-approves permission requests by default.
-- **Trade-off**: `015` must add a named exception for the camera scanner. Cost is one small function.
+- **Trade-off**: later features add named exceptions (005 needs the microphone for problem-report voice notes; 015 needs none on the desktop, because camera scanning runs in the phone apps). Cost is one small function.
 - **Industry practice**: Electron security item 5. No named-company source found.
 - **References**: [Security](https://www.electronjs.org/docs/latest/tutorial/security).
 

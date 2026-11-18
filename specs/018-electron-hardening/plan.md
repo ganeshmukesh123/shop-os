@@ -146,7 +146,7 @@ A1 ─► A2 ─► B ─► C0 (spike) ─► C
 | `senderFrame` of a `file:` page behaves differently from expectation (O11) | Medium | High (could refuse every command) | Test against real Electron first; e2e packaged check saves a bill |
 | Fuses flipped on the dev binary break `pnpm test` | Low | High | Flip only inside electron-builder's packaging step; SC-005 check |
 | ASAR integrity refuses a valid build on Windows (O10) | Low | Medium | Verify on a Windows build before release; keep it behind the packaged-app check |
-| Custom protocol loses saved theme (O7) | Medium | Low | Spike records storage origin; migrate or accept and re-ask |
+| Custom protocol loses saved theme (O7) | Medium | Low | Theme moved into main-process storage in a release before the protocol switch (T035), so nothing is left in the old origin |
 | Navigation rule blocks the dev server | Medium | Low | Parse host and port exactly; dev server only when `isDev` |
 
 ## Complexity Tracking

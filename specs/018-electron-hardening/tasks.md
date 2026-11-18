@@ -92,12 +92,12 @@ description: "Task list for Electron hardening (security and performance)"
 - [ ] T020 [US4] Add the `electronFuses` block to `apps/desktop/electron-builder.yml`: `runAsNode: false`, `enableNodeOptionsEnvironmentVariable: false`, `enableNodeCliInspectArguments: false`, `enableEmbeddedAsarIntegrityValidation: true`, `onlyLoadAppFromAsar: true`; leave `loadBrowserProcessSpecificV8Snapshot` unset (research R4 and R5)
 - [ ] T021 [US4] Verify O2 and O10 on a real packaged build (`pnpm --filter @shopos/desktop package`): Mac plist has `ElectronAsarIntegrity`; on Windows the integrity hash is embedded; record in `research.md`
 - [ ] T022 [US4] Run `check-fuses.mjs` against the packaged app, then confirm `ELECTRON_RUN_AS_NODE=1` does not act as Node on the packaged app and that `pnpm test` still runs on the dev binary (US4 scenarios 1, 2, 4; SC-005)
-- [ ] T023 [US4] Test O14 and US4 scenario 3: alter the `app.asar` header on Mac (and Windows if available) and confirm the app will not start; alter one packed file with an intact header and record whether it fails at launch or on read
+- [ ] T023 [US4] Test O14 and US4 scenario 3: alter the `app.asar` header on Mac **and on a Windows build** (SC-004 promises both; O10) and confirm the app will not start; alter one packed file with an intact header and record whether it fails at launch or on read
 - [ ] T024 [US4] Check O15: try launching the packaged app with Chromium's `--remote-debugging-port`; record the result and, if it attaches, add the smallest block (a startup switch check in `apps/desktop/src/main/app/startApp.ts`) or write the limit into `spec.md` US4 scope
 - [ ] T025 [US4] Extend `apps/desktop/scripts/e2e-packaged.mjs` (or add `apps/desktop/tests/e2e/hardening.spec.ts`): packaged app opens the database, saves and prints a bill (US4 scenario 5)
 - [ ] T026 [US4] Wire `check-fuses.mjs` as an npm script `check:fuses` in `apps/desktop/package.json` and add it to the release steps in `docs/` (and to the CI packaged smoke job once `017` has one) (FR-006)
 - [ ] T027 [US4] Menu (FR-009, D2): add `apps/desktop/src/main/app/appMenu/appMenu.ts` (with test first) that keeps a minimal Edit menu on Mac and may drop the default menu on Windows and Linux; measure startup before and after and keep it only if it helps; call it from `startApp.ts`
-- [ ] T028 [US4] Write the accepted gaps into `docs/` (Linux AppImage O12, migrations outside the archive O13) per D3 and D4
+- [ ] T028 [US4] Write the accepted gaps into `docs/` (Linux AppImage O12, migrations outside the archive O13) per D3 and D4; repeat T003's timing on the packaged build with fuses and the menu and block PR B if bill save and print is more than 5% slower (SC-008)
 
 **Checkpoint (PR B done)**: SC-004 and SC-005 proven; fuse check passes.
 
@@ -115,8 +115,8 @@ description: "Task list for Electron hardening (security and performance)"
 - [ ] T032 [US6] Load the window from the private address in `apps/desktop/src/main/app/mainWindow.ts` and update the navigation policy (T013) and the sender policy (T006) to the new scheme and location; update their tests
 - [ ] T033 [US6] Deliver the CSP by response header for the private protocol in `apps/desktop/src/main/app/securityHeaders.ts` (FR-008); update `securityHeaders.test.ts`
 - [ ] T034 [US6] Turn the file-protocol extra-privileges fuse off in `electron-builder.yml` and add it to `check-fuses.mjs` expectations (FR-008)
-- [ ] T035 [US6] Handle the theme preference per the spike (migrate or accept one re-ask); check every screen in System, Light and Dark in the packaged app; run the Playwright e2e suite
-- [ ] T036 [US6] Run the quickstart "After PR C" checks and record SC-006 in `research.md`
+- [ ] T035 [US6] **Ship before T032** (its own release, while the page is still on `file:`): the spec forbids losing the saved theme (edge case), and the new origin cannot read the old origin's `localStorage`. Move the theme preference into main-process storage (`shop_profile.theme`, `system` default, additive migration; read and written through the typed API by `src/renderer/shared/theme/themePreference.ts`), copying any existing `localStorage` value once; then, after T032, check every screen in System, Light and Dark in the packaged app; run the Playwright e2e suite
+- [ ] T036 [US6] Run the quickstart "After PR C" checks and record SC-006 in `research.md`; repeat T003's timing (SC-008)
 
 **Checkpoint (PR C done)**: SC-006 proven.
 
@@ -150,7 +150,7 @@ Deferred: Phase 8 (US5, US7)        Polish: Phase 9 after each PR
 
 - US1, US2 and US3 touch different files and can be built in parallel, but ship as A1 (US1) and A2 (US2, US3, FR-010) to stay within 400 lines.
 - US4 needs PR A merged (the print and permission behaviour must be stable before packaging checks) and D2 to D4 answered.
-- US6 needs US4 (the fuse check), US1 and US3 (their policies change scheme), and a "go" from T029.
+- US6 needs US4 (the fuse check), US1 and US3 (their policies change scheme), and a "go" from T029. The theme move in T035 ships in a release **before** T032 switches the scheme.
 
 ## Parallel examples
 
