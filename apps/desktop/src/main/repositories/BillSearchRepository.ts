@@ -62,6 +62,10 @@ export class BillSearchRepository {
    * not just this page. A search term is plain text: %, _ and \ match themselves.
    */
   list(filter: BillsListInput): { bills: Bill[]; total: number } {
+    const isInvalidLimit = Number.isInteger(filter.limit) === false || filter.limit <= 0;
+    if (isInvalidLimit) {
+      throw new CoreError("INVALID_FIELD", "Bill page limit must be a positive integer");
+    }
     const where = and(...this.conditions(filter));
     const total =
       this.databaseHandle

@@ -187,4 +187,19 @@ describe("BillRepository.list (T067, FR-016)", () => {
     expect(listed.bills).toHaveLength(MAX_BILL_PAGE_SIZE);
     expect(listed.total).toBe(extraBills);
   });
+
+  it.each([0, -1, -500, 0.5, 1.5, 500.5, NaN, Infinity, -Infinity])(
+    "rejects invalid page limit %s before constructing a query",
+    (limit) => {
+      const select = vi.spyOn(testDb.db, "select");
+
+      expect(() => bills.list({ limit, offset: 0 })).toThrowError(
+        expect.objectContaining({
+          code: "INVALID_FIELD",
+          message: "Bill page limit must be a positive integer",
+        }),
+      );
+      expect(select).not.toHaveBeenCalled();
+    },
+  );
 });
