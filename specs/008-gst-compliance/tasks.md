@@ -26,7 +26,7 @@ description: "Task list for feature 008: GST, bill formats, turnover, scheme swi
 - [ ] T004 [US5] Implement `core/src/privacy/*.ts` to pass T002
 - [ ] T005 [P] [US5] Write tests in `desktop/src/main/services/privacy/DataRequestService.test.ts`: access export writes JSON and PDF; erasure leaves every bill row and line byte for byte unchanged and reprints identically; erasure audited; consent withdrawal writes a new `consent_record`
 - [ ] T006 [US5] Implement `desktop/src/main/services/privacy/NoticeService.ts`, `DataRequestService.ts` and `desktop/src/main/repositories/PrivacyRepository.ts` to pass T005; register `privacy.*`
-- [ ] T007 [US5] Require the transactional consent tick with the notice version in 004's `parties.create` and 003's quick-add (`CONSENT_REQUIRED`), with tests in `desktop/tests/integration/consentOnCreate.test.ts`
+- [ ] T007 [US5] Require the transactional consent tick with the notice version in 004's `parties.create`, and in 003's quick-add if 003 is merged by then (003's window starts 26 April; otherwise 003 adds it when it builds quick-add) (`CONSENT_REQUIRED`), with tests in `desktop/tests/integration/consentOnCreate.test.ts`
 - [ ] T008 [P] [US5] Build `desktop/src/renderer/features/privacy/ConsentTicks/` (notice text, two separate ticks), `PrivacyNotice/` (publish a version in English and Hindi) and `DataRequests/` (list, due dates, export, erase)
 - [ ] T009 [US5] Write the e2e spec `desktop/tests/e2e/privacy.spec.ts` for quickstart 0; ship before 13 May 2027
 
@@ -41,7 +41,7 @@ description: "Task list for feature 008: GST, bill formats, turnover, scheme swi
 
 ## Phase 2: Foundational (M1, 7 to 13 Jun)
 
-- [ ] T012 [P] Write golden tests in `core/tests/gst/taxLine.test.ts`: ₹1,180.00 at 18% gives ₹1,000.00, ₹90.00, ₹90.00; ₹100.01 at 18% gives taxable ₹84.75, CGST ₹7.63, SGST ₹7.63; inter-state gives IGST only; 0% gives no tax; for 10,000 random nets and the rates 0, 5, 12, 18, 28 every line satisfies taxable + CGST + SGST + IGST = net
+- [ ] T012 [P] Write golden tests in `core/tests/gst/taxLine.test.ts`: ₹1,180.00 at 18% gives ₹1,000.00, ₹90.00, ₹90.00; ₹100.01 at 18% gives taxable ₹84.75, CGST ₹7.63, SGST ₹7.63; a line at ₹1,180.00 with ₹118.00 line discount (`amount_paise` ₹1,062.00) gives taxable ₹900.00, CGST ₹81.00, SGST ₹81.00 (the line discount is taken once, through `amount_paise`); inter-state gives IGST only; 0% gives no tax; for 10,000 random nets and the rates 0, 5, 12, 18, 28 every line satisfies taxable + CGST + SGST + IGST = net
 - [ ] T013 [P] Write tests in `core/tests/gst/gstRate.test.ts`: longest prefix wins (85 at 18%, 8539 at 12% before 22 Sep 2025 then 18%); override beats HSN from its date; overlapping ranges rejected; no HSN falls back to the category default, then 18% with source `fallback`
 - [ ] T014 [P] Write tests in `core/tests/gst/registration.test.ts` and `taxBill.test.ts`: the row in force at an instant; a switch at 14:00 makes a 13:59 bill a bill of supply and a 14:01 bill a tax invoice; bill totals equal the sum of lines plus round-off; a bill of supply has zero tax fields
 - [ ] T015 [P] Write tests in `core/tests/gst/turnover.test.ts`: FY sum minus returns; levels at 80%, 95% and crossed with the crossing date; ₹75 lakh limit

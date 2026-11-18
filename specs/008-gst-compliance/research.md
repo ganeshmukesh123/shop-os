@@ -17,7 +17,7 @@ Sources read: the spec, PRD section 11 (FR-CMP-001 to 017), FR-BIL-014, FR-BIL-0
 
 ### D2. Tax is calculated from tax-inclusive prices, line by line
 
-- **Decision** (001 D20, architecture 11.1 step 7): prices are final, tax-inclusive. For each line, net = amount minus line discount minus the line's bill-discount share (003). Under a tax invoice: taxable = net x 10000 / (10000 + rate_bp), rounded half up once; tax = net minus taxable; intra-state: CGST = tax / 2 rounded down, SGST = tax minus CGST (the odd paisa goes to SGST); inter-state: IGST = tax. So taxable + CGST + SGST + IGST = net exactly for every line, and the bill total = sum of lines + round-off (the architecture's CHECK).
+- **Decision** (001 D20, architecture 11.1 step 7): prices are final, tax-inclusive. For each line, net = `amount_paise` minus the line's bill-discount share (003). `amount_paise` already excludes the line discount (001 data model: quantity x price, rounded, minus the line discount), so the line discount is not subtracted again. Example: 1 pipe at ₹1,180.00 with ₹118.00 off has `amount_paise` ₹1,062.00; with no bill discount the net is ₹1,062.00, taxable ₹900.00 at 18%. Under a tax invoice: taxable = net x 10000 / (10000 + rate_bp), rounded half up once; tax = net minus taxable; intra-state: CGST = tax / 2 rounded down, SGST = tax minus CGST (the odd paisa goes to SGST); inter-state: IGST = tax. So taxable + CGST + SGST + IGST = net exactly for every line, and the bill total = sum of lines + round-off (the architecture's CHECK).
 - **Example**: net ₹1,180.00 at 18%: taxable ₹1,000.00, tax ₹180.00, CGST ₹90.00, SGST ₹90.00. Net ₹100.01 at 18%: taxable 10001 x 10000 / 11800 = 8475.42, rounded to ₹84.75; tax ₹15.26; CGST ₹7.63, SGST ₹7.63.
 - **Under composition**: no tax is calculated or shown (FR-001); the line still stores HSN and rate for later reports.
 - **Open item OI-1**: whether the CA prefers CGST and SGST each computed as rate/2 on the taxable value (which can differ from the net by a paisa) instead of the split above. The split keeps the printed total equal to the price the customer agreed.
@@ -35,7 +35,7 @@ The printed content per format is in `contracts/bill-formats.md`, drawn from CGS
 
 ### D5. Number series per format
 
-`number_series` (001) gains `doc_format` in its key, so the series key becomes shop, counter, financial year, document kind and format (architecture 5.4). A scheme switch starts a new series from its effective instant with its own template (for example `C1/27-28/000001` for bills of supply and `T1/27-28/000001` for tax invoices); every template is checked to stay within 16 characters of letters, digits, hyphen and slash (001 numbering). Gaps from crashes and restores are already recorded (001 D21, 003 D16); a 10,000-bill test checks no repeats and no number above 16 characters (SC-005).
+`number_series` (001) gains `doc_format` in its key, so the series key becomes shop, counter, financial year, document kind and format (architecture 5.4). A scheme switch starts a new series from its effective instant with its own template (for example `C1/27-28/000001` for bills of supply and `I1/27-28/000001` for tax invoices (not `T`, which 012's training mode uses)); every template is checked to stay within 16 characters of letters, digits, hyphen and slash (001 numbering). Gaps from crashes and restores are already recorded (001 D21, 003 D16); a 10,000-bill test checks no repeats and no number above 16 characters (SC-005).
 
 ### D6. Turnover tracker
 

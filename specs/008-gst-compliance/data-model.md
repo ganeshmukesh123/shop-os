@@ -50,7 +50,7 @@ Adds `doc_format` (`estimate` for bills before any registration, `bill_of_supply
 
 ### `bill_line` (append-only)
 
-Adds `hsn_code` (snapshot), `gst_rate_bp`, `taxable_paise`, `cgst_paise`, `sgst_paise`, `igst_paise`. CHECK for tax-invoice lines: `taxable + cgst + sgst + igst = amount_paise - line_discount_paise - bill_discount_share_paise`.
+Adds `hsn_code` (snapshot), `gst_rate_bp`, `taxable_paise`, `cgst_paise`, `sgst_paise`, `igst_paise`. CHECK for tax-invoice lines: `taxable + cgst + sgst + igst = amount_paise - bill_discount_share_paise` (`amount_paise` already excludes the line discount, 001).
 
 ### `number_series`
 
