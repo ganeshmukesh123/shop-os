@@ -14,7 +14,7 @@ Make the counter fast and safe: keyboard-only billing with tier and party prices
 
 **Primary Dependencies**: Unchanged from 001 and 002. One addition needs owner approval: the `qrcode` package for the UPI QR (OD-1).
 
-**Storage**: Same SQLite file. New tables `tender_resolution`, `held_bill`, `sales_return`, `sales_return_line`, `credit_note`, `quotation`, `quotation_line`, `unmet_demand`; new columns on `bill`, `bill_line`, `bill_tender`, `item_batch`, `shop_profile`, `number_series`; `stock_movement` rebuilt for `edit_reverse` and `sale_return`; `bill` unique index widened to include `version_no`.
+**Storage**: Same SQLite file. New tables `tender_resolution`, `held_bill`, `sales_return`, `sales_return_line`, `credit_note`, `quotation`, `quotation_line`, `unmet_demand`; new columns on `bill`, `bill_line`, `bill_tender`, `item_batch`, `shop_profile`, `number_series`; new lookup rows (`edit_reverse`, `sale_return`, tender statuses, document kinds; 002 research D17), no table rebuild; `bill`'s two unique indexes widened to include `version_no` and `device_id` (offline edit forks are kept and flagged).
 
 **Testing**: Vitest test-first for every core rule and every bill, return, tender and stock write; Playwright for Electron for the quickstart scenarios; a timed 5-line keyboard bill.
 

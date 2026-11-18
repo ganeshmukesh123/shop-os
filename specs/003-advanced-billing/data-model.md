@@ -31,7 +31,7 @@ held_bill (drafts)   unmet_demand   bill_number_gap (001, new reason)
 | cancel_approval_id    | nullable FK to `approval_request`; required when status becomes `cancelled` from this feature on |
 | user_id               | FK to `app_user` (005): who saved this version                                                   |
 
-Unique index changes from `(shop_id, bill_no)` to `(shop_id, bill_no, version_no)`; `UNIQUE(previous_version_id)` so a version is replaced at most once. The 001 trigger (only `posted` to `cancelled` may change) is unchanged. A version row is never updated to mark it superseded: "current" means no row has it as `previous_version_id`.
+Unique indexes change: `(shop_id, bill_no)` becomes `(shop_id, bill_no, version_no, device_id)`, and 001's `bill_counter_fy_seq_uq` on `(counter_code, financial_year, seq)` becomes `(counter_code, financial_year, seq, version_no, device_id)`, because every version shares the number and the sequence of version 1 (without this, no edit can be inserted). `device_id` is in both keys so two counters that edit the same version offline both keep their printed versions (a fork) instead of one being rejected by sync. The 001 trigger (only `posted` to `cancelled` may change) is unchanged. A version row is never updated to mark it superseded: the **current** version is, among versions that no other row names as `previous_version_id`, the one with the latest `hlc` (010; before 010, the latest `billed_at`). When two versions share a `previous_version_id`, a `bill_version_conflict` exception is raised for the owner, who settles it with a further edit (same day) or a return.
 
 ### `bill_line` (append-only)
 
@@ -63,7 +63,7 @@ Adds `mrp_pack_qty_milli` integer above 0, default 1000. Cap per base unit = `mr
 
 ### `stock_movement`
 
-`movement_type` adds `edit_reverse` and `sale_return`; `doc_type` adds `sales_return`. Rebuilt with triggers re-created (as in 002).
+Rows added to 002's lookup tables (002 research D17), no rebuild: `movement_type` `edit_reverse` (in, doc) and `sale_return` (in, doc); `movement_doc_type` `sales_return`.
 
 ### `shop_profile`
 
@@ -79,7 +79,7 @@ Adds `home_state_code` (2 digits), `upi_vpa` (text up to 60, nullable), `upi_pay
 
 ### `number_series` (001)
 
-Gains `doc_kind` (`bill` default, `return`, `quotation`, `credit_note`); unique per shop, counter, financial year and `doc_kind`. Templates for the new kinds default to `R{counter}/{fy}/{seq6}`, `Q{counter}/{fy}/{seq6}`, `CN{counter}/{fy}/{seq5}`; all at most 16 characters.
+Gains `doc_kind`, a foreign key to a new lookup table `doc_kind` (seeded `bill` default, `return`, `quotation`, `credit_note`; later features add rows such as `receipt`, `challan`, `debit_note` by INSERT); unique per shop, counter, financial year and `doc_kind`. Templates for the new kinds default to `R{counter}/{fy}/{seq6}`, `Q{counter}/{fy}/{seq6}`, `CN{counter}/{fy}/{seq5}`; all at most 16 characters.
 
 ## New tables
 
@@ -149,7 +149,7 @@ Approval (005): requested -> approved | rejected | expired; approved -> consumed
 
 ## Indexes
 
-- `bill(shop_id, bill_no, version_no)` unique; `bill(previous_version_id)` unique; `bill(party_id, business_date)`.
+- `bill(shop_id, bill_no, version_no, device_id)` unique; `bill(counter_code, financial_year, seq, version_no, device_id)` unique (replaces 001's sequence index); `bill(previous_version_id)` (not unique, forks allowed); `bill(party_id, business_date)`.
 - `bill_tender(business_id, reference) where mode = 'upi' and reference is not null` unique; `bill_tender(status)`.
 - `sales_return_line(bill_line_id)`; `sales_return(bill_id)`.
 - `quotation(shop_id, quotation_no, version_no)` unique; `bill_line(quotation_line_id)`.
