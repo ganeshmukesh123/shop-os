@@ -67,7 +67,7 @@ Source: official Electron docs read 2026-11-15 (links in `spec.md`) and an audit
 
 - **O1 (resolved 2026-11-17)**: yes. electron-builder 26.15.7 has an `electronFuses` option (`app-builder-lib/scheme.json`, `out/platformPackager.js` calls `flipFuses` from `@electron/fuses`). No new package expected. Read from the installed source, not yet run.
 - **O2 (partly resolved 2026-11-17)**: electron-builder computes the ASAR header hash (`integrity.computeData`) and writes `ElectronAsarIntegrity` into the Mac plist (`electronMac.js`). Windows handling not read; confirm in the PR B task on a real build.
-- **O3 (likely resolved 2026-11-17)**: `electron.vite.config.ts` replaces the `<!--CSP-->` marker in `src/renderer/index.html`. Confirm the built `out/` file carries the meta tag (task T-A0).
+- **O3 (resolved 2026-11-18)**: `electron.vite.config.ts` replaces the `<!--CSP-->` marker in `src/renderer/index.html`. A fresh `pnpm build` on 2026-11-18 produced `out/renderer/index.html` with the `Content-Security-Policy` meta tag (task T001).
 - **O4**: does the Vite-built output (module scripts, fonts, Radix assets) load under a custom protocol? Needs a spike before PR C.
 - **O5**: can `grantFileProtocolExtraPrivileges` be disabled while still on `file://`? Module scripts over `file://` may need it. Run the packaged app with it off.
 - **O6**: does the offscreen print window (`data:` URL) still work after the permission and navigation changes?

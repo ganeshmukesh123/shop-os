@@ -21,9 +21,9 @@ description: "Task list for Electron hardening (security and performance)"
 
 ## Phase 1: Setup and verification of assumptions
 
-- [X] T001 Confirm the built renderer carries the CSP meta tag: run `pnpm build` in `apps/desktop`, check `apps/desktop/out/renderer/index.html` for `Content-Security-Policy`, and record the result in `specs/018-electron-hardening/research.md` O3 _(2026-11-17: the 15 Nov build output carries the CSP meta tag, and `electron.vite.config.ts` injects it. A fresh `pnpm build` failed here with `Cannot find module 'electron/package.json'`, which looks like an environment problem; re-check on a fresh build.)_
+- [X] T001 Confirm the built renderer carries the CSP meta tag: run `pnpm build` in `apps/desktop`, check `apps/desktop/out/renderer/index.html` for `Content-Security-Policy`, and record the result in `specs/018-electron-hardening/research.md` O3 _(2026-11-17: the 15 Nov build output carries the CSP meta tag, and `electron.vite.config.ts` injects it. A fresh `pnpm build` failed here with `Cannot find module 'electron/package.json'`. 2026-11-18: a fresh `pnpm build` succeeded and `out/renderer/index.html` carries the `Content-Security-Policy` meta tag.)_
 - [ ] T002 Owner action (D1 answered by default `INTERNAL`; D2 to D4 still open): answer D1 (refusal error code), D2 (main platform, O8), D3 (Linux exception, O12) and D4 (migrations outside the archive, O13) from `plan.md`; record each answer in `research.md`
-- [ ] T003 [P] Record the performance baseline before PR A: time of `apps/desktop/tests/integration/searchPerf.test.ts` and of a bill save plus print in `pnpm dev`, in `research.md` (for SC-008)
+- [ ] T003 [P] Record the performance baseline before PR A: time of `apps/desktop/tests/integration/searchPerf.test.ts` and of a bill save plus print, both in `pnpm dev` and in the packaged build (before fuses and the menu), in `research.md` (for SC-008; compare each later timing with the baseline of the same build mode)
 
 **Checkpoint**: O3 closed, D1 to D4 answered, baseline recorded.
 
@@ -39,7 +39,7 @@ description: "Task list for Electron hardening (security and performance)"
 - [X] T005 [P] [US1] Write the failing table-driven test for `isTrustedSender` in `apps/desktop/src/main/ipc/senderPolicy/senderPolicy.test.ts` covering every row of `contracts/hardening-policies.md` section 1 (own page, null frame, child frame, foreign page, dev-server page in a packaged build) _(placed in `apps/desktop/tests/unit/senderPolicy.test.ts`: the Vitest `main` project only includes `tests/unit` and `tests/integration`)_
 - [X] T006 [US1] Implement the pure `isTrustedSender` in `apps/desktop/src/main/ipc/senderPolicy/senderPolicy.ts` with `types.ts` (`ISenderSummary`) and `constants.ts`; compare parsed scheme and location, never a serialized origin (FR-001) _(16 tests pass)_
 - [X] T007 [US1] Write the failing integration case in `apps/desktop/tests/integration/ipcRegistration.test.ts`: a refused sender gets `{ ok: false, code, message }`, no handler or service is called, zero rows written, and a log line without customer data _(also updated `mainEntry.test.ts` and `appConfig.test.ts`)_
-- [X] T008 [US1] Call the policy before dispatch in `apps/desktop/src/main/ipc/index.ts` (use `event.senderFrame` and the main window's `mainFrame`); refusal never throws across the bridge; error code per D1 _(D1: reused `INTERNAL` with message `Command refused`; trusted pages come from `listTrustedPageUrls` in `appConfig.ts`)_
+- [X] T008 [US1] Call the policy before dispatch in `apps/desktop/src/main/ipc/index.ts` (use `event.senderFrame` and the main window's `mainFrame`); refusal never throws across the bridge; error code per D1 _(D1: reused `INTERNAL` with message `Command refused`; trusted pages come from `listTrustedPageUrls` in `appConfig.ts`; the code is in PR #43 (`feat/018-ipc-sender-check`), so merge #43 before this tasks file)_
 
 **Checkpoint**: SC-001 tests pass; own-page commands behave as before. Ship as PR A1.
 
@@ -51,7 +51,7 @@ description: "Task list for Electron hardening (security and performance)"
 
 **Independent test**: trigger a request and a check on the session; both deny.
 
-- [ ] T009 [P] [US2] Write the failing test in `apps/desktop/src/main/app/permissionPolicy/permissionPolicy.test.ts`: any permission name is denied for requests and not granted for checks; an empty named-exceptions list is the default
+- [ ] T009 [P] [US2] Write the failing test in `apps/desktop/tests/unit/permissionPolicy.test.ts` (the Vitest `main` project only includes `tests/unit` and `tests/integration`, as in T005): any permission name is denied for requests and not granted for checks; an empty named-exceptions list is the default
 - [ ] T010 [US2] Implement `denyAllPermissions` and the empty `ALLOWED_PERMISSION_EXCEPTIONS` constant in `apps/desktop/src/main/app/permissionPolicy/permissionPolicy.ts`, `constants.ts` and `types.ts`
 - [ ] T011 [US2] Register `setPermissionRequestHandler` and `setPermissionCheckHandler` on the default session from `apps/desktop/src/main/app/startApp.ts` (next to `installSecurityHeaders`); extend the fake session in `apps/desktop/tests/integration/startApp.test.ts`
 
@@ -97,7 +97,7 @@ description: "Task list for Electron hardening (security and performance)"
 - [ ] T025 [US4] Extend `apps/desktop/scripts/e2e-packaged.mjs` (or add `apps/desktop/tests/e2e/hardening.spec.ts`): packaged app opens the database, saves and prints a bill (US4 scenario 5)
 - [ ] T026 [US4] Wire `check-fuses.mjs` as an npm script `check:fuses` in `apps/desktop/package.json` and add it to the release steps in `docs/` (and to the CI packaged smoke job once `017` has one) (FR-006)
 - [ ] T027 [US4] Menu (FR-009, D2): add `apps/desktop/src/main/app/appMenu/appMenu.ts` (with test first) that keeps a minimal Edit menu on Mac and may drop the default menu on Windows and Linux; measure startup before and after and keep it only if it helps; call it from `startApp.ts`
-- [ ] T028 [US4] Write the accepted gaps into `docs/` (Linux AppImage O12, migrations outside the archive O13) per D3 and D4; repeat T003's timing on the packaged build with fuses and the menu and block PR B if bill save and print is more than 5% slower (SC-008)
+- [ ] T028 [US4] Write the accepted gaps into `docs/` (Linux AppImage O12, migrations outside the archive O13) per D3 and D4; repeat T003's timing on the packaged build with fuses and the menu, compare it with T003's packaged baseline, and block PR B if bill save and print is more than 5% slower (SC-008)
 
 **Checkpoint (PR B done)**: SC-004 and SC-005 proven; fuse check passes.
 
@@ -110,12 +110,12 @@ description: "Task list for Electron hardening (security and performance)"
 **Independent test**: every screen renders in System, Light and Dark; a `../` request is refused.
 
 - [ ] T029 [US6] Spike (O4, O5, O7): load the built renderer under a registered `shopos-app` scheme in a scratch branch; record whether module scripts, fonts and Radix assets load, whether `grantFileProtocolExtraPrivileges` can be off, and whether `localStorage` (theme) is lost; write a go or no-go in `research.md`. Stop here if no-go.
-- [ ] T030 [P] [US6] Write the failing test for the path guard in `apps/desktop/src/main/app/appProtocol/pathGuard.test.ts`: in-bundle file served; `../`, encoded `%2e%2e`, absolute paths and non-GET refused (contract section 5)
+- [ ] T030 [P] [US6] Write the failing test for the path guard in `apps/desktop/tests/unit/pathGuard.test.ts` (Vitest discovery, as in T005): in-bundle file served; `../`, encoded `%2e%2e`, absolute paths and non-GET refused (contract section 5)
 - [ ] T031 [US6] Implement the path guard and protocol handler in `apps/desktop/src/main/app/appProtocol/` (`pathGuard.ts`, `appProtocol.ts`, `constants.ts`, `types.ts`); register the scheme before app ready and serve with `protocol.handle`
 - [ ] T032 [US6] Load the window from the private address in `apps/desktop/src/main/app/mainWindow.ts` and update the navigation policy (T013) and the sender policy (T006) to the new scheme and location; update their tests
 - [ ] T033 [US6] Deliver the CSP by response header for the private protocol in `apps/desktop/src/main/app/securityHeaders.ts` (FR-008); update `securityHeaders.test.ts`
 - [ ] T034 [US6] Turn the file-protocol extra-privileges fuse off in `electron-builder.yml` and add it to `check-fuses.mjs` expectations (FR-008)
-- [ ] T035 [US6] **Ship before T032** (its own release, while the page is still on `file:`): the spec forbids losing the saved theme (edge case), and the new origin cannot read the old origin's `localStorage`. Move the theme preference into main-process storage (`shop_profile.theme`, `system` default, additive migration; read and written through the typed API by `src/renderer/shared/theme/themePreference.ts`), copying any existing `localStorage` value once; then, after T032, check every screen in System, Light and Dark in the packaged app; run the Playwright e2e suite
+- [ ] T035 [US6] **Ship before T032** (its own release, while the page is still on `file:`): the spec forbids losing the saved theme (edge case), and the new origin cannot read the old origin's `localStorage`. Move the theme preference into main-process storage (`shop_profile.theme`, `system` default, additive migration; read and written through the typed API by `src/renderer/shared/theme/themePreference.ts`), copying any existing `localStorage` value once. The PR C release requires this release to be installed first: write that in the release notes and add it to the PR C checks. Then, after T032, check every screen in System, Light and Dark in the packaged app; run the Playwright e2e suite
 - [ ] T036 [US6] Run the quickstart "After PR C" checks and record SC-006 in `research.md`; repeat T003's timing (SC-008)
 
 **Checkpoint (PR C done)**: SC-006 proven.

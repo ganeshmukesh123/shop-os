@@ -39,7 +39,7 @@ Example: a foreign frame sends "bill:save" for C1/26-27/000123 (2 pcs x ₹120)
 
 **Project Type**: desktop-app (Electron main process, packaging config)
 
-**Performance Goals**: bill save and print not slower by more than 5% after any PR (SC-008, against the `016` benchmark once it exists; until then compare the existing `searchPerf` and print timings by hand).
+**Performance Goals**: bill save and print not slower by more than 5% after any PR (SC-008, against the `016` benchmark once it exists; until then time `searchPerf` and a bill save plus print by hand, as T003 records, in the same build mode before and after).
 
 **Constraints**: fuses only on packaged output, never the dev or test binary (tests use `ELECTRON_RUN_AS_NODE`, FR-005); each PR within 400 changed lines (`pnpm pr:size`); lint limits (file 200, function 40, complexity 10, no single-letter names).
 
@@ -146,7 +146,7 @@ A1 ─► A2 ─► B ─► C0 (spike) ─► C
 | `senderFrame` of a `file:` page behaves differently from expectation (O11) | Medium | High (could refuse every command) | Test against real Electron first; e2e packaged check saves a bill |
 | Fuses flipped on the dev binary break `pnpm test` | Low | High | Flip only inside electron-builder's packaging step; SC-005 check |
 | ASAR integrity refuses a valid build on Windows (O10) | Low | Medium | Verify on a Windows build before release; keep it behind the packaged-app check |
-| Custom protocol loses saved theme (O7) | Medium | Low | Theme moved into main-process storage in a release before the protocol switch (T035), so nothing is left in the old origin |
+| Custom protocol loses saved theme (O7) | Medium | Low | Theme moved into main-process storage in a release before the protocol switch (T035), so nothing is left in the old origin. The PR C release requires the T035 release to be installed first (one shop, one install: the owner upgrades through it); a skipped release falls back to System once |
 | Navigation rule blocks the dev server | Medium | Low | Parse host and port exactly; dev server only when `isDev` |
 
 ## Complexity Tracking

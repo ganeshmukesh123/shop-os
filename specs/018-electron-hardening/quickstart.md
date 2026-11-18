@@ -30,14 +30,14 @@ pnpm test && pnpm test:e2e      # dev binary untouched (SC-005)
 |---|---|
 | Fuse report | run-as-node, node-options, node-inspect off; integrity and only-from-asar on |
 | Run-as-node on packaged app | does not print `1`; app starts normally or exits |
-| Alter `app.asar` header (Mac or Windows) | app will not start (US4 scenario 3) |
+| Alter `app.asar` header (Mac or Windows) | app will not start (US4 scenario 3); then restore the original archive or re-run `package` before the next row |
 | Packaged app: save and print bill C1/26-27/000123 | works; database opens (US4 scenario 5) |
 
 ## After PR C (US6)
 
 | Check | Expected |
 |---|---|
-| Every screen in System, Light, Dark | renders; fonts and icons load |
+| Packaged app: every screen in System, Light, Dark | renders; fonts and icons load from the private address |
 | Request `../` path outside the bundle | refused (SC-006) |
-| Theme preference after upgrade | kept: it lives in the database before the switch (T035) |
+| Theme preference after upgrade from the T035 release | kept: it lives in the database before the switch (T035) |
 | Fuse report | file-protocol extra privileges off |
