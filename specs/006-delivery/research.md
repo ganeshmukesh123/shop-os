@@ -20,7 +20,7 @@ Sources read: the spec, PRD section 6 Delivery (FR-DLV-001 to 008), FR-BIL-022, 
 
 ### D3. The delivery charge is a non-stock bill line
 
-- **Decision**: 002's `item_family.kind` gains `service`. A seeded service item "Delivery charge" has no stock movements (the stock rules skip `service` variants). When "To deliver" is ticked before saving, the charge line is added from the rate for the chosen area or distance band (`delivery_rate`). Waiving removes the line, needs the permission `delivery.waive` (new, 005; Owner and Manager allow, Counter request) and writes an audit entry with the waived amount.
+- **Decision**: 002's `item_family.kind` gains `service`. A seeded service item "Delivery charge" has no stock movements (the stock rules skip `service` variants). When "To deliver" is ticked before saving, the charge line is added from the rate for the chosen area or distance band (`delivery_rate`). Waiving removes the line, needs the permission `delivery.waive` (new, 005; Owner and Manager allow, Counter request) and writes an audit entry with the waived amount. Service lines carry no cost, so 003's below-cost guard skips them and 011's cost completeness leaves them out (otherwise every delivery would show "Cost unknown").
 - **Marking after save**: allowed, but without a charge line unless the bill is edited the same day (003's version flow adds the line). Rationale: adding a line to a saved bill otherwise breaks constitution I.
 - **Distance**: by area name or a band label typed by the owner ("0 to 3 km"); no map routing (spec assumption).
 

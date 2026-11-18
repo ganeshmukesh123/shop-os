@@ -64,13 +64,12 @@ Address fields may be corrected before the delivery is out (audited); not after.
 
 ## Changed tables
 
-- `item_family.kind` (002) adds `service`; stock folding and movement writers skip `service` variants. Seeded family and variant "Delivery charge" (unit `pcs`, decimals off, price 0; the line price comes from the rate).
-- `bill_tender.mode` (003) adds `cod`; `status` adds `pending_collection`.
-- `tender_resolution.kind` (003) adds `collected` with `driver_id` and `collected_mode` (`cash`, `upi`) and `reference` for UPI.
-- `cash_entry.kind` (005) adds `driver_handover` (positive).
+- `item_family.kind` (002) gets `service` (a lookup row if 002 made `kind` a lookup; `item_family` is master data, not append-only, so a rebuild there would also be safe); stock folding and movement writers skip `service` variants. Seeded family and variant "Delivery charge" (unit `pcs`, decimals off, price 0; the line price comes from the rate).
+- Lookup rows, no table rebuild (002 research D17): `tender_mode` `cod`, `tender_status` `pending_collection`, `cash_entry_kind` `driver_handover` (positive), `doc_kind` `challan`.
+- `tender_resolution.kind` (003, a lookup table under 002 research D17) gets the row `collected`; new nullable columns with `driver_id` and `collected_mode` (`cash`, `upi`) and `reference` for UPI.
 - `unmet_demand` (003) adds `reason` (`not_available` default, `referred_inter_state`) and `value_paise` (nullable).
 - `role_permission` (005) seeds `delivery.waive` (Owner allow, Manager allow, Counter request, others deny) and `delivery.dispatch` (Owner, Manager allow).
-- `number_series.doc_kind` adds `challan`.
+- `number_series` uses the `doc_kind` row `challan`.
 
 ## Derived values (in `@shopos/core`)
 
