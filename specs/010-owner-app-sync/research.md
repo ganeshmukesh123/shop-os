@@ -42,7 +42,7 @@ As architecture 5.3: facts (bills, movements, ledger, cash, audit, deliveries) n
 
 ### D6. Pull-apply on the desktop: which operations
 
-The desktop applies, from other devices: every fact operation (another counter's bills and movements keep local stock converging, EC-02), master-data upserts, approval decisions from the owner's phone, and the godown app's receipts, movements and counts. Apply handlers write the rows exactly as received (ids included), through the same repositories, so a pulled bill is byte-for-byte the author's. The same handlers build the server's nightly snapshot (D2).
+The desktop applies, from other devices: every fact operation (another counter's bills and movements keep local stock converging, EC-02), master-data upserts, approval decisions from the owner's phone, and the godown app's receipts, movements and counts. Apply handlers write the rows exactly as received (ids included), so a pulled bill is byte-for-byte the author's, and they go through the same writers as local use cases (`MovementService`, `LedgerService`, the projection updaters for `item_sales_stat`, `turnover_daily` and `party_balance`), in the same transaction as the rows, so every cache stays equal to its records and the nightly verifiers of 004, 007 and 008 stay quiet (staff review 2026-11-18). Bill versions above 1 (003 D1) are applied as edits; two versions with the same predecessor from different devices are both kept and flagged (`bill_version_conflict`). The handlers and repository interfaces live in a shared package, `packages/data`, which both the desktop and the server's snapshot builder use (D14).
 
 ### D7. Stack additions (each needs owner approval)
 
@@ -62,7 +62,7 @@ The desktop applies, from other devices: every fact operation (another counter's
 
 ### D8. Device registration, tokens and revoke
 
-- The owner creates a one-time code on the desktop (or the owner app); a new device exchanges it at `POST /v1/devices/register` for an opaque device token, stored with Electron `safeStorage` on desktops (018's US5 waits for this) and the Android Keystore on phones. The token is exchanged for a 15-minute JWT (architecture 9.1). PINs never leave the device.
+- The owner creates a one-time code on the desktop (or the owner app); a new device exchanges it at `POST /v1/devices/register` for an opaque device token, stored with Electron `safeStorage` on desktops (018's US5 waits for this) and the Android Keystore on phones. The token is exchanged for a 15-minute JWT (architecture 9.1). **PINs and PIN hashes never leave the device that set them** (staff review 2026-11-18): `user.upsert` operations carry no `pin_hash`; a 6-digit PIN hash can be brute-forced offline (005 D1), so it must not pass through the server. Each phone user sets a device PIN on that phone, which unlocks a per-device signing key kept in the Android Keystore; the public half is registered with the server at enrolment. Remote approvals are signed with that key, and the server verifies the signature (no shared secret, no PIN-derived key on the server).
 - **Revoke** (EC-03): the owner revokes from the phone; the token stops working at once; the revoked device, when it next connects, receives `DEVICE_REVOKED`, locks itself and pushes nothing more. The "at risk" report shows the device's last acknowledged `device_seq`, last sync time and the last bill number the server saw from each of its series; bills made after that are unknown to the server and are listed as "possibly unsynced since <time>".
 - **Clock** (EC-20): the server records `received_at` with every operation; a skew above 10 minutes between device time and server time raises an exception (the spec's 10 minutes; the architecture's 5-minute banner is kept as the warning level).
 
@@ -91,16 +91,23 @@ Scan-first React Native screens for receiving (009 receipts as drafts posted fro
 
 A written plan in `docs/operations/breach-response.md` (who decides, how affected people and the Data Protection Board are told, the 72-hour detailed report, evidence kept) for counsel to review (FR-011, NFR-009). Availability 99.5% a month (FR-010) with one VM: an external uptime check, alerting to the builder's phone, a quarterly restore drill (architecture 12.2). Counters never depend on the server (constitution IV).
 
+### D14. Shared data package and a separate server install (staff review 2026-11-18)
+
+- **Problem**: the snapshot builder (D2) replays operations with the desktop's apply handlers, which need better-sqlite3. The workspace keeps one native binary per install and it must be the Electron build (CLAUDE.md); plain Node on the server fails with `NODE_MODULE_VERSION`. Importing `apps/desktop` internals from `apps/server` also breaks the layering rules.
+- **Decision**: move the apply handlers, the repository interfaces and their SQLite implementations into `packages/data` (no Electron imports). The server is built and deployed from its own install (a Docker image running `pnpm install --filter @shopos/server...`), which compiles better-sqlite3 for the server's Node ABI; the desktop keeps the Electron build. A CI job builds both and runs the snapshot test in the server image.
+- **Alternative**: run the snapshot builder under an Electron binary with `ELECTRON_RUN_AS_NODE` on the server (works with one binary, but ships Electron to a server). Rejected unless the separate install proves hard (OI-7).
+
 ## Open items
 
-| ID   | Item                                                                                                   | Resolve by                         | Milestone |
-| ---- | ------------------------------------------------------------------------------------------------------ | ---------------------------------- | --------- |
-| OI-1 | Phone SQLite driver with Drizzle (expo-sqlite) handles 50,000 items and the snapshot size              | Spike on a mid-range Android phone | M1        |
-| OI-2 | Snapshot size for 24 months of the shop's data (architecture estimates a few hundred MB, not measured) | Measure on generated data          | M3        |
-| OI-3 | FCM delivery time in the shop's area (10 s target)                                                     | Measure 50 notifications           | M5        |
-| OI-4 | Hosting cost and region (VM, database, object storage)                                                 | Current quotes                     | M1        |
-| OI-5 | Breach plan wording, notice periods and the Board's process under the DPDP Rules 2025                  | Counsel                            | M3        |
-| OI-6 | `safeStorage` behaviour on Linux without a keyring (backup key and device token)                       | Test on Ubuntu                     | M3        |
+| ID   | Item                                                                                                        | Resolve by                         | Milestone |
+| ---- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------- | --------- |
+| OI-1 | Phone SQLite driver with Drizzle (expo-sqlite) handles 50,000 items and the snapshot size                   | Spike on a mid-range Android phone | M1        |
+| OI-2 | Snapshot size for 24 months of the shop's data (architecture estimates a few hundred MB, not measured)      | Measure on generated data          | M3        |
+| OI-3 | FCM delivery time in the shop's area (10 s target)                                                          | Measure 50 notifications           | M5        |
+| OI-4 | Hosting cost and region (VM, database, object storage)                                                      | Current quotes                     | M1        |
+| OI-5 | Breach plan wording, notice periods and the Board's process under the DPDP Rules 2025                       | Counsel                            | M3        |
+| OI-7 | Separate server install builds better-sqlite3 for Node in Docker while the desktop keeps the Electron build | Build both in CI                   | M1        |
+| OI-6 | `safeStorage` behaviour on Linux without a keyring (backup key and device token)                            | Test on Ubuntu                     | M3        |
 
 ## Owner decisions needed
 

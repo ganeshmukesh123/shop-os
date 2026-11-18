@@ -64,6 +64,7 @@ specs/010-owner-app-sync/
 ```text
 packages/core/src/sync/          # hlc.ts, deviceSeq.ts, mergeMasterField.ts, clockSkew.ts
 packages/core/src/owner/         # dailySnapshot.ts, rankAlerts.ts
+packages/data/src/               # repositories, apply handlers, projection updaters (used by desktop and server; no Electron imports)
 packages/sync-protocol/src/      # envelope.ts, opTypes/ (one file per family with Zod payloads), versions.ts
 apps/desktop/src/main/
 ├── sync/                        # OutboxPort adapter, SyncAgent (push, pull, backoff), applyHandlers/ (one per family),
@@ -87,7 +88,7 @@ apps/mobile/                     # Expo app with two entry modes
 docs/operations/                 # breach-response.md, server-runbook.md, restore guide update
 ```
 
-**Structure Decision**: Three apps and two shared packages. The desktop's apply handlers are written once in a form the server's snapshot builder can import (they depend only on repository interfaces and Drizzle SQLite), so the snapshot and the counters cannot disagree.
+**Structure Decision**: Three apps and three shared packages. The apply handlers and repositories live in `packages/data` (research D14), used by the desktop and by the server's snapshot builder, so the snapshot and the counters cannot disagree. The server has its own install and Docker image so its better-sqlite3 is built for Node, while the desktop keeps the Electron build (CLAUDE.md).
 
 ## Milestone Plan
 

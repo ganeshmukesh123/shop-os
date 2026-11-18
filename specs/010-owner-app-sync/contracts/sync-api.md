@@ -41,10 +41,10 @@ Push rules: each operation in its own savepoint; known `op_id` gives `duplicate`
 | ------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------- |
 | `POST /v1/approvals` (counter)                                | `{ approval }` (as 005's `approval_request`) | `{ approvalId, status: "requested", expiresAt }` |                                                                              |
 | `GET /v1/approvals/{id}?wait=30` (counter, long poll)         |                                              | `{ status, decidedBy?, reason? }`                |                                                                              |
-| `POST /v1/approvals/{id}/decide` (owner or delegated manager) | `{ decision, reason?, userId, pinProof }`    | `{ approval }`                                   | `ALREADY_DECIDED` (first decision wins), `EXPIRED`, `NOT_ALLOWED_TO_APPROVE` |
+| `POST /v1/approvals/{id}/decide` (owner or delegated manager) | `{ decision, reason?, userId, signature }`   | `{ approval }`                                   | `ALREADY_DECIDED` (first decision wins), `EXPIRED`, `NOT_ALLOWED_TO_APPROVE` |
 | `POST /v1/push/subscribe`                                     | `{ fcmToken }`                               | `{}`                                             |                                                                              |
 
-`pinProof` is an HMAC over the approval id made on the phone with a key derived from the user's locally verified PIN session; PINs never leave the device (research D8).
+`signature` is made on the phone with its per-device Keystore key (unlocked by the phone's own PIN) over the approval id, decision and amount; the server verifies it with the registered `device_key`. No PIN or PIN-derived secret reaches the server (research D8).
 
 ## Health
 
