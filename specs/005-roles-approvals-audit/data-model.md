@@ -7,7 +7,7 @@ Builds on 001's target shape and 002's `exception_event`. Conventions unchanged.
 ```
 app_role 1--* role_permission
 app_role 1--* app_user 1--* approval_request (requested_by / decided_by)
-app_user 1--* audit_log (hash chain per business)
+app_user 1--* audit_log (hash chain per device)
 app_user 0..1--1 discount_limit (per role or per user)
 cash_session (per counter, business date) 1--* cash_entry, 1--0..1 cash_count
 problem_report    device (one row for this computer)    owner_recovery (hash)
@@ -71,18 +71,18 @@ One row for this computer: `kind` (`desktop`), `counter_code`, `label`, `revoked
 
 ### `audit_log` (append-only)
 
-| Field                   | Rule                                                                                                                        |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| seq                     | integer, unique per business, increasing by 1                                                                               |
-| action                  | for example `item.update`, `bill.cancel`, `approval.decide`, `user.sign_in`, `pin.failed`, `settings.update`, `data.export` |
-| entity_type, entity_id  | nullable for sign-in                                                                                                        |
-| user_id, device_id      | user nullable only for failed PINs of unknown users                                                                         |
-| device_time             | epoch ms (local clock); `server_time` nullable, filled by 010                                                               |
-| before_json, after_json | changed fields only, nullable                                                                                               |
-| reason                  | nullable text up to 200                                                                                                     |
-| prev_hash, row_hash     | 64 hex characters each; first row's `prev_hash` is 64 zeros                                                                 |
+| Field                   | Rule                                                                                                                                         |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| seq                     | integer, unique per **device**, increasing by 1 (`UNIQUE(device_id, seq)`); each device keeps its own chain so offline devices never collide |
+| action                  | for example `item.update`, `bill.cancel`, `approval.decide`, `user.sign_in`, `pin.failed`, `settings.update`, `data.export`                  |
+| entity_type, entity_id  | nullable for sign-in                                                                                                                         |
+| user_id, device_id      | user nullable only for failed PINs of unknown users                                                                                          |
+| device_time             | epoch ms (local clock); `server_time` nullable, filled by 010                                                                                |
+| before_json, after_json | changed fields only, nullable                                                                                                                |
+| reason                  | nullable text up to 200                                                                                                                      |
+| prev_hash, row_hash     | 64 hex characters each; first row's `prev_hash` is 64 zeros                                                                                  |
 
-Triggers reject UPDATE and DELETE. Verification walks `seq` order and recomputes each `row_hash`.
+Triggers reject UPDATE and DELETE. Verification walks each device's chain in `seq` order and recomputes each `row_hash`. With sync (010), the server verifies every device's chain as it arrives and records the order it received entries in; a single business-wide sequence is impossible while devices work offline.
 
 ### `cash_session`
 
@@ -90,7 +90,7 @@ Triggers reject UPDATE and DELETE. Verification walks `seq` order and recomputes
 
 ### `cash_entry` (append-only)
 
-`session_id`, `kind` (`opening_float`, `cash_sale`, `cash_sale_reverse`, `cash_receipt`, `cash_refund`, `cash_expense`, `cash_drop`, `cash_in_other`), `amount_paise` (signed: in positive, out negative; CHECK sign by kind), `doc_type`, `doc_id`, `note` (required for `cash_expense`, `cash_drop`, `cash_in_other`), `user_id`, `occurred_at`.
+`session_id`, `kind` (`opening_float`, `cash_sale`, `cash_sale_reverse`, `cash_receipt`, `cash_refund`, `cash_expense`, `cash_drop`, `cash_in_other`), `amount_paise` (signed: in positive, out negative; `kind` is a foreign key to a `cash_entry_kind` lookup table with a `sign` column, checked by a trigger, so 006, 009 and 011 add kinds by INSERT; 002 research D17), `doc_type`, `doc_id`, `note` (required for `cash_expense`, `cash_drop`, `cash_in_other`), `user_id`, `occurred_at`.
 
 ### `cash_count`
 
@@ -125,5 +125,5 @@ Example: expected ₹18,450.00, counted ₹18,200.00: variance -₹250.00; above
 
 - `app_user(role_id)`; `role_permission(role_id, permission)` unique.
 - `approval_request(status, expires_at)`, `approval_request(subject_type, subject_id)`.
-- `audit_log(business_id, seq)` unique, `audit_log(entity_type, entity_id)`, `audit_log(action, device_time)`.
+- `audit_log(device_id, seq)` unique, `audit_log(entity_type, entity_id)`, `audit_log(action, device_time)`.
 - `cash_entry(session_id)`, `cash_session(shop_id, counter_code, business_date)` unique.
