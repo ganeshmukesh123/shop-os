@@ -1,4 +1,4 @@
-import type { IAppConfig } from "../../src/main/app/appConfig";
+import { listTrustedPageUrls, type IAppConfig } from "../../src/main/app/appConfig";
 import {
   buildMainWindowOptions,
   createMainWindow,
@@ -128,7 +128,18 @@ describe("createMainWindow", () => {
   it("loads the built page from disk in a packaged app", () => {
     const { fakeWindow, calls } = buildFakeWindow();
     createMainWindow(() => fakeWindow, buildConfig());
-    expect(calls.loadedFiles).toEqual(["/app/renderer/index.html"]);
-    expect(calls.loadedUrls).toEqual([]);
+    expect(calls.loadedFiles).toEqual([]);
+    expect(calls.loadedUrls).toEqual(["file:///app/renderer/index.html"]);
+  });
+
+  it("loads the same encoded URL it trusts when the renderer path contains a percent sign", () => {
+    const { fakeWindow, calls } = buildFakeWindow();
+    const config = buildConfig({ rendererHtmlPath: "/Shop 100%/renderer/index.html" });
+
+    createMainWindow(() => fakeWindow, config);
+
+    expect(calls.loadedUrls).toEqual(["file:///Shop%20100%25/renderer/index.html"]);
+    expect(calls.loadedUrls).toEqual(listTrustedPageUrls(config));
+    expect(calls.loadedFiles).toEqual([]);
   });
 });

@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 
 const electronMocks = vi.hoisted(() => ({
   setPath: vi.fn(),
@@ -50,7 +49,10 @@ vi.mock("electron", () => {
   };
 });
 
+const priorRendererUrl = process.env["ELECTRON_RENDERER_URL"];
+
 beforeAll(async () => {
+  delete process.env["ELECTRON_RENDERER_URL"];
   vi.useFakeTimers();
   electronMocks.userDataFolder.value = fs.mkdtempSync(path.join(os.tmpdir(), "shopos-entry-"));
   process.env["SHOPOS_USER_DATA"] = electronMocks.userDataFolder.value;
@@ -62,14 +64,21 @@ afterAll(() => {
   vi.clearAllTimers();
   vi.useRealTimers();
   delete process.env["SHOPOS_USER_DATA"];
+  if (priorRendererUrl === undefined) {
+    delete process.env["ELECTRON_RENDERER_URL"];
+  } else {
+    process.env["ELECTRON_RENDERER_URL"] = priorRendererUrl;
+  }
 });
 
 /** An IPC event from the page the app loaded into its window, as Electron would deliver it. */
 function eventFromAppPage(): unknown {
   const appWindow = electronMocks.constructedWindows[0] as {
-    loadFile: { mock: { calls: string[][] } };
+    loadURL: { mock: { calls: string[][] } };
   };
-  const mainFrame = { url: pathToFileURL(String(appWindow.loadFile.mock.calls[0]?.[0])).href };
+  const loadedUrl = appWindow.loadURL.mock.calls[0]?.[0];
+  expect(loadedUrl).toEqual(expect.stringMatching(/^file:\/\//));
+  const mainFrame = { url: loadedUrl };
   return { senderFrame: mainFrame, sender: { mainFrame } };
 }
 
@@ -132,6 +141,7 @@ describe("main entry file", () => {
       input: unknown,
     ) => Promise<unknown>;
     await listener(eventFromAppPage(), "system.pickFolder", {});
+    expect(electronMocks.showOpenDialog).toHaveBeenCalledOnce();
     expect(electronMocks.showOpenDialog.mock.calls[0]?.[0]).toBeUndefined();
   });
 });

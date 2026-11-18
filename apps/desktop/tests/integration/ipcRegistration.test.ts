@@ -1,4 +1,4 @@
-import { COMMAND_NAMES } from "@shopos/core";
+import { COMMAND_NAMES, type CommandName } from "@shopos/core";
 import { buildHandlersFixture } from "../helpers/handlersFixture";
 
 const electronMocks = vi.hoisted(() => ({ handle: vi.fn() }));
@@ -72,12 +72,33 @@ describe("registerIpc", () => {
     });
   });
 
-  it("runs every command of the contract through its handler", async () => {
+  it.each(COMMAND_NAMES)("dispatches %s to its handler", async (commandName) => {
+    const invalidInput = { ok: false, code: "INVALID_FIELD" };
+    const expectedResults = {
+      "items.list": invalidInput,
+      "items.create": invalidInput,
+      "items.update": invalidInput,
+      "stock.adjust": invalidInput,
+      "bills.draft.save": invalidInput,
+      "bills.draft.load": { ok: true, data: { payload: null } },
+      "bills.save": invalidInput,
+      "bills.get": invalidInput,
+      "bills.print": invalidInput,
+      "bills.exportPdf": invalidInput,
+      "settings.get": { ok: true, data: { name: "My Shop", seriesCode: "C1", backupFolder: "" } },
+      "settings.update": invalidInput,
+      "backup.run": { ok: false, code: "BACKUP_FAILED", message: "No backup folder is set" },
+      "backup.status": { ok: true, data: { folder: "", lastOkAt: null, lastError: null } },
+      "backup.restore": invalidInput,
+      "system.pickFolder": { ok: true, data: { path: null } },
+      "system.pickBackupFile": { ok: true, data: { path: null } },
+      "system.pickPdfPath": { ok: true, data: { path: null } },
+    } satisfies Record<CommandName, unknown>;
     const listener = registerAndGetListener();
-    const results = await Promise.all(
-      COMMAND_NAMES.map((commandName) => listener(TRUSTED_EVENT, commandName, {})),
-    );
-    expect(results.every((result) => (result as { ok: boolean }).ok !== undefined)).toBe(true);
+    const result = await listener(TRUSTED_EVENT, commandName, {});
+
+    expect(result).not.toMatchObject({ message: "Command refused" });
+    expect(result).toMatchObject(expectedResults[commandName]);
   });
 
   it("validates input from the renderer and never trusts it", async () => {
@@ -128,14 +149,20 @@ describe("registerIpc", () => {
       const logRefusal = vi.fn();
       const listener = registerAndGetListener(logRefusal);
       const customerInput = { customerName: "Ramesh Traders" };
+      const privateFrame = {
+        url: "https://user:password@evil.example/Ramesh?token=secret#private",
+      };
       await listener(
-        { senderFrame: FOREIGN_FRAME, sender: { mainFrame: FOREIGN_FRAME } },
+        { senderFrame: privateFrame, sender: { mainFrame: privateFrame } },
         "bills.save",
         customerInput,
       );
       expect(logRefusal).toHaveBeenCalledOnce();
       const loggedText = JSON.stringify(logRefusal.mock.calls);
       expect(loggedText).toContain("evil.example");
+      expect(logRefusal).toHaveBeenCalledWith(
+        "Refused a command from an untrusted sender: https://evil.example",
+      );
       expect(loggedText).not.toContain("Ramesh");
     });
   });

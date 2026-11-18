@@ -7,9 +7,20 @@ import type { ISenderEvent } from "./senderPolicy/types";
 
 export const CHANNEL = "shopos:invoke";
 
-/** The refusal is logged with the page address only: never the command input (customer data). */
+/** Paths, credentials, queries and fragments may contain customer data. */
+function senderLocation(address: string): string {
+  try {
+    const page = new URL(address);
+    return `${page.protocol}//${page.host}`;
+  } catch {
+    return "invalid sender URL";
+  }
+}
+
+/** Log only the sender scheme and host, never command input. */
 function logRefusedSender(event: ISenderEvent, logRefusal: (message: string) => void): void {
-  const senderAddress = summarizeSender(event)?.url ?? "no sender frame";
+  const sender = summarizeSender(event);
+  const senderAddress = sender ? senderLocation(sender.url) : "no sender frame";
   logRefusal(`Refused a command from an untrusted sender: ${senderAddress}`);
 }
 
