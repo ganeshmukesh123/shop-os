@@ -30,13 +30,15 @@ Sources read: the spec, PRD section 8 (FR-KHA-001 to 014), US-05, US-08, US-15, 
 
 ### D4. Allocation links credits to bills; ageing is derived
 
-- **Decision**: `ledger_allocation(credit_entry_id, debit_entry_id, amount_paise)`, append-only. A payment or credit note (credit entry) is allocated to open bill entries (debit entries) oldest first, or to the bills the user selected (FR-003). A remainder stays unallocated as an advance (spec edge case "payment larger than all open bills"); later bills are allocated against the advance automatically. A `payment_reverse` writes negative allocation rows for that payment's allocations, never edits them.
+- **Decision**: `ledger_allocation(settling_entry_id, settled_entry_id, amount_paise)`, append-only, with absolute bounds so the same table serves distributor payables in 009 (whose purchase bills are negative entries). A payment or credit note (the settling entry) is allocated to open bill entries (the settled entries) oldest first, or to the bills the user selected (FR-003). A remainder stays unallocated as an advance (spec edge case "payment larger than all open bills"); later bills are allocated against the advance automatically. A `payment_reverse` writes negative allocation rows for that payment's allocations, never edits them.
 - Open amount of a bill entry = its amount minus its allocations. Ageing = open amounts grouped by days since the bill's `business_date` into 0-30, 31-60, 61-90 and 90+ (`ageOpenItems` in core; cut points a setting, architecture 11.5).
 - **Example**: bills ₹3,000 (1 Jan), ₹5,000 (20 Jan), ₹2,000 (10 Feb); payment ₹6,000 on 15 Feb with none selected: ₹3,000 to the first, ₹3,000 to the second; open ₹2,000 + ₹2,000 = ₹4,000.
 
 ### D5. Credit checks at billing
 
 `checkPartyCredit({ limitPaise, balancePaise, newCreditPaise, overdueBills, warnAtBp: 8000 })` in core returns `ok`, `warn_near_limit` (at or above 80% after the sale), `over_limit` or `overdue` (any open bill older than the party's credit days, with the reason "Overdue bill #C1/26-27/000098"). `over_limit` and `overdue` need an approval through feature 005 (kind `over_credit`), whose id is stored on the bill's credit tender. A party with a limit of 0 or null has no credit until the owner sets one ("Credit not allowed").
+
+**Accepted risk (staff review 2026-11-18): limits are only as fresh as the last sync.** With two counters, each checks the limit against its own copy of the ledger. Example: limit ₹50,000, balance ₹40,000; offline, counter 1 and counter 2 each sell ₹8,000 on credit, each sees ₹48,000 (96%, allowed) and together the party reaches ₹56,000. When sync (010) brings both bills together, an `over_credit_after_sync` exception is raised for the owner; the bills stand (they were printed). 010's simulation includes this case.
 
 ### D6. Payments and receipts
 
