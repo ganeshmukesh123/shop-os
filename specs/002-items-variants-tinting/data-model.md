@@ -125,16 +125,16 @@ One row per variant: `sold_qty_90d_milli`, `bill_count_90d`, `last_sold_at`. Upd
 
 ### `item_merge_log` (new, append-only)
 
-| Field                                    | Rule                                                                            |
-| ---------------------------------------- | ------------------------------------------------------------------------------- |
-| action                                   | `merge` or `reverse`                                                            |
-| survivor_id, merged_id                   | FKs to `item_variant`, different                                                |
-| merge_log_id                             | for `reverse` rows: the `merge` row reversed; unique (a merge is reversed once) |
-| moved_qty_milli                          | signed integer: stock moved from merged to survivor                             |
-| moved_barcode_ids, moved_search_name_ids | JSON arrays                                                                     |
-| reason                                   | text 1-200                                                                      |
-| user_label                               | text (the user name; roles arrive in 005)                                       |
-| reversible_until                         | epoch ms = merged time + 30 days (for `merge` rows)                             |
+| Field                                    | Rule                                                                                                                      |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| action                                   | `merge` or `reverse`                                                                                                      |
+| survivor_id, merged_id                   | FKs to `item_variant`, different                                                                                          |
+| merge_log_id                             | for `reverse` rows: the `merge` row reversed; unique (a merge is reversed once)                                           |
+| moved_json                               | JSON list of `{ locationId, batchId, qtyMilli }` moved from merged to survivor (signed), one entry per location and batch |
+| moved_barcode_ids, moved_search_name_ids | JSON arrays                                                                                                               |
+| reason                                   | text 1-200                                                                                                                |
+| user_label                               | text (the user name; roles arrive in 005)                                                                                 |
+| reversible_until                         | epoch ms = merged time + 30 days (for `merge` rows)                                                                       |
 
 Triggers reject UPDATE and DELETE.
 
@@ -142,11 +142,23 @@ Triggers reject UPDATE and DELETE.
 
 `kind` (`duplicate_barcode`, `duplicate_suspect`), `subject_type` (`item_variant`), `subject_ids` JSON array, `detail` text up to 200, `status` (`open`, `resolved`), `resolved_at`, `resolution_note`. Status may change from `open` to `resolved` only (trigger). Features 005 and 011 add kinds.
 
+## Lookup tables (research D17)
+
+| Table               | Columns                                                                      | Seeded values                                                                                                                                                              |
+| ------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `movement_type`     | `code`, `direction` (`in`, `out`, `both`), `requires_doc`, `requires_reason` | `opening` in, `adjustment` in or out (direction from the locations, reason required), `sale` out (doc), `sale_cancel` in (doc), `merge_in` in (doc), `merge_out` out (doc) |
+| `movement_doc_type` | `code`                                                                       | `bill`, `item_merge`                                                                                                                                                       |
+| `tender_mode`       | `code`                                                                       | `cash`, `upi`, `card`, `unpaid`                                                                                                                                            |
+| `tender_status`     | `code`                                                                       | `label`                                                                                                                                                                    |
+| `exception_kind`    | `code`                                                                       | `duplicate_barcode`, `duplicate_suspect`                                                                                                                                   |
+
+`stock_movement.movement_type` and `doc_type`, `bill_tender.mode` and `status`, and `exception_event.kind` become foreign keys to these. A trigger replaces 001's CHECKs on movements: it reads `movement_type` to require exactly one location for `in` and `out`, both (different) for `both`, a doc for `requires_doc`, and a reason or note for `requires_reason`. Later features add rows, never rebuild.
+
 ## Stock (changed)
 
 ### `stock_movement`
 
-- `movement_type` gains `merge_in` and `merge_out` (table rebuilt with its triggers, as migration 0007 did).
+- Rebuilt **once** (research D17) so `movement_type` and `doc_type` are foreign keys to lookup tables; `merge_in` and `merge_out` are lookup rows; the append-only triggers and the new rule trigger are re-created.
 - `doc_type` gains `item_merge` (doc = the `item_merge_log` row); `merge_in` and `merge_out` must carry it.
 - New nullable `batch_id` FK to `item_batch`.
 - Colorant use on a tinted bill is a normal `sale` movement with doc `bill`.
@@ -171,7 +183,7 @@ Triggers reject UPDATE and DELETE.
 
 ### `tint_formula`
 
-`shade_id` FK, `base_variant_id` FK to a `base_paint` variant, `version` integer from 1, `is_current` 0 or 1. Unique current formula per (shade, base variant) (partial unique index). A formula row and its lines are immutable once a bill uses it (trigger checks `bill_line.tint_formula_id`); changes save a new version.
+`shade_id` FK, `base_variant_id` FK to a `base_paint` variant, `version` integer from 1, `UNIQUE(shade_id, base_variant_id, version)`. The **current** formula is the highest version for its shade and base variant (derived, never a stored flag, so saving version 2 changes no row of version 1). A formula row and its lines are immutable once a bill uses it (trigger checks `bill_line.tint_formula_id`); changes save a new version.
 
 ### `tint_formula_line`
 
@@ -218,7 +230,7 @@ Example: tinted 4 L "Sky Blue" from base "Pastel 3.6 L" priced ₹1,450.00 plus 
 - `item_variant(family_id, axis_signature)` unique; `item_variant(merged_into_id)`.
 - `item_barcode(code)`; `item_search_name(name COLLATE NOCASE)`.
 - `item_batch(variant_id, received_at)`; `stock_movement(batch_id)`.
-- `tint_formula(shade_id, base_variant_id) where is_current = 1` unique; `bill_line(tint_formula_id)`.
+- `tint_formula(shade_id, base_variant_id, version)` unique (the current version is the maximum); `bill_line(tint_formula_id)`.
 - `tint_shade(customer_label COLLATE NOCASE)`, `tint_shade(site_label COLLATE NOCASE)`; `bill(customer_name)` exists from 001.
 
 ## State transitions

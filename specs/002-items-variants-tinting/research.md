@@ -51,7 +51,7 @@ Sources read: the spec, PRD section 5 (FR-ITM-001 to 017, FR-TNT-001 to 009), PR
 - **Decision**: Merging variant B into survivor A:
   1. sets `item_variant.merged_into_id = A` and `is_active = 0` on B (master data, may change);
   2. moves B's barcodes and search names to A (master data);
-  3. inserts two stock movements: `merge_out` from B for B's whole stock and `merge_in` to A for the same quantity (negative stock is moved the other way round);
+  3. inserts, **for each location and batch where B has a non-zero balance**, one `merge_out` from B and one `merge_in` to A for the same quantity, location and batch (negative stock is moved the other way round), so stock per location (007) and MRP per batch are kept;
   4. inserts an `item_merge_log` row with `action = 'merge'`, who, when, reason, the moved barcode and name ids, the moved quantity and `reversible_until` = merged time + 30 days.
      Bill lines and old movements still point at B; reports and the item history follow `merged_into_id`, so "all history moves to the survivor" (FR-ITM-009) without changing a saved bill line (constitution I and II).
 - **Reversal** (within 30 days): opposite movements for the quantity moved, barcodes and names moved back, pointer cleared, B re-activated, and a second `item_merge_log` row with `action = 'reverse'`. Sales of A after the merge stay on A; the reversal screen says so.
@@ -82,7 +82,7 @@ Sources read: the spec, PRD section 5 (FR-ITM-001 to 017, FR-TNT-001 to 009), PR
 
 - **Base paints** are families of kind `base_paint` (brand and product on the family, axes `base type` x `pack size`). **Colorants** are families of kind `colorant` with base unit `ml`, decimals on, so 0.25 ml is 250 milli.
 - **Shade library**: `tint_shade` (code, name, brand, shade card, `source` `library` or `custom`, and for custom shades a customer label, a site label and a nullable `party_id` that feature 004 connects). `tint_formula` (shade, base variant, version, `is_current`) and `tint_formula_line` (colorant variant, `qty_milli` in thousandths of a ml).
-- **Formulas are versioned, not edited**: once a formula has been used on a bill, a change saves a new version and marks the old one not current. Each tinted bill line also stores its own snapshot of colorant amounts and costs in `bill_line_tint` (append-only), so a reprint and a repeat order show exactly what was mixed.
+- **Formulas are versioned, not edited**: once a formula has been used on a bill, a change saves a new version; the current formula is the highest version (no flag is updated on the old row, so the immutability trigger never blocks a new version). Each tinted bill line also stores its own snapshot of colorant amounts and costs in `bill_line_tint` (append-only), so a reprint and a repeat order show exactly what was mixed.
 - **Billing** (FR-014): pick product, shade and pack size; `resolveTintFormula` picks the base variant and current formula; the screen lists colorant amounts for the tinter. One bill line is the base can; the bill transaction writes a `sale` movement for the base and one `sale` movement per colorant (doc = the bill). Base out of stock is allowed and flagged (spec edge case). No formula: the screen says so and offers a custom shade.
 - **Price** (FR-015): the shade price list (`tint_shade_price`, shade and base variant) if loaded, otherwise base price plus `tint_charge_rule` for the pack's declared size (1 L, 4 L, 10 L, 20 L). The line stores `tint_charge_paise`.
 - **Cost** (FR-015): `bill_line.cost_paise` = base purchase price + sum of colorant purchase price per ml x ml, rounded half up once. Margin reports are feature 011.
@@ -112,7 +112,7 @@ Every existing family gets `kind = 'general'`, no category (shown as "Uncategori
 
 ### D16. Cross-feature calendar (proposed 2026-11-18)
 
-Features are planned in number order but cannot be **built** in number order: 003 needs 004 and 005, and 004 needs 005. Proposed build order and windows for one full-time builder (re-date when each feature starts):
+This table is the **single source** for dates: when a window moves, update it here and in that feature's milestone table only. Features are planned in number order but cannot be **built** in number order: 003 needs 004 and 005, and 004 needs 005. Proposed build order and windows for one full-time builder (re-date when each feature starts):
 
 | Order | Feature                                            | Window                        | Weeks |
 | ----- | -------------------------------------------------- | ----------------------------- | ----- |
@@ -136,6 +136,16 @@ Features are planned in number order but cannot be **built** in number order: 00
 001's remaining milestones (M3b, M5, the M6 trial in March 2027) run alongside 002 and 005.
 
 **Risk (owner decision OD-4)**: with every MVP feature in full, go-live lands around 1 October 2027, four months after the PRD's 1 June 2027. Options: (a) accept the later date; (b) go live on 1 June with 002, 005, 004, 003 and 008 only, with 007, 006 and 012's extras after go-live; (c) work part of 007 and 006 in parallel. Recommendation: (b), because those five features cover the PRD's counter loop (items, billing, khata, roles, both bill formats).
+
+### D17. Enum values live in lookup tables, so later features add values without rebuilding tables (staff review 2026-11-18)
+
+- **Problem**: 001's enums are text columns with a CHECK. SQLite can change a CHECK only by rebuilding the table (https://www.sqlite.org/lang_altertable.html#otheralter). The plans for 002, 003, 007 and 009 each rebuilt `stock_movement`, and 003, 004, 006, 009 and 011 widened other enums the same way. 006, 007 and 009 run after go-live, on real data, and 012 D10 needs additive migrations for rollback.
+- **Decision**: one rebuild of `stock_movement` and `bill_tender`, in this feature, turns their enum columns into foreign keys to small lookup tables. From then on, adding a value is an INSERT into the lookup table (additive, rollback-safe).
+  - `movement_type(code, direction, requires_doc, requires_reason)`: `direction` is `in`, `out` or `both` (transfer); `requires_doc` and `requires_reason` replace 001's CHECKs (a sale needs its bill; an adjustment needs a reason). A trigger on `stock_movement` reads the row to enforce the locations, doc and reason rules, so 007's transfer needs only a new row.
+  - `movement_doc_type(code)`, `tender_mode(code)`, `tender_status(code)`.
+  - Rule for later features: every new enum is a lookup table from the start (`ledger_entry_type` with a `sign` column in 004, `cash_entry_kind` in 005, `doc_kind` in 003, `exception_kind` here); adding a value is an INSERT.
+- **Trade-off**: one join to read a label; triggers instead of CHECKs for the rules that depend on the type. Rejected: keep CHECKs and rebuild each time (four rebuilds of the largest append-only table, two after go-live).
+- **Practice**: SQLite's documentation gives the 12-step rebuild as the only way to change a constraint (primary). Stripe adds enum values to its API without breaking existing data (https://stripe.com/docs/upgrades, primary vendor documentation). No named company source for SQLite lookup tables specifically.
 
 ## Open items (unverified facts, constitution "Unconfirmed facts")
 

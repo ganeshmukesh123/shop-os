@@ -14,7 +14,7 @@ Turn the flat 001 item into a family with up to 4 variant axes, generated in one
 
 **Primary Dependencies**: Unchanged from 001 (Electron ^43.8, React 18, Radix UI, drizzle-orm ^0.45, better-sqlite3 Electron build, Zod 4, Luxon). One possible addition needs owner approval: an XLSX parser (OD-2). Search and Code 128 are written in-house (research D4, D13).
 
-**Storage**: The same local SQLite file; migrations `0013` onward add about 17 tables and new nullable columns (data-model.md). `stock_movement` is rebuilt once to widen its CHECKs, with its triggers re-created.
+**Storage**: The same local SQLite file; migrations `0013` onward add about 17 tables and new nullable columns (data-model.md). `stock_movement` and `bill_tender` are rebuilt once so their enums become lookup tables (research D17); after that, later features add movement types, tender modes and other enum values by INSERT, never by a rebuild.
 
 **Testing**: Vitest (core rules test-first; services against in-memory SQLite inside Electron's Node), Playwright for Electron for the quickstart scenarios, a search benchmark with 50,000 generated variants.
 
@@ -127,9 +127,10 @@ Window 4 January to 21 February 2027 (proposed, research D16; re-date when the f
 
 ## Complexity Tracking
 
-| Addition                                                | Why it is needed                                                                         | Simpler alternative rejected because                                   |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Category, attribute and brand tables (Generic template) | The long-term catalogue shape (architecture 6.2) so packs later add rows, not migrations | Fixed axis columns need a migration per product type (research D1)     |
-| In-memory search index in the main process              | 0.2 s with typos at 50,000 variants                                                      | `LIKE` and FTS5 cannot do edit distance (research D4)                  |
-| Formula versions plus `bill_line_tint` snapshots        | A used formula must never change (constitution I)                                        | Editing formulas in place would change what an old bill says was mixed |
-| Possible XLSX parser package (OD-2)                     | The owner's files are Excel                                                              | CSV only is the fallback if the owner declines                         |
+| Addition                                                | Why it is needed                                                                         | Simpler alternative rejected because                                               |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Category, attribute and brand tables (Generic template) | The long-term catalogue shape (architecture 6.2) so packs later add rows, not migrations | Fixed axis columns need a migration per product type (research D1)                 |
+| In-memory search index in the main process              | 0.2 s with typos at 50,000 variants                                                      | `LIKE` and FTS5 cannot do edit distance (research D4)                              |
+| Formula versions plus `bill_line_tint` snapshots        | A used formula must never change (constitution I)                                        | Editing formulas in place would change what an old bill says was mixed             |
+| Enum lookup tables with a rule trigger (research D17)   | Later features add types without rebuilding append-only tables after go-live             | CHECK enums need a table rebuild per new value (four rebuilds of `stock_movement`) |
+| Possible XLSX parser package (OD-2)                     | The owner's files are Excel                                                              | CSV only is the fallback if the owner declines                                     |
