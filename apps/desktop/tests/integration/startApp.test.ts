@@ -66,6 +66,8 @@ function buildDependencies(
 ) {
   const appListeners = new Map<string, () => void>();
   const onHeadersReceived = vi.fn();
+  const setPermissionRequestHandler = vi.fn();
+  const setPermissionCheckHandler = vi.fn();
   const windows = overrides.windows ?? [];
   const dependencies = {
     app: {
@@ -76,7 +78,11 @@ function buildDependencies(
       exit: vi.fn(),
     },
     dialog: { showOpenDialog: vi.fn(), showSaveDialog: vi.fn(), showErrorBox: vi.fn() },
-    getDefaultSession: () => ({ webRequest: { onHeadersReceived } }),
+    getDefaultSession: () => ({
+      webRequest: { onHeadersReceived },
+      setPermissionRequestHandler,
+      setPermissionCheckHandler,
+    }),
     createBrowserWindow: vi.fn(() => buildFakeWindow()),
     getAllWindows: () => windows,
     getFocusedWindow: () => undefined,
@@ -86,6 +92,8 @@ function buildDependencies(
     parts: dependencies,
     appListeners,
     onHeadersReceived,
+    setPermissionRequestHandler,
+    setPermissionCheckHandler,
   };
 }
 
@@ -102,6 +110,16 @@ describe("startApp", () => {
     expect(electronMocks.handle).toHaveBeenCalledWith("shopos:invoke", expect.any(Function));
     expect(onHeadersReceived).toHaveBeenCalledOnce();
     expect(parts.createBrowserWindow).toHaveBeenCalledOnce();
+  });
+
+  it("denies every permission request and check on the default session", async () => {
+    const { dependencies, setPermissionRequestHandler, setPermissionCheckHandler } =
+      buildDependencies();
+    await startApp(dependencies, buildConfig());
+    const respond = vi.fn();
+    setPermissionRequestHandler.mock.calls[0]?.[0]({}, "media", respond);
+    expect(respond).toHaveBeenCalledExactlyOnceWith(false);
+    expect(setPermissionCheckHandler.mock.calls[0]?.[0]({}, "media")).toBe(false);
   });
 
   it("starts the periodic backup timer", async () => {
