@@ -65,9 +65,9 @@ Source: official Electron docs read 2026-11-15 (links in `spec.md`) and an audit
 
 ## Open items (unverified)
 
-- **O1**: does electron-builder 26.15 have a built-in option for flipping fuses? The Electron fuses page does not cover electron-builder. If not, `@electron/fuses` is a new package: ask the owner first.
-- **O2**: does electron-builder wire ASAR integrity header hashing, or must the fuse step do it? The ASAR page names only Packager and Forge (minimum versions) and the manual method.
-- **O3**: the docs say a CSP header cannot apply to `file://`. Confirm `index.html` carries the CSP `<meta>` tag for packaged builds until PR C.
+- **O1 (resolved 2026-11-17)**: yes. electron-builder 26.15.7 has an `electronFuses` option (`app-builder-lib/scheme.json`, `out/platformPackager.js` calls `flipFuses` from `@electron/fuses`). No new package expected. Read from the installed source, not yet run.
+- **O2 (partly resolved 2026-11-17)**: electron-builder computes the ASAR header hash (`integrity.computeData`) and writes `ElectronAsarIntegrity` into the Mac plist (`electronMac.js`). Windows handling not read; confirm in the PR B task on a real build.
+- **O3 (likely resolved 2026-11-17)**: `electron.vite.config.ts` replaces the `<!--CSP-->` marker in `src/renderer/index.html`. Confirm the built `out/` file carries the meta tag (task T-A0).
 - **O4**: does the Vite-built output (module scripts, fonts, Radix assets) load under a custom protocol? Needs a spike before PR C.
 - **O5**: can `grantFileProtocolExtraPrivileges` be disabled while still on `file://`? Module scripts over `file://` may need it. Run the packaged app with it off.
 - **O6**: does the offscreen print window (`data:` URL) still work after the permission and navigation changes?
@@ -75,7 +75,7 @@ Source: official Electron docs read 2026-11-15 (links in `spec.md`) and an audit
 - **O8**: which of Windows or Mac is the shop's main platform? Decides FR-009.
 - **O9**: Apple developer account cost and whether notarization is needed for a build installed by hand on the owner's own Mac.
 - **O10**: Windows-specific fuse and integrity behaviour (integrity needs Electron 30 or later on Windows; we use 43, so expected to work, not tested).
-- **O11**: what Electron's `senderFrame.origin` and `senderFrame.url` return for the app's `file:` page and for a custom protocol, and whether the main-frame test (`senderFrame === webContents.mainFrame`) works as intended. Test before relying on it.
+- **O11 (answered 2026-11-17, scratch Electron 43.8.10 on macOS, `file:` page)**: `senderFrame.origin` is `file://`, `senderFrame.url` is the full file URL, `senderFrame === webContents.mainFrame` is true for the main frame. A child iframe in a sandboxed window got no preload, so it could not call the bridge. Not yet checked: a custom protocol (PR C). Original question:  what Electron's `senderFrame.origin` and `senderFrame.url` return for the app's `file:` page and for a custom protocol, and whether the main-frame test (`senderFrame === webContents.mainFrame`) works as intended. Test before relying on it.
 - **O12**: `electron-builder.yml` also builds a Linux AppImage, and ASAR integrity does not apply there. Decide whether Linux is an accepted exception or needs a separate protection (the shop's first use is Mac, NFR-013).
 - **O13**: the `drizzle` migrations are in `extraResources`, outside `app.asar`, and run against the shop database at start. Decide whether to bundle them inside the archive or protect them separately.
 - **O14**: the ASAR page says the app checks the hash of the archive **header** at launch. Does a changed file with an intact header fail at launch, or only when that file is read? Test by modifying one packed file and launching.
