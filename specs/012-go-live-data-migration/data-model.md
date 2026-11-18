@@ -40,7 +40,7 @@ Builds on 002 (import, merge), 004 (party import), 005 (users), 007 (counts) and
 
 ## Training database
 
-`training.sqlite` in the user-data folder, made from the real file by the online backup API, with `shop_profile.is_training = 1`, every `number_series` template prefixed `T-` and sync disabled. Never backed up to the cloud, deleted and remade on "Reset training data".
+`training.sqlite` in the user-data folder, made from the real file by the online backup API, with `shop_profile.is_training = 1`, every `number_series` counter code replaced by `TR` (for example `TR/26-27/000123`) and sync disabled. Never backed up to the cloud, deleted and remade on "Reset training data".
 
 ## Derived values (in `@shopos/core`)
 
@@ -48,6 +48,6 @@ Builds on 002 (import, merge), 004 (party import), 005 (users), 007 (counts) and
 - `shareBilledInSystem({ systemSalesPaise, oldBookPaise, cashSurplusPaise })` in basis points.
 - `bypassSignals(days)`: bills per footfall and cash difference over 14 days.
 - `top200Accuracy({ topItems, countLines, toleranceBp })`.
-- `isTrainingSeries(template)`; `trainingTemplate(template)` keeps 16 characters or fewer.
+- `isTrainingSeries(template)`; `trainingTemplate(template)` swaps the counter code for `TR`, so the number never grows past the live one (at most 16 characters).
 
 Example: system sales ₹38,200, old book ₹1,500, cash surplus ₹300: share = 38,200 / 40,000 = 95.5%.

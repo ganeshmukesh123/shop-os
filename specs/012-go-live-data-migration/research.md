@@ -18,7 +18,7 @@ Item and shade import come from 002 (research D12 there, OD-1) and party and ope
 
 ### D3. Training mode is a separate database file
 
-- **Decision**: "Training mode" opens a separate SQLite file (`training.sqlite`) made from the real database with SQLite's online backup API (constitution), then marked as training: every number series gets a `T-` prefix (still at most 16 characters), sync is off, cloud backup is off, and a fixed orange "TRAINING" banner with the word shows on every screen. Leaving training mode closes that file and reopens the real one. The real database is never written while in training mode (US2 scenario 1).
+- **Decision**: "Training mode" opens a separate SQLite file (`training.sqlite`) made from the real database with SQLite's online backup API (constitution), then marked as training: every number series has its counter code replaced by `TR` (`C1/26-27/000123` becomes `TR/26-27/000123`, 15 characters; a `T-` prefix would make 17 and break the 16-character limit, staff review 2026-11-18), sync is off, cloud backup is off, and a fixed orange "TRAINING" banner with the word shows on every screen. Leaving training mode closes that file and reopens the real one. The real database is never written while in training mode (US2 scenario 1).
 - **Alternatives rejected**: a training flag on rows in the real database (every query must filter it; one missed filter corrupts real stock or ledgers); a practice shop with made-up items (staff learn on unfamiliar names).
 
 ### D4. Sign-off, training records and champions

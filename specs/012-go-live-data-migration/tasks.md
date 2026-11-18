@@ -29,7 +29,7 @@ description: "Task list for feature 012: go-live tools, training mode, reconcili
 ## Phase 2: Foundational
 
 - [ ] T004 [P] Write tests in `core/tests/golive/readiness.test.ts`: 512 items with 3 missing units and 96 of 100 parties gives "Not ready" with both gaps; 500 items, all parties, no open duplicates, sign-off and training complete gives "Ready"
-- [ ] T005 [P] Write tests in `core/tests/golive/shareBilled.test.ts`, `bypassSignals.test.ts`, `top200Accuracy.test.ts`, `trainingSeries.test.ts`: ₹38,200 / ₹40,000 = 9550 bp; bills per footfall over 14 days; 19 of 20 within tolerance gives 9500 bp; `T-` prefix keeps templates at 16 characters or fewer and refuses one that would exceed
+- [ ] T005 [P] Write tests in `core/tests/golive/shareBilled.test.ts`, `bypassSignals.test.ts`, `top200Accuracy.test.ts`, `trainingSeries.test.ts`: ₹38,200 / ₹40,000 = 9550 bp; bills per footfall over 14 days; 19 of 20 within tolerance gives 9500 bp; `trainingTemplate` turns `C1/26-27/000123` into `TR/26-27/000123` (15 characters) and never makes a number longer than the live one
 - [ ] T006 Implement `core/src/golive/*.ts` to pass T004 and T005
 - [ ] T007 Add `readiness_input`, `signoff_item` (seeded six), `training_record` (one champion per shop), `daily_reconciliation` (append-only), `gate_review` (append-only), `feature_switch`, `release_marker`, `bill.paper_bill_ref` and `number_series.doc_kind` value `paper_backfill` to `desktop/src/main/db/schema.ts`; generate the migration (marked additive)
 
@@ -57,7 +57,7 @@ description: "Task list for feature 012: go-live tools, training mode, reconcili
 
 ## Phase 5: User Story 2 - Settings sign-off and training (M2, 30 Aug to 5 Sep; P1)
 
-- [ ] T018 [P] [US2] Write tests in `desktop/src/main/golive/TrainingModeService.test.ts`: entering copies the live file with the online backup API, marks it training, prefixes series with `T-` and disables sync and cloud backup; bills saved in training never change the live file (compare checksums and row counts); leaving reopens the live file; reset remakes the copy
+- [ ] T018 [P] [US2] Write tests in `desktop/src/main/golive/TrainingModeService.test.ts`: entering copies the live file with the online backup API, marks it training, swaps every series' counter code for `TR` and disables sync and cloud backup; bills saved in training never change the live file (compare checksums and row counts); leaving reopens the live file; reset remakes the copy
 - [ ] T019 [US2] Implement `desktop/src/main/golive/TrainingModeService.ts` to pass T018; register `training.*`
 - [ ] T020 [P] [US2] Build `desktop/src/renderer/features/golive/Training/` with `TrainingBanner/` (fixed "TRAINING" word and colour on every screen in both themes), training records and champion
 - [ ] T021 [P] [US2] Build `desktop/src/renderer/features/golive/Signoff/`; register `golive.signoff.*`

@@ -12,7 +12,7 @@ Prerequisites: 002, 004, 005 and 007 merged (010 for server restore). Commands a
 ## 2. Sign-off and training (M2; US2)
 
 1. Mark the six settings items signed off.
-2. Enter training mode. Expected: orange "TRAINING" banner; bill numbers start with `T-`.
+2. Enter training mode. Expected: orange "TRAINING" banner; bill numbers start with `TR/` (for example `TR/26-27/000124`).
 3. A trainee saves 5 bills unaided; leave training mode. Expected: real stock, ledgers and bill numbers unchanged (compare counts before and after).
 4. Record both sessions and the 5-bill result; name a champion. A second champion is refused.
 
