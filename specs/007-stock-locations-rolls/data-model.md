@@ -25,18 +25,20 @@ counter_setting.sale_location_id -> location
 
 Seeded: Godown and Defective (if 003 has not), so every shop has at least Shop floor, Godown and Defective (FR-003).
 
-### `stock_movement` (append-only; rebuilt once)
+### `stock_movement` (append-only; no rebuild)
 
-| Change        | Rule                                                                                                                                    |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| movement_type | adds `transfer`, `damage`, `count_correction`; reserves `transfer_out`, `transfer_in`                                                   |
-| locations     | CHECK: `transfer` and `damage` need both `from_location_id` and `to_location_id`, different; every other type exactly one               |
-| reason_code   | CHECK in (`damage`, `theft`, `count_error`, `sample`, `personal_use`, `tinting_waste`, `other`); required for `adjustment` and `damage` |
-| note          | required when `reason_code = 'other'`                                                                                                   |
-| approval_id   | nullable FK to `approval_request`                                                                                                       |
-| doc_type      | adds `count_session` (for `count_correction`)                                                                                           |
-| roll_id       | nullable, reserved for V2 rolls (no FK until `roll` exists)                                                                             |
-| user_id       | from 005                                                                                                                                |
+002 made movement types, document types and their rules lookup data with one rule trigger (002 research D17), so this feature only inserts rows and adds nullable columns (`ALTER TABLE ADD COLUMN`, additive and rollback-safe under 012 D10).
+
+| Change                  | Rule                                                                                                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `movement_type` rows    | `transfer` (direction `both`), `damage` (direction `both`, reason required), `count_correction` (in or out, doc required); `transfer_out` and `transfer_in` reserved for outlet transfers (Later) |
+| locations               | enforced by 002's rule trigger from `direction`: `both` needs two different locations, `in` and `out` exactly one                                                                                 |
+| `reason_code`           | foreign key to a new `reason_code` lookup (`damage`, `theft`, `count_error`, `sample`, `personal_use`, `tinting_waste`, `other`); required when the type's `requires_reason` is set               |
+| note                    | required when `reason_code = 'other'` (rule trigger)                                                                                                                                              |
+| approval_id             | new nullable column, FK to `approval_request`                                                                                                                                                     |
+| `movement_doc_type` row | `count_session` (for `count_correction`)                                                                                                                                                          |
+| roll_id                 | new nullable column, reserved for V2 rolls (no FK until `roll` exists)                                                                                                                            |
+| user_id                 | from 005                                                                                                                                                                                          |
 
 ### `item_variant`
 

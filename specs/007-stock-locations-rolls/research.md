@@ -18,12 +18,12 @@ Sources read: the spec, PRD section 7 (FR-STK-001 to 018) and its roll lifecycle
 
 ### D2. A transfer is one movement with both locations
 
-- **Decision**: `movement_type = 'transfer'` with `from_location_id` and `to_location_id` both set and different; totals do not change (US1 scenario 1). 001's CHECK "exactly one location" is widened: in and out movements keep exactly one, `transfer` needs both.
+- **Decision**: `movement_type = 'transfer'` with `from_location_id` and `to_location_id` both set and different; totals do not change (US1 scenario 1). 001's CHECK "exactly one location" became 002's rule trigger reading the type's `direction` (002 research D17), so `transfer` is a lookup row with direction `both`: in and out movements keep exactly one, `transfer` needs both.
 - **Rejected for now**: the architecture's two linked rows (`transfer_out`, `transfer_in`) with a transit location. That serves outlet-to-outlet transfers with "in transit" (FR-STK-018, Later); inside one shop nothing is in transit. The movement types `transfer_out` and `transfer_in` are reserved in the CHECK for that later feature.
 
 ### D3. Movement types after this feature
 
-Existing: `opening`, `adjustment`, `sale`, `sale_cancel`, `merge_in`, `merge_out` (002), `edit_reverse`, `sale_return` (003). Added here: `transfer`, `damage`, `count_correction`. Added by 009: `purchase`, `purchase_return`, `warranty_out`, `warranty_in`. `site_return` waits for site returns (003 V2). Each addition rebuilds the CHECK in one migration with triggers re-created.
+Existing: `opening`, `adjustment`, `sale`, `sale_cancel`, `merge_in`, `merge_out` (002), `edit_reverse`, `sale_return` (003). Added here: `transfer`, `damage`, `count_correction`. Added by 009: `purchase`, `purchase_return`, `warranty_out`, `warranty_in`. `site_return` waits for site returns (003 V2). Each addition is an INSERT into 002's `movement_type` lookup (002 research D17), never a table rebuild.
 
 ### D4. Stock balance per location as a checked projection
 

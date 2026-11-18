@@ -16,7 +16,7 @@ Turn 001's single "Shop floor" into a tree of locations (Shop floor and Godown w
 
 **Primary Dependencies**: Unchanged; no new package.
 
-**Storage**: Same SQLite file. `location` gains `parent_id`; `stock_movement` rebuilt once (new types, two-location CHECK, `reason_code` list, `approval_id`, reserved `roll_id`); new `stock_balance`, `count_session`, `count_line`, `counter_setting`; `item_variant.home_location_id`, reserved `is_sold_from_rolls`.
+**Storage**: Same SQLite file. `location` gains `parent_id`; `stock_movement` gets new lookup rows and nullable columns only (`reason_code`, `approval_id`, reserved `roll_id`), no rebuild (002 research D17); new `stock_balance`, `count_session`, `count_line`, `counter_setting`; `item_variant.home_location_id`, reserved `is_sold_from_rolls`.
 
 **Testing**: Vitest test-first for core (balances at a time, corrections, sale location) and every movement writer; a property test (random movements, every balance equals the sum); Playwright for the quickstart.
 
@@ -79,13 +79,13 @@ apps/desktop/src/renderer/features/stock/
 
 Window 5 July to 1 August 2027 (proposed, 002 research D16).
 
-| #     | Dates                | Milestone                                    | Exit criteria                                                                                                                                                                |
-| ----- | -------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| M1    | 5 to 11 Jul          | Core, schema, single movement writer         | Core green; movement rebuild migrated on a copy of the owner's database; every existing writer routed through `MovementService` with all tests green; OD-1 and OI-1 answered |
-| M2    | 12 to 18 Jul         | Locations, transfers, damage, lookup (US1)   | Quickstart 1                                                                                                                                                                 |
-| M3    | 19 to 25 Jul         | Opening stock by rack (US2)                  | Quickstart 2; SC-002 timed; OD-2 answered                                                                                                                                    |
-| M4    | 26 Jul to 1 Aug      | Adjustments, approvals, negative stock (US3) | Quickstart 3 and 4                                                                                                                                                           |
-| After | day 60 after go-live | Accuracy                                     | SC-001 (95% of top-200 items match) measured with rack counts                                                                                                                |
+| #     | Dates                | Milestone                                    | Exit criteria                                                                                                                                                                                |
+| ----- | -------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M1    | 5 to 11 Jul          | Core, schema, single movement writer         | Core green; movement lookup rows and columns migrated on a copy of the owner's database; every existing writer routed through `MovementService` with all tests green; OD-1 and OI-1 answered |
+| M2    | 12 to 18 Jul         | Locations, transfers, damage, lookup (US1)   | Quickstart 1                                                                                                                                                                                 |
+| M3    | 19 to 25 Jul         | Opening stock by rack (US2)                  | Quickstart 2; SC-002 timed; OD-2 answered                                                                                                                                                    |
+| M4    | 26 Jul to 1 Aug      | Adjustments, approvals, negative stock (US3) | Quickstart 3 and 4                                                                                                                                                                           |
+| After | day 60 after go-live | Accuracy                                     | SC-001 (95% of top-200 items match) measured with rack counts                                                                                                                                |
 
 **Risks and fallbacks**
 
