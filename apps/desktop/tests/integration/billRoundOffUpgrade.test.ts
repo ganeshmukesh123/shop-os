@@ -1,11 +1,22 @@
+import type { Connection } from "../../src/main/db/connection";
 import { insertTargetSeriesAndBill } from "../helpers/schemaRows";
 import { createTestDb } from "../helpers/testDb";
-import { upgradeDatabaseWithOneBill } from "../helpers/upgradeFixture";
+import { upgradeConnectionWithOneBill } from "../helpers/upgradeFixture";
 
 /** Task T080 (migration 0013): round-off and document title on the bill, three new shop settings. */
 describe("upgrading a database for round-off, document title and time zone (FR-010a, FR-015a, FR-019a)", () => {
+  let connection: Connection;
+
+  beforeEach(() => {
+    connection = upgradeConnectionWithOneBill();
+  });
+
+  afterEach(() => {
+    connection?.sqlite.close();
+  });
+
   it("keeps the old bill and gives it a round-off of 0 and the title 'Estimate'", () => {
-    const sqlite = upgradeDatabaseWithOneBill();
+    const sqlite = connection.sqlite;
 
     const billRow = sqlite
       .prepare("select bill_no, round_off_paise, doc_title, total_paise from bill")
@@ -21,7 +32,7 @@ describe("upgrading a database for round-off, document title and time zone (FR-0
   });
 
   it("keeps the shop profile and gives it rounding on, Asia/Kolkata and the title 'Estimate'", () => {
-    const sqlite = upgradeDatabaseWithOneBill();
+    const sqlite = connection.sqlite;
 
     const profileRow = sqlite
       .prepare(
@@ -39,7 +50,7 @@ describe("upgrading a database for round-off, document title and time zone (FR-0
   });
 
   it("keeps the bill's lines, tender and number series attached", () => {
-    const sqlite = upgradeDatabaseWithOneBill();
+    const sqlite = connection.sqlite;
 
     const attached = sqlite
       .prepare(
@@ -52,7 +63,7 @@ describe("upgrading a database for round-off, document title and time zone (FR-0
   });
 
   it("still refuses to delete a bill, to edit its title or round-off, and lets it be cancelled", () => {
-    const sqlite = upgradeDatabaseWithOneBill();
+    const sqlite = connection.sqlite;
 
     expect(() => sqlite.prepare("delete from bill").run()).toThrow(/cannot be deleted/);
     expect(() => sqlite.prepare("update bill set doc_title = 'Cash Memo'").run()).toThrow(
@@ -73,7 +84,7 @@ describe("upgrading a database for round-off, document title and time zone (FR-0
     ["the title", "doc_title = 'Cash Memo'"],
     ["the round-off", "round_off_paise = 10"],
   ])("refuses a cancellation that also changes %s", (_fieldLabel, fieldChange) => {
-    const sqlite = upgradeDatabaseWithOneBill();
+    const sqlite = connection.sqlite;
     const cancelAndChange = `update bill set status = 'cancelled', cancel_reason = 'wrong item',
                              cancelled_at = 1, ${fieldChange}`;
 
