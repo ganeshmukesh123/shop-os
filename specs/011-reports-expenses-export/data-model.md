@@ -35,7 +35,7 @@ Same shape as `expense` without `category_id`; cash drawings write a `cash_drop`
 
 ## Changed tables
 
-- `cash_entry.kind` (005) adds `owner_drawing`.
+- Lookup row `cash_entry_kind` `owner_drawing` (negative), no table rebuild (002 research D17).
 - Indexes added for report speed: `bill_line(variant_id)`, `bill(user_id, business_date)`, `bill_tender(mode)`, `sales_return(business_date)`.
 
 ## Report definitions (in `@shopos/core`)

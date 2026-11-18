@@ -42,7 +42,7 @@ Each report is a definition in `@shopos/core` (`ReportDefinition`: id, filters, 
 
 ### D5. Cost of goods sold uses the cost on each bill line
 
-- Real profit and margins use `bill_line.cost_paise`, the cost **at the time of sale** (batch landed cost, else the variant's purchase price; 002 and 003). Lines with no cost are counted in **cost completeness** = lines with cost / all lines, by value (FR-005, EC-08), and shown as "Cost unknown" in margin reports, never hidden.
+- Real profit and margins use `bill_line.cost_paise`, the cost **at the time of sale** (batch landed cost, else the variant's purchase price; 002 and 003). Lines with no cost are counted in **cost completeness** = lines with cost / all lines, by value, leaving out `service` lines such as the delivery charge (006), which have no cost by nature (FR-005, EC-08), and shown as "Cost unknown" in margin reports, never hidden.
 - **Dependency**: 003 must store `cost_paise` on every line, not only tinted ones (002 stores it for tinted lines; 003 reads cost for the below-cost guard). If a bill line lacks it, this feature does not invent one: it counts the line as cost unknown. Recorded for 003's tasks.
 
 ### D6. Real profit formula with terms that may not exist yet
