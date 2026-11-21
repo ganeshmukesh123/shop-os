@@ -23,7 +23,9 @@ describe("isPermissionGranted", () => {
 
 describe("installPermissionPolicy", () => {
   // Handler types come from the session contract, so a change in Electron's signature fails typecheck.
-  type RequestHandler = NonNullable<Parameters<IPermissionSession["setPermissionRequestHandler"]>[0]>;
+  type RequestHandler = NonNullable<
+    Parameters<IPermissionSession["setPermissionRequestHandler"]>[0]
+  >;
   type CheckHandler = NonNullable<Parameters<IPermissionSession["setPermissionCheckHandler"]>[0]>;
   type RequestArguments = Parameters<RequestHandler>;
   type CheckArguments = Parameters<CheckHandler>;
