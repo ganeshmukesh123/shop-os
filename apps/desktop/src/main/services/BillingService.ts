@@ -11,6 +11,7 @@ import {
   type Bill,
   type BillLine,
   type BillsCancelInput,
+  type BillsListInput,
   type BillsSaveInput,
   type Item,
 } from "@shopos/core";
@@ -18,6 +19,7 @@ import type { DB } from "../db/connection";
 import type { Ctx } from "../db/seed";
 import { BillCancelRepository } from "../repositories/BillCancelRepository";
 import { BillRepository } from "../repositories/BillRepository";
+import { BillSearchRepository } from "../repositories/BillSearchRepository";
 import { ItemRepository } from "../repositories/ItemRepository";
 import { SettingsRepository } from "../repositories/SettingsRepository";
 import { StockRepository } from "../repositories/StockRepository";
@@ -172,6 +174,11 @@ export class BillingService {
       }
       return { bill: bills.get(input.id)!.bill };
     });
+  }
+
+  /** Search the saved bills for the bill list (FR-016): newest first, one page at a time. */
+  listBills(input: BillsListInput): { bills: Bill[]; total: number } {
+    return new BillSearchRepository(this.db, this.ctx).list(input);
   }
 
   getBill(id: string): { bill: Bill; lines: BillLine[] } {
