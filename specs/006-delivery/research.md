@@ -16,7 +16,14 @@ Sources read: the spec, PRD section 6 Delivery (FR-DLV-001 to 008), FR-BIL-022, 
 ### D2. Status history is append-only; the current status is derived
 
 - **Decision**: `delivery_event(delivery_id, status, reason, driver_id, vehicle_id, occurred_at, user_id)`, append-only. Statuses follow the architecture's machine reduced to the spec's four words: `pending` (planned), `out_for_delivery`, `delivered`, `failed`; plus `rescheduled` (failed back to pending with a new date) and `closed_returned` (goods taken back through a return). The current status is the latest event. FR-009: "never delete earlier states".
-- Allowed moves (core `nextDeliveryStatus`): pending to out_for_delivery (needs one driver and a vehicle); out_for_delivery to delivered (needs proof) or failed (needs a reason); failed to rescheduled (new date) or closed_returned.
+
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:9855ecb53dd858509d7284149f895a7165726010de422bac583b5e13a95fea52 -->
+
+- Allowed moves (core `nextDeliveryStatus`): `pending` or `rescheduled` to `out_for_delivery` (both need one driver and a vehicle); `out_for_delivery` to `delivered` (needs proof) or `failed` (needs a reason); `failed` to `rescheduled` (new date) or `closed_returned` (needs a return ID). All other moves are refused.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### D3. The delivery charge is a non-stock bill line
 
@@ -26,7 +33,14 @@ Sources read: the spec, PRD section 6 Delivery (FR-DLV-001 to 008), FR-BIL-022, 
 
 ### D4. Failed deliveries never invent a stock movement
 
-- The sale movement already took the goods out of stock at bill save. A failed delivery that will be retried changes nothing in stock (the goods are the customer's, waiting in the shop). If the customer no longer wants them, "Take back" opens 003's return flow (a `sale_return` movement and a refund or credit note) or, on the same business day, a cancel with approval. The delivery then gets `closed_returned` with the return's id.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:03eb3349546e728150aea0b3c597139968c863c00fe1f246ade91a31a39c3ddc -->
+
+- The sale movement already took the goods out of stock at bill save. A failed delivery that will be retried changes nothing in stock (the goods are the customer's, waiting in the shop). If the customer no longer wants them, "Take back" opens 003's return flow (a `sale_return` movement and a refund or credit note) and closes the delivery as `closed_returned` with that return ID. On the same business day, an approved bill cancellation is also an option; how it closes the delivery is open (OI-4).
+
+<!-- /coderabbit-ai-generated:v1 -->
+
 - **Rejected**: a delivery-specific stock movement (the architecture's `site_return` for "goods back to shop"). It would put goods back on sale while the bill still says they were sold.
 
 ### D5. Inter-state delivery under composition (EC-16)
@@ -36,7 +50,15 @@ The delivery address carries a state code. Saving a delivery whose state differs
 ### D6. Cash on delivery
 
 - **Decision**: the bill is saved with a tender `cod` (new mode, status `pending_collection`, 003's `bill_tender`). The driver's collection is a `tender_resolution` of kind `collected` (new kind) with the driver id and the amount; a collection in UPI is `collected` with mode `upi` and a reference (still checked for duplicates). Handing cash to the drawer is a `driver_handover` row plus a 005 `cash_entry` of kind `driver_handover` (new) in the open cash session.
-- **Day close** lists per driver: collected in cash, handed in, difference (US3 scenario 3). A difference above 005's variance alert raises an owner exception.
+
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:304162f9ee4238cae19b6ec7f9266de36109022325896cd89eda4b4a2a8261c5 -->
+
+- **Day close** lists cash activity per driver for the selected shop business date (US3 scenario 3). Attribute cash collections to the business date of the collection event in the shop's time zone, and handovers to their recorded `business_date`. The difference is cash collected minus cash handed in for that date. Open balances do not carry into later closes. Count a handover even when there is no collection for that driver on that date; it produces a negative difference. Raise one owner exception per driver at day close when the absolute difference strictly exceeds 005's variance alert.
+
+<!-- /coderabbit-ai-generated:v1 -->
+
 - **Example**: bill ₹4,250 COD; driver collects ₹4,250 cash; hands in ₹4,000 at 7 pm: day close shows Driver Ramesh: collected ₹4,250, handed in ₹4,000, short ₹250.
 
 ### D7. Challan
@@ -57,11 +79,18 @@ A challan has its own number from 001's `number_series` with `doc_kind` `challan
 
 ## Open items
 
-| ID   | Item                                                                                                                                          | Resolve by | Milestone                    |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------------------------- |
-| OI-1 | Whether an e-way bill is ever needed for the shop's intra-state deliveries (value threshold and state rules); PRD and spec say not researched | Shop's CA  | Before go-live of deliveries |
-| OI-2 | Delivery areas and charge bands                                                                                                               | Owner      | M1                           |
-| OI-3 | Whether the owner wants prices on the default challan                                                                                         | Owner      | M1                           |
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:3782baae094823a95330df26c815fb08aabff3e6c072b2bff295bcdcac201178 -->
+
+| ID   | Item                                                                                                                                          | Resolve by                     | Milestone                     |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ----------------------------- |
+| OI-1 | Whether an e-way bill is ever needed for the shop's intra-state deliveries (value threshold and state rules); PRD and spec say not researched | Shop's CA                      | Before go-live of deliveries  |
+| OI-2 | Delivery areas and charge bands                                                                                                               | Owner                          | M1                            |
+| OI-3 | Whether the owner wants prices on the default challan                                                                                         | Owner                          | M1                            |
+| OI-4 | Decide whether same-day cancellation creates a return accepted by `delivery.closeReturned` or needs a separate closure event and transition.  | Owner and 003/006 implementers | Before M2 dispatch completion |
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## References
 

@@ -27,13 +27,28 @@ description: "Task list for feature 006: delivery"
 
 ## Phase 2: Foundational
 
-- [ ] T003 [P] Write tests in `core/tests/delivery/deliveryStatus.test.ts`: pending to out_for_delivery needs driver and vehicle; out_for_delivery to delivered needs proof; failed needs a reason; failed to rescheduled needs a date; failed to closed_returned needs a return id; every other move refused; current status is the latest event
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:16740a3861b1392e6df95357b990accf16d3744cdbdccac657e326fca134cb7d -->
+
+- [ ] T003 [P] Write tests in `core/tests/delivery/deliveryStatus.test.ts`: `pending` and `rescheduled` can each move to `out_for_delivery` with a driver and vehicle; refuse either move if the driver or vehicle is missing; out_for_delivery to delivered needs proof; failed needs a reason; failed to rescheduled needs a date; failed to closed_returned needs a return id; every other move refused; current status is the latest event
+
+<!-- /coderabbit-ai-generated:v1 -->
+
 - [ ] T004 [P] Write tests in `core/tests/delivery/deliveryCharge.test.ts` and `driverCash.test.ts`: Old City ₹100, waived gives 0; Ramesh collected ₹4,250 and handed in ₹4,000 gives short ₹250; UPI collections are not counted as cash to hand in
 - [ ] T005 [P] Write tests in `core/tests/delivery/challanVersion.test.ts`: current version 2 and challan version 1 gives "changed"
 - [ ] T006 Implement `core/src/delivery/*.ts` to pass T003 to T005
 - [ ] T007 Add `delivery` (fields and limits of `data-model.md`; `UNIQUE(shop_id, bill_no)`), `delivery_event` (append-only; reason required for `failed`; driver and vehicle required for `out_for_delivery`), `delivery_proof` (append-only; photo or signature required), `delivery_rate`, `driver`, `vehicle`, `challan`, `challan_print` (append-only), `driver_handover` (append-only) to `desktop/src/main/db/schema.ts` and generate the migration
 - [ ] T008 Add lookup rows and columns (002 research D17: enum values are INSERTs into lookup tables, never table rebuilds): `item_family.kind` `service`; `bill_tender.mode` `cod` and status `pending_collection`; `tender_resolution.kind` `collected` with `driver_id`, `collected_mode`, `reference`; `cash_entry.kind` `driver_handover`; `unmet_demand.reason` and `value_paise`; `number_series.doc_kind` `challan`; seed the "Delivery charge" service item and the permissions `delivery.waive` and `delivery.dispatch`
-- [ ] T009 Make stock folding and movement writers skip `service` variants in `core/src/stock.ts` and `desktop/src/main/services/billing/SaveBill.ts`, with tests in `core/tests/stock.test.ts`
+
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:aafd260a723b8bafa62f01ebe59d70209a2f28acabd236b86880f28bf53e82bf -->
+
+- [ ] T009 Make stock folding and movement writers skip `service` variants in `core/src/stock.ts` and `desktop/src/main/services/billing/SaveBill.ts`, with tests in `core/tests/stock.test.ts`. Dependency for 011: cost completeness must exclude service lines; the calculation belongs to 011.
+
+<!-- /coderabbit-ai-generated:v1 -->
+
 - [ ] T010 Write `desktop/tests/integration/migrations006.test.ts`: migrations on a database with all earlier features; nothing existing changes; append-only triggers hold
 
 ---
@@ -61,9 +76,24 @@ description: "Task list for feature 006: delivery"
 
 ## Phase 5: User Story 3 - Proof of delivery and driver cash (P1)
 
-- [ ] T022 [P] [US3] Write tests in `desktop/src/main/services/delivery/DriverCashService.test.ts`: `delivery.collect` writes one `collected` resolution per COD tender; amount must equal the tender (`AMOUNT_MISMATCH`); UPI collection checks duplicate references; `handover` writes the handover and a `driver_handover` cash entry in one transaction; `driverCash` gives collected, handed in and difference; a difference above 005's alert raises one owner exception at day close
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:e1fad91d6a80796a3916b0d8bcc2803be9e20770bce6f205e72d48fb586a1b68 -->
+
+- [ ] T022 [P] [US3] Write tests in `desktop/src/main/services/delivery/DriverCashService.test.ts`: `delivery.collect` writes one `collected` resolution per COD tender; amount must equal the tender (`AMOUNT_MISMATCH`); UPI collection checks duplicate references; `handover` writes the handover and a `driver_handover` cash entry in one transaction; `driverCash` gives collected, handed in and difference; an absolute difference above 005's alert raises one owner exception per driver at day close. With an alert of ₹250, collect ₹4,250 on one business date and hand in ₹4,250 on the next. Assert day one shows +₹4,250; day two shows ₹0 collected, ₹4,250 handed in, −₹4,250 difference and one owner exception
+
+<!-- /coderabbit-ai-generated:v1 -->
+
 - [ ] T023 [P] [US3] Write tests in `desktop/tests/integration/deliveryProof.test.ts`: `recordProof` copies the photo into the data folder, writes the proof and a `delivered` event; delivered without proof refused
-- [ ] T024 [US3] Implement `desktop/src/main/services/delivery/DriverCashService.ts` and proof recording in `DispatchService.ts` to pass T022 and T023; add driver cash to 005's `DayCloseService` summary
+
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:33d8818ec149f0b192b5012e6dfbd60704349d9c429ff9928ca7a3663223554d -->
+
+- [ ] T024 [US3] Implement `desktop/src/main/services/delivery/DriverCashService.ts` and proof recording in `DispatchService.ts` to pass T022 and T023; add driver cash to 005's `DayCloseService` summary. Following T015 and T019, register `delivery.recordProof`, `delivery.collect`, `delivery.handover`, and `delivery.driverCash` in `desktop/src/main/ipc/handlers.ts` with command schemas in `core/src/commands.ts`; wire proof recording to `DispatchService` and the three cash commands to their matching `DriverCashService` operations for the US3 screens.
+
+<!-- /coderabbit-ai-generated:v1 -->
+
 - [ ] T025 [P] [US3] Build `desktop/src/renderer/features/delivery/DeliveryDetail/ProofForm/` (receiver name, photo pick, signature pad) and `DriverCash/` (collect, hand in, per-driver position)
 - [ ] T026 [US3] Write the e2e spec `desktop/tests/e2e/deliveryProofCash.spec.ts` for quickstart 3
 
