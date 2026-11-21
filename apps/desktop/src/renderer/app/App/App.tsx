@@ -4,7 +4,7 @@ import { LAYOUT } from "../../shared/constants/layout";
 import { StatusBadge } from "../../shared/components/StatusBadge/StatusBadge";
 import { ItemsScreen } from "../../features/inventory/ItemsScreen";
 import { NewBillScreen } from "../../features/billing/NewBillScreen";
-import { SettingsScreen } from "../../screens/SettingsScreen";
+import { SettingsScreen } from "../../features/settings/SettingsScreen";
 import { uiText } from "../../shared/text/strings";
 import { call } from "../../shared/api/api";
 import type { Route } from "./types";
