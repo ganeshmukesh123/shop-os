@@ -26,10 +26,6 @@ description: "Task list for feature 011: report engine, core reports, expenses, 
 
 ---
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:fa4104af6e5134c5e0eac409e3078b6a93d30f629a9aabb7f6cce74a532b2f36 -->
-
 ## Phase 2: Foundational
 
 - [ ] T004 [P] Write tests in `core/tests/reports/salesFigures.test.ts` with a fixed data set: cancelled bills excluded; an edited bill counted once at its current version; returns booked in the return's period; gross, discounts, returns and net equal hand-checked values
@@ -53,7 +49,7 @@ description: "Task list for feature 011: report engine, core reports, expenses, 
 
 ## Phase 4: User Story 2 - Expenses and real profit (M1, 17 to 23 Jan 2028; P1, V2)
 
-- [ ] T015 [P] [US2] Write tests in `core/tests/reports/costCompleteness.test.ts` and `realProfit.test.ts`: sales ₹4,52,000, returns ₹12,000, cost ₹3,41,000, expenses ₹38,500 give ₹60,500; absent terms marked not tracked; completeness by value in basis points (a costed product with an uncosted delivery charge is 10,000 bp, or 100% complete); a restocked return reverses only the returned quantity at the original sale cost; drawings not in expenses
+- [ ] T015 [P] [US2] Write tests in `core/tests/reports/costCompleteness.test.ts` and `realProfit.test.ts`: sales ₹4,52,000, returns ₹12,000, cost ₹3,41,000, expenses ₹38,500 give ₹60,500; absent terms marked not tracked; completeness by value in basis points (a costed product with an uncosted delivery charge is 10,000 bp, or 100% complete); a restocked return reverses only the returned quantity at the original sale cost; drawings not in expenses Completeness is `null` with no goods sold and with only service lines; 2 of 5 pcs returned from a ₹300 line reverses ₹120, and two returns never reverse more than ₹300; a restocked return with no line cost leaves COGS unchanged, counts in `unknownReturnCostCount` and sets `isComplete` false.
 - [ ] T016 [P] [US2] Write tests in `desktop/src/main/services/expenses/ExpenseService.test.ts`: cash expense writes the expense and a `cash_expense` entry in one transaction; no open session gives `NO_OPEN_SESSION`; correction is a negative row with a reason, once; drawings write `owner_drawing` cash entries; retrying the same `clientExpenseId` after reopening the database returns the original expense and linked cash entry with no duplicate rows
 - [ ] T017 [US2] Implement `core/src/reports/costCompleteness.ts`, `realProfit.ts` and `ExpenseService.ts`; add `expense_category`, `expense` with its unique client key, and `owner_drawing` to the schema. Run the T015 and T016 tests after generating the migration in T035
 - [ ] T035 [US2] Generate the T017 migration for `expense_category`, `expense` (including its unique key) and `owner_drawing`; seed the categories and add the `owner_drawing` row to `cash_entry_kind` without rebuilding `cash_entry`
@@ -76,8 +72,6 @@ description: "Task list for feature 011: report engine, core reports, expenses, 
 - [ ] T027 [US3] Write the e2e spec `desktop/tests/e2e/caExport.spec.ts` for quickstart 2; the CA checks one real quarter (SC-003)
 
 ---
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Phase 6: User Story 4 - Distributor scorecard (M4, 7 to 13 Feb 2028; P2, V2)
 

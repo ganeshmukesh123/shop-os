@@ -42,7 +42,7 @@ Each report is a definition in `@shopos/core` (`ReportDefinition`: id, filters, 
 
 ### D5. Cost of goods sold uses the cost on each bill line
 
-- Real profit and margins use `bill_line.cost_paise`, the cost **at the time of sale** (batch landed cost, else the variant's purchase price; 002 and 003). Lines with no cost are counted in **cost completeness** = lines with cost / all lines, by value, leaving out `service` lines such as the delivery charge (006), which have no cost by nature (FR-005, EC-08), and shown as "Cost unknown" in margin reports, never hidden.
+- Real profit and margins use `bill_line.cost_paise`, the **line-total** cost (the whole line's quantity, not per unit) **at the time of sale** (batch landed cost, else the variant's purchase price; 002 and 003). Lines with no cost are counted in **cost completeness** = lines with cost / all lines, by value, leaving out `service` lines such as the delivery charge (006), which have no cost by nature (FR-005, EC-08), and shown as "Cost unknown" in margin reports, never hidden.
 - **Dependency**: 003 must store `cost_paise` on every line, not only tinted ones (002 stores it for tinted lines; 003 reads cost for the below-cost guard). If a bill line lacks it, this feature does not invent one: it counts the line as cost unknown. Recorded for 003's tasks.
 
 ### D6. Real profit formula with terms that may not exist yet
@@ -75,7 +75,7 @@ Reports are tables with totals; a trend is shown as a small table of periods. No
 | OI-1 | The Tally version and import format the CA uses                                       | CA                                        | M3        |
 | OI-2 | GSTR-1 and GSTR-3B layouts the CA wants (offline tool templates or the CA's software) | CA                                        | M3        |
 | OI-3 | Due dates for CMP-08, GSTR-4, GSTR-1 and GSTR-3B for the shop's state and turnover    | CA                                        | M3        |
-| OI-4 | Whether 003 stores `cost_paise` on every bill line (D5)                               | Check 003's code when this feature starts | M0        |
+| OI-4 | Whether 003 stores `cost_paise` on every bill line, as the line total (D5)            | Check 003's code when this feature starts | M0        |
 
 ## Owner decisions needed
 

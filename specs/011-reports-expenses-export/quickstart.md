@@ -2,10 +2,6 @@
 
 Prerequisites: for M0, features 002 to 008 merged; for the rest, 009 as well. Commands as in 001. Commands and codes: `contracts/ipc-commands.md`.
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:6c59436991149f7b5b838e4fdd70389ee803428ad1dc3903380acaea20d56608 -->
-
 ## 0. Core reports (M0, 13 to 26 Sep 2027; US1)
 
 1. Generate a test day of 500 bills (scripted), with 3 cancels, 2 same-day edits, 4 over-limit discounts, 2 below-cost lines, 1 return without a bill and 2 negative-stock items.
@@ -15,8 +11,6 @@ Prerequisites: for M0, features 002 to 008 merged; for the rest, 009 as well. Co
 5. Stock value at cost by location and by category. Expected: equals quantity x cost per item; items without cost flagged.
 6. Tap a total, then a row, then a bill. Expected: the bill opens in 3 taps (FR-013).
 7. Reconcile 20 report totals against their documents with a script. Expected: 100% equal (SC-002).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## 1. Expenses and real profit (M1; US2)
 
