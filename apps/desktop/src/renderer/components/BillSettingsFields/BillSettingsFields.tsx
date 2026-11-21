@@ -2,12 +2,20 @@ import { Flex, RadioGroup, Switch, Text, TextField } from "@radix-ui/themes";
 import { isValidTimeZone, type ReceiptWidth } from "@shopos/core";
 import { StatusMessage } from "../../shared/components/StatusMessage/StatusMessage";
 import { uiText } from "../../strings";
-import { DOC_TITLE_MAX_LENGTH, PAPER_CHOICES } from "./BillSettingsFields.constants";
+import {
+  DOC_TITLE_MAX_LENGTH,
+  PAPER_CHOICES,
+  ZONE_ERROR_ID,
+  ZONE_HELP_ID,
+} from "./BillSettingsFields.constants";
 import type { IBillSettingsFieldsProps } from "./BillSettingsFields.types";
 
 /** The settings that shape every bill (FR-010a, FR-015a, FR-019a). Pure: the screen owns the state. */
 export function BillSettingsFields({ settings, onChange }: IBillSettingsFieldsProps) {
   const text = uiText.settings;
+  const isZoneUnknown = !isValidTimeZone(settings.timeZone);
+  // While the error shows, a screen reader reads it with the field, not only the help.
+  const zoneDescription = isZoneUnknown ? `${ZONE_HELP_ID} ${ZONE_ERROR_ID}` : ZONE_HELP_ID;
   return (
     <Flex direction="column" gap="3">
       <div>
@@ -51,20 +59,23 @@ export function BillSettingsFields({ settings, onChange }: IBillSettingsFieldsPr
         <TextField.Root
           id="bill-time-zone"
           required
-          aria-describedby="bill-time-zone-help"
+          aria-invalid={isZoneUnknown}
+          aria-describedby={zoneDescription}
           size="3"
           maxLength={64}
           value={settings.timeZone}
           onChange={(changeEvent) => onChange({ timeZone: changeEvent.target.value })}
         />
-        <Text as="div" id="bill-time-zone-help" size="1" color="gray" mt="1">
+        <Text as="div" id={ZONE_HELP_ID} size="1" color="gray" mt="1">
           {text.timeZoneHelp}
         </Text>
       </div>
-      {!isValidTimeZone(settings.timeZone) && (
-        <StatusMessage role="danger" label={uiText.status.error}>
-          {text.timeZoneUnknown}
-        </StatusMessage>
+      {isZoneUnknown && (
+        <div id={ZONE_ERROR_ID}>
+          <StatusMessage role="danger" label={uiText.status.error}>
+            {text.timeZoneUnknown}
+          </StatusMessage>
+        </div>
       )}
 
       <div>

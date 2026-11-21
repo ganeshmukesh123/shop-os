@@ -4,7 +4,7 @@ import path from "node:path";
 import { CoreError } from "@shopos/core";
 import { openDatabase, type Connection } from "../../src/main/db/connection";
 import { ensureSeed, type Ctx } from "../../src/main/db/seed";
-import { BackupService } from "../../src/main/services/BackupService";
+import { BackupService, restoreBackup } from "../../src/main/services/BackupService";
 import { BillingService } from "../../src/main/services/BillingService";
 import { InventoryService } from "../../src/main/services/InventoryService";
 import {
@@ -20,6 +20,30 @@ const NOW = new Date(Date.UTC(2026, 10, 21, 10, 0));
 /** 11 May 2027: financial year 27-28. */
 const NEXT_YEAR = new Date(Date.UTC(2027, 4, 11, 10, 0));
 
+// Every connection and temp folder a test opens is released after it, pass or fail.
+const openedConnections: Connection[] = [];
+const createdFolders: string[] = [];
+
+function tempFolder(prefix: string): string {
+  const folder = makeTempFolder(prefix);
+  createdFolders.push(folder);
+  return folder;
+}
+
+function openTracked(databasePath: string, options: { migrationsFolder: string }): Connection {
+  const connection = openDatabase(databasePath, options);
+  openedConnections.push(connection);
+  return connection;
+}
+
+afterEach(() => {
+  openedConnections
+    .splice(0)
+    .filter((connection) => connection.sqlite.open)
+    .forEach((connection) => connection.sqlite.close());
+  createdFolders.splice(0).forEach((folder) => fs.rmSync(folder, { recursive: true, force: true }));
+});
+
 interface IShop {
   connection: Connection;
   ctx: Ctx;
@@ -29,8 +53,8 @@ interface IShop {
 
 /** A shop whose counter stands at `lastSeq` (the bills made so far are few; the counter is set directly). */
 function createShop(billCount: number, lastSeq: number): IShop {
-  const databasePath = path.join(makeTempFolder("shopos-shop-"), "shopos.sqlite");
-  const connection = openDatabase(databasePath, { migrationsFolder: MIGRATIONS });
+  const databasePath = path.join(tempFolder("shopos-shop-"), "shopos.sqlite");
+  const connection = openTracked(databasePath, { migrationsFolder: MIGRATIONS });
   const ctx = ensureSeed(connection.db);
   const itemId = new InventoryService(connection.db, ctx).createItem({
     name: "Pipe",
@@ -38,7 +62,7 @@ function createShop(billCount: number, lastSeq: number): IShop {
     pricePaise: 10000,
     openingQtyMilli: 100000,
   }).item.id;
-  const shop = { connection, ctx, itemId, backupFolder: makeTempFolder("shopos-backups-") };
+  const shop = { connection, ctx, itemId, backupFolder: tempFolder("shopos-backups-") };
   Array.from({ length: billCount }).forEach(() => saveBill(shop, NOW));
   connection.sqlite.prepare("update number_series set last_seq = ?").run(lastSeq);
   return shop;
@@ -70,14 +94,14 @@ async function takeBackup(shop: IShop): Promise<string> {
 /** Plans, restores into a fresh database file, and opens it: what a restore on a new computer does. */
 function restoreAndOpen(backupFile: string, lastIssuedBillNo: string | null) {
   const plan = planRestoreNumbering(backupFile, lastIssuedBillNo, NOW);
-  const livePath = path.join(makeTempFolder("shopos-restored-"), "shopos.sqlite");
+  const livePath = path.join(tempFolder("shopos-restored-"), "shopos.sqlite");
   restoreWithNumbering(
     backupFile,
     { databasePath: livePath, migrationsFolder: MIGRATIONS },
     plan,
     NOW,
   );
-  const connection = openDatabase(livePath, { migrationsFolder: MIGRATIONS });
+  const connection = openTracked(livePath, { migrationsFolder: MIGRATIONS });
   return { plan, connection, ctx: ensureSeed(connection.db), livePath };
 }
 
@@ -187,6 +211,15 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
     );
   });
 
+  it("refuses a number from an earlier financial year than the backup's last bill", async () => {
+    // The backup's last bill is in 26-27, so a 25-26 number cannot be the last one printed.
+    const backupFile = await takeBackup(createShop(1, 1));
+
+    const failure = errorCodeOf(() => planRestoreNumbering(backupFile, "C1/25-26/000126", NOW));
+
+    expect(failure).toBe("INVALID_FIELD");
+  });
+
   it("reads the backup without changing it", async () => {
     const backupFile = await takeBackup(createShop(3, 120));
     const bytesBefore = fs.readFileSync(backupFile);
@@ -231,7 +264,7 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
       ),
     );
 
-    const after = openDatabase(livePath, { migrationsFolder: MIGRATIONS });
+    const after = openTracked(livePath, { migrationsFolder: MIGRATIONS });
     expect(failure).toBeDefined();
     expect(after.sqlite.prepare("select count(*) as total from bill").get()).toEqual({ total: 2 });
     expect(after.sqlite.prepare("select count(*) as total from bill_number_gap").get()).toEqual({
@@ -246,7 +279,7 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
     const backupEndingAt120 = await takeBackup(createShop(3, 120));
     const backupEndingAt200 = await takeBackup(createShop(3, 200));
     const planFor120 = planRestoreNumbering(backupEndingAt120, "C1/26-27/000126", NOW);
-    const livePath = path.join(makeTempFolder("shopos-restored-"), "shopos.sqlite");
+    const livePath = path.join(tempFolder("shopos-restored-"), "shopos.sqlite");
 
     const failure = errorCodeOf(() =>
       restoreWithNumbering(
@@ -270,6 +303,19 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
 
     expect(failure).toBeDefined();
     expect(planFolders()).toEqual(foldersBefore);
+  });
+
+  it("removes its install copy when putting the restored file in place fails", () => {
+    const backupFile = path.join(tempFolder("shopos-backup-file-"), "backup.sqlite");
+    openTracked(backupFile, { migrationsFolder: MIGRATIONS }).sqlite.close();
+    // A folder in the database's place makes the final rename fail.
+    const liveFolder = tempFolder("shopos-live-");
+    const livePath = path.join(liveFolder, "shopos.sqlite");
+    fs.mkdirSync(path.join(livePath, "blocker"), { recursive: true });
+
+    expect(() => restoreBackup(backupFile, livePath)).toThrow();
+
+    expect(fs.readdirSync(liveFolder).filter((name) => name.includes(".restore-"))).toEqual([]);
   });
 });
 
