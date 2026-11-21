@@ -211,6 +211,15 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
     );
   });
 
+  it("refuses a number from an earlier financial year than the backup's last bill", async () => {
+    // The backup's last bill is in 26-27, so a 25-26 number cannot be the last one printed.
+    const backupFile = await takeBackup(createShop(1, 1));
+
+    const failure = errorCodeOf(() => planRestoreNumbering(backupFile, "C1/25-26/000126", NOW));
+
+    expect(failure).toBe("INVALID_FIELD");
+  });
+
   it("reads the backup without changing it", async () => {
     const backupFile = await takeBackup(createShop(3, 120));
     const bytesBefore = fs.readFileSync(backupFile);

@@ -4,6 +4,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import {
   CoreError,
+  assertNotBeforeBackupYear,
   DEFAULT_TIME_ZONE,
   businessDateOf,
   financialYearOfBusinessDate,
@@ -135,6 +136,13 @@ export function planRestoreNumbering(
     const inspection = new BackupInspectionRepository(copyDatabase);
     const settings = inspection.readNumberingSettings();
     const series = chooseSeries(settings, lastIssuedBillNo, now);
+    const isTypedNumber = series.confirmedSeq !== null;
+    if (isTypedNumber) {
+      assertNotBeforeBackupYear(
+        series.financialYear,
+        inspection.latestFinancialYear(series.counterCode),
+      );
+    }
     const restoredLastSeq = inspection.lastSeq(series.counterCode, series.financialYear);
     const gap = planNumberGap(restoredLastSeq, series.confirmedSeq);
     const nextSeq = (gap?.newLastSeq ?? restoredLastSeq) + 1;
