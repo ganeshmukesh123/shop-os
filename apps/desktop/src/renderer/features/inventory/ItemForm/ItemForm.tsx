@@ -1,95 +1,22 @@
-import { useState } from "react";
 import { Box, Button, Checkbox, Dialog, Flex, Select, Text, TextField } from "@radix-ui/themes";
 import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
-import {
-  defaultAllowsDecimal,
-  formatQuantity,
-  paiseToInput,
-  parseQuantity,
-  parseRupees,
-  UNITS,
-  type Item,
-} from "@shopos/core";
+import { formatQuantity, UNITS } from "@shopos/core";
 import { uiText } from "../../../shared/text/strings";
-import { ApiError, call, messageOf } from "../../../shared/api/api";
-import { useToast } from "../../../shared/components/Toast";
-
-const CUSTOM = "__custom__";
+import { CUSTOM_UNIT_OPTION } from "./constants";
+import type { IItemFormProps } from "./types";
+import { useItemFormFields } from "./useItemFormFields";
+import { useItemFormSave } from "./useItemFormSave";
 
 /** Add (no `item`) or edit an item. Duplicate names are listed and block saving until renamed. */
-export function ItemForm({
-  item,
-  onClose,
-  onDone,
-}: {
-  item?: Item;
-  onClose: () => void;
-  onDone: () => void;
-}) {
-  const toast = useToast();
-  const editing = !!item;
-  const startUnit = item?.unit ?? "pcs";
-  const isBuiltin = (UNITS as readonly string[]).includes(startUnit);
-  const [name, setName] = useState(item?.name ?? "");
-  const [unitSel, setUnitSel] = useState(isBuiltin ? startUnit : CUSTOM);
-  const [custom, setCustom] = useState(isBuiltin ? "" : startUnit);
-  const [decimalOverride, setDecimalOverride] = useState<boolean | null>(
-    item ? item.allowsDecimal : null,
-  );
-  const [price, setPrice] = useState(item ? paiseToInput(item.pricePaise) : "");
-  const [opening, setOpening] = useState("");
-  const [errors, setErrors] = useState<string[]>([]);
-  const [dupes, setDupes] = useState<Item[]>([]);
-  const [busy, setBusy] = useState(false);
-
-  const unit = unitSel === CUSTOM ? custom.trim() : unitSel;
-  const allowsDecimal = decimalOverride ?? defaultAllowsDecimal(unit);
-
-  async function save() {
-    const errs: string[] = [];
-    if (!name.trim()) errs.push("Enter the item name");
-    if (!unit) errs.push("Choose or type a unit");
-    if (unit.length > 20) errs.push("Unit name can be at most 20 characters");
-    const pricePaise = parseRupees(price);
-    if (pricePaise === null) errs.push("Enter the price in rupees, for example 120 or 49.50");
-    let openingQtyMilli = 0;
-    if (!editing && opening.trim() !== "") {
-      const openingQuantityMilli = parseQuantity(opening);
-      if (openingQuantityMilli === null)
-        errs.push("Enter the opening quantity as a number, for example 10 or 2.5");
-      else openingQtyMilli = openingQuantityMilli;
-    }
-    if (!editing && !allowsDecimal && openingQtyMilli % 1000 !== 0)
-      errs.push("This unit accepts whole numbers only");
-    setErrors(errs);
-    setDupes([]);
-    if (errs.length || pricePaise === null) return;
-    setBusy(true);
-    try {
-      if (editing) await call("items.update", { id: item.id, name: name.trim(), unit, pricePaise });
-      else
-        await call("items.create", {
-          name: name.trim(),
-          unit,
-          allowsDecimal,
-          pricePaise,
-          openingQtyMilli,
-        });
-      toast("success", `${name.trim()} saved`);
-      onDone();
-    } catch (caughtError) {
-      if (caughtError instanceof ApiError && caughtError.code === "DUPLICATE_NAME")
-        setDupes(caughtError.details as Item[]);
-      else setErrors([messageOf(caughtError)]);
-    } finally {
-      setBusy(false);
-    }
-  }
+export function ItemForm({ item, onClose, onDone }: IItemFormProps) {
+  const fields = useItemFormFields(item);
+  const { errors, duplicateItems, isBusy, save } = useItemFormSave(fields, item, onDone);
+  const { isEditing } = fields;
 
   return (
     <Dialog.Root open onOpenChange={(isOpen) => !isOpen && onClose()}>
       <Dialog.Content maxWidth="520px">
-        <Dialog.Title>{editing ? uiText.form.editTitle : uiText.form.addTitle}</Dialog.Title>
+        <Dialog.Title>{isEditing ? uiText.form.editTitle : uiText.form.addTitle}</Dialog.Title>
         <Dialog.Description size="2" mb="3">
           Fields marked * are required.
         </Dialog.Description>
@@ -112,8 +39,8 @@ export function ItemForm({
               size="3"
               autoFocus
               maxLength={120}
-              value={name}
-              onChange={(changeEvent) => setName(changeEvent.target.value)}
+              value={fields.name}
+              onChange={(changeEvent) => fields.setName(changeEvent.target.value)}
             />
           </label>
           <Flex gap="3">
@@ -122,13 +49,7 @@ export function ItemForm({
                 <Text as="div" size="2" weight="bold" mb="1">
                   {uiText.form.unit} *
                 </Text>
-                <Select.Root
-                  value={unitSel}
-                  onValueChange={(selectedUnit) => {
-                    setUnitSel(selectedUnit);
-                    setDecimalOverride(null);
-                  }}
-                >
+                <Select.Root value={fields.unitChoice} onValueChange={fields.chooseUnit}>
                   <Select.Trigger className="shopos-full-width" aria-label={uiText.form.unit} />
                   <Select.Content>
                     {UNITS.map((unitOption) => (
@@ -136,12 +57,12 @@ export function ItemForm({
                         {unitOption}
                       </Select.Item>
                     ))}
-                    <Select.Item value={CUSTOM}>Custom…</Select.Item>
+                    <Select.Item value={CUSTOM_UNIT_OPTION}>Custom…</Select.Item>
                   </Select.Content>
                 </Select.Root>
               </label>
             </Box>
-            {unitSel === CUSTOM && (
+            {fields.unitChoice === CUSTOM_UNIT_OPTION && (
               <Box flexGrow="1" asChild>
                 <label>
                   <Text as="div" size="2" weight="bold" mb="1">
@@ -150,8 +71,8 @@ export function ItemForm({
                   <TextField.Root
                     size="3"
                     maxLength={20}
-                    value={custom}
-                    onChange={(changeEvent) => setCustom(changeEvent.target.value)}
+                    value={fields.customUnit}
+                    onChange={(changeEvent) => fields.setCustomUnit(changeEvent.target.value)}
                   />
                 </label>
               </Box>
@@ -160,9 +81,9 @@ export function ItemForm({
           <Text as="label" size="2">
             <Flex gap="2" align="center">
               <Checkbox
-                checked={allowsDecimal}
-                disabled={editing || unitSel !== CUSTOM}
-                onCheckedChange={(checkedState) => setDecimalOverride(checkedState === true)}
+                checked={fields.allowsDecimal}
+                disabled={isEditing || fields.unitChoice !== CUSTOM_UNIT_OPTION}
+                onCheckedChange={(checkedState) => fields.setAllowsDecimal(checkedState === true)}
               />
               {uiText.form.allowsDecimal}
             </Flex>
@@ -174,11 +95,11 @@ export function ItemForm({
             <TextField.Root
               size="3"
               inputMode="decimal"
-              value={price}
-              onChange={(changeEvent) => setPrice(changeEvent.target.value)}
+              value={fields.priceText}
+              onChange={(changeEvent) => fields.setPriceText(changeEvent.target.value)}
             />
           </label>
-          {!editing && (
+          {!isEditing && (
             <label>
               <Text as="div" size="2" weight="bold" mb="1">
                 {uiText.form.opening}
@@ -186,13 +107,13 @@ export function ItemForm({
               <TextField.Root
                 size="3"
                 inputMode="decimal"
-                value={opening}
-                onChange={(changeEvent) => setOpening(changeEvent.target.value)}
+                value={fields.openingText}
+                onChange={(changeEvent) => fields.setOpeningText(changeEvent.target.value)}
                 placeholder="0"
               />
             </label>
           )}
-          {editing && (
+          {item && (
             <Text size="2" color="gray">
               Current stock {formatQuantity(item.stockMilli)} {item.unit}. Use “
               {uiText.items.adjust}” to change stock.
@@ -203,10 +124,10 @@ export function ItemForm({
               {errorMessage}
             </StatusMessage>
           ))}
-          {dupes.length > 0 && (
+          {duplicateItems.length > 0 && (
             <StatusMessage role="warning" label={uiText.status.duplicate}>
               {uiText.form.duplicateTitle}. {uiText.form.duplicateHelp}{" "}
-              {dupes
+              {duplicateItems
                 .map(
                   (duplicateItem) =>
                     `${duplicateItem.name} (${formatQuantity(duplicateItem.stockMilli)} ${duplicateItem.unit} in stock)`,
@@ -219,7 +140,7 @@ export function ItemForm({
           <Button variant="soft" color="gray" size="3" onClick={onClose}>
             {uiText.form.cancel}
           </Button>
-          <Button size="3" onClick={() => void save()} loading={busy}>
+          <Button size="3" onClick={() => void save()} loading={isBusy}>
             {uiText.form.save}
           </Button>
         </Flex>
