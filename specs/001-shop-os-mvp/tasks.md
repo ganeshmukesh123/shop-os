@@ -218,7 +218,7 @@ Every schema task: edit `apps/desktop/src/main/db/schema.ts`, run `pnpm --filter
 
 - [X] T088 Move the renderer to `app/`, `features/` and `shared/` per `shopos-react-components`, one folder per PR, tests green before and after _(done 2026-11-16 as seven mechanical PRs following the T093 folder rule: shared (api, text, layout, toast), theme, status components, app, inventory, billing, settings; `screens/`, `components/` and `state/` are gone. Renderer tests (67), typecheck and build pass before and after each move)_
 - [X] T089 Split `NewBillScreen.tsx` (472 lines) into `useBillForm`, `useBillSave`, `BillSearchBox`, `BillLinesTable`, `BillSummaryPanel` and `RecoverDraftDialog` (same work as spec 017 T030; do it once) _(done 2026-11-21 as seven stacked PRs: behaviour tests first, then RecoverDraftDialog, BillSummaryPanel, BillLinesTable, BillSearchBox with useItemSearch, useBillForm and useBillSave, each with its own tests; `NewBillScreen.tsx` went from 447 to 136 lines and its component function from about 400 to 109 lines, under the 120-line component limit; the generic 40-line function warning still shows for it, and the focus handling and draft recovery could be hooks later)_
-- [ ] T090 Split `ItemForm.tsx` (230 lines) and `SettingsScreen.tsx` (233 lines) under the 120-line component limit
+- [ ] T090 Split `ItemForm.tsx` (230 lines) and `SettingsScreen.tsx` (233 lines) under the 120-line component limit _(2026-11-21: the ItemForm half is done (229 to 91 lines: validateItemForm, useItemFormFields, useItemFormSave, ItemUnitFields and ItemFormMessages, each with tests, in PRs after the behaviour tests); the SettingsScreen half is still open, so the box stays open)_
 
 ### Operations (research D15; finding H5)
 
