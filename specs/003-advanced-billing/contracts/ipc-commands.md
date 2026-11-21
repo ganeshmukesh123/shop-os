@@ -16,7 +16,7 @@ Rules as in `specs/001-shop-os-mvp/contracts/ipc-commands.md` (result shape, pai
 
 All 001 guarantees hold for `bills.save` and `bills.edit`: one transaction (version row, lines, tenders, movements including `edit_reverse`, ledger entries through 004, audit row through 005, approvals consumed, UPI references claimed in `upi_reference`), idempotent by `clientBillId`, committed before print or share.
 
-**Quotation quantities**: `quotes.prepareBill` only drafts. `bills.save` and `bills.edit` check again, inside the save transaction and with current unit conversions, that each referenced `quotationLineId` still has open quantity for the line; otherwise they return `QUOTE_LINE_OVERDRAWN` and write nothing. So two drafts from one quote cannot both overdraw it. Example: quote line 10 pcs, a saved bill took 6; a second draft for 6 is refused at save.
+**Quotation quantities**: `quotes.prepareBill` only drafts. `bills.save` and `bills.edit` check again, inside the save transaction and with current unit conversions, that each referenced `quotationLineId` still has open quantity for the **sum** of the save's lines that reference it (two lines of 6 against 10 open take 12 and are refused); otherwise they return `QUOTE_LINE_OVERDRAWN` and write nothing. So two drafts from one quote cannot both overdraw it. Example: quote line 10 pcs, a saved bill took 6; a second draft for 6 is refused at save.
 
 ## Held bills
 
