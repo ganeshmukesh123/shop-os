@@ -141,6 +141,7 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 
 - T036 must not start until T035 confirms 90% on `main`.
 - T030 (splitting `NewBillScreen`) is several PRs; each keeps tests green.
+- T030 and T031 were done ahead of T028 and T029, as spec 001 T089 (behaviour tests first, then one extraction per PR). The diagram's order was for re-estimating M3 coverage, not a build dependency; T028 and T029 stay open and still feed that estimate.
 - Feature work on spec 001 continues in parallel and writes its own tests so the gap does not grow.
 
 ## Implementation strategy
