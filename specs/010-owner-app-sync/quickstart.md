@@ -37,15 +37,9 @@ Count rack R3 on the phone by camera scan. Expected: after sync the counter show
 
 ## 5. Backup, revoke and restore (M3; US5)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:bc529349446292849bd60d9a98c4dd71e7c98947ec86f868ba8b04c139462455 -->
-
 1. Confirm the server's write-ahead log archive runs every 15 minutes and the device's daily encrypted upload exists (download it: unreadable without the key).
 2. Revoke a counter from the desktop Devices screen. Expected: the counter locks with "This device was removed by the owner"; the at-risk report shows its last sync time and last bill numbers.
 3. On a clean computer, follow the restore guide with a registration code. Expected: someone other than the builder has the shop billing within 30 minutes (SC-005); the first replacement bill uses a fresh counter code even if the lost counter issued unacknowledged numbers.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## 6. Both themes
 

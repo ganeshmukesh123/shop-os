@@ -18,13 +18,7 @@ device_credential (encrypted device token via safeStorage)
 
 ### `sync_state` (one row)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:1cfb590a1e3101cafa3b5a40b9497616c430365626976b969f0ca0ac6a2adfd0 -->
-
 `last_device_seq`, `pull_cursor` (opaque safe prefix from the last pull, committed with inbox changes), `last_push_at`, `last_pull_at`, `last_server_time`, `hlc_last` (the latest clock seen), `schema_v`.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### `sync_inbox_applied`
 
@@ -49,10 +43,6 @@ series_index, token_index (uniqueness checks)    device_cursor    sync_quarantin
 
 ### Tenancy and devices
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:a1c5f356ca9bc9f6357911722792599030ff0af4d4ced917c089e501135cfc64 -->
-
 - `business(id, name, plan)`, `shop(id, business_id, name, state_code, time_zone)`.
 - `device(id, business_id, shop_id, kind` (`desktop`, `owner_phone`, `godown_phone`), `label, counter_code, token_hash, registered_at, last_seen_at, last_acked_device_seq, revoked_at, schema_v)`. Counter codes are unique per shop, including revoked devices; retain retired codes permanently.
 - `registration_code(code_hash, shop_id, kind, counter_code, approval_user_id, expires_at, used_at, created_by)`; single use, 15-minute expiry. Approval codes bind the owner-selected approver; registering the device consumes the code and inserts its key in one transaction.
@@ -60,13 +50,7 @@ series_index, token_index (uniqueness checks)    device_cursor    sync_quarantin
 - `device_key(device_id, user_id, public_key, registered_at, revoked_at)`: public half of each phone's Keystore signing key, used to verify remote approvals. One active key and enrolled user per approval device.
 - `push_subscription(device_id, fcm_token, updated_at)`.
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ### Log and checks
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:71907dc1187ece6b2714b84508309a033a4f3d31f62dcd092f3555949ee14f4d -->
 
 - `sync_log(server_seq bigserial, op_id uuid unique, business_id, shop_id, device_id, device_seq, hlc, op_type, schema_v, actor_user_id, payload jsonb, device_time, received_at, status` (`applied`, `rejected`), `reject_code)`. `UNIQUE(device_id, device_seq)`. Append-only (trigger and no UPDATE or DELETE grant).
 - `sync_quarantine(op_id, reason, payload, received_at)` for operations that cannot be applied (unknown references); never dropped.
@@ -74,8 +58,6 @@ series_index, token_index (uniqueness checks)    device_cursor    sync_quarantin
 - `device_cursor(device_id, cursor_server_seq, updated_at)`.
 - `series_index(shop_id, series_key, last_seq, last_bill_no, last_device_id)`: bill, return, receipt and other numbers seen; a repeat raises a high-severity exception (architecture 5.4), except a bill version above 1 (003 D1), which shares its number by design and is checked against the version-1 row instead.
 - `token_index(business_id, kind` (`upi_ref`, `cheque_no`), `value, op_id)`, unique per kind and value.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### Projections (rebuildable from `sync_log`)
 

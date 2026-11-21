@@ -30,10 +30,6 @@ description: "Task list for feature 010: sync, server, owner app, godown app, cl
 
 ## Phase 2: Foundational protocol and server (M1, 15 to 21 Nov)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:a88fa88d0046de7222c3b47cf30b22b791094837d46b81f9552fea575bdc7a04 -->
-
 - [ ] T006 [P] Write tests in `core/tests/sync/hlc.test.ts`: monotonic on one device; receive takes the max and increments; ordering across devices with skewed clocks; text form sorts like the clock
 - [ ] T007 [P] Write tests in `core/tests/sync/mergeMasterField.test.ts`: later HLC wins for plain fields; money fields (price, cost, MRP, credit limit, tier) with different values give conflict; equal values never conflict
 - [ ] T008 [P] Write tests in `proto/tests/envelope.test.ts`: every op type's Zod schema accepts a valid payload and rejects missing ids; schema_v current and previous accepted, older refused
@@ -43,20 +39,14 @@ description: "Task list for feature 010: sync, server, owner app, godown app, cl
 - [ ] T012 Implement `desktop/src/main/sync/outboxPort.ts` to pass T011, and emit `bill.post` from `SaveBill.ts` as the first emitter
 - [ ] T013 Add the server schema of `data-model.md` in `server/src/db/schema.ts` (tenancy, devices, codes, `sync_log` append-only with no UPDATE or DELETE grant, quarantine, cursors, indexes, projections, snapshots, backups) with row-level security policies in a hand-written migration; test that a query without the tenant setting returns nothing
 - [ ] T014 Write tests in `server/src/modules/sync/push.test.ts`: duplicate `op_id` gives `duplicate`; a gap gives `resend_from`; one bad operation in a batch is quarantined and the rest apply; a repeated bill number gives `rejected` and is kept with an exception, but a bill version above 1 with the same number is applied as an edit (003 D1) and two versions with the same predecessor from different devices are both applied and flagged; everything in one transaction per operation (savepoints)
-- [ ] T015 Implement `server/src/modules/sync/` push and pull routes from `contracts/sync-api.md` to pass T014; pull excludes the caller's operations and pages by `server_seq`. Test with two transactions: deliver a committed higher sequence while the lower is pending, then commit the lower and verify it is pulled exactly once after inbox deduplication; also cover rollback and page limits
+- [ ] T015 Implement `server/src/modules/sync/` push and pull routes from `contracts/sync-api.md` to pass T014; pull excludes the caller's operations and pages by `server_seq`. Test with two transactions: deliver a committed higher sequence while the lower is pending, then commit the lower and verify it is pulled exactly once after inbox deduplication; also cover rollback and page limits Test pull progress with a stalled watermark and more than one page above it: each poll moves `nextScanAfter` forward, no page repeats, and the stalled operation arrives once it commits.
 - [ ] T016 Write the simulation harness `desktop/tests/sim/syncSimulation.test.ts`: in-process server, N desktop databases, seeded random schedule of bills, disconnects and reconnects, then convergence checks (every operation once per database, balances equal)
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 **Checkpoint (M1 exit)**: one operation type round-trips through push and pull; simulation harness runs.
 
 ---
 
 ## Phase 3: User Story 1 - Sync that never loses or duplicates a bill (M2, 22 Nov to 5 Dec; P1) MVP
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:579fa041640b0a2ba42adf632ac0bb272c5259d383a5ce6e290ae92640cc38e9 -->
 
 - [ ] T017 [US1] Emit operations from every writing use case, one PR per family, each with a test that the operation is in the same transaction: sales (`bill.edit`, `bill.cancel`, `return.post`, `quotation.save`) in `desktop/src/main/services/billing/`, `returns/`, `quotes/`
 - [ ] T018 [US1] Emit stock operations (`stock.movement`, `count.submit`, `location.upsert`) from `desktop/src/main/services/stock/`
@@ -70,17 +60,11 @@ description: "Task list for feature 010: sync, server, owner app, godown app, cl
 - [ ] T026 [P] [US1] Build `desktop/src/renderer/features/sync/SyncIndicator/` (pending count, amber when behind, "Offline" and "Removed" as words) and `RejectedOps/`
 - [ ] T027 [US1] Run the simulation for 7 simulated days with 2 counters and a phone, 500 bills each, the last unit of item X sold on both, the same bill edited on both counters offline (both versions kept, one conflict), a credit party pushed over its limit by two counters (one `over_credit_after_sync` exception), random drops: assert SC-001 and EC-02 (stock -1 flagged); make it a required CI check
 - [ ] T028 [US1] Write the e2e spec `desktop/tests/e2e/syncIndicator.spec.ts` for quickstart 1 steps 2 to 4
-- [ ] T028a [US1] Implement the ordered, retryable pre-010 import in research D3 and its first-snapshot gate. Interrupt and retry an import; restore the resulting snapshot and compare all syncable source rows, IDs and counts, including bundled facts.
-
-<!-- /coderabbit-ai-generated:v1 -->
+- [ ] T028a [US1] Implement the ordered, retryable pre-010 import in research D3 and its first-snapshot gate. Interrupt and retry an import; restore the resulting snapshot and compare all syncable source rows, IDs and counts, including bundled facts. Test the switch: a sale committed in the transaction right after live outbox writes turn on is synced once through the outbox and not duplicated by the import; a sale committed just before is in the import.
 
 ---
 
 ## Phase 4: User Story 5 - Backup, device control and recovery (M3, 6 to 19 Dec; P1)
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:89f41b7164d3547d8b4bb4a0a92354da444ec3708f4e6666a67a3f4113edc3ca -->
 
 - [ ] T029 [P] [US5] Write tests in `server/src/modules/identity/registration.test.ts`: code single-use, 15-minute expiry, valid phone proof binds the code’s user to the new device key, invalid proof leaves the code unused; register returns a token and the last numbers per series; token to 15-minute JWT; revoked token gives `DEVICE_REVOKED`
 - [ ] T030 [US5] Implement registration, tokens and revoke in `server/src/modules/identity/` to pass T029; store the device token with `safeStorage` in `desktop/src/main/sync/DeviceRegistration.ts`
@@ -94,15 +78,9 @@ description: "Task list for feature 010: sync, server, owner app, godown app, cl
 - [ ] T038 [US5] Write `docs/operations/breach-response.md` (FR-011) and send it to counsel (OI-5)
 - [ ] T039 [US5] Restore drill by someone other than the builder on a clean computer; record the time (SC-005) in `specs/010-owner-app-sync/plan.md`
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ---
 
 ## Phase 5: User Story 2 - Owner Today card (M4, 20 Dec to 2 Jan; P1)
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:a385b70c0f57a58c9c3384953c15ddbdf9fcb9ef9c86899ab1eeb3c1a3f36c68 -->
 
 - [ ] T040 [P] [US2] Write tests in `core/tests/owner/dailySnapshot.test.ts`: sales, expected cash, pending UPI, credit given, collected, overdue khata from a fixed set of operations equal the desktop's day-close figures (005) for the same day
 - [ ] T041 [US2] Implement `core/src/owner/dailySnapshot.ts` and `server/src/modules/projections/` (daily snapshot, document index, balances, counter freshness, updated in the push transaction; nightly rebuild compares and logs differences)
@@ -112,15 +90,9 @@ description: "Task list for feature 010: sync, server, owner app, godown app, cl
 - [ ] T045 [US2] Cache the last responses on the phone and show their age on weak signal (FR-005)
 - [ ] T046 [US2] Measure the card on a 4G connection 20 times (SC-002, under 3 s) and record it in `specs/010-owner-app-sync/plan.md`
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ---
 
 ## Phase 6: User Story 3 - Ranked alerts and remote approvals (M5, 3 to 9 Jan; P1)
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:5938d798f68a12583a205a0f990f5333b729fa1f37b7c62b28c8e5a302ac09e5 -->
 
 - [ ] T047 [P] [US3] Write tests in `core/tests/owner/rankAlerts.test.ts`: ₹45,000 overdue, ₹4,000 cancelled bill, ₹250 cash difference ranked in that order; approvals always first
 - [ ] T048 [P] [US3] Write tests in `server/src/modules/approvals/approvals.test.ts`: request stored and pushed; first decision wins in one transaction; second gets `ALREADY_DECIDED`; expiry at 2 minutes; long poll returns the decision; the signature verified against the phone's registered `device_key`; a signature from a revoked device refused; mismatched or tampered userId gives 403 NOT_ALLOWED_TO_APPROVE
@@ -128,8 +100,6 @@ description: "Task list for feature 010: sync, server, owner app, godown app, cl
 - [ ] T050 [US3] Implement `approvals.requestRemote` in `desktop/src/main/services/approvals/` (post, long-poll up to 2 minutes, record the decision locally, fall back to the PIN prompt offline) and add "Ask owner on phone" to 005's `ApprovalPrompt`
 - [ ] T051 [P] [US3] Build `mobile/src/owner/Alerts/` and `mobile/src/owner/Approvals/` (notification opens the request; approve or reject with a reason)
 - [ ] T052 [US3] Measure 20 notifications (OI-3, under 10 s) and run quickstart 3
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ---
 

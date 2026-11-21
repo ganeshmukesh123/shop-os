@@ -6,13 +6,7 @@
 
 ## Summary
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:9d2f9c4e25a6658260afa3a7ed960ce1e27d7b81349c7a1dfa487079ec47e03b -->
-
 Add the architecture's sync hub without making the counter depend on it. Every writing use case already in the desktop also writes one immutable operation to an outbox in the same transaction. A sync agent pushes operations in device order and pulls other devices' operations by server order; pull cursors use the writer barrier and certified watermark in research D4. Both paths are idempotent, so drops and retries never duplicate a bill. The server (Node.js, Fastify, PostgreSQL) keeps the operation log, a few uniqueness indexes, projections for the owner's phone and nightly per-shop SQLite snapshots built by replaying the log with the desktop's own apply handlers. On top: device registration and revoke, restore of a lost computer in 30 minutes, a daily encrypted device backup plus 15-minute server archiving, an Android owner app (Today card, drill-down, ranked alerts, remote approvals by push) and a scan-first godown app.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Technical Context
 
@@ -30,7 +24,7 @@ Add the architecture's sync hub without making the counter depend on it. Every w
 
 **Performance Goals**: Sync within a minute of reconnecting (NFR-004); push of 200 operations under 2 s on the server; Today card under 3 s on a phone connection (NFR-003, SC-002); approval notification under 10 s (FR-004); restore under 30 minutes (SC-005); bill save still about 1 s with the outbox row.
 
-**Constraints**: Counters never depend on the server (constitution IV, FR-010); no fact operation is ever lost, dropped or rewritten (rejected ones are kept and flagged); PINs never leave devices; tenant isolation fails closed.
+**Constraints**: Counters never depend on the server (constitution IV, FR-010); no fact operation that reached the server or is still on a working device is ever lost, dropped or rewritten (rejected ones are kept and flagged); the stated loss boundary is a lost or destroyed computer's operations that never reached the server, which the owner sees in the "at risk" report with the last sync time (research D9, EC-03); PINs never leave devices; tenant isolation fails closed.
 
 **Scale/Scope**: One shop now (up to 5 counters, 2 phones); 500 bills a day; 10 years of data (NFR-014); the server design is sized for the pilot's 10 shops (013) without change.
 
