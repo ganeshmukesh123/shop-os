@@ -23,27 +23,39 @@ Each line stores `invoiced_qty_milli`, `received_qty_milli` and `damaged_qty_mil
 - Stock: one `purchase` movement of the good quantity into the receipt's location, and one `purchase` movement of the damaged quantity into the Defective location (so damaged goods are visible and can be returned, D6). Short quantities move nothing; they feed the debit note and the short-supply rate.
 - **Example**: invoiced 100, received 98, damaged 3: 95 into Godown, 3 into Defective, short 2.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:fda7426a50576d602ef96f79806c6ee4be678d4636459b89838ef33573a45a1b -->
+
 ### D3. Landed cost by the architecture's allocation
 
-- Charges (`freight`, `unloading`, `cartage`, `other`) are spread by value (default) or quantity per charge (FR-002). Share = charge x line basis / total basis, rounded down; the remainder goes to the line with the largest basis, so shares add up exactly (architecture 11.4).
-- Line landed total = line value (received quantity x unit price) + shares. Landed cost per base unit = line landed total x 1000 / received quantity in milli, rounded half up, stored on the batch (`item_batch.landed_cost_paise`, 002) and in price history.
+- Charges (`freight`, `unloading`, `cartage`, `other`) are spread by value (default) or quantity per charge (FR-002). Use received line value or received quantity as the basis. Floor each proportional share, then give one paise at a time to lines in descending order of fractional remainder, breaking ties by ascending receipt line number. Shares sum exactly to the charge (architecture 11.4). If the selected basis totals zero, reject a positive charge on that basis before posting.
+- Line landed total = line value (received quantity x unit price) + shares. Landed cost per base unit = line landed total x 1000 / received quantity in milli, rounded half up, stored on the batch (`item_batch.landed_cost_paise`, 002) and in price history. A line with zero received quantity has zero line value, charge shares and landed total. Skip division, write no stock movement or batch, leave the variant cost unchanged, and retain the supplier price in history with no landed cost. Keep the invoiced quantity for a short-only debit note (D6).
 - **Example**: lines ₹6,000, ₹3,000 and ₹1,000 with ₹600 freight by value: shares ₹360, ₹180, ₹60.
 - **Item cost**: `item_variant.purchase_price_paise` becomes the latest landed cost per base unit (what the below-cost guard uses when no batch is chosen, 003). Weighted-average cost for margin reports is feature 011's choice from the same price history.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### D4. Purchase GST per line (FR-016, FR-CMP-012)
 
 Receipt lines store `gst_rate_bp` and `gst_paise` as printed on the distributor's invoice (entered or calculated from the rate), and the purchase bill stores the invoice's taxable value, CGST, SGST, IGST and total. A mismatch between the bill's total and the linked receipt lines is shown, not hidden. This is what 008's closing-stock statement reads for input credit; the claim itself is the CA's.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:855ffb7cb9fd5a0ccd346a841919b2ec98803501da9d5ff9951491c65530bab8 -->
+
 ### D5. Distributor ledger on 004's ledger
 
-- Distributors are 004 parties of type `distributor`. The same `party_ledger_entry` table is used with the 004 sign rule (positive = party owes the shop), so a purchase bill is a **negative** entry (the shop owes). New entry types: `purchase_bill`, `debit_note`, `payment_out`, `payment_out_reverse`. 004's `payment` gets `direction = 'out'`; allocations link payments out to purchase bills oldest first, and 004's ageing works on payables with the sign flipped.
+- Distributors are 004 parties of type `distributor`. The same `party_ledger_entry` table is used with the 004 sign rule (positive = party owes the shop), so a purchase bill is a **negative** entry (the shop owes). New entry types: `purchase_bill`, `debit_note`, `payment_out`, `payment_out_reverse`. 004's `payment` gets `direction = 'out'`; allocations link payments out to purchase bills oldest first, and 004's ageing works on payables with the sign flipped. At bill posting, allocate any available credit from previously posted debit notes for its linked receipts as specified in the data model.
 - Due date = bill date + the distributor's credit days (004 `party.credit_days`); "Due this week" lists open bills due in the next 7 days (FR-004).
 - **Cash purchase without a GST bill** (FR-003): a purchase bill with `is_unbilled_cash = 1`, paid at once by a `payment_out` in cash, which writes a 005 `cash_entry` of kind `cash_purchase` (new). Flagged in the exceptions list and in 011's reports.
 - A nightly check (SC-004) compares each distributor's payable with the ledger sum (004's `ledger.verify` covers it).
 
 ### D6. Purchase returns and debit notes
 
-`purchase_return` (linked to a posted receipt; lines from any location, normally Defective) writes `purchase_return` movements out of stock and a `debit_note` (number from `number_series` `doc_kind` `debit_note`, `DN{counter}/{fy}/{seq5}`, at most 16 characters) with a `debit_note` ledger entry that reduces the payable, in one transaction (US4 scenario 1). Status history Raised, Sent, Accepted, Settled is an append-only `debit_note_event` table (each transition logged with user and time, scenario 2). Short quantities can be put on a debit note without a stock movement (nothing arrived).
+`purchase_return` (linked to a posted receipt; lines from any location, normally Defective) writes `purchase_return` movements out of stock and a `debit_note` (number from `number_series` `doc_kind` `debit_note`, `DN{counter}/{fy}/{seq5}`, at most 16 characters) with a `debit_note` ledger entry that reduces the payable, in one transaction (US4 scenario 1). Status history Raised, Sent, Accepted, Settled is an append-only `debit_note_event` table (each transition logged with user and time, scenario 2). Short quantities can be put on a debit note without a stock movement (nothing arrived). If nothing was received on the line, value the short quantity at the invoiced unit price (round half up to paise); there is no landed unit cost or charge share to credit.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### D7. Price history and alerts
 
@@ -60,11 +72,17 @@ Per item and distributor: last price and date, average price over the last 6 rec
 
 `compliance_record(scheme_code, identifier, variant_id, batch_id, valid_to)` (architecture 6.7), captured on the receipt line for items whose category is flagged `requires_isi` (new category column; seeded flags are unverified, and the spec says the BIS list "is maintained by the product, not the shop"). Missing number: a warning on the line and an `exception_event`, never a block. Identifier patterns are checked as warnings only (architecture 6.7).
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:fb3b4fc2f04e2944bc40857bc5c3dcaf2e97dac2d53015fe90137eb2359beaad -->
+
 ### D10. Warranty register data now, cases and claims later
 
-- **Decision**: `warranty_register` is a projection with one row per sold unit of a variant that carries `warranty_months` (002): bill line, sale date, party, serial number or batch, end date (sale business date + months). It is written in the bill transaction and rebuildable from bill lines.
+- **Decision**: `warranty_register` is a projection with one row per sold unit whose 003 bill line captured a non-null `warranty_months_at_sale`: bill line, sale date, party, serial number or batch, and end date (sale business date + captured months). The bill transaction and rebuild both use this immutable snapshot.
 - **Serial numbers**: for variants with `is_serial_tracked = 1`, the serial must be captured on the bill line at sale. 003's bill line has no serial field. This feature adds `bill_line_serial(bill_line_id, serial_no)` (append-only) and a serial prompt at the counter. Because the PRD wants warranty data "from MVP", the owner may pull this one task forward into 003 (OD-1).
 - Cases, replacements, claim profiles, claims and claim accounting are V3 (not planned).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Open items
 
