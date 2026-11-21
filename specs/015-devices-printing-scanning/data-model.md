@@ -6,17 +6,24 @@ Builds on 001 (`shop_profile.receipt_width`, `backup_log`), 002 (barcodes, label
 
 ### `printer_profile`
 
-| Field             | Rule                                                                                                               |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| label             | text 1-40 (for example "Counter receipt")                                                                          |
-| os_printer_name   | the OS printer name used as `deviceName`                                                                           |
-| model             | text up to 60, typed by the owner (FR-010)                                                                         |
-| kind              | `receipt`, `a4`, `a5`, `label`                                                                                     |
-| paper_width_mm    | 58 or 80 for receipts; null for sheets; label width for labels                                                     |
-| label_height_mm   | labels only                                                                                                        |
-| is_default_for    | JSON list of document kinds: `bill`, `return`, `quote`, `challan`, `receipt`, `statement`, `label`, `location_tag` |
-| prints_devanagari | 0 or 1, set by the test page result                                                                                |
-| is_silent         | 0 or 1 (default 1 for receipts)                                                                                    |
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:f87c8d2e75516e3f78a98ff94d132e592b597c6b4748a8fefc689f4f2c37f6ab -->
+
+| Field             | Rule                                                                                                                   |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| label             | text 1-40 (for example "Counter receipt")                                                                              |
+| os_printer_name   | the OS printer name used as `deviceName`                                                                               |
+| model             | text up to 60, typed by the owner (FR-010)                                                                             |
+| connection_type   | owner-entered text (D9), such as USB, network or another connection; null until recorded (including migrated profiles) |
+| kind              | `receipt`, `a4`, `a5`, `label`                                                                                         |
+| paper_width_mm    | 58 or 80 for receipts; null for sheets; label width for labels                                                         |
+| label_height_mm   | labels only                                                                                                            |
+| is_default_for    | JSON list of document kinds: `bill`, `return`, `quote`, `challan`, `receipt`, `statement`, `label`, `location_tag`     |
+| prints_devanagari | 0 or 1, set by the test page result                                                                                    |
+| is_silent         | 0 or 1 (default 1 for receipts)                                                                                        |
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### `scanner_profile`
 
@@ -28,8 +35,16 @@ Builds on 001 (`shop_profile.receipt_width`, `backup_log`), 002 (barcodes, label
 
 ## Changed tables
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:ca5f4063610900fc4c49f1eabe8bd01bf3031becf69fc7d526fec10b42616b27 -->
+
 - `shop_profile.receipt_width` (001) is replaced by the default receipt profile's `paper_width_mm` (migration copies it).
-- Location tags use 007's location `id` through a short code: `location.short_code` (new, 2 to 8 characters, unique per shop) encoded as Code 128 `LOC-<short_code>`.
+- Location tags use 007's location `id` through a stable `location.short_code`: 2 to 8 uppercase ASCII letters or digits (`[A-Z0-9]{2,8}`), unique per shop. T018 prints Code 128 `LOC-<short_code>` (for example, `LOC-01`) and resolves the code within the active shop.
+- T007 backfills locations with no code in location ID order within each shop and uses the same allocation rule on new location inserts. Starting at `01`, take the first unused uppercase base-36 value in that shop, padded to at least two characters. Skip any occupied code (if `01` is taken, try `02`). Preserve assigned codes on reruns and renames.
+- Enforce the format and a unique constraint on `(shop_id, short_code)` after backfill. Allocate and write in the same transaction; if a concurrent insert claims the candidate, retry with the next free code. If no code fits within eight characters, fail the write without assigning an invalid or duplicate code.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Derived values (in `@shopos/core`)
 

@@ -12,11 +12,18 @@ Prerequisites: 001's printer spike (T008) done; 002, 007, 010 and 014 merged. A 
 
 ## 2. Scan items (M2; US2)
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:366632f889cde37f2457f475841ae2b866d421d8b138121a9ba89b3857c46f8e -->
+
 1. With focus anywhere on the bill screen, scan 10 items with the USB scanner. Expected: each added in under 1 s (SC-003); typing a name by hand is never treated as a scan.
 2. Scan a UPC-A product whose barcode is stored as EAN-13. Expected: found.
+   - Store only UPC-A `036000291452` on an item. Scan with the scanner sending EAN-13 `0036000291452`. Expected: the item is added to the bill and the unknown-barcode panel stays closed.
 3. Scan a barcode on two items. Expected: chooser and one data issue (002).
 4. Scan an unknown code. Expected: Search, Create item with this barcode, or Record as unmet demand.
 5. In the godown app (010), scan 50 barcodes in normal shop light with the torch off and on. Expected: 95% read (SC-004).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## 3. Labels and tags (M2; US3)
 

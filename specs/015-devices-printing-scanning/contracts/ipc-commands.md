@@ -16,4 +16,10 @@ Rules as in `specs/001-shop-os-mvp/contracts/ipc-commands.md`, with 005's checks
 | `labels.print` (changed from 002)  | adds `profileId?` and `kind: "location_tag"` with `locationIds[]`                    | `{ result }`                                                                                          |                                                        |
 | `hardware.health`                  | `{}`                                                                                 | `{ checks[{ component, level: "ok" or "warning" or "problem", message, nextStep? }] }`                |                                                        |
 
-The renderer's scan listener calls 002's `items.lookupBarcode` with the normalised code and, if nothing matches, opens the unknown-barcode panel (search, create item, record unmet demand).
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:09830cfe40c281fcd4f0221b8911b7126fb43ddb12adc13fbd55aa965cc0fda2 -->
+
+For scan lookup through 002's `items.lookupBarcode`, a 13-digit EAN-13 formed by prefixing a zero to a 12-digit UPC-A must match an item that stores that UPC-A (for example, `0036000291452` matches `036000291452`). Include that match in the existing duplicate-barcode handling. If nothing matches, the renderer opens the unknown-barcode panel (search, create item, record unmet demand).
+
+<!-- /coderabbit-ai-generated:v1 -->
