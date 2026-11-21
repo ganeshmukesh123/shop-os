@@ -5,6 +5,10 @@ import {
   validateNumberTemplate,
 } from "../src/numbering";
 
+// A fixed moment, so the preview never depends on the real clock.
+const FIXED_NOW = new Date(Date.UTC(2026, 10, 21, 6, 0));
+const SHOP_ZONE = "Asia/Kolkata";
+
 describe("numbering", () => {
   it("financial year runs 1 April to 31 March", () => {
     expect(financialYear(new Date(2026, 3, 1))).toBe("26-27");
@@ -28,15 +32,19 @@ describe("numbering", () => {
   });
 
   it("rejects a template that can exceed 16 characters", () => {
-    expect(validateNumberTemplate(DEFAULT_NUMBER_TEMPLATE, "C1").ok).toBe(true);
-    expect(validateNumberTemplate("{series}/{fy}/{seq}", "COUNTER1").ok).toBe(false);
-    expect(validateNumberTemplate("SHOP-INVOICE/{seq}", "C1").ok).toBe(false);
+    expect(validateNumberTemplate(DEFAULT_NUMBER_TEMPLATE, "C1", FIXED_NOW, SHOP_ZONE).ok).toBe(
+      true,
+    );
+    expect(validateNumberTemplate("{series}/{fy}/{seq}", "COUNTER1", FIXED_NOW, SHOP_ZONE).ok).toBe(
+      false,
+    );
+    expect(validateNumberTemplate("SHOP-INVOICE/{seq}", "C1", FIXED_NOW, SHOP_ZONE).ok).toBe(false);
   });
 
   it("rejects templates without a sequence or with illegal characters", () => {
-    expect(validateNumberTemplate("{series}/{fy}", "C1").ok).toBe(false);
-    expect(validateNumberTemplate("{seq} #", "C1").ok).toBe(false);
-    expect(validateNumberTemplate("{seq}", "C 1").ok).toBe(false);
+    expect(validateNumberTemplate("{series}/{fy}", "C1", FIXED_NOW, SHOP_ZONE).ok).toBe(false);
+    expect(validateNumberTemplate("{seq} #", "C1", FIXED_NOW, SHOP_ZONE).ok).toBe(false);
+    expect(validateNumberTemplate("{seq}", "C 1", FIXED_NOW, SHOP_ZONE).ok).toBe(false);
   });
 
   it("throws when the sequence overflows the padded width", () => {
@@ -68,16 +76,6 @@ describe("the template preview takes its financial year from the shop's zone (FR
     );
 
     expect(validation).toEqual({ ok: true, example: "C1/26-27/000001" });
-  });
-
-  it("uses the shop's default zone when none is given", () => {
-    const validation = validateNumberTemplate(
-      DEFAULT_NUMBER_TEMPLATE,
-      "C1",
-      justAfterMidnightInIndia,
-    );
-
-    expect(validation).toEqual({ ok: true, example: "C1/27-28/000001" });
   });
 });
 

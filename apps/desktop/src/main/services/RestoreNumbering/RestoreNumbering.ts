@@ -36,15 +36,44 @@ function withBackupCopy<Result>(
   readCopy: (copyDatabase: Database.Database) => Result,
 ): Result {
   const copyFolder = fs.mkdtempSync(path.join(os.tmpdir(), "shopos-plan-"));
-  const copyFile = path.join(copyFolder, "backup.sqlite");
-  fs.copyFileSync(backupFile, copyFile);
-  const copyDatabase = new Database(copyFile, { fileMustExist: true });
+  // The folder holds a full copy of the shop's data, so it goes even when the copy or open fails.
   try {
-    return readCopy(copyDatabase);
+    const copyFile = path.join(copyFolder, "backup.sqlite");
+    fs.copyFileSync(backupFile, copyFile);
+    return readDatabaseFile(copyFile, readCopy);
   } finally {
-    copyDatabase.close();
     fs.rmSync(copyFolder, { recursive: true, force: true });
   }
+}
+
+function readDatabaseFile<Result>(
+  databaseFile: string,
+  readDatabase: (database: Database.Database) => Result,
+): Result {
+  const database = new Database(databaseFile, { fileMustExist: true });
+  try {
+    return readDatabase(database);
+  } finally {
+    database.close();
+  }
+}
+
+/**
+ * The plan was made from the file earlier; refuse if the copy now ends elsewhere, because applying
+ * it would move the counter to a number the backup already used.
+ */
+function assertPlanMatchesCopy(preparedFile: string, plan: IRestoreNumberingPlan): void {
+  const copyLastSeq = readDatabaseFile(preparedFile, (database) =>
+    new BackupInspectionRepository(database).lastSeq(plan.counterCode, plan.financialYear),
+  );
+  const isSameBackup = copyLastSeq === plan.restoredLastSeq;
+  if (isSameBackup) {
+    return;
+  }
+  throw new CoreError(
+    "INVALID_BACKUP",
+    "The backup file changed after it was checked. Choose it again.",
+  );
 }
 
 function currentFinancialYear(timeZone: string, now: Date): string {
@@ -179,6 +208,7 @@ export function restoreWithNumbering(
   try {
     fs.mkdirSync(path.dirname(target.databasePath), { recursive: true });
     fs.copyFileSync(backupFile, preparedFile);
+    assertPlanMatchesCopy(preparedFile, plan);
     applyNumbering(preparedFile, target.migrationsFolder, plan, now);
     restoreBackup(preparedFile, target.databasePath);
   } finally {
