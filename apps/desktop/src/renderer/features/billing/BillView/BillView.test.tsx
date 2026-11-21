@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Bill, BillLine, Item } from "@shopos/core";
 import {
@@ -82,6 +82,19 @@ describe("BillView: the saved bill", () => {
     expect(screen.getByText("2026-11-15 15:30 · UPI · Ramesh")).toBeTruthy();
     expect(screen.getByText("Pipe 20mm")).toBeTruthy();
     expect(screen.getByText("Grand total: ₹240.00")).toBeTruthy();
+  });
+
+  it("shows each money field of a line in its own cell, and the subtotal by its label", () => {
+    renderBillView();
+
+    const pipeRow = screen.getByRole("row", { name: /Pipe 20mm/ });
+    const cellTexts = within(pipeRow)
+      .getAllByRole("cell")
+      .map((cell) => cell.textContent);
+
+    // 2 pcs x ₹120.00 = ₹240.00, no line discount (empty cell).
+    expect(cellTexts).toEqual(["2 pcs", "₹120.00", "", "₹240.00"]);
+    expect(screen.getByText("Total: ₹240.00")).toBeTruthy();
   });
 
   it("warns, with the words Negative stock, which items went below zero", () => {
