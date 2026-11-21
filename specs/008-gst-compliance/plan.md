@@ -14,13 +14,7 @@ Make every bill legally shaped for the registration in force at its instant: a B
 
 **Primary Dependencies**: Unchanged; no new package.
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:b968c2737fc2ea05a503c6e771d50c1c0e4aae5d4ffe41e40c866cd84052a4c1 -->
-
 **Storage**: Same SQLite file. New `registration_setting`, `hsn_rate`, `item_tax_override`, `turnover_daily`, `scheme_switch`, `privacy_notice`, `data_request`; tax columns on `bill` and `bill_line` and printed identity snapshots on `bill`; format and registration ID on `number_series`; `is_erased` on `party`.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 **Testing**: Vitest test-first for every tax, rate, format, turnover and erasure rule (golden tests with the CA's worked examples once received) and for bill writes with tax; a 10,000-bill numbering test; Playwright for the quickstart.
 
@@ -102,26 +96,15 @@ Feature window 7 June to 4 July 2027 (proposed, 002 research D16), plus M0 earli
 
 - The CA is slow to confirm: bills stay "Estimate" with the paper book as the legal bill (001 D23) until the CA signs off the printed samples.
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:071fa58a2ecc7ee5cc9ff161937764c00a0619514c6be60130337b4a412c60be -->
-
-- The owner switches to regular before M4: complete the wizard's checklist by hand with the CA, then create the `gst.registration` row and its new tax-invoice series in one transaction for the same effective instant. Apply the same prefix reservation and template checks as the wizard. Until that instant billing keeps using the composition registration and series.
-
-<!-- /coderabbit-ai-generated:v1 -->
+- The owner switches to regular **before M2** (no registration tables yet): bills stay "Estimate" with the paper book as the legal bill (001 D23), as for a slow CA; at M2 the registration in force on that day, regular if the switch already happened, is entered with `gst.registration.setInitial`.
+- The owner switches **between M2 and M4**: the switch transaction is built in M2 (T022: `gst.switch.confirm` without the wizard screens, owner-only), so the checklist is completed by hand with the CA and that command creates the `gst.registration` row and its new tax-invoice series for the same effective instant, with the wizard's prefix reservation and template checks. Until that instant billing keeps the composition registration and series. The wizard screens stay in M4.
 
 - M0 slips past 13 May: go-live waits; consent is a legal start date, not a nice-to-have.
 
 ## Complexity Tracking
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:61166b8484801928799e1c4b87890a82eb1c55a38cc73400c6f66da80b9141f3 -->
-
 | Addition                                       | Why it is needed                                  | Simpler alternative rejected because                                        |
 | ---------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------- |
 | Dated registration with an instant, not a date | A switch in the middle of a day (spec edge case)  | A date alone mis-formats bills between midnight and the switch time         |
 | Dated `hsn_rate` plus dated overrides          | Rate changes are data (NFR-016, architecture 6.7) | A rate column on each item needs editing thousands of items on every change |
-| Number series per registration and format                       | A new series at a scheme switch (US1 scenario 5)  | One series cannot restart at the switch                                     |
-
-<!-- /coderabbit-ai-generated:v1 -->
+| Number series per registration and format      | A new series at a scheme switch (US1 scenario 5)  | One series cannot restart at the switch                                     |

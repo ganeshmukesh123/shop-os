@@ -31,16 +31,10 @@ Prerequisites: 002, 003, 004 and 005 merged (M0 needs only 004 and 005). Command
 
 ## 4. Scheme-switch wizard (M4; US4)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:40d4d9e9fccb1a83a08ebec434979b4b3542153774027cca8f2f39c215403ffe -->
-
 1. Start a switch to regular for the 1st of next month with 3 items lacking HSN. Expected: checklist lists them; confirm disabled.
 2. Fix them; review the closing-stock preview ("Purchase tax not recorded" until 009).
 3. Review suggested prices with "keep final price"; edit two and confirm with the CA's name. Expected: the registration, series and audited prices are scheduled together. Move the test clock to the effective instant and check the new series, prices and final statement, including movements since confirmation through that instant. Time the wizard (SC-003, under 30 minutes).
 4. Try to delete a bill or ledger entry with the `sqlite3` CLI on a test copy. Expected: refused (US6 scenario 1).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## 5. Both themes and print
 

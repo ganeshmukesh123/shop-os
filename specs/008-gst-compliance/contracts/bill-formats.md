@@ -1,16 +1,10 @@
 # Contract: printed bill formats (extends `specs/001-shop-os-mvp/contracts/bill-layout.md`)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:d3d5844c3e3c98ce1de822ff427ace493c14e3964818ef4d7acaeee7755d3003 -->
-
 Which format prints is decided by the registration in force at the bill's `billed_at` and stored on the bill (`doc_format`). Every field marked **(CA)** is drawn from secondary summaries of CGST Rules 46 and 49 and must be confirmed by the shop's CA before go-live (research OI-3). Reprints use the saved version’s shop and recipient names, addresses and GSTINs wherever the format calls for them. All formats print black on white; the 001 rules for quantities, wrapping and reprints apply.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Estimate (before any registration is set; 001 behaviour)
 
-Heading "Estimate"; no GSTIN, no tax wording.
+Heading: the bill's saved `doc_title` (001 T080, default "Estimate"), so a reprint of an older bill with its own title matches what was printed; no GSTIN, no tax wording. Bills under a registration use the format's own title below.
 
 ## Bill of Supply (composition)
 

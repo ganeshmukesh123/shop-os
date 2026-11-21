@@ -12,14 +12,8 @@ Sources read: the spec, PRD section 11 (FR-CMP-001 to 017), FR-BIL-014, FR-BIL-0
 
 ### D1. Registration is a dated setting per shop; the bill stores what applied
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:821f0d25ddb6835685bdbc46606fe4fca5290d7b0977ac863585091d001859d6 -->
-
 - **Decision**: `registration_setting(shop_id, registration_type, gstin, legal_name, effective_from_ms, home_state_code)`, append-only rows; the one in force at a bill's `billed_at` is the latest eligible row with `effective_from_ms <= billed_at` (exclude cancelled switches as defined in the data model). An effective instant, not just a date, handles a switch in the middle of a day (spec edge case). Each bill version stores `doc_format` (`bill_of_supply`, `tax_invoice`), `registration_type`, both GSTINs and the printed shop and recipient names and addresses as snapshots, so a past bill reprints exactly (FR-002, architecture 11.9).
 - **Before any registration is in force** (the 001 trial) bills keep the `Estimate` title (001 D23). Once a registration exists, the title comes from the format: "Bill of Supply" or "Tax Invoice"; the free `doc_title` setting is no longer used for new bills.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### D2. Tax is calculated from tax-inclusive prices, line by line
 
@@ -41,13 +35,7 @@ The printed content per format is in `contracts/bill-formats.md`, drawn from CGS
 
 ### D5. Number series per format
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:f963a9ef8cfa84ace399d8fa3fb4c25e0c63952a746434f31bfae37091ad2c6e -->
-
 `number_series` (001) gains format and registration ID in its key (see the data model). Each switch starts a distinct series at its effective instant and reserves a prefix before restarting at 1. For example, in the same financial year use `C1/27-28/000001`, then `I1/27-28/000001`, then `C2/27-28/000001` for a return to composition. Do not use `T`, which 012 reserves for training; every template is checked to stay within 16 characters of letters, digits, hyphen and slash (001 numbering). Gaps from crashes and restores are already recorded (001 D21, 003 D16); a 10,000-bill test checks no repeats and no number above 16 characters (SC-005).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### D6. Turnover tracker
 
@@ -56,26 +44,14 @@ The printed content per format is in `contracts/bill-formats.md`, drawn from CGS
 
 ### D7. Scheme-switch wizard
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:1613313b5581b5aabd9e3ea18a76ee76416a62deae03ae45a5226194617366d1 -->
-
 Steps recorded on a `scheme_switch` row (`draft`, `checklist_ok`, `confirmed`, `effective`, or `cancelled`):
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 1. Target type and effective date and time (future, in the shop's zone).
 2. Checklist: every active item has an HSN and a resolvable rate; business parties with GSTIN entered; a new series template within 16 characters. The wizard cannot be confirmed until the list is clear (architecture 11.9).
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:15d062b3c19d10ba0bf4661fc0f88d80b6f8b2957b0dcdb0c8298b07b04ba48f -->
-
-3. Generate or refresh the final closing-stock statement when the switch takes effect. Use movements with `occurred_at <= effective_from_ms` and exclude later activity, even if the report is generated after that instant. Show per-variant quantity (from movements), cost, and purchase tax where recorded. Any statement shown earlier is a preview; confirmation does not set the cutoff. Purchase GST per line is FR-CMP-012 (V2, feature 009), so until 009 the statement shows "Purchase tax not recorded" for those lines and is a CA working paper, not a claim.
+3. Generate or refresh the final closing-stock statement when the switch takes effect. Use movements with `occurred_at < effective_from_ms` (strictly before: a movement at the switch instant belongs to the new scheme, as registration selection assigns it) and exclude later activity, even if the report is generated after that instant. The final statement is read in one read transaction that starts after `effective_from_ms`; the app has a single SQLite writer, so every local movement stamped before the instant has committed by then. A movement synced later from another device (010) with an earlier `occurred_at` marks the statement stale and it is regenerated; it becomes final only when no device has unsynced movements before the cutoff. Show per-variant quantity (from movements), cost, and purchase tax where recorded. Any statement shown earlier is a preview; confirmation does not set the cutoff. Purchase GST per line is FR-CMP-012 (V2, feature 009), so until 009 the statement shows "Purchase tax not recorded" for those lines and is a CA working paper, not a claim.
 4. Suggested prices: for composition to regular, the owner chooses "keep final price" (tax comes out of margin) or "add GST on top of today's price"; suggestions are rounded to the rupee and can be edited one by one before applying. Schedule the audited changes through 002's price path with effect at `effective_from_ms`. Billing uses the current scheme and prices until then. Scheduled changes from a cancelled switch never take effect.
 5. Confirm with the CA (a tick and the CA's name are recorded); confirmation writes the linked `registration_setting`, its new series and the audited price schedule for the same effective instant in one transaction.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 - Moving regular to composition produces the reversal statement in the same way.
 
@@ -96,15 +72,16 @@ V2 and V3 items: CA exports for CMP-08 and GSTR-4 (in 011), measuring-instrument
 
 ## Open items (to confirm with the CA or counsel before go-live)
 
-| ID   | Item                                                                                                                   | Who     | Milestone |
-| ---- | ---------------------------------------------------------------------------------------------------------------------- | ------- | --------- |
-| OI-1 | CGST and SGST split method and rounding per line                                                                       | CA      | M1        |
-| OI-2 | Seeded HSN rates (18% basket, 12% LED before 22 Sep 2025, 5% items)                                                    | CA      | M2        |
-| OI-3 | Mandatory fields of the tax invoice and bill of supply (Rules 46 and 49) and the exact composition declaration wording | CA      | M2        |
-| OI-4 | What counts in aggregate turnover for the composition limit; whether the shop's state has the ₹75 lakh limit           | CA      | M3        |
-| OI-5 | Erasure when the party owes money; whether a walk-in name must stay on a bill (001 D19)                                | Counsel | M0        |
-| OI-6 | DPDP response periods, breach notice duties and notice wording                                                         | Counsel | M0        |
-| OI-7 | Whether cancelled invoices and restore gaps need any report beyond the bill list (spec assumption)                     | CA      | M4        |
+| ID   | Item                                                                                                                                                           | Who     | Milestone |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | --------- |
+| OI-1 | CGST and SGST split method and rounding per line                                                                                                               | CA      | M1        |
+| OI-2 | Seeded HSN rates (18% basket, 12% LED before 22 Sep 2025, 5% items)                                                                                            | CA      | M2        |
+| OI-3 | Mandatory fields of the tax invoice and bill of supply (Rules 46 and 49) and the exact composition declaration wording                                         | CA      | M2        |
+| OI-4 | What counts in aggregate turnover for the composition limit; whether the shop's state has the ₹75 lakh limit                                                   | CA      | M3        |
+| OI-5 | Erasure when the party owes money; whether a walk-in name must stay on a bill (001 D19)                                                                        | Counsel | M0        |
+| OI-6 | DPDP response periods, breach notice duties and notice wording                                                                                                 | Counsel | M0        |
+| OI-7 | Whether cancelled invoices and restore gaps need any report beyond the bill list (spec assumption)                                                             | CA      | M4        |
+| OI-8 | Whether the shop profile (name, address) changed before 008; if so, reprints of older bills show the migration-time header (data-model, `legacy_print_header`) | Owner   | M1        |
 
 ## Owner decisions needed
 
