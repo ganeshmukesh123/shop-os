@@ -9,11 +9,12 @@ export const UNCONFIRMED_GAP_SIZE = 100;
 
 const MAX_SEQ = 10 ** SEQ_WIDTH - 1;
 const TOKEN_PATTERN = /(\{series\}|\{fy\}|\{seq\})/;
-const GROUP_PATTERN_BY_TOKEN: Record<string, string> = {
-  "{series}": "(?<series>.+?)",
-  "{fy}": "(?<fy>\\d{2}-\\d{2})",
-  "{seq}": `(?<seq>\\d{${SEQ_WIDTH}})`,
-};
+// A Map, not an object: literal text such as "toString" must never find an inherited property.
+const GROUP_PATTERN_BY_TOKEN = new Map<string, string>([
+  ["{series}", "(?<series>.+?)"],
+  ["{fy}", "(?<fy>\\d{2}-\\d{2})"],
+  ["{seq}", `(?<seq>\\d{${SEQ_WIDTH}})`],
+]);
 
 export interface IParsedBillNumber {
   /** null when the shop's number format has no series part. */
@@ -43,7 +44,7 @@ export function parseBillNumber(template: string, text: string): IParsedBillNumb
 function patternOf(template: string): string {
   return template
     .split(TOKEN_PATTERN)
-    .map((part) => GROUP_PATTERN_BY_TOKEN[part] ?? escapeRegex(part))
+    .map((part) => GROUP_PATTERN_BY_TOKEN.get(part) ?? escapeRegex(part))
     .join("");
 }
 
