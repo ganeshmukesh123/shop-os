@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import type { BrowserWindow, BrowserWindowConstructorOptions } from "electron";
 import type { IAppConfig } from "./appConfig";
 
@@ -50,5 +51,5 @@ export function createMainWindow(
   });
   void (config.isDev
     ? mainWindow.loadURL(config.rendererUrl!)
-    : mainWindow.loadFile(config.rendererHtmlPath));
+    : mainWindow.loadURL(pathToFileURL(config.rendererHtmlPath).href));
 }
