@@ -50,7 +50,7 @@ Every command from the screen to the database layer is accepted only when it com
 
 Camera, microphone, location, notifications and every other browser permission are denied, for both requests and checks, unless a later feature explicitly allows one.
 
-**Why this priority**: Electron approves every permission request by default (Security item 5). The counter app needs none of them today (barcode scanning arrives with `015` and will allow exactly one).
+**Why this priority**: Electron approves every permission request by default (Security item 5). The counter app needs none of them today (005's problem-report voice note will need the microphone while its dialog is open; 015's camera scanning runs in the phone apps, so the desktop needs no camera exception).
 
 **Independent Test**: Trigger a permission request and a permission check on the session and confirm both return denied.
 
@@ -58,7 +58,7 @@ Camera, microphone, location, notifications and every other browser permission a
 
 1. **Given** the page requests any permission, **Then** it is denied.
 2. **Given** a permission check, **Then** it reports not granted.
-3. **Given** `015` later needs the camera, **Then** it adds one named, tested exception without removing the default.
+3. **Given** a later feature needs one permission (005: the microphone, only while the problem-report dialog has armed it), **Then** it adds one named, tested exception without removing the default.
 
 ---
 
