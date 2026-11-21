@@ -1,6 +1,7 @@
 import {
   CoreError,
   assertQuantity,
+  billsCancelInput,
   billsSaveInput,
   DEFAULT_TIME_ZONE,
   businessDateOf,
@@ -9,11 +10,13 @@ import {
   formatBillNumber,
   type Bill,
   type BillLine,
+  type BillsCancelInput,
   type BillsSaveInput,
   type Item,
 } from "@shopos/core";
 import type { DB } from "../db/connection";
 import type { Ctx } from "../db/seed";
+import { BillCancelRepository } from "../repositories/BillCancelRepository";
 import { BillRepository } from "../repositories/BillRepository";
 import { ItemRepository } from "../repositories/ItemRepository";
 import { SettingsRepository } from "../repositories/SettingsRepository";
@@ -133,6 +136,42 @@ export class BillingService {
     return [...new Set(itemIds)]
       .map((itemId) => items.get(itemId)!)
       .filter((item) => item.stockMilli < 0);
+  }
+
+  /**
+   * Cancel a posted bill (FR-017) in ONE transaction: mark it Cancelled with the reason, then append
+   * one equal and opposite `sale_cancel` movement per line and give the stock back. The bill, its
+   * lines and the original `sale` movements are never changed, and its number is never reused.
+   */
+  cancelBill(raw: BillsCancelInput, now: Date = new Date()): { bill: Bill } {
+    const input = billsCancelInput.parse(raw);
+    const reason = input.reason.trim();
+    if (!reason) throw new CoreError("REASON_REQUIRED", "Say why the bill is being cancelled");
+
+    return this.db.transaction((tx) => {
+      const bills = new BillRepository(tx, this.ctx);
+      const savedBill = bills.get(input.id);
+      if (!savedBill) throw new CoreError("NOT_FOUND", "Bill not found");
+      const wasPosted = new BillCancelRepository(tx, this.ctx).markCancelled(
+        input.id,
+        reason,
+        now.getTime(),
+      );
+      if (!wasPosted) throw new CoreError("ALREADY_CANCELLED", "This bill is already cancelled");
+
+      const stock = new StockRepository(tx, this.ctx);
+      const items = new ItemRepository(tx, this.ctx);
+      for (const savedLine of savedBill.lines) {
+        stock.append({
+          itemId: savedLine.itemId,
+          quantityMilli: savedLine.quantityMilli,
+          reason: "sale_cancel",
+          billId: input.id,
+        });
+        items.addStockDelta(savedLine.itemId, savedLine.quantityMilli);
+      }
+      return { bill: bills.get(input.id)!.bill };
+    });
   }
 
   getBill(id: string): { bill: Bill; lines: BillLine[] } {
