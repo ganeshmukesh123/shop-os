@@ -9,7 +9,12 @@ import {
   Text,
   TextField,
 } from "@radix-ui/themes";
-import { validateNumberTemplate, type BackupStatus, type ShopProfile } from "@shopos/core";
+import {
+  DEFAULT_TIME_ZONE,
+  validateNumberTemplate,
+  type BackupStatus,
+  type ShopProfile,
+} from "@shopos/core";
 import { useToast } from "../components/Toast";
 import { LAYOUT } from "../layout";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
@@ -48,7 +53,12 @@ export function SettingsScreen() {
   }, [refresh, toast]);
   if (!shopProfile) return <Text>{uiText.common.loading}…</Text>;
 
-  const tpl = validateNumberTemplate(shopProfile.numberTemplate, shopProfile.seriesCode);
+  const tpl = validateNumberTemplate(
+    shopProfile.numberTemplate,
+    shopProfile.seriesCode,
+    new Date(),
+    DEFAULT_TIME_ZONE,
+  );
   const set = (patch: Partial<ShopProfile>) => setP({ ...shopProfile, ...patch });
 
   async function save(next = shopProfile!) {
