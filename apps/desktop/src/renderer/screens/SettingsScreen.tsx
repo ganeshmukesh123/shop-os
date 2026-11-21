@@ -9,6 +9,8 @@ import {
 } from "@shopos/core";
 import { BillSettingsFields } from "../components/BillSettingsFields/BillSettingsFields";
 import { isBillSettingsValid } from "../components/BillSettingsFields/billSettingsValidity";
+import { RestoreBackupDialog } from "../components/RestoreBackupDialog/RestoreBackupDialog";
+import { useRestoreBackup } from "../components/RestoreBackupDialog/useRestoreBackup";
 import { useToast } from "../components/Toast";
 import { LAYOUT } from "../layout";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
@@ -37,6 +39,7 @@ export function SettingsScreen() {
   const [shopProfile, setP] = useState<ShopProfile | null>(null);
   const [status, setStatus] = useState<BackupStatus | null>(null);
   const [busy, setBusy] = useState(false);
+  const restoreBackup = useRestoreBackup(shopProfile, toast);
 
   const refresh = useCallback(async () => {
     setP(await call("settings.get", {}));
@@ -88,18 +91,6 @@ export function SettingsScreen() {
     } finally {
       setBusy(false);
       setStatus(await call("backup.status", {}));
-    }
-  }
-
-  async function restore() {
-    const { path } = await call("system.pickBackupFile", {});
-    if (!path) return;
-    if (!window.confirm(uiText.settings.restoreConfirm)) return;
-    try {
-      await call("backup.restore", { filePath: path });
-      toast("success", "Restoring… the app will restart.");
-    } catch (caughtError) {
-      toast("error", messageOf(caughtError));
     }
   }
 
@@ -226,7 +217,7 @@ export function SettingsScreen() {
         >
           {uiText.settings.runNow}
         </Button>
-        <Button size="3" variant="soft" color="gray" onClick={() => void restore()}>
+        <Button size="3" variant="soft" color="gray" onClick={() => void restoreBackup.start()}>
           {uiText.settings.restore}
         </Button>
       </Flex>
@@ -234,6 +225,7 @@ export function SettingsScreen() {
       <Separator size="4" my="3" />
       <Heading size="3">{uiText.theme.title}</Heading>
       <ThemePicker preference={themePreference} onChange={setThemePreference} />
+      <RestoreBackupDialog {...restoreBackup.dialog} />
     </Flex>
   );
 }
