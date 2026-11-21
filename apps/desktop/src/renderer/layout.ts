@@ -17,4 +17,5 @@ export const LAYOUT = {
   discountColumnWidth: "230px",
   amountColumnWidth: "130px",
   actionColumnWidth: "90px",
+  restoreDialogWidth: "520px",
 } as const;

@@ -113,8 +113,6 @@ export const uiText = {
     never: "No backup yet",
     runNow: "Back up now",
     restore: "Restore from file",
-    restoreConfirm:
-      "Restoring replaces ALL current data with the backup and restarts the app. Continue?",
     backupFailed: "Last backup failed",
     backupOk: "Backup complete",
   },
@@ -126,6 +124,24 @@ export const uiText = {
     negativeStock: "Negative stock",
     cancelled: "Cancelled",
     draft: "Draft",
+  },
+  /** Restoring a backup; the last bill number keeps numbers unique afterwards (FR-013b, EC-19, research D21). */
+  restore: {
+    title: "Restore from backup",
+    file: "Backup file",
+    warning:
+      "Restoring replaces ALL current data with this backup and restarts the app. Anything entered after the backup was made is not in it.",
+    lastBill: "Last bill number you printed",
+    lastBillHelp:
+      "Look at your last printed bill or your paper book and type its number exactly. Example: {example}.",
+    cannotSay:
+      'If you cannot find it, leave this empty. Shop OS then skips the next 100 bill numbers and marks them "Lost in restore", so no bill number is ever used twice.',
+    cancel: "Cancel",
+    confirm: "Restore and restart",
+    busy: "Restoring…",
+    started: "Restoring… the app will restart. The next bill will be {next}.",
+    lostRange: "Bill numbers {from} to {to} are recorded as lost in the restore.",
+    lostGuess: "That is a block of 100, because the last number was not entered.",
   },
   /** Warnings about the computer's clock; billing is never blocked by them (FR-019a). */
   clock: {

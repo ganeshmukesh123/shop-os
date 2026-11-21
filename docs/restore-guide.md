@@ -29,10 +29,26 @@ Open **Settings > Backup**. "Last good backup" should show today's date and a re
 2. Plug in the drive that holds the backups.
 3. Open **Settings > Backup > Restore from file**.
 4. Choose the newest `shopos-….sqlite` file (the file name has the date and time).
-5. Confirm. The app **replaces all current data** with the backup and restarts.
-6. Check **Items** and look at the last bill you made. Anything entered after the backup's time is not in it.
+5. A window asks for **the last bill number you printed**. Look at your last printed bill (or your paper bill book) and type its number exactly, for example `C1/26-27/000126`. The window shows an example in your own number format.
+6. Click **Restore and restart**. The app **replaces all current data** with the backup and restarts.
+7. Check **Items** and look at the last bill you made. Anything entered after the backup's time is not in it.
+
+### Why the app asks for the last bill number
+
+A backup is a copy from an earlier time. Bills you printed after it was made are not in it, but their numbers are already on your customers' paper. If the app carried on from the backup, it would give a new bill a number that a customer already holds. So it continues **after** the number you type, and records the numbers in between as **lost in restore**, so the gap in the sequence is explained.
+
+Example: the backup ended at bill `C1/26-27/000120`, and you printed bills 121 to 126 before the disk failed. You type `C1/26-27/000126`. The next bill is `C1/26-27/000127`, and 121 to 126 are recorded as lost in the restore.
+
+- **If you cannot find the number**, leave the box empty. The app then skips the next 100 bill numbers and records them as lost, so no number is ever used twice. It tells you this before it restarts.
+- **If the number you type is not in your bill number format, is in another series, or is older than the backup's own last bill**, the app says so and changes nothing; correct it and try again.
+- The numbers recorded as lost cannot be edited or deleted. _(Showing them as "Lost in restore" in the bill list needs the Bills screen, task T070, and is not built yet. Until then they are in the database only.)_
+- _To be confirmed with the shop's CA: whether recording lost numbers like this is the right treatment for GST numbering (research D21)._
 
 If you choose a file that is not a Shop OS backup, the app refuses it and changes nothing.
+
+## What stays on your bills (retention)
+
+A saved bill is never changed, even if a customer asks for their name to be removed. It keeps exactly what was printed on it for the period the law requires bills to be kept (72 months from the annual return due date, CGST Rule 56; this is still to be confirmed with the shop's CA). The only personal detail this version holds is the optional **customer name** typed on a bill; it stays with the bill. Shop OS stores no phone numbers or addresses of customers in this version. Everything else held about a person (from a later version, their party record) can be removed on request; the bill itself stays. Restoring a backup keeps your bills as they were printed.
 
 ## First run on a Mac (the build is not notarised)
 
