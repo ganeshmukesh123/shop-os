@@ -1,6 +1,9 @@
 import { CoreError } from "./errors";
 import { SEQ_WIDTH } from "./numbering";
 
+/** The reason stored on a recorded gap: bills that were printed but are not in the restored database. */
+export const GAP_REASON_LOST_IN_RESTORE = "lost_in_restore";
+
 /** How far the counter jumps when the owner cannot say which bill was the last one issued (research D21). */
 export const UNCONFIRMED_GAP_SIZE = 100;
 
