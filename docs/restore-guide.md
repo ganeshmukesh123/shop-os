@@ -39,6 +39,8 @@ A backup is a copy from an earlier time. Bills you printed after it was made are
 
 Example: the backup ended at bill `C1/26-27/000120`, and you printed bills 121 to 126 before the disk failed. You type `C1/26-27/000126`. The next bill is `C1/26-27/000127`, and 121 to 126 are recorded as lost in the restore.
 
+The gap is recorded only in the financial year of the number you type. Example: the backup ends at `C1/25-26/000120` and you type `C1/26-27/000005`: the app records `26-27` numbers 1 to 5 as lost, but not any `25-26` numbers printed after 120, because it does not ask for that year's last bill. Write those down on paper for your CA.
+
 - **If you cannot find the number**, leave the box empty. The app then skips the next 100 bill numbers and records them as lost. This protects only those 100 numbers: if more than 100 bills were printed after the backup was made, the next bill could repeat a number a customer already holds, so find the last printed bill (paper book, a customer's copy, WhatsApp shares) before restoring. It tells you this before it restarts.
 - **If the number you type is not in your bill number format, is in another series, or is older than the backup's own last bill**, the app says so and changes nothing; correct it and try again.
 - The numbers recorded as lost cannot be edited or deleted. _(Showing them as "Lost in restore" in the bill list needs the Bills screen, task T070, and is not built yet. Until then they are in the database only.)_
@@ -48,7 +50,7 @@ If you choose a file that is not a Shop OS backup, the app refuses it and change
 
 ## What stays on your bills (retention)
 
-A saved bill is never changed, even if a customer asks for their name to be removed. It keeps exactly what was printed on it for the period the law requires bills to be kept (72 months from the annual return due date, CGST Rule 56; this is still to be confirmed with the shop's CA). The only personal detail this version holds is the optional **customer name** typed on a bill; it stays with the bill. Shop OS stores no phone numbers or addresses of customers in this version. Everything else held about a person (from a later version, their party record) can be removed on request; the bill itself stays. Restoring a backup keeps your bills as they were printed.
+A saved bill is never changed, even if a customer asks for their name to be removed. It keeps exactly what was printed on it for the period the law requires bills to be kept (72 months from the annual return due date, CGST Rule 56; longer for records involved in an appeal, revision, proceeding or investigation, which are kept until one year after it is finally disposed of, [CGST Act section 36](https://upload.indiacode.nic.in/showfile?actid=AC_CEN_2_2_00042_201712_1517807328102&filename=a2017-12.pdf&type=actfile); both are still to be confirmed with the shop's CA). The only personal detail this version holds is the optional **customer name** typed on a bill; it stays with the bill. Shop OS stores no phone numbers or addresses of customers in this version. Everything else held about a person (from a later version, their party record) can be removed on request; the bill itself stays. Restoring a backup keeps your bills as they were printed.
 
 ## First run on a Mac (the build is not notarised)
 
