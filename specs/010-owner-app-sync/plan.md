@@ -6,7 +6,13 @@
 
 ## Summary
 
-Add the architecture's sync hub without making the counter depend on it. Every writing use case already in the desktop also writes one immutable operation to an outbox in the same transaction. A sync agent pushes operations in device order and pulls other devices' operations by server order; both are idempotent, so drops and retries never duplicate a bill. The server (Node.js, Fastify, PostgreSQL) keeps the operation log, a few uniqueness indexes, projections for the owner's phone and nightly per-shop SQLite snapshots built by replaying the log with the desktop's own apply handlers. On top: device registration and revoke, restore of a lost computer in 30 minutes, a daily encrypted device backup plus 15-minute server archiving, an Android owner app (Today card, drill-down, ranked alerts, remote approvals by push) and a scan-first godown app.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:9d2f9c4e25a6658260afa3a7ed960ce1e27d7b81349c7a1dfa487079ec47e03b -->
+
+Add the architecture's sync hub without making the counter depend on it. Every writing use case already in the desktop also writes one immutable operation to an outbox in the same transaction. A sync agent pushes operations in device order and pulls other devices' operations by server order; pull cursors use the writer barrier and certified watermark in research D4. Both paths are idempotent, so drops and retries never duplicate a bill. The server (Node.js, Fastify, PostgreSQL) keeps the operation log, a few uniqueness indexes, projections for the owner's phone and nightly per-shop SQLite snapshots built by replaying the log with the desktop's own apply handlers. On top: device registration and revoke, restore of a lost computer in 30 minutes, a daily encrypted device backup plus 15-minute server archiving, an Android owner app (Today card, drill-down, ranked alerts, remote approvals by push) and a scan-first godown app.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Technical Context
 

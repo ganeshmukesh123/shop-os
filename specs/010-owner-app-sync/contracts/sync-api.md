@@ -4,13 +4,23 @@ REST over HTTPS, JSON, gzip, under `/v1` (architecture 9.1). Errors are RFC 7807
 
 ## Registration and auth
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:7a5f2d51cb737a7f568deb9bf370ef190ae3224106c57994c9d4e8a36b76a6d7 -->
+
 | Method and path                                   | Body                             | Result                                                                     | Codes                                       |
 | ------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------- |
-| `POST /v1/registration-codes` (owner device only) | `{ kind, counterCode? }`         | `{ code, expiresAt }`                                                      | `FORBIDDEN`                                 |
-| `POST /v1/devices/register`                       | `{ code, kind, label, schemaV }` | `{ deviceId, deviceToken, counterCode?, seriesLastNumbers[] }`             | `CODE_INVALID`, `CODE_USED`, `CODE_EXPIRED` |
+| `POST /v1/registration-codes` (owner device only) | `{ kind, counterCode?, approvalUserId? }`         | `{ code, expiresAt }`                                                      | `FORBIDDEN`                                 |
+| `POST /v1/devices/register`                       | `{ code, kind, label, schemaV, approvalPublicKey?, keyProof? }` | `{ deviceId, deviceToken, counterCode?, seriesLastNumbers[] }`             | `CODE_INVALID`, `CODE_USED`, `CODE_EXPIRED`, `INVALID_KEY_PROOF` |
 | `POST /v1/auth/token`                             | `{ deviceToken }`                | `{ jwt, expiresIn: 900 }`                                                  | `DEVICE_REVOKED` (403)                      |
 | `POST /v1/devices/{id}/revoke` (owner)            | `{ reason }`                     | `{ revokedAt, atRisk: { lastAckedDeviceSeq, lastSyncAt, lastNumbers[] } }` |                                             |
 | `GET /v1/devices` (owner)                         |                                  | `{ devices[{ id, kind, label, lastSeenAt, lastSyncAt, revokedAt }] }`      |                                             |
+
+For an approval phone, the authenticated owner selects an active approver in the shop when issuing the code. The server stores that user on the single-use code. Registration over HTTPS requires the phone’s P-256 public key (base64 DER SubjectPublicKeyInfo) and proof of possession: an ECDSA/SHA-256 signature over the UTF-8 JSON array `["register",code,kind,approvalPublicKey]` (compact JSON; signatures are base64 raw r||s). Verify the code, kind and proof before atomically consuming the code, creating the device and token, and storing the key with the new device ID and the code’s user ID. Invalid or missing proof returns 400 `INVALID_KEY_PROOF` without consuming the code. Registration cannot select another user or replace an existing device’s key. Success returns the registration result above.
+
+For lost-counter replacement, revoke the lost device and permanently reserve its counter code. Registration must allocate a never-used counter code for the replacement; reject an attempted reuse with 409 `COUNTER_CODE_USED`. Historical series numbers are informational.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Sync
 
@@ -22,7 +32,15 @@ REST over HTTPS, JSON, gzip, under `/v1` (architecture 9.1). Errors are RFC 7807
 | `POST /v1/backups/presign`            | `{ sizeBytes, sha256 }`                                             | `{ uploadUrl, objectKey }`                                                                                                                                 |                                                                                     |
 | `POST /v1/backups/complete`           | `{ objectKey, sha256 }`                                             | `{ recorded }`                                                                                                                                             | `CHECKSUM_MISMATCH`                                                                 |
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:1d7c4cb31f096ce506ffe2492434081924101a29ce554a7ea14f68a8d09ad342 -->
+
 Push rules: each operation in its own savepoint; known `op_id` gives `duplicate`; a `device_seq` that is not the next expected gives `resend_from` with the expected number (nothing after it is applied); a bill number or UPI reference already used gives `rejected` with the code and the operation is kept and flagged (architecture 9.3, 9.5).
+
+Pull reads the certified watermark and log in one database snapshot (research D4). Starting after the incoming cursor, return eligible committed operations in sequence order, up to the limit. On a full page, advance only to the lesser of the last returned sequence and the watermark; otherwise advance to the watermark. A higher committed operation may be delivered early, but cannot advance the cursor beyond the certified prefix. Retry from that safe cursor on the next poll; a lower operation that commits later is then returned, and the inbox deduplicates any replay by `opId`. Set `hasMore` for remaining eligible rows within the certified prefix; poll again normally even when false.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Owner queries
 
@@ -44,7 +62,13 @@ Push rules: each operation in its own savepoint; known `op_id` gives `duplicate`
 | `POST /v1/approvals/{id}/decide` (owner or delegated manager) | `{ decision, reason?, userId, signature }`   | `{ approval }`                                   | `ALREADY_DECIDED` (first decision wins), `EXPIRED`, `NOT_ALLOWED_TO_APPROVE` |
 | `POST /v1/push/subscribe`                                     | `{ fcmToken }`                               | `{}`                                             |                                                                              |
 
-`signature` is made on the phone with its per-device Keystore key (unlocked by the phone's own PIN) over the approval id, decision and amount; the server verifies it with the registered `device_key`. No PIN or PIN-derived secret reaches the server (research D8).
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:50afc4a7ba012cb766e3774b5e5d2fa26b415a8b6a894f7a59b0951a75d171d3 -->
+
+`signature` is made on the phone with its per-device Keystore key (unlocked by the phone's own PIN) over the compact UTF-8 JSON array `["decide",approvalId,decision,amountPaise,userId,reasonOrNull]` using the registration signature format. The server uses the stored approval amount and selects the active key by authenticated device ID. Before recording a decision, require a valid signature, the key’s enrolled user to equal `userId`, and that user to be active and authorized for this approval; otherwise return 403 `NOT_ALLOWED_TO_APPROVE`. No PIN or PIN-derived secret reaches the server (research D8).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Health
 

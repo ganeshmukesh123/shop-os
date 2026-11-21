@@ -28,13 +28,27 @@ Each counter keeps its complete SQLite database and bills without the network (c
 
 ### D3. Operation envelope, outbox and ordering exactly as the architecture
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:e777ee35920277a632483cfab2cf320b235f9aec354c439bda0bd23c2b44f2e4 -->
+
 - Envelope fields `op_id` (UUID v7), `device_id`, `device_seq` (gap-free per device), `hlc`, `op_type`, `schema_v`, `business_id`, `shop_id`, `actor_user_id`, `payload` (architecture 5.1). The hybrid logical clock is a pure module in `@shopos/core` (`hlc.ts`).
 - **Outbox**: every writing use case writes one `sync_outbox` row in its own SQLite transaction through an `OutboxPort` (architecture 5.2 step 1). The payload is the full set of facts (a bill carries its lines, tenders, movements, ledger and cash entries, approvals consumed and audit rows). Operation types and their payload schemas live in a new shared package `packages/sync-protocol` (Zod), used by the desktop, the server and the phone apps.
 - **Retrofit**: every use case added by 001 to 009 must emit its operation. One task per use-case family (bills, returns, quotes, stock, counts, khata, purchasing, cash, approvals, audit, master data, settings); each has a test that the operation is in the same transaction.
 
+- **Initial import (T028a)**: before enabling live outbox writes, take a consistent cut of the existing shop data. Emit every pre-010 syncable record exactly once: settings, users (no PIN material) and masters first, then documents in dependency order, then dependent lines, movements, ledger, cash, approvals and audit rows. Bundle children already carried by a document in its payload; preserve source IDs and audit-chain order. Break dependency ties by table and primary key. Persist each source identity, its assigned operation ID and outbox entry atomically; retries reuse the mapping. Publish the first shop snapshot only after all source counters’ imports are acknowledged and included in its certified prefix.
+
+<!-- /coderabbit-ai-generated:v1 -->
+
 ### D4. Push and pull as the architecture, with the server never undoing a sale
 
-Push in `device_seq` order, up to 200 per request, each in a savepoint; results `applied`, `duplicate`, `rejected` (kept as a legal record, flagged), `conflict` (master data). Pull by cursor in `server_seq` order, excluding the device's own, applied in one SQLite transaction with the cursor (architecture 5.2, 9.3). Push before pull on reconnect. Backoff with jitter capped at one minute (NFR-004: sync within a minute). The server re-runs `@shopos/core` on bills and records `totals_verified`; a mismatch is an exception, never a rejection (architecture 9.5).
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:7b682ef980ef53a31356abe6e3804284ed42d88585f476133dea66846430ae53 -->
+
+Push in `device_seq` order, up to 200 per request, each in a savepoint; results `applied`, `duplicate`, `rejected` (kept as a legal record, flagged), `conflict` (master data). Pull by cursor in `server_seq` order, excluding the device's own, applied in one SQLite transaction with the cursor (architecture 5.2, 9.3). Push before pull on reconnect. Backoff with jitter capped at one minute (NFR-004: sync within a minute). To certify a safe global watermark, every log writer holds the same shared transaction advisory lock from before sequence allocation until transaction end (sequence CACHE 1, no preallocation). A periodic publisher takes the exclusive lock, then in a fresh READ COMMITTED statement records the global highest committed sequence (initially zero) and commits. Earlier allocations have now committed or rolled back; future allocations are higher. Snapshots replay only through this certified prefix. The server re-runs `@shopos/core` on bills and records `totals_verified`; a mismatch is an exception, never a rejection (architecture 9.5).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### D5. Conflict rules
 
@@ -62,15 +76,27 @@ The desktop applies, from other devices: every fact operation (another counter's
 
 ### D8. Device registration, tokens and revoke
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:884129eb9284eac5cc124e1df4c6610971aa61cf156040c31996ed8bd5a89f37 -->
+
 - The owner creates a one-time code on the desktop (or the owner app); a new device exchanges it at `POST /v1/devices/register` for an opaque device token, stored with Electron `safeStorage` on desktops (018's US5 waits for this) and the Android Keystore on phones. The token is exchanged for a 15-minute JWT (architecture 9.1). **PINs and PIN hashes never leave the device that set them** (staff review 2026-11-18): `user.upsert` operations carry no `pin_hash`; a 6-digit PIN hash can be brute-forced offline (005 D1), so it must not pass through the server. Each phone user sets a device PIN on that phone, which unlocks a per-device signing key kept in the Android Keystore; the public half is registered with the server at enrolment. Remote approvals are signed with that key, and the server verifies the signature (no shared secret, no PIN-derived key on the server).
-- **Revoke** (EC-03): the owner revokes from the phone; the token stops working at once; the revoked device, when it next connects, receives `DEVICE_REVOKED`, locks itself and pushes nothing more. The "at risk" report shows the device's last acknowledged `device_seq`, last sync time and the last bill number the server saw from each of its series; bills made after that are unknown to the server and are listed as "possibly unsynced since <time>".
+- **Revoke** (EC-03): the owner revokes from the desktop Devices screen in M3 (or the phone once available); the token stops working at once; the revoked device, when it next connects, receives `DEVICE_REVOKED`, locks itself and pushes nothing more. The "at risk" report shows the device's last acknowledged `device_seq`, last sync time and the last bill number the server saw from each of its series; bills made after that are unknown to the server and are listed as "possibly unsynced since <time>".
 - **Clock** (EC-20): the server records `received_at` with every operation; a skew above 10 minutes between device time and server time raises an exception (the spec's 10 minutes; the architecture's 5-minute banner is kept as the warning level).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### D9. "Encrypted cloud backup every 15 minutes" is the synced log plus encrypted files
 
-- Every operation reaches the server within a minute when online (D4), and the server's PostgreSQL archives its write-ahead log to object storage every 15 minutes with a nightly base backup (architecture 4.2, 12.2). That is the 15-minute cloud copy (NFR-006).
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:0612baec24cf7a6e5da1892bdb7e9cb173f16758785ab27a43bfd00f56d27233 -->
+
+- Every operation reaches the server within a minute when online (D4), and the server's PostgreSQL archives its write-ahead log to object storage every 15 minutes with a nightly base backup (architecture 4.2, 12.2). Both archives require encryption for NFR-006; the method and key owner are unverified (OI-8).
 - In addition, each desktop uploads its own SQLite file daily, made with SQLite's online backup API (constitution) and encrypted on the device with AES-256-GCM (Node `crypto`) under a backup key held in `safeStorage` and printed once as a recovery key (like 005's recovery code). The daily second-drive copy from 001 stays.
-- **Restore in 30 minutes** (SC-005): register the new device with a code, download the shop's latest snapshot (checksum verified), pull the log after it, and resume numbering from the server's last numbers per series (architecture 5.4, 001 D21's handshake replaced). The written restore guide is updated and rehearsed by someone other than the builder.
+- **Restore in 30 minutes** (SC-005): register the new device with a code, download the shop's latest snapshot (checksum verified), pull the log after it, and bill under a fresh counter code. For a lost device, retire its series permanently: architecture 5.4’s last-known-number handshake cannot account for unacknowledged bills. The written restore guide is updated and rehearsed by someone other than the builder.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### D10. Remote approvals
 
@@ -99,6 +125,10 @@ A written plan in `docs/operations/breach-response.md` (who decides, how affecte
 
 ## Open items
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:d29189ab4370c1b5f8980329a8b8e74e7092f0c7ead01b180a7a67c74a465625 -->
+
 | ID   | Item                                                                                                        | Resolve by                         | Milestone |
 | ---- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------- | --------- |
 | OI-1 | Phone SQLite driver with Drizzle (expo-sqlite) handles 50,000 items and the snapshot size                   | Spike on a mid-range Android phone | M1        |
@@ -107,7 +137,10 @@ A written plan in `docs/operations/breach-response.md` (who decides, how affecte
 | OI-4 | Hosting cost and region (VM, database, object storage)                                                      | Current quotes                     | M1        |
 | OI-5 | Breach plan wording, notice periods and the Board's process under the DPDP Rules 2025                       | Counsel                            | M3        |
 | OI-7 | Separate server install builds better-sqlite3 for Node in Docker while the desktop keeps the Electron build | Build both in CI                   | M1        |
+| OI-8 | Encryption method and key custodian for WAL archives and nightly base backups | Verify deployment settings and rehearse key-authorized restore | M3 |
 | OI-6 | `safeStorage` behaviour on Linux without a keyring (backup key and device token)                            | Test on Ubuntu                     | M3        |
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Owner decisions needed
 
