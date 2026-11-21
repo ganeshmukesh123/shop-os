@@ -35,7 +35,7 @@ pnpm test && pnpm test:e2e      # dev binary untouched (SC-005)
 
 ## Before shipping PR C (US6)
 
-Launch the installed T035 build and let its `file:` page load. The one-time copy runs on the first load of that page; installing T035 alone is insufficient. Verify that the theme previously saved in `localStorage` matches `shop_profile.theme` before proceeding with the PR C release.
+Launch the installed T035 build and let its `file:` page load. The one-time copy runs on the first load of that page; installing T035 alone is insufficient. Right after that first load, verify that `shop_profile.theme` equals the value that was in `localStorage` (the copy worked). Just before the PR C release, check only that `shop_profile.theme` holds the owner's current choice: if they changed the theme after the copy, the old `localStorage` value is stale and is no longer compared.
 
 ## After PR C (US6)
 
