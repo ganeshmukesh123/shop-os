@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ShopProfile } from "@shopos/core";
-import { ToastProvider } from "../../../src/renderer/components/Toast";
+import { ToastProvider } from "../../../src/renderer/shared/components/Toast";
 import { SettingsScreen } from "../../../src/renderer/screens/SettingsScreen";
 import { ThemeProvider } from "../../../src/renderer/shared/theme/ThemeProvider";
 import { THEME_STORAGE_KEY } from "../../../src/renderer/shared/theme/theme.constants";

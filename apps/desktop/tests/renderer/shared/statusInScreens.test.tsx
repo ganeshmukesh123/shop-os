@@ -4,7 +4,7 @@ import { Table } from "@radix-ui/themes";
 import type { DraftLine, Item, ShopProfile } from "@shopos/core";
 import { AdjustStockDialog } from "../../../src/renderer/components/AdjustStockDialog";
 import { BillLineRow } from "../../../src/renderer/components/BillLineRow";
-import { ToastProvider, useToast } from "../../../src/renderer/components/Toast";
+import { ToastProvider, useToast } from "../../../src/renderer/shared/components/Toast";
 import { ItemsScreen } from "../../../src/renderer/screens/ItemsScreen";
 import { SettingsScreen } from "../../../src/renderer/screens/SettingsScreen";
 import { installFakeShopos } from "../../helpers/fakeShopos";

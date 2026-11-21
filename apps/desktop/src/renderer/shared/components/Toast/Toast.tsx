@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { Toast } from "radix-ui";
-import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
-import type { StatusRole } from "../shared/components/status.types";
-import { uiText } from "../strings";
+import { StatusMessage } from "../StatusMessage/StatusMessage";
+import type { StatusRole } from "../status.types";
+import { uiText } from "../../text/strings";
 
 type Kind = "success" | "error";
 
