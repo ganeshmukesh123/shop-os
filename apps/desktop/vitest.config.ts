@@ -12,7 +12,12 @@ export default defineConfig({
         extends: true,
         test: {
           name: "main",
-          include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
+          // A test lives beside its code (T093: `src/main/**/x.test.ts`) or in the shared tests folders.
+          include: [
+            "tests/unit/**/*.test.ts",
+            "tests/integration/**/*.test.ts",
+            "src/main/**/*.test.ts",
+          ],
         },
       },
       {
@@ -20,7 +25,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: "renderer",
-          include: ["tests/renderer/**/*.test.{ts,tsx}"],
+          include: ["tests/renderer/**/*.test.{ts,tsx}", "src/renderer/**/*.test.{ts,tsx}"],
           environment: "jsdom",
           setupFiles: ["tests/setup/renderer.ts"],
         },

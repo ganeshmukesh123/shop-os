@@ -165,8 +165,10 @@ export const billsListInput = z.object({
   limit: z.number().int().min(1).max(500),
   offset: z.number().int().min(0),
 });
+export type BillsListInput = z.infer<typeof billsListInput>;
 export const billsGetInput = z.object({ id: z.string().min(1) });
 export const billsCancelInput = z.object({ id: z.string().min(1), reason: z.string() });
+export type BillsCancelInput = z.infer<typeof billsCancelInput>;
 export const billsPrintInput = z.object({
   id: z.string().min(1),
   target: z.enum(["receipt", "a4", "a5"]),

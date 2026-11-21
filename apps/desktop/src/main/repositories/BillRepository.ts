@@ -7,8 +7,18 @@ import { bill, billLine, billTender, draftBill, numberSeries, shopProfile } from
 import type { Ctx } from "../db/seed";
 import type { INewBill, INewLine } from "./newBillTypes";
 
+/** The shop's named time zone (FR-019a); the default when the profile has none yet. */
+export function readShopTimeZone(databaseHandle: Handle, shopId: string): string {
+  const profileRow = databaseHandle
+    .select({ timeZone: shopProfile.timeZone })
+    .from(shopProfile)
+    .where(eq(shopProfile.shopId, shopId))
+    .get();
+  return profileRow?.timeZone ?? DEFAULT_TIME_ZONE;
+}
+
 /** The payment mode is not on the bill row: it is the label on the bill's tender (D18). */
-const toBill = (
+export const toBill = (
   billRow: typeof bill.$inferSelect,
   paymentMode: PaymentMode,
   timeZone: string,
@@ -126,12 +136,7 @@ export class BillRepository {
 
   /** The shop's named time zone, which a stored bill time is shown in (FR-019a). */
   private shopTimeZone(): string {
-    const profileRow = this.databaseHandle
-      .select({ timeZone: shopProfile.timeZone })
-      .from(shopProfile)
-      .where(eq(shopProfile.shopId, this.ctx.shopId))
-      .get();
-    return profileRow?.timeZone ?? DEFAULT_TIME_ZONE;
+    return readShopTimeZone(this.databaseHandle, this.ctx.shopId);
   }
 
   insertLines(billId: string, lines: INewLine[]): BillLine[] {
