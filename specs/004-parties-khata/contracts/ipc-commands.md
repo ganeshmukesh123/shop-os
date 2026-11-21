@@ -26,7 +26,13 @@ Rules as in `specs/001-shop-os-mvp/contracts/ipc-commands.md`. Commands that nee
 
 ## Bills (changed)
 
-`bills.save` accepts `partyId` and `paymentMode: "credit"`; the bill and its `bill_credit` entry are one transaction; over limit or overdue returns `APPROVAL_REQUIRED` (kind `over_credit`). `bills.cancel` of a credit bill writes `bill_cancel_reverse`. New error: `CREDIT_NEEDS_PARTY`, `CREDIT_NOT_ALLOWED` (party has no limit).
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:2be67bd13cad0107889099b29eec8e6f3c42a824212f46ec869443139312b5e9 -->
+
+`bills.save` accepts `partyId` and `paymentMode: "credit"`; the bill and its `bill_credit` entry are one transaction; over limit or overdue returns `APPROVAL_REQUIRED` (kind `over_credit`). `bills.cancel` of a credit bill writes `bill_cancel_reverse` and releases active allocations in the same transaction under the [credit bill cancellation rule](../data-model.md#ledger_allocation-append-only). New error: `CREDIT_NEEDS_PARTY`, `CREDIT_NOT_ALLOWED` (party has no limit).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 `PartyLedgerPort` (used by 003): `postBillCredit`, `reverseBillCredit`, `postCreditNote`, `checkCredit`, all inside the caller's transaction.
 
@@ -39,7 +45,15 @@ Rules as in `specs/001-shop-os-mvp/contracts/ipc-commands.md`. Commands that nee
 | `payments.list`                                   | `{ partyId?, from?, to? }`                                                                                             | `{ payments[] }`                                  |                                                                                          |
 | `payments.printReceipt` / `payments.shareReceipt` | `{ id, target? }` / `{ id }`                                                                                           | `{ printed }` / `{ pdfPath, whatsappUrl }`        | `PRINT_FAILED`, `NO_PHONE`                                                               |
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:ebb552fc4388ac13a63ae96c7c32f40d48bd6c7bfdd84628e36103966e9c26a5 -->
+
+`payments.receive` rejects the request with `INVALID_FIELD` if any `allocateTo` bill belongs to a different party. The payment and allocations are not written.
+
 ## Statements and reminders
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 | Command                             | Input                                  | Result                                                              | Error codes                                           |
 | ----------------------------------- | -------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------- |
