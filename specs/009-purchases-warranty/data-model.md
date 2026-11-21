@@ -28,27 +28,21 @@ bill_line 1--* bill_line_serial     bill_line --> warranty_register (projection)
 | received_at, business_date, posted_by, posted_at |                                                                                                                            |
 | client_receipt_id                                | unique per shop (idempotent posting)                                                                                       |
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:cc2f5d77e440ba57f4ae129d691ac0b0a5ceb5b318ff53d7c29716e06ccefd04 -->
-
 ### `purchase_receipt_line`
 
-| Field                                                     | Rule                                             |
-| --------------------------------------------------------- | ------------------------------------------------ |
-| receipt_id, line_no, variant_id                           |                                                  |
-| entered_uom, invoiced_qty_entered_milli                   | as entered; base quantities by 002 conversion    |
-| invoiced_qty_milli, received_qty_milli, damaged_qty_milli | base units; `damaged <= received`; all 0 or more |
-| unit_price_paise                                          | per base unit, 0 or more                         |
-| line_value_paise                                          | received x price / 1000, rounded half up once; 0 when received is 0    |
-| charges_share_paise                                       | from allocation; 0 when received is 0; sum over lines = sum of charges |
-| landed_total_paise, landed_cost_paise                     | total and per base unit (research D3); when received is 0, total is 0 and unit cost is NULL            |
-| batch_code, mrp_paise, mrp_pack_qty_milli                 | nullable; batch created at posting only for received stock               |
-| gst_rate_bp, gst_paise                                    | from the distributor's invoice                   |
-| isi_number                                                | nullable; warning when the category requires it  |
-| batch_id                                                  | set at posting for received stock; otherwise NULL                                   |
-
-<!-- /coderabbit-ai-generated:v1 -->
+| Field                                                     | Rule                                                                                        |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| receipt_id, line_no, variant_id                           |                                                                                             |
+| entered_uom, invoiced_qty_entered_milli                   | as entered; base quantities by 002 conversion                                               |
+| invoiced_qty_milli, received_qty_milli, damaged_qty_milli | base units; `damaged <= received`; all 0 or more                                            |
+| unit_price_paise                                          | per base unit, 0 or more                                                                    |
+| line_value_paise                                          | received x price / 1000, rounded half up once; 0 when received is 0                         |
+| charges_share_paise                                       | from allocation; 0 when received is 0; sum over lines = sum of charges                      |
+| landed_total_paise, landed_cost_paise                     | total and per base unit (research D3); when received is 0, total is 0 and unit cost is NULL |
+| batch_code, mrp_paise, mrp_pack_qty_milli                 | nullable; batch created at posting only for received stock                                  |
+| gst_rate_bp, gst_paise                                    | from the distributor's invoice                                                              |
+| isi_number                                                | nullable; warning when the category requires it                                             |
+| batch_id                                                  | set at posting for received stock; otherwise NULL                                           |
 
 ### `purchase_receipt_charge`
 
@@ -57,10 +51,6 @@ bill_line 1--* bill_line_serial     bill_line --> warranty_register (projection)
 ### `purchase_bill` (append-only)
 
 `party_id`, `supplier_invoice_no` (1-30), `supplier_invoice_date`, `taxable_paise`, `cgst_paise`, `sgst_paise`, `igst_paise`, `total_paise` (CHECK total = taxable + taxes + round-off), `round_off_paise`, `due_date` (= invoice date + credit days), `is_unbilled_cash` (0 or 1), `business_date`, `client_bill_id` unique. `UNIQUE(party_id, supplier_invoice_no, financial_year)` except for unbilled cash.
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:f4aae1e20a93d929a56f41ab720bbe06ce38f68b88e542e7edd6a29b50a0449d -->
 
 ### `purchase_bill_receipt` (append-only)
 
@@ -72,9 +62,7 @@ bill_line 1--* bill_line_serial     bill_line --> warranty_register (projection)
 
 ### `purchase_return` and `purchase_return_line` (append-only)
 
-`purchase_return`: `return_no` (`PR{counter}/{fy}/{seq5}`), `receipt_id`, `party_id`, `reason` (1-200), `business_date`. Lines: `receipt_line_id`, `variant_id`, `from_location_id`, `qty_base_milli` (0 for short-only lines), `short_qty_milli`, `value_paise` (at the line's landed cost, or at the invoiced unit price for a fully short line with no landed cost; see D6). In the posting transaction, check each receipt line across all posted returns plus every proposed return line: cumulative `qty_base_milli` must not exceed the original received quantity, and cumulative `short_qty_milli` must not exceed `max(0, invoiced_qty_milli - received_qty_milli)`. Include short-only return lines in the short-quantity check.
-
-<!-- /coderabbit-ai-generated:v1 -->
+`purchase_return`: `return_no` (`PR{counter}/{fy}/{seq5}`), `receipt_id`, `party_id`, `reason` (1-200), `business_date`. Lines: `receipt_line_id`, `variant_id`, `from_location_id`, `qty_base_milli` (0 for short-only lines), `short_qty_milli`, `value_paise` = returned `qty_base_milli` × the line's landed cost + `short_qty_milli` × the invoiced unit price (see D6). Short units never arrived, so they carry no freight or other charge share. Example: 2 invoiced at ₹100, 1 arrives, freight ₹100, so the received unit's landed cost is ₹200; returning it and claiming the short unit credits ₹200 + ₹100 = ₹300, what the goods and freight cost. In the posting transaction, check each receipt line across all posted returns plus every proposed return line: cumulative `qty_base_milli` must not exceed the original received quantity, and cumulative `short_qty_milli` must not exceed `max(0, invoiced_qty_milli - received_qty_milli)`. Include short-only return lines in the short-quantity check.
 
 ### `debit_note` and `debit_note_event` (append-only)
 
@@ -86,15 +74,11 @@ bill_line 1--* bill_line_serial     bill_line --> warranty_register (projection)
 
 ### `bill_line_serial` (append-only)
 
-`bill_line_id`, `serial_no` (1-40); count per line equals the line's quantity in whole units for serial-tracked variants (service check).
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:548349268cb43e47d78a312706fad3a51bdac4566062749f0f709cc6d318fec0 -->
+`bill_line_id`, `serial_no` (1-40); count per line equals the line's quantity in whole units for serial-tracked variants (service check). Never updated or deleted, also on cancel: the rows record what was sold, and a cancelled or superseded bill's serials are excluded by reading the bill's status and current version.
 
 ### `warranty_register` (projection)
 
-`bill_line_id`, `variant_id`, `party_id` (nullable), `serial_no` or `batch_id`, `sold_on`, `ends_on` (= sale business date + the bill line’s `warranty_months_at_sale`, using the same end-of-month rule for incremental writes and rebuilds). A NULL snapshot yields no row. Rebuild uses saved sale data, including any captured serials, and excludes cancelled bills; cancellation removes their rows in its transaction.
+`bill_line_id`, `variant_id`, `party_id` (nullable), `serial_no` or `batch_id`, `sold_on`, `ends_on` (= sale business date + the bill line’s `warranty_months_at_sale`, using the same end-of-month rule for incremental writes and rebuilds). A NULL snapshot yields no row. Rebuild uses saved sale data, including any captured serials, from the **current version** of each non-cancelled bill only. Cancellation removes the bill's register rows in its transaction. A same-day edit (003) removes the register rows of the version it replaces and writes rows for the new version's warranty lines in the edit transaction, so a line removed by the edit has no warranty and a rebuild cannot bring it back. The register is a projection, so deleting its rows is allowed; `bill_line_serial` rows are not touched.
 
 ## Changed tables
 
@@ -107,12 +91,6 @@ bill_line 1--* bill_line_serial     bill_line --> warranty_register (projection)
 - `category` adds `target_margin_bp` (nullable, 0 to 9000) and `requires_isi` (0 or 1, seeded unverified).
 - `exception_event.kind` adds `price_rise`, `missing_isi`, `unbilled_cash_purchase`, `duplicate_supplier_invoice`.
 - `number_series` uses the `doc_kind` rows above.
-
-<!-- /coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:e8c168164e48da998f2d72bed89b70d29e2f76bd255aea10c8991111e0a6ec74 -->
 
 ## Derived values (in `@shopos/core`)
 
@@ -133,5 +111,3 @@ Example: lines ₹6,000, ₹3,000, ₹1,000 and ₹600 freight by value give sha
 - `purchase_receipt_line(receipt_id)`, `item_price_history(variant_id, party_id, received_on)`.
 - `purchase_bill(party_id, due_date)`; `purchase_bill_receipt(receipt_id)` unique.
 - `warranty_register(serial_no)`, `warranty_register(party_id)`; `bill_line_serial(serial_no)`.
-
-<!-- /coderabbit-ai-generated:v1 -->

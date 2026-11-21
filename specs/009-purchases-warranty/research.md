@@ -20,12 +20,8 @@ Sources read: the spec, PRD section 9 (FR-PUR-001 to 015) and its warranty flow 
 
 Each line stores `invoiced_qty_milli`, `received_qty_milli` and `damaged_qty_milli` (in base units after 002's conversion of the entered unit). Short = invoiced minus received when positive; excess = received minus invoiced when positive. Good = received minus damaged.
 
-- Stock: one `purchase` movement of the good quantity into the receipt's location, and one `purchase` movement of the damaged quantity into the Defective location (so damaged goods are visible and can be returned, D6). Short quantities move nothing; they feed the debit note and the short-supply rate.
+- Stock: one `purchase` movement of the good quantity into the receipt's location, and one `purchase` movement of the damaged quantity into the Defective location (so damaged goods are visible and can be returned, D6). Short quantities move nothing; they feed the debit note at the invoiced unit price (no charge share, since they never arrived) and the short-supply rate.
 - **Example**: invoiced 100, received 98, damaged 3: 95 into Godown, 3 into Defective, short 2.
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:fda7426a50576d602ef96f79806c6ee4be678d4636459b89838ef33573a45a1b -->
 
 ### D3. Landed cost by the architecture's allocation
 
@@ -34,15 +30,9 @@ Each line stores `invoiced_qty_milli`, `received_qty_milli` and `damaged_qty_mil
 - **Example**: lines ₹6,000, ₹3,000 and ₹1,000 with ₹600 freight by value: shares ₹360, ₹180, ₹60.
 - **Item cost**: `item_variant.purchase_price_paise` becomes the latest landed cost per base unit (what the below-cost guard uses when no batch is chosen, 003). Weighted-average cost for margin reports is feature 011's choice from the same price history.
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ### D4. Purchase GST per line (FR-016, FR-CMP-012)
 
 Receipt lines store `gst_rate_bp` and `gst_paise` as printed on the distributor's invoice (entered or calculated from the rate), and the purchase bill stores the invoice's taxable value, CGST, SGST, IGST and total. A mismatch between the bill's total and the linked receipt lines is shown, not hidden. This is what 008's closing-stock statement reads for input credit; the claim itself is the CA's.
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:855ffb7cb9fd5a0ccd346a841919b2ec98803501da9d5ff9951491c65530bab8 -->
 
 ### D5. Distributor ledger on 004's ledger
 
@@ -54,8 +44,6 @@ Receipt lines store `gst_rate_bp` and `gst_paise` as printed on the distributor'
 ### D6. Purchase returns and debit notes
 
 `purchase_return` (linked to a posted receipt; lines from any location, normally Defective) writes `purchase_return` movements out of stock and a `debit_note` (number from `number_series` `doc_kind` `debit_note`, `DN{counter}/{fy}/{seq5}`, at most 16 characters) with a `debit_note` ledger entry that reduces the payable, in one transaction (US4 scenario 1). Status history Raised, Sent, Accepted, Settled is an append-only `debit_note_event` table (each transition logged with user and time, scenario 2). Short quantities can be put on a debit note without a stock movement (nothing arrived). If nothing was received on the line, value the short quantity at the invoiced unit price (round half up to paise); there is no landed unit cost or charge share to credit.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### D7. Price history and alerts
 
@@ -72,17 +60,11 @@ Per item and distributor: last price and date, average price over the last 6 rec
 
 `compliance_record(scheme_code, identifier, variant_id, batch_id, valid_to)` (architecture 6.7), captured on the receipt line for items whose category is flagged `requires_isi` (new category column; seeded flags are unverified, and the spec says the BIS list "is maintained by the product, not the shop"). Missing number: a warning on the line and an `exception_event`, never a block. Identifier patterns are checked as warnings only (architecture 6.7).
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:fb3b4fc2f04e2944bc40857bc5c3dcaf2e97dac2d53015fe90137eb2359beaad -->
-
 ### D10. Warranty register data now, cases and claims later
 
 - **Decision**: `warranty_register` is a projection with one row per sold unit whose 003 bill line captured a non-null `warranty_months_at_sale`: bill line, sale date, party, serial number or batch, and end date (sale business date + captured months). The bill transaction and rebuild both use this immutable snapshot.
 - **Serial numbers**: for variants with `is_serial_tracked = 1`, the serial must be captured on the bill line at sale. 003's bill line has no serial field. This feature adds `bill_line_serial(bill_line_id, serial_no)` (append-only) and a serial prompt at the counter. Because the PRD wants warranty data "from MVP", the owner may pull this one task forward into 003 (OD-1).
 - Cases, replacements, claim profiles, claims and claim accounting are V3 (not planned).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Open items
 
