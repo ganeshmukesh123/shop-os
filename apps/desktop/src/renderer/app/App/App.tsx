@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { Box, Button, Flex, Text } from "@radix-ui/themes";
-import { LAYOUT } from "./shared/constants/layout";
-import { StatusBadge } from "./shared/components/StatusBadge/StatusBadge";
-import { ItemsScreen } from "./screens/ItemsScreen";
-import { NewBillScreen } from "./screens/NewBillScreen";
-import { SettingsScreen } from "./screens/SettingsScreen";
-import { uiText } from "./shared/text/strings";
-import { call } from "./shared/api/api";
-
-type Route = "items" | "bill" | "settings";
+import { LAYOUT } from "../../shared/constants/layout";
+import { StatusBadge } from "../../shared/components/StatusBadge/StatusBadge";
+import { ItemsScreen } from "../../screens/ItemsScreen";
+import { NewBillScreen } from "../../screens/NewBillScreen";
+import { SettingsScreen } from "../../screens/SettingsScreen";
+import { uiText } from "../../shared/text/strings";
+import { call } from "../../shared/api/api";
+import type { Route } from "./types";
 
 export function App() {
   const [route, setRoute] = useState<Route>("bill");
