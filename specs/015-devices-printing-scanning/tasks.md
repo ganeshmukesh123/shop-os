@@ -10,13 +10,7 @@ description: "Task list for feature 015: printer profiles, scanning, location ta
 
 **Tests**: Included for every rule and for "printing never affects a saved bill" (constitution I).
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:55e77e3beff99edf8f4dd3ffdfe38c259a4ae2a210db1f69a19fe3fbdc927c04 -->
-
 **Organization**: US1, US2, US4 (P1), US3 (P2), US5 (P3). The proposed deferral of the Android tablet counter (FR-001, US4 scenario 2) is pending owner decision OD-1; roll labels wait for 007's V2 rolls.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -33,49 +27,31 @@ description: "Task list for feature 015: printer profiles, scanning, location ta
 
 ## Phase 2: Foundational
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:400501781ae387340acc1d7dfca0bbd33ae9c6ffcb18ccc8e0f6027e309e7bb0 -->
-
 - [ ] T003 [P] Write tests in `core/tests/devices/scannerBurst.test.ts`: 13 characters 8 ms apart ending with Enter is a scan; the same typed 120 ms apart is not; a burst shorter than the minimum is not
 - [ ] T004 [P] Write tests in `core/tests/devices/barcodeNormalise.test.ts` and `ean13.test.ts`: control characters and configured prefix and suffix removed; UPC-A `036000291452` becomes EAN-13 `0036000291452`; check digit validation; a wrong check digit still returns the typed code
 - [ ] T005 [P] Write tests in `core/tests/devices/locationTag.test.ts` and `healthChecks.test.ts`: `LOC-R3` parses to short code `R3`; missing printer, low disk (under 2 GB), backup older than 26 hours and no sync for 24 hours each give a problem with a next step
 - [ ] T006 Implement `core/src/devices/*.ts` to pass T003 to T005
 - [ ] T007 Add `printer_profile`, `scanner_profile`, `print_log` (append-only) and `location.short_code` to `desktop/src/main/db/schema.ts`; migrate `shop_profile.receipt_width` into a default receipt profile; generate the migration (marked additive). Backfill existing location codes and allocate codes on new location inserts per [the data model](./data-model.md#changed-tables).
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ---
 
 ## Phase 3: User Story 1 - Print bills on the shop's printer (M1, 13 to 19 Sep 2027; P1) MVP
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:624c19f23edfd0caff7245e78e66b7ecfd0d4e957b7af925a42c36c1c724215d -->
-
 - [ ] T008 [P] [US1] Write tests in `desktop/src/main/services/printing/PrintService.test.ts` with the fake renderer: silent print to the profile's `deviceName` and assert driver `pageSize` width plus rendered receipt body width for both profiles (58 mm: 58,000 µm and 54 mm body; 80 mm: 80,000 µm and 76 mm body with 2 mm margins on each side). Use a conflicting shop width to catch fallback; A4 and A5 layouts; every attempt written to `print_log`; a failing or cancelled print leaves the bill row and lines byte for byte unchanged; no profile gives `NO_PRINTER_PROFILE`
-- [ ] T009 [US1] First update the spec's shop-setting edge case so the shop width only seeds the default profile and the selected profile controls printing. Extend `desktop/src/main/services/PrintService.ts` (moved to `desktop/src/main/services/printing/`) and `electronRenderer.ts` to derive driver `pageSize` and receipt HTML layout from the same selected profile width and pass T008; add `documents.print` for returns, quotes, challans, receipts and statements
+- [ ] T009 [US1] Extend `desktop/src/main/services/PrintService.ts` (moved to `desktop/src/main/services/printing/`) and `electronRenderer.ts` to derive driver `pageSize` and receipt HTML layout from the same selected profile width and pass T008; add `documents.print` for returns, quotes, challans, receipts and statements
 - [ ] T010 [US1] Implement `PrinterProfileService.ts` and `TestPage.ts` (a page with English, Hindi and a barcode) and `printers.*` commands
 - [ ] T011 [US1] When a profile cannot print Devanagari, render bills for it with item and party names in their English or code form and show "This printer cannot print Hindi" (014)
 - [ ] T012 [P] [US1] Build `desktop/src/renderer/features/devices/Printers/` (OS printers, profiles, defaults per document, test page and result) and change the saved-bill screen to say "Sent to printer" or "Could not send to printer" with Retry, Share on WhatsApp and Reprint
 - [ ] T013 [US1] Run quickstart 1 on the real printer and record SC-001 and SC-002 in `specs/015-devices-printing-scanning/plan.md`
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ---
 
 ## Phase 4: User Story 2 - Scan items (M2, 20 to 24 Sep; P1)
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:c0ee51c598cd3a9c707c724dfc2153323e47a5fc2233650224d349dc318c0238 -->
 
 - [ ] T014 [US2] Implement `desktop/src/renderer/shared/scanner/useScannerListener.ts` (window-level key listener using `isScannerBurst`, normalisation from the scanner profile, calls 002's `items.lookupBarcode`, reports `scanners.recordScan`) and mount it on the bill, count and move screens
 - [ ] T015 [P] [US2] Build `desktop/src/renderer/features/devices/UnknownBarcode/` (Search, Create item with this barcode, Record as unmet demand) and `Scanners/` (profiles)
 - [ ] T016 [US2] Write the e2e spec `desktop/tests/e2e/scanning.spec.ts`: simulated bursts add items without focusing a field; a scan in a focused text field leaves its value unchanged; hand-typed text and Enter reach the field unchanged; UPC-A matches stored EAN-13 and EAN-13 matches stored UPC-A; duplicate barcode chooser; unknown barcode panel
 - [ ] T017 [US2] Measure SC-003 with the real scanner and SC-004 on the phone (010's godown app) and record them
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ---
 

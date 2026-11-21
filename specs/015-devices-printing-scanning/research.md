@@ -21,17 +21,12 @@ The driver accepts a job long before paper comes out; out-of-paper is often not 
 
 ### D3. USB scanners as keyboard wedges, detected by timing
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:2500f6d698ca321fd4d1d4c80aa329aa624750965ec7815bf8b7991f5559992e -->
-
 - A USB barcode scanner types characters very fast and ends with Enter. A renderer-wide listener treats a burst of at least 6 characters arriving less than 30 ms apart and ending with Enter as a scan, wherever focus is on the bill screen (spec US2 scenario 1: "without clicking a field first"), and routes it to 002's `items.lookupBarcode`. The thresholds are settings.
-- When a text field has focus, the listener holds candidate characters and the terminating Enter before the field handles them. If the burst is a scan, consume them and leave the field unchanged. If the gap times out without a scan or Enter ends a burst that does not meet the scan criteria, replay the held input once, in order, through the original field's ordinary input handling. Hand-typed text and Enter reach the field unchanged, including Enter's normal action.
+- When a text field has focus, keystrokes reach the field as usual, and the listener remembers the field's value from before the burst began. On the terminating Enter's keydown, if the burst meets the scan criteria, the listener calls `preventDefault` on that real (trusted) event, so no form submits, puts the field's earlier value back, and routes the code to the lookup. Otherwise Enter and every typed character reach the field unchanged, including Enter's normal action. Holding keys and replaying them is not used: scripted key events are untrusted (`isTrusted` is false), so a replayed Enter would not submit a form and replayed text would not reach React's inputs ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)).
+- **Limit**: a burst that meets the criteria counts as a scan whoever types it. Six characters under 30 ms apart is more than 33 characters a second, beyond hand typing, so hand-typed input is not expected to match; the thresholds are settings (`scanner_profile`) if a shop's scanner or staff need otherwise.
 - Control characters and configured prefixes or suffixes are stripped (spec edge case).
 - **Normalisation**: UPC-A (12 digits) is matched as EAN-13 with a leading zero; EAN-13 check digits are validated but a code with a wrong check digit is still looked up as typed (it may be a shop label); internal labels from 002 are Code 128 of the item code (`ITM-0042`).
 - **Unknown barcode** (US2 scenario 4): a panel offers Search, Create item with this barcode, or Record as unmet demand (003).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### D4. Camera scanning lives in the phone apps
 

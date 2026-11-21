@@ -6,13 +6,7 @@
 
 ## Summary
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:9f37d141e012e6e33ea10a705a9b4b236546d029ef40a281e8cf319814e47231 -->
-
 Make the shop's hardware dependable without making it a dependency of the sale. Bills keep printing through the OS driver from HTML, now silently to a chosen printer profile with the right paper width and per-document defaults; every attempt is logged and "sent to printer" is never confused with "printed", so reprint and WhatsApp share are always one tap away. USB scanners work anywhere on the bill screen by keystroke timing, with barcode normalisation and an unknown-barcode panel; phone camera scanning is in 010's apps. Location tags join 002's item labels. Installers for macOS, Windows and Linux, a timed second-device takeover drill, and a health check with plain next steps complete it. The Android tablet counter is proposed for a separate spec (OD-1, pending owner decision).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Technical Context
 
@@ -50,13 +44,7 @@ Checked against `.specify/memory/constitution.md` v2.1.0 on 2026-11-18.
 | Unconfirmed facts                | Printer behaviour (OI-1) recorded, not assumed                                               | Pass (recorded)            |
 | Performance target (constraints) | Bill save and print about 1 s; the 3 s print target is measured on the real printer          | Pass once OI-1 is measured |
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:65ada025cfd62794ba9083ab57f8fc7cb23e9115a8443fe736d15c9a1d4d2962 -->
-
 Post-design re-check (2026-11-18): FR-001 remains unmet. It requires Android phone and tablet support; this plan covers phones via 010 and proposes deferring the US4 tablet counter under [OD-1](./research.md#owner-decisions-needed). Keep this gap open until the plan covers the tablet counter or the owner approves the deferral and FR-001 or the feature scope is updated.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Project Structure
 
@@ -82,15 +70,9 @@ apps/desktop/src/renderer/
 apps/desktop/electron-builder.yml  # dmg, nsis, AppImage, deb targets
 ```
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:166c33ecbdcf6e4249167bebe11ba295ac9c68b992cc6ac6a36b9ec3145d8e48 -->
-
 **Structure Decision**: Same two packages; the scanner listener is shared renderer code used by the bill, count and move screens.
 
-**Receipt width**: Use the selected printer profile's `paper_width_mm` for both driver `pageSize` and HTML layout. The body fits within that width after page margins. The [spec's shop-setting edge case](./spec.md#edge-cases) describes the old behavior: the shop width seeds the default profile during migration (T007), then the selected profile controls each print. Reconcile that wording before implementing T009. T008 tests both outputs at 58 mm and 80 mm.
-
-<!-- /coderabbit-ai-generated:v1 -->
+**Receipt width**: Use the selected printer profile's `paper_width_mm` for both driver `pageSize` and HTML layout. The body fits within that width after page margins. The shop width seeds the default profile during migration (T007), then the selected profile controls each print ([spec edge case](./spec.md#edge-cases)). T008 tests both outputs at 58 mm and 80 mm.
 
 ## Milestone Plan
 
