@@ -37,6 +37,8 @@ pnpm test && pnpm test:e2e      # dev binary untouched (SC-005)
 
 Launch the installed T035 build and let its `file:` page load. The one-time copy runs on the first load of that page; installing T035 alone is insufficient. Right after that first load, verify that `shop_profile.theme` equals the value that was in `localStorage` (the copy worked). Just before the PR C release, check only that `shop_profile.theme` holds the owner's current choice: if they changed the theme after the copy, the old `localStorage` value is stale and is no longer compared.
 
+**Release gate for PR C**: the shop installs updates by hand (no auto-updater), so PR C is handed out only after **every** counter has launched the T035 build and its theme check above has passed; record each counter's name and the date. A counter that was upgraded straight to PR C anyway (a mistake, not a supported path) has no way to read the old `file:` storage: it starts with System and shows a one-time "Choose your theme again" message, so the loss is visible and fixed in one click rather than silent.
+
 ## After PR C (US6)
 
 | Check | Expected |
