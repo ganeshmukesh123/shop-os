@@ -22,9 +22,14 @@ export function installFakeShopos(handlers: FakeCommandHandlers = {}): IFakeShop
     const handler = (handlers as Record<string, ((commandInput: unknown) => unknown) | undefined>)[
       commandName
     ];
-    return handler
-      ? { ok: true, data: await handler(input) }
-      : { ok: false, code: "INTERNAL", message: `no fake for ${commandName}` };
+    if (!handler) return { ok: false, code: "INTERNAL", message: `no fake for ${commandName}` };
+    try {
+      return { ok: true, data: await handler(input) };
+    } catch (caughtError) {
+      // A handler that throws stands for the main process answering with an error result.
+      const code = (caughtError as { code?: string }).code ?? "INTERNAL";
+      return { ok: false, code, message: (caughtError as Error).message };
+    }
   };
   window.shopos = buildShopOsApi(invoke);
   return { calls };
