@@ -48,6 +48,24 @@ describe("BillSettingsFields (task T080, FR-010a, FR-015a, FR-019a)", () => {
     );
   });
 
+  it("marks an unknown time zone invalid and links the error to the field", () => {
+    renderWithTheme(<Harness initial={{ ...DEFAULT_SETTINGS, timeZone: "Mars/Olympus" }} />);
+
+    const zoneField = screen.getByRole("textbox", { name: "Shop time zone" });
+
+    expect(zoneField.getAttribute("aria-invalid")).toBe("true");
+    expect(zoneField.getAttribute("aria-describedby")).toContain("bill-time-zone-error");
+  });
+
+  it("leaves a known time zone valid, described by its help only", () => {
+    renderWithTheme(<Harness />);
+
+    const zoneField = screen.getByRole("textbox", { name: "Shop time zone" });
+
+    expect(zoneField.getAttribute("aria-invalid")).toBe("false");
+    expect(zoneField.getAttribute("aria-describedby")).toBe("bill-time-zone-help");
+  });
+
   it("changes the title as the user types", async () => {
     renderWithTheme(<Harness />);
 
