@@ -135,7 +135,7 @@ export const uiText = {
     lastBillHelp:
       "Look at your last printed bill or your paper book and type its number exactly. Example: {example}.",
     cannotSay:
-      'If you cannot find it, leave this empty. Shop OS then skips the next 100 bill numbers and marks them "Lost in restore", so no bill number is ever used twice.',
+      'If you cannot find it, leave this empty. Shop OS then skips the next 100 bill numbers and marks them "Lost in restore". This is safe only if you printed fewer than 100 bills after this backup; if you printed more, find the last bill number first, or a new bill could repeat one a customer already has.',
     cancel: "Cancel",
     confirm: "Restore and restart",
     busy: "Restoring…",
