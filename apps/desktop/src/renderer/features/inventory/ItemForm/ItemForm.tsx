@@ -1,8 +1,8 @@
-import { Box, Button, Checkbox, Dialog, Flex, Select, Text, TextField } from "@radix-ui/themes";
-import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
-import { formatQuantity, UNITS } from "@shopos/core";
+import { Button, Dialog, Flex, Text, TextField } from "@radix-ui/themes";
+import { formatQuantity } from "@shopos/core";
 import { uiText } from "../../../shared/text/strings";
-import { CUSTOM_UNIT_OPTION } from "./constants";
+import { ItemFormMessages } from "./components/ItemFormMessages";
+import { ItemUnitFields } from "./components/ItemUnitFields";
 import type { IItemFormProps } from "./types";
 import { useItemFormFields } from "./useItemFormFields";
 import { useItemFormSave } from "./useItemFormSave";
@@ -43,51 +43,7 @@ export function ItemForm({ item, onClose, onDone }: IItemFormProps) {
               onChange={(changeEvent) => fields.setName(changeEvent.target.value)}
             />
           </label>
-          <Flex gap="3">
-            <Box flexGrow="1" asChild>
-              <label>
-                <Text as="div" size="2" weight="bold" mb="1">
-                  {uiText.form.unit} *
-                </Text>
-                <Select.Root value={fields.unitChoice} onValueChange={fields.chooseUnit}>
-                  <Select.Trigger className="shopos-full-width" aria-label={uiText.form.unit} />
-                  <Select.Content>
-                    {UNITS.map((unitOption) => (
-                      <Select.Item key={unitOption} value={unitOption}>
-                        {unitOption}
-                      </Select.Item>
-                    ))}
-                    <Select.Item value={CUSTOM_UNIT_OPTION}>Custom…</Select.Item>
-                  </Select.Content>
-                </Select.Root>
-              </label>
-            </Box>
-            {fields.unitChoice === CUSTOM_UNIT_OPTION && (
-              <Box flexGrow="1" asChild>
-                <label>
-                  <Text as="div" size="2" weight="bold" mb="1">
-                    {uiText.form.customUnit}
-                  </Text>
-                  <TextField.Root
-                    size="3"
-                    maxLength={20}
-                    value={fields.customUnit}
-                    onChange={(changeEvent) => fields.setCustomUnit(changeEvent.target.value)}
-                  />
-                </label>
-              </Box>
-            )}
-          </Flex>
-          <Text as="label" size="2">
-            <Flex gap="2" align="center">
-              <Checkbox
-                checked={fields.allowsDecimal}
-                disabled={isEditing || fields.unitChoice !== CUSTOM_UNIT_OPTION}
-                onCheckedChange={(checkedState) => fields.setAllowsDecimal(checkedState === true)}
-              />
-              {uiText.form.allowsDecimal}
-            </Flex>
-          </Text>
+          <ItemUnitFields fields={fields} />
           <label>
             <Text as="div" size="2" weight="bold" mb="1">
               {uiText.form.price} *
@@ -119,22 +75,7 @@ export function ItemForm({ item, onClose, onDone }: IItemFormProps) {
               {uiText.items.adjust}” to change stock.
             </Text>
           )}
-          {errors.map((errorMessage) => (
-            <StatusMessage key={errorMessage} role="danger" label={uiText.status.error}>
-              {errorMessage}
-            </StatusMessage>
-          ))}
-          {duplicateItems.length > 0 && (
-            <StatusMessage role="warning" label={uiText.status.duplicate}>
-              {uiText.form.duplicateTitle}. {uiText.form.duplicateHelp}{" "}
-              {duplicateItems
-                .map(
-                  (duplicateItem) =>
-                    `${duplicateItem.name} (${formatQuantity(duplicateItem.stockMilli)} ${duplicateItem.unit} in stock)`,
-                )
-                .join("; ")}
-            </StatusMessage>
-          )}
+          <ItemFormMessages errors={errors} duplicateItems={duplicateItems} />
         </Flex>
         <Flex gap="3" mt="4" justify="end">
           <Button variant="soft" color="gray" size="3" onClick={onClose}>
