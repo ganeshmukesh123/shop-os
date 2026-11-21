@@ -201,6 +201,17 @@ describe("registerIpc", () => {
       expect(listed).toMatchObject({ ok: true, data: { items: [] } });
     });
 
+    // The sender is checked first, so a foreign page learns nothing about names or input rules.
+    it.each([
+      ["a command outside the contract", "no.such.command", {}],
+      ["a command with invalid input", "backup.restore", { filePath: 0 }],
+    ])("refuses %s from a foreign page before checking it", async (_caseName, name, input) => {
+      const listener = registerAndGetListener();
+      const foreignEvent = { senderFrame: FOREIGN_FRAME, sender: { mainFrame: FOREIGN_FRAME } };
+
+      expect(await listener(foreignEvent, name, input)).toEqual(REFUSED);
+    });
+
     it("logs the refusal with the page address and no command input", async () => {
       const logRefusal = vi.fn();
       const listener = registerAndGetListener(logRefusal);
