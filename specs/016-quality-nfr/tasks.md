@@ -30,7 +30,7 @@ description: "Task list for feature 016: datasets, benchmarks, offline routine, 
 - [ ] T003 [P] [US1] Write tests in `tools/quality/tests/percentile.test.ts` and `budget.test.ts`: p50 and p95 of known samples; within or outside budget; a miss with an accepted note passes the gate, without one fails
 - [ ] T004 [P] [US1] Write tests in `tools/quality/tests/dataset.test.ts`: the same seed gives byte-identical masters; the release profile has 50,000 variants and 2 years of 500 bills a day; messy cases present (duplicates, 120-character names, Hindi names, no cost, negative stock, cancelled and edited bills, returns)
 - [ ] T005 [US1] Implement `tools/quality/src/percentile.ts`, `budget.ts` and `dataset/` (writes through the desktop repositories and services in a Node script run with `ELECTRON_RUN_AS_NODE=1`) to pass T003 and T004; `pnpm quality:dataset`
-- [ ] T006 [US1] Implement bench mode in `desktop/src/main/bench/` (refuses the real user-data folder; copies the dataset with the online backup API; runs search, bill save, save and print to PDF, daily report when 011 exists, start-up; records machine details) and `pnpm quality:bench`
+- [ ] T006 [US1] Implement bench mode in `desktop/src/main/bench/` (refuses the real user-data folder; copies the dataset with the online backup API; runs search, bill save, save and print to PDF, daily report when 011 exists, start-up; records machine details) and `pnpm quality:bench` Record `sourceCommit` in the run file (`git rev-parse HEAD`), and refuse to run when the working tree has changes outside `quality/`, so the hash names exactly what was measured.
 - [ ] T007 [US1] Run the release and scale profiles on the reference machine; commit the run files under `quality/runs/` and record size and time (OI-1)
 
 ---
@@ -42,19 +42,13 @@ description: "Task list for feature 016: datasets, benchmarks, offline routine, 
 
 ---
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:1526603a525c6ec08e6eb94ffe7b609105aa5535346c0a9580a4e63e75f0cc03 -->
-
 ## Phase 4: User Story 3 - Backup, restore and reliability (M2, 30 Dec; P1)
 
-- [ ] T010 [P] [US3] Write tests in `desktop/src/main/services/backup/verifyBackup.test.ts` (before code): a good backup restores into a scratch database, passes schema, integrity and row-count checks, and sets `verified_at`; a backup corrupted by the test fixture before automatic verification sets `verify_error`; a backup missing any required table is not marked verified (test each required table, including `shop_profile`, which is outside the four row-count checks); verification opens the source file read-only and never changes it
+- [ ] T010 [P] [US3] Write tests in `desktop/src/main/services/backup/verifyBackup.test.ts` (before code): a good backup restores into a scratch database, passes schema, integrity and row-count checks, and sets `verified_at`; a backup corrupted by the test fixture before automatic verification sets `verify_error` (the fixture exists only in this test; the shipped app has no way to corrupt a backup); a backup missing any required table is not marked verified (test each required table, including `shop_profile`, which is outside the four row-count checks); verification opens the source file read-only and never changes it
 - [ ] T011 [US3] Add `backup_log.verified_at` and `verify_error` (migration marked additive) and run verification after every backup in `desktop/src/main/services/BackupService.ts` to pass T010; show unverified backups in 015's health check when it exists
 - [ ] T012 [US3] Add `quality/drills/` with a restore-drill template; record the first drill by someone other than the builder (SC-003)
 
 ---
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Phase 5: User Story 4 - Security and privacy checks (M2, 31 Dec; P1)
 
@@ -62,10 +56,6 @@ description: "Task list for feature 016: datasets, benchmarks, offline routine, 
 - [ ] T014 [US4] Add a breach tabletop drill template to `quality/drills/` (run yearly after 010's breach plan exists)
 
 ---
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:45c2f1f7a23593ba226118eac356f9bb568db7d3ff8c2edd5154a93f7613ac97 -->
 
 ## Phase 6: User Story 5 - Learnability, accessibility, language and traceability (M2, 1 to 2 Jan 2027; P2)
 
@@ -75,25 +65,13 @@ description: "Task list for feature 016: datasets, benchmarks, offline routine, 
 
 ---
 
-<!-- /coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:25d70cc03bb492eada5e279c4ee574ff1278494f188b6f7c61aba78f83d40c4c -->
-
 ## Phase 7: Release gate (M2, 3 Jan 2027)
 
 - [ ] T018 Implement `pnpm quality:release-record <version>` and the template in `tools/quality/src/release/` with CI result and link pending before tagging
-- [ ] T019 Add `.github/workflows/release-gate.yml` (tags `v*`): tests, e2e, `quality:offline`, `quality:print-snapshots`, `quality:a11y`, `quality:security`, a benchmark result for the version within 14 days with each measure within budget or accepted by the owner, a tagged record with applicable manual items complete, zero open `bill-integrity` issues
+- [ ] T019 Add `.github/workflows/release-gate.yml` (tags `v*`): tests, e2e, `quality:offline`, `quality:print-snapshots`, `quality:a11y`, `quality:security`, a benchmark result for the version within 14 days that has every applicable measure, each within budget or accepted by the owner, and whose `sourceCommit` matches the tag outside `quality/`, a tagged record with applicable manual items complete, zero open `bill-integrity` issues
 - [ ] T020 Run quickstart 6 for the first tagged release by committing the operator-edited record before tagging, then committing the first gate run's result and link before publication
 
 ---
-
-<!-- /coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:6c1b264cb210bf2c5492e35ca957c2390518106ef327895d4ca05293f5a4c4d2 -->
 
 ## Extension points (added by later features; each listed in that feature's tasks)
 
@@ -112,8 +90,6 @@ description: "Task list for feature 016: datasets, benchmarks, offline routine, 
 - [ ] T033 004: add statement PDF snapshots at 58 mm, 80 mm, A4 and A5 to T016 when the print layout is available
 
 ---
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Dependencies and execution order
 

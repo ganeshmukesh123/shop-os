@@ -20,21 +20,15 @@ quality/
 
 ### Benchmark run (`runs/*.json`)
 
-`version`, `profile` (`release`, `scale`), `seed`, `datasetBytes`, `machine` (`os`, `cpuModel`, `cpuCount`, `ramBytes`, `diskKind` typed by the operator), `measures` (per measure: `samples`, `p50Ms`, `p95Ms`, `maxMs`, `budget`, `isWithinBudget`), `misses` (each with an accepted-by note or empty), `ranAt`.
+`version`, `profile` (`release`, `scale`), `seed`, `datasetBytes`, `machine` (`os`, `cpuModel`, `cpuCount`, `ramBytes`, `diskKind` typed by the operator), `measures` (per measure: `samples`, `p50Ms`, `p95Ms`, `maxMs`, `budget`, `isWithinBudget`), `misses` (each with an accepted-by note or empty), `ranAt`, `sourceCommit` (the full commit hash of the source that was built and measured).
 
 ### Offline routine result (`offline/*.json`)
 
 `version`, `checks` (per check: `name`, `passed`, `details`), `simulation` (when 010 exists: devices, days, operations, duplicates found, lost found, negative-stock flags).
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:f56afd9f8c8400596109ebd98b9cb851ad706bc0d78725e053132c1b5d05392c -->
-
 ### Release record (`releases/<version>.md`)
 
 CI evidence: pending in the tagged record; before publication the operator adds the first `release-gate` run's result and link, with each job's result. Manual items completed before tagging: benchmark on the reference machine, hardware run (015), restore drill if due, breach drill if due, open `bill-integrity` issues = 0, owner's acceptance of any budget miss.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## App database change
 
