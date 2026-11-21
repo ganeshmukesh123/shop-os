@@ -100,6 +100,37 @@ describe("useBillForm: changing the bill", () => {
     expect(result.current.form.draft.lines.map((draftLine) => draftLine.name)).toEqual(["Elbow"]);
   });
 
+  // React batches updates made in one act; each change must build on the one before it.
+  it("keeps both edits when two lines are changed in the same update", () => {
+    const { result } = renderBillForm();
+    act(() => result.current.addItem(PIPE));
+    act(() => result.current.addItem(ELBOW));
+    const [pipeLine, elbowLine] = result.current.form.draft.lines;
+
+    act(() => {
+      result.current.patchLine(pipeLine!.key, { qty: "2" });
+      result.current.patchLine(elbowLine!.key, { qty: "3" });
+    });
+
+    expect(result.current.form.draft.lines.map((draftLine) => draftLine.qty)).toEqual(["2", "3"]);
+  });
+
+  it("keeps an edit when another line is removed in the same update", () => {
+    const { result } = renderBillForm();
+    act(() => result.current.addItem(PIPE));
+    act(() => result.current.addItem(ELBOW));
+    const [pipeLine, elbowLine] = result.current.form.draft.lines;
+
+    act(() => {
+      result.current.patchLine(elbowLine!.key, { qty: "4" });
+      result.current.removeLine(pipeLine!.key);
+    });
+
+    expect(result.current.form.draft.lines).toEqual([
+      expect.objectContaining({ name: "Elbow", qty: "4" }),
+    ]);
+  });
+
   it("updates the customer, the payment mode and the bill discount without touching the lines", () => {
     const { result } = renderBillForm();
     act(() => result.current.addItem(PIPE));
