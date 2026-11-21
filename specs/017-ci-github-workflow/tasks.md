@@ -85,7 +85,7 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 - [X] T030 [US3] Split `NewBillScreen.tsx` (472 lines) following `shopos-react-components`: one extraction per PR (`useBillForm`, `useBillSave`, `BillSearchBox`, `BillLinesTable`, `BillSummaryPanel`, `RecoverDraftDialog`), tests green before and after each _(done 2026-11-21: same work as 001 T089, see there)_
 - [X] T031 [US3] Tests for the extracted `NewBillScreen` hooks and components (search and add by keyboard, totals, save with a `clientBillId`, double-save, error toast, draft recovery) _(done 2026-11-21: behaviour tests for the whole screen (search and add by keyboard, totals, save once with a clientBillId, no double save, error toast, draft recovery and discard) plus tests for each extracted hook and component)_
 - [ ] T032 [P] [US3] Tests for `ItemsScreen` and `ItemForm` (search, add, duplicate warning, decimal rules, deactivate)
-- [ ] T033 [P] [US3] Tests for `BillView` and `SettingsScreen` (print and PDF success and failure, backup section, number template warning)
+- [ ] T033 [P] [US3] Tests for `BillView` and `SettingsScreen` (print and PDF success and failure, backup section, number template warning) _(2026-11-21: the BillView half is done in BillView.test.tsx (print and PDF success and failure); the Settings half is still open)_
 - [ ] T034 [US3] Tests for `App.tsx` and `main.tsx` (navigation, shortcuts, negative-stock badge); re-measure; if branch coverage of 90% is out of reach for some UI code, write the evidence in `research.md` and raise it with the owner (resolves O6); never lower the threshold silently
 - [ ] T035 [US3] Confirm the desktop total and `main` are at 90% on lines, statements, functions and branches; record it in `research.md`
 
