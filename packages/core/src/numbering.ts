@@ -1,4 +1,4 @@
-import { DEFAULT_TIME_ZONE, businessDateOf, financialYearOfBusinessDate } from "./businessDate";
+import { businessDateOf, financialYearOfBusinessDate } from "./businessDate";
 import { CoreError } from "./errors";
 
 export const DEFAULT_NUMBER_TEMPLATE = "{series}/{fy}/{seq}";
@@ -35,8 +35,8 @@ const LEGAL = /^[A-Za-z0-9\-/]+$/;
 export function validateNumberTemplate(
   template: string,
   series: string,
-  now: Date = new Date(),
-  timeZone: string = DEFAULT_TIME_ZONE,
+  now: Date,
+  timeZone: string,
 ): { ok: true; example: string } | { ok: false; reason: string } {
   if (!template.includes("{seq}")) return { ok: false, reason: "Template must contain {seq}" };
   if (!LEGAL.test(series))
