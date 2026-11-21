@@ -25,10 +25,6 @@ description: "Task list for feature 013: multi-shop separation, pilot onboarding
 
 ---
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:efe2225c47b4f330a65ff1296cb2d418d4c1b76322d056246a465df23f8c17d0 -->
-
 ## Phase 2: Foundational
 
 - [ ] T003 [P] Write tests in `core/tests/tenancy/recordScope.test.ts`: enumerate both schemas and require every table to be classified as business, shop or explicitly global, as defined in `data-model.md`; a new unclassified table fails the test, and global `plan` rows never enter tenant pull
@@ -50,8 +46,6 @@ description: "Task list for feature 013: multi-shop separation, pilot onboarding
 
 ---
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ## Phase 4: User Story 2 - Onboard a pilot shop (M2, 13 to 19 Mar; P1)
 
 - [ ] T012 [P] [US2] Write tests in `server/src/admin/createShop.test.ts`: `create-business` and `create-shop` write audit rows; the shop gets default per-shop settings and an owner registration code
@@ -71,20 +65,14 @@ description: "Task list for feature 013: multi-shop separation, pilot onboarding
 
 ---
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:ff3ab8e7880a618ca301ef1912fce46ad6d6bd65d9caf6716d0aa84ccefeb67c -->
-
 ## Phase 6: Support access and exit (M3, 24 to 26 Mar; FR-008, FR-009)
 
 - [ ] T021 [P] Write tests in `server/src/modules/support/grants.test.ts`: request, owner approval, reads allowed only inside `starts_at` to `ends_at` (at most 24 hours), every read audited, revoke stops reads, no write path exists
 - [ ] T022 Implement `server/src/modules/support/`, `admin support request` and `support read`, and `mobile/src/owner/SupportRequests/` to pass T021
 - [ ] T023 [P] Write tests in `desktop/src/main/exports/exportAll.test.ts`: with A1 and A2 in the source, reopen the SQLite export and check it and the CSVs contain every authorized A1 row and shared master row and no A2 facts or settings; verify a whole-business export preserves committed WAL data through online backup, permission is required, and plan lapse does not block export (FR-008)
-- [ ] T024 Implement scoped `exportAll.ts` and `POST /v1/owner/export` per the contract, plus `admin exit start` and `exit delete-server-data` per D8. Test that deletion waits for confirmation of the matching scope, and that A2 can still sync and restore after A1 exits (quickstart 5.2, FR-008)
+- [ ] T024 Implement scoped `exportAll.ts` and `POST /v1/owner/export` per the contract, plus `admin exit start` and `exit delete-server-data` per D8. Test that deletion waits for confirmation of the matching scope, and that A2 can still sync and restore after A1 exits (quickstart 5.2, FR-008) After a single-shop exit, the departing shop has no `pilot_shop_status`, `onboarding_step` or `usage_week` rows left, and the remaining shops keep theirs.
 
 ---
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Phase 7: User Story 4 - Paid plans and willingness to pay (M4, 27 Mar to 2 Apr; P2)
 

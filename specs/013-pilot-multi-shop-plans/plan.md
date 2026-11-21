@@ -4,15 +4,9 @@
 
 **Input**: Feature specification from `/specs/013-pilot-multi-shop-plans/spec.md`, PRD sections 1, 2, 3 and 15, the architecture reference sections 3, 6.10, 8.1 and 12.3 to 12.5, the constitution v2.1.0, and the designs of 008, 010, 011 and 012.
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:b370aebccc881223ff6015fd577e5c4bd18f81660b4530cd1ee9f69590a0a470 -->
-
 ## Summary
 
 Prove and enforce that one business never sees another's data: master data scoped to the business, facts and settings to the shop, pull filtered by both, and an automated cross-tenant test suite on the server and the desktop as a required check. Let the builder create pilot businesses and shops from an audited admin command, onboard each with 012's tools and starter import templates, review weekly usage from aggregates only, record plan offers and subscriptions with signed entitlements that pause premium features but never billing, backups or export, grant time-limited, owner-approved, logged support access, and support single-shop and whole-business exit with a full export and server deletion limited to that scope. A1 can leave while A2 keeps its data, shared business records and the ability to restore.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Technical Context
 

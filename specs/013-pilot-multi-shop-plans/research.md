@@ -8,17 +8,11 @@ Sources read: the spec, PRD sections 1 (decisions of 12 November 2026), 2 (BO-6)
 
 ## Decisions
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:fee6c88a62f080f0a4ce2879e2b6ac0e668ec1b7e2beb085eb132a9941f08ebf -->
-
 ### D1. Tenancy is already in every row; this feature proves it
 
 - Tenant records carry `business_id` and use `shop_id` for shop ownership or origin (constitution IV, from 001). The shared `plan` catalogue is global and excluded from tenant pull; subscription and offer records are business scoped. The server enforces row-level security by `business_id` and fails closed (010). This feature adds what a second business needs on top: shop scoping on devices, an automated cross-tenant test suite, per-business backup keys and support-access control.
 - **Shape**: a business can have several shops; a counter device belongs to one shop; the owner's phone sees all shops of its business. **Master data** (items, parties, price tiers, roles) is per business; **facts** (bills, movements, ledger, cash, counts) and **settings** (registration, series, tax, limits, locations) are per shop (FR-002, FR-CMP-017). A shop with two locations is two shops in one business (spec edge case).
 - **Pull scope**: a device receives its business's master data and only its own shop's facts; the server's pull query filters by both (010's `sync_log` has both ids). A contractor known to two pilot shops is two unrelated parties (spec edge case).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### D2. Cross-tenant security test suite (SC-001)
 
@@ -49,18 +43,12 @@ Weekly per-shop figures computed on the server from `sync_log` metadata and proj
 - Devices receive a signed **entitlement** (a JWT from the server listing enabled premium features and its expiry, with a 14-day grace period offline). Premium features are 012's feature switches; when an entitlement lapses, those switches pause. **Billing, stock, khata, backups and data export are never gated** (FR-007, US4 scenario 3); a test asserts this for every core command.
 - Prices are not set here (spec assumption); payment collection is outside the app (bank transfer or UPI), recorded by the builder.
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:9241ef6789d0de71d1112ca91ab885986b22701e72f70b6f970675ec7640a8de -->
-
 ### D8. Single-shop or whole-business exit: export, then deletion
 
 - A single shop may exit a multi-shop business (FR-008). Deliver a full export of the authorized scope as SQLite and CSV files per the export contract, then confirm receipt before deleting anything.
-- On single-shop exit, disable server sync for the departing shop after confirmation so its devices cannot upload erased data again. Delete only that shop's operation log and projections. Preserve shared business records and remaining shops' data. Replace mixed snapshots and backups with versions that omit the departing shop, then retire the old copies under the retention terms in OI-1. Verify that remaining shops can still restore. A whole-business exit deletes that business's operation log, projections, snapshots and backups under the same terms.
+- On single-shop exit, disable server sync for the departing shop after confirmation so its devices cannot upload erased data again. Delete only that shop's operation log, projections (including `usage_week`), and its shop-scoped server rows that are not projections: `pilot_shop_status` (with its `note`) and `onboarding_step`. Preserve shared business records and remaining shops' data. Replace mixed snapshots and backups with versions that omit the departing shop, then retire the old copies under the retention terms in OI-1. Verify that remaining shops can still restore. A whole-business exit deletes that business's operation log, projections, `pilot_shop_status` and `onboarding_step` rows, snapshots and backups under the same terms (OI-1).
 - Exiting devices keep their local data and the shop keeps its export for required records. Erasure of customers' personal data inside the shop's records remains the separate flow in 008.
 - **Open item OI-1**: Shop OS acts as a processor for the shop's customer data; a processor agreement (PRD dependency "DPDP consent wording and processor contract") and the deletion and retention terms need counsel.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### D9. Builder support access is granted, time-limited and logged
 

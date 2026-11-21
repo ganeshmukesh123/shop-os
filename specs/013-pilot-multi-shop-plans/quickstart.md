@@ -25,14 +25,8 @@ With generated activity for 10 shops over 8 weeks, run `admin usage --cohort`. E
 1. Offer a plan; record "accepted" for 7 of 10 test shops. Expected: the count shown against SC-004.
 2. Let a subscription lapse and move the clock past the 14-day grace. Expected: premium features pause; billing, stock, khata, backup and `data.exportAll` still work.
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:a0188225658bbb77f3b1643dcba64a5de4c9855421c2499610e413123b94d6c8 -->
-
 ## 5. Support access and exit
 
 1. `support request` for 2 hours; the owner approves on the phone. Expected: reads work and each is logged; after 2 hours they stop; the owner can revoke earlier.
 2. Exit A1 from business A, which also has A2. Open the SQLite and CSV exports: all A1 facts and settings and the shared master data are present; no A2 facts or settings are present. Before receipt is confirmed, nothing is deleted. After confirmation and deletion under D8, A1's devices keep local data; the server and retained recovery copies contain no A1 shop data except required retention. A2 can still sync and restore with all its data and shared master data.
 3. Repeat for a whole-business exit. Expected: the export covers the whole business; after confirmation, deletion covers that business under D8 and leaves other businesses untouched.
-
-<!-- /coderabbit-ai-generated:v1 -->
