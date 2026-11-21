@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Box, Flex, Heading, Text, TextField } from "@radix-ui/themes";
+import { Flex, Heading } from "@radix-ui/themes";
 import {
   evaluateDraft,
-  formatQuantity,
-  formatRupees,
   paiseToInput,
   type Bill,
   type BillLine,
@@ -16,8 +14,10 @@ import { uiText } from "../../../shared/text/strings";
 import { call, messageOf } from "../../../shared/api/api";
 import { emptyForm, loadDraftForm, type IBillForm } from "../billForm";
 import { useDraftAutosave } from "../hooks/useDraftAutosave";
+import { useItemSearch } from "./hooks/useItemSearch";
 import { BillView } from "../BillView";
 import { BillLinesTable } from "./components/BillLinesTable";
+import { BillSearchBox } from "./components/BillSearchBox";
 import { BillSummaryPanel } from "./components/BillSummaryPanel";
 import { RecoverDraftDialog } from "./components/RecoverDraftDialog";
 
@@ -34,9 +34,8 @@ export function NewBillScreen() {
   const [recover, setRecover] = useState<IBillForm | null>(null);
   const [saved, setSaved] = useState<Saved | null>(null);
   const [saving, setSaving] = useState(false);
-  const [query, setQuery] = useState("");
-  const [matches, setMatches] = useState<Item[]>([]);
-  const [hi, setHi] = useState(0);
+  const { query, matches, highlightedIndex, setQuery, setHighlightedIndex, clearSearch } =
+    useItemSearch();
   const searchRef = useRef<HTMLInputElement>(null);
   const qtyRefs = useRef(new Map<string, HTMLInputElement>());
   const focusLine = useRef<string | null>(null);
@@ -48,26 +47,6 @@ export function NewBillScreen() {
       .finally(() => setReady(true));
   }, []);
   useDraftAutosave(form, ready && !saved && !recover);
-
-  // Search as the user types (2+ characters), keeping only the latest response.
-  useEffect(() => {
-    if (query.trim().length < 2) {
-      setMatches([]);
-      return;
-    }
-    let live = true;
-    call("items.list", { query: query.trim(), limit: 8, offset: 0 })
-      .then((listResult) => {
-        if (live) {
-          setMatches(listResult.items);
-          setHi(0);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      live = false;
-    };
-  }, [query]);
 
   useEffect(() => {
     if (focusLine.current) {
@@ -91,44 +70,46 @@ export function NewBillScreen() {
       ),
     });
 
-  const addItem = useCallback((it: Item) => {
-    setForm((previousForm) => {
-      const existing = previousForm.draft.lines.find((draftLine) => draftLine.itemId === it.id);
-      if (existing) {
-        focusLine.current = existing.key;
-        const existingQuantity = Number(existing.qty);
-        const next = Number.isFinite(existingQuantity) ? String(existingQuantity + 1) : "1";
+  const addItem = useCallback(
+    (it: Item) => {
+      setForm((previousForm) => {
+        const existing = previousForm.draft.lines.find((draftLine) => draftLine.itemId === it.id);
+        if (existing) {
+          focusLine.current = existing.key;
+          const existingQuantity = Number(existing.qty);
+          const next = Number.isFinite(existingQuantity) ? String(existingQuantity + 1) : "1";
+          return {
+            ...previousForm,
+            draft: {
+              ...previousForm.draft,
+              lines: previousForm.draft.lines.map((draftLine) =>
+                draftLine.key === existing.key ? { ...draftLine, qty: next } : draftLine,
+              ),
+            },
+          };
+        }
+        const key = crypto.randomUUID();
+        focusLine.current = key;
+        const line: DraftLine = {
+          key,
+          itemId: it.id,
+          name: it.name,
+          unit: it.unit,
+          allowsDecimal: it.allowsDecimal,
+          qty: "1",
+          rate: paiseToInput(it.pricePaise),
+          disc: "",
+          discMode: "rupees",
+        };
         return {
           ...previousForm,
-          draft: {
-            ...previousForm.draft,
-            lines: previousForm.draft.lines.map((draftLine) =>
-              draftLine.key === existing.key ? { ...draftLine, qty: next } : draftLine,
-            ),
-          },
+          draft: { ...previousForm.draft, lines: [...previousForm.draft.lines, line] },
         };
-      }
-      const key = crypto.randomUUID();
-      focusLine.current = key;
-      const line: DraftLine = {
-        key,
-        itemId: it.id,
-        name: it.name,
-        unit: it.unit,
-        allowsDecimal: it.allowsDecimal,
-        qty: "1",
-        rate: paiseToInput(it.pricePaise),
-        disc: "",
-        discMode: "rupees",
-      };
-      return {
-        ...previousForm,
-        draft: { ...previousForm.draft, lines: [...previousForm.draft.lines, line] },
-      };
-    });
-    setQuery("");
-    setMatches([]);
-  }, []);
+      });
+      clearSearch();
+    },
+    [clearSearch],
+  );
 
   const save = useCallback(async () => {
     if (!ev.valid || !ev.input || saving) {
@@ -192,65 +173,15 @@ export function NewBillScreen() {
     <Flex direction="column" gap="3" maxWidth={LAYOUT.pageWide}>
       <Heading size="6">{uiText.bill.title}</Heading>
 
-      <Box position="relative">
-        <TextField.Root
-          ref={searchRef}
-          size="3"
-          autoFocus
-          placeholder={uiText.bill.search}
-          aria-label={uiText.bill.search}
-          value={query}
-          onChange={(changeEvent) => setQuery(changeEvent.target.value)}
-          onKeyDown={(keyboardEvent) => {
-            if (keyboardEvent.key === "ArrowDown") {
-              keyboardEvent.preventDefault();
-              setHi((previousHighlight) => Math.min(previousHighlight + 1, matches.length - 1));
-            } else if (keyboardEvent.key === "ArrowUp") {
-              keyboardEvent.preventDefault();
-              setHi((previousHighlight) => Math.max(previousHighlight - 1, 0));
-            } else if (keyboardEvent.key === "Enter" && matches[hi]) {
-              keyboardEvent.preventDefault();
-              addItem(matches[hi]!);
-            } else if (keyboardEvent.key === "Escape") {
-              setQuery("");
-            }
-          }}
-        />
-        {query.trim().length >= 2 && (
-          <ul role="listbox" aria-label="Matching items" className="shopos-search-results">
-            {matches.length === 0 && (
-              <li className="shopos-search-empty">
-                <Text color="gray">{uiText.bill.noMatch}</Text>
-              </li>
-            )}
-            {matches.map((matchingItem, listIndex) => (
-              <li
-                key={matchingItem.id}
-                role="option"
-                aria-selected={listIndex === hi}
-                onMouseDown={(mouseEvent) => {
-                  mouseEvent.preventDefault();
-                  addItem(matchingItem);
-                }}
-                onMouseEnter={() => setHi(listIndex)}
-                className="shopos-search-result"
-              >
-                <span>
-                  {matchingItem.name}{" "}
-                  <Text color="gray" size="2">
-                    ({matchingItem.unit})
-                  </Text>
-                </span>
-                <span>
-                  {formatRupees(matchingItem.pricePaise)} · stock{" "}
-                  {formatQuantity(matchingItem.stockMilli)}
-                  {matchingItem.needsCorrection ? " (negative)" : ""}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Box>
+      <BillSearchBox
+        ref={searchRef}
+        query={query}
+        matches={matches}
+        highlightedIndex={highlightedIndex}
+        onQueryChange={setQuery}
+        onHighlightChange={setHighlightedIndex}
+        onChoose={addItem}
+      />
 
       <BillLinesTable
         lines={form.draft.lines}
