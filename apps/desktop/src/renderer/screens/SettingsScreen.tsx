@@ -9,12 +9,7 @@ import {
   Text,
   TextField,
 } from "@radix-ui/themes";
-import {
-  DEFAULT_TIME_ZONE,
-  validateNumberTemplate,
-  type BackupStatus,
-  type ShopProfile,
-} from "@shopos/core";
+import { validateNumberTemplate, type BackupStatus, type ShopProfile } from "@shopos/core";
 import { useToast } from "../components/Toast";
 import { LAYOUT } from "../layout";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
@@ -57,7 +52,7 @@ export function SettingsScreen() {
     shopProfile.numberTemplate,
     shopProfile.seriesCode,
     new Date(),
-    DEFAULT_TIME_ZONE,
+    shopProfile.timeZone,
   );
   const set = (patch: Partial<ShopProfile>) => setP({ ...shopProfile, ...patch });
 
