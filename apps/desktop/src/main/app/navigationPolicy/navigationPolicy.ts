@@ -9,9 +9,13 @@ function parseAddress(address: string): URL | null {
   }
 }
 
-/** The app's own page: same scheme and exact path. A query or hash does not change the page. */
+/** The app's own page: same scheme, host and path. A query or hash does not change the page. */
 function isAppPage(target: URL, appPage: URL): boolean {
-  return target.protocol === appPage.protocol && target.pathname === appPage.pathname;
+  return (
+    target.protocol === appPage.protocol &&
+    target.host === appPage.host &&
+    target.pathname === appPage.pathname
+  );
 }
 
 /** The dev server: same scheme, host and port (host includes the port), any path. */
