@@ -14,17 +14,11 @@ Setup: rates "Old City ₹100", "0 to 3 km ₹150"; driver Ramesh; vehicle MH12 
 
 ## 2. Dispatch list and statuses (M2; US2)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:e8c8901c9d3dad9472efac7c79a244f49e5957fc5992bd2711bced07d53de29c -->
-
 1. Create 3 deliveries for tomorrow. Expected: all 3 listed for that date as Pending (SC-004).
 2. Assign Ramesh and MH12 AB 1234 to one; try assigning a second driver. Expected: refused.
 3. Dispatch it. Expected: Out for delivery.
 4. Assign and dispatch the second delivery. Once it is Out for delivery, fail it with reason "Customer not home"; reschedule to the day after. Expected: history shows both events.
 5. Assign and dispatch the third delivery. Once it is Out for delivery, fail it; "Take back" through a return. Expected: stock back via `sale_return`; delivery closed as returned.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## 3. Proof and driver cash (M3; US3)
 
