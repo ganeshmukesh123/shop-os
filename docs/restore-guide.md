@@ -32,8 +32,22 @@ Open **Settings > Backup**. "Last good backup" should show today's date and a re
 5. Confirm. The app **replaces all current data** with the backup and restarts.
 6. Check **Items** and look at the last bill you made. Anything entered after the backup's time is not in it.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:5b0b452c8d7688399144a8236e24842d64838a2781c84e37fc147974fa7e39e1 -->
+
 If you choose a file that is not a Shop OS backup, the app refuses it and changes nothing.
 
+## Owner access after restore (planned for feature 005)
+
+Before you need a restore, create a second trusted Owner with a separate PIN, verify they can sign in, and take a backup containing both owners. Keep recovery codes separately from backups.
+
+Restoring also restores the users and credentials as of the backup date. Use **Forgot PIN** with the recovery code valid for that copy if available. If both PIN and code are lost, use the current database if it is intact. If restoring damaged data, keep the original and work on a separate copy. Have the other active Owner sign in with their own PIN, open **Users**, and create a replacement Owner. Save the new recovery code, verify the new Owner can sign in, then deactivate the inaccessible account. Its history and the restored shop records stay in place; owner creation and deactivation are audited.
+
+First-run setup refuses any database that already contains users. Without another valid owner credential, keep the database and backups until a credential is found. Reinstallation and possession of a backup do not authorize a new owner.
+
+
+<!-- /coderabbit-ai-generated:v1 -->
 ## First run on a Mac (the build is not notarised)
 
 Shop OS is signed on the builder's computer without an Apple developer account, so macOS shows "cannot be opened because the developer cannot be verified" (or "Apple could not verify..."). Do this once, after dragging **Shop OS** into **Applications**:

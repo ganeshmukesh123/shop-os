@@ -1,6 +1,19 @@
 # Contract: commands added or changed by feature 005
 
-Rules as in `specs/001-shop-os-mvp/contracts/ipc-commands.md`. **New for every command**: the main process checks the session and the command's permission before the service runs. Results may now be `PERMISSION_DENIED` (role cannot do this), `SESSION_LOCKED` (idle lock; sign in again), `NOT_SIGNED_IN`, or `APPROVAL_REQUIRED` (`{ kind, amountPaise, detail }`).
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:632512253cf458a82c3dae64a4e1a6c561299ffec4463aac0ea733509fd00270 -->
+
+Feature 001's IPC validation and sender checks apply to every command. Before dispatch, main requires an explicit guard policy; an undeclared command is refused. Protected commands require an unlocked session and the declared permission checked against current grants. Errors include `NOT_SIGNED_IN`, `SESSION_LOCKED`, `PERMISSION_DENIED` and `APPROVAL_REQUIRED` (`{ kind, amountPaise, detail }`).
+
+Session commands use these guards in main:
+
+- `session.setupOwner`: no session required. Check for zero user rows and create the first owner in one transaction; otherwise return `ALREADY_SET_UP`.
+- `session.signIn` and `session.switchUser`: no active session required. Verify the target user's active status, lockout and PIN before establishing or replacing the session. Either can unlock; a failed attempt never unlocks the previous session.
+- `session.recoverOwner`: no session required. Rate-limit attempts; require an active owner's unused recovery code, reset the PIN and rotate the code atomically. Sign-in is still required afterwards.
+- `session.current`: available signed out or locked; return only session display state, never credentials.
+- `session.lock` and `session.signOut`: may lock or clear the calling session even when locked; idempotent when signed out. Neither grants access.
+- `session.touch`: requires an unlocked session; activity alone cannot unlock it.
 
 ## Session and users
 
@@ -15,6 +28,10 @@ Rules as in `specs/001-shop-os-mvp/contracts/ipc-commands.md`. **New for every c
 | `session.recoverOwner`                                             | `{ recoveryCode, newPin }`                               | `{ newRecoveryCode }`                         | `WRONG_RECOVERY_CODE` (lockout as PINs)                                        |
 | `users.list` / `users.save` / `users.setActive` / `users.resetPin` | owner only                                               | `{ users[] }` / `{ user }`                    | `LAST_OWNER` (cannot deactivate the only owner), `INVALID_PIN`                 |
 | `roles.list` / `roles.setPermission`                               | `{}` / `{ roleCode, permission, mode, thresholdPaise? }` | `{ roles[{ role, permissions[] }] }`          | `UNKNOWN_PERMISSION`                                                           |
+
+Only an active owner may administer users, roles and the manager delegation setting. The Roles screen saves delegated approval kinds independently of action mode via the owner settings command.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Approvals
 

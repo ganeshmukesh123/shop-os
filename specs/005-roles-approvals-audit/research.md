@@ -18,14 +18,18 @@ Sources read: the spec, PRD section 10 Control (FR-CTL-001 to 008), the permissi
 ### D2. Owner PIN recovery: a printed recovery code
 
 - **Decision** (the spec says "to be designed in planning, not assumed"): when the owner account is created, the app shows a 12-character recovery code once (letters and digits without look-alike characters, grouped `XXXX-XXXX-XXXX`) and asks the owner to write it down or print it. Only its scrypt hash is stored. "Forgot PIN" on the owner's sign-in asks for the recovery code and a new PIN, then shows a new recovery code. Each use is audit-logged. Other users' PINs are reset by the owner.
-- **If the code is lost**: there is no back door in the app. The fallback is the written restore guide (001): restore the database from backup onto the app freshly installed and set up a new owner. Data is kept; the audit log records the new owner. This is a support procedure, not a feature.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:0c89d9a497f21711cf840c6456f594b5f8538a833a4f165d97a71c64042e2a94 -->
+
+- **If the PIN and code are lost**: provision a second active owner before backup. That owner signs in with their own PIN on the current or restored database and creates the replacement owner through owner-only `users.save` (see the restore guide). A reinstall or backup file proves no authority. Without a surviving owner credential, preserve the database; there is no authorized reset.
 - **Alternatives rejected**: a builder-held master key (a back door); recovery through email or SMS (needs a server and an account, feature 010).
 - **Owner decision OD-1**: accept the recovery-code design.
 
 ### D3. Permissions are checked in the main process on every command
 
-- **Decision**: the main process holds the signed-in session (user, role, device). Every IPC handler declares the permission it needs; a wrapper checks it with `checkPermission(rolePermissions, permission)` from `@shopos/core` before the service runs and returns `PERMISSION_DENIED` or `APPROVAL_REQUIRED`. The renderer hides buttons a role cannot use, but the check that counts is in the main process ("never trust the client", architecture 12.3).
-- **Permission modes** (`role_permission.mode`): `allow`, `request` (needs an approval), `approve` (may approve others' requests of that kind, used for delegated managers), `deny`. This expresses every cell of the PRD's table, including "Request", "Approve if delegated" and "Up to threshold" (`allow` with a threshold setting).
+- **Decision**: the main process holds the signed-in session (user, role, device). Every IPC handler declares a guard policy (session commands use the specific guards in the IPC contract); for protected commands, a wrapper checks it with `checkPermission(rolePermissions, permission)` from `@shopos/core` before the service runs and returns `PERMISSION_DENIED` or `APPROVAL_REQUIRED`. The renderer hides buttons a role cannot use, but the check that counts is in the main process ("never trust the client", architecture 12.3).
+- **Permission modes**: `allow` (optionally up to a threshold), `request`, or `deny` govern one's own actions. Separately, `canApprove` checks role and the owner’s delegated kinds; changing delegation preserves request rights.
 - **Changes apply from the next action** (spec US1 scenario 5): permissions are read per command, not cached per session.
 
 ### D4. Default permissions from the PRD
@@ -35,7 +39,9 @@ The seeded `role_permission` rows reproduce the PRD's section 15 table exactly (
 ### D5. Approvals: single-use, bound, 2-minute expiry, local first
 
 - **Decision**: `approval_request` holds kind (`below_cost`, `over_discount`, `over_credit`, `cancel`, `return_without_bill`, `tinted_return`, `stock_adjust_over_threshold`, `edit_after_save`), subject (type and id, for example the draft bill's `client_bill_id`), the exact amount or value, a JSON detail shown to the approver, requester, device, status and expiry (2 minutes). Status moves only along the architecture's state machine (requested to approved, rejected or expired; approved to consumed or expired), enforced by a trigger.
-- **On-device approval**: the approver types their PIN into the prompt on the same counter. The approver must hold `approve` for that kind (owner always; manager when delegated, EC-10). The requester cannot approve their own request.
+- **On-device approval**: the approver types their PIN into the prompt on the same counter. The approver must be authorized to decide that kind (owner always; manager when delegated, EC-10). The requester cannot approve their own request.
+
+<!-- /coderabbit-ai-generated:v1 -->
 - **Consumption**: the service that saves the bill, cancel, return or adjustment calls `ApprovalPort.consume(approvalId, subject, amount)` inside its transaction; a mismatch, a second use or an expired approval fails (`APPROVAL_INVALID`). "Two approvals for the same action: the first decides, the second is ignored and logged."
 - **Rejection** needs a reason; the screen puts the line back for correction.
 - **Remote approval** (owner's phone) is feature 010. Until then a request waits only for an on-device PIN; offline remote requests are not possible.

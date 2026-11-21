@@ -21,7 +21,13 @@ problem_report    device (one row for this computer)    owner_recovery (hash)
 
 ### `role_permission`
 
-`role_id`, `permission` (text key, list below), `mode` (`allow`, `request`, `approve`, `deny`), `threshold_paise` (nullable, for "up to threshold"). `UNIQUE(role_id, permission)`. Editable by the owner; every change is audited.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:515ed21371fd0fcea160511efc226f1e56dae9d8872c78a5cf15d9cd2a463f28 -->
+
+`role_id`, `permission` (text key, list below), `mode` (`allow`, `request`, `deny`), `threshold_paise` (nullable, for "up to threshold"). `UNIQUE(role_id, permission)`. Editable by the owner; every change is audited.
+
+Mode governs the actor’s own action. In the seed table, “approve” means the owner may decide others’ requests; use request mode for the owner’s own gated action. Decision authority is independent: the owner may decide any kind; a manager may decide only kinds in the owner’s `manager_delegated_kinds` setting. Delegation never changes the manager’s action mode or permits self-approval.
 
 Permission keys: `bill.create`, `quote.create`, `discount.give`, `bill.below_cost`, `bill.cancel`, `return.without_bill`, `credit.over_limit`, `payment.receive`, `stock.receive`, `stock.move`, `stock.count`, `stock.adjust`, `item.edit`, `price.edit`, `tier.edit`, `report.profit`, `data.export`, `settings.edit`, `users.manage`, `bill.edit_same_day`.
 
@@ -82,11 +88,11 @@ One row for this computer: `kind` (`desktop`), `counter_code`, `label`, `revoked
 | reason                  | nullable text up to 200                                                                                                                      |
 | prev_hash, row_hash     | 64 hex characters each; first row's `prev_hash` is 64 zeros                                                                                  |
 
-Triggers reject UPDATE and DELETE. Verification walks each device's chain in `seq` order and recomputes each `row_hash`. With sync (010), the server verifies every device's chain as it arrives and records the order it received entries in; a single business-wide sequence is impossible while devices work offline.
+Triggers reject UPDATE and DELETE. Verification walks each device's chain in `seq` order and recomputes each `row_hash`. Require seq 1 at the start, consecutive numbers and matching links. An intact prefix still verifies: without an independently trusted head, removing the tail (or a whole chain) or rebuilding the hashes cannot reliably be detected offline. Triggers still forbid every role from deleting or editing rows. With sync (010), the server verifies every device's chain as it arrives and records the order it received entries in; a single business-wide sequence is impossible while devices work offline.
 
 ### `cash_session`
 
-`counter_code`, `business_date`, `status` (`open`, `counting`, `closed`), `opening_float_paise`, `opened_by`, `opened_at`, `expected_paise` (stored at close), `counted_paise`, `variance_paise`, `variance_reason` (required when variance is not 0), `closed_by`, `closed_at`. `UNIQUE(shop_id, counter_code, business_date)`. Updates allowed only along open, counting, closed (trigger); a closed session never changes.
+`counter_code`, `business_date`, `status` (`open`, `counting`, `closed`), `opening_float_paise`, `opened_by`, `opened_at`, `expected_paise` (stored at close), `counted_paise`, `variance_paise`, `variance_reason` (required when variance is not 0), `closed_by`, `closed_at`. `UNIQUE(shop_id, counter_code, business_date, session_no)` (positive session number allocated on open); partial unique index on `(shop_id, counter_code) WHERE status IN ('open','counting')`. Updates allowed only along open, counting, closed (trigger); a closed session never changes.
 
 ### `cash_entry` (append-only)
 
@@ -112,7 +118,7 @@ Nullable `user_id` added to `bill`, `bill_line` not needed (the bill has it), `s
 
 - `checkPermission(permissions, key, { amountPaise? })` returning `allow`, `request`, `deny`.
 - `effectiveDiscountLimit(role, user)`.
-- `canApprove(approverPermissions, kind, requesterId, approverId)`.
+- `canApprove(approverRole, delegatedKinds, kind, requesterId, approverId)`.
 - `nextApprovalStatus(current, event, nowMs)`.
 - `hashAuditRow(prevHash, row)`, `verifyAuditChain(rows)`.
 - `expectedCash(entries)`, `countTotal(denominations)`, `cashVariance(expected, counted)`.
@@ -126,4 +132,6 @@ Example: expected ₹18,450.00, counted ₹18,200.00: variance -₹250.00; above
 - `app_user(role_id)`; `role_permission(role_id, permission)` unique.
 - `approval_request(status, expires_at)`, `approval_request(subject_type, subject_id)`.
 - `audit_log(device_id, seq)` unique, `audit_log(entity_type, entity_id)`, `audit_log(action, device_time)`.
-- `cash_entry(session_id)`, `cash_session(shop_id, counter_code, business_date)` unique.
+- `cash_entry(session_id)`, cash session identity and active-session indexes as defined above.
+
+<!-- /coderabbit-ai-generated:v1 -->

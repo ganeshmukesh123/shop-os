@@ -6,7 +6,11 @@
 
 ## Summary
 
-Give every action an accountable user. Staff sign in with a 4 to 6 digit PIN (scrypt-hashed, with lockout); five roles carry the PRD's permissions, editable by the owner; the main process checks permission on every command; the screen locks after idle time without losing work, and users switch by PIN. Risky actions raise single-use, 2-minute approvals decided by an owner or delegated manager PIN on the device. Every change goes into a hash-chained, append-only audit log. A cash session per counter records cash entries in the same transactions as sales and payments, so day-close shows expected cash, a reasoned variance and a drill-down summary. A problem-report button collects text, photos and voice notes.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:aa3236459ecb02535376cb9461961105ae2e92197009342d723d0f1b3614c135 -->
+
+Give every action an accountable user. Staff sign in with a 4 to 6 digit PIN (scrypt-hashed, with lockout); five roles carry the PRD's permissions, editable by the owner; the main process enforces the IPC guard policy for each command; the screen locks after idle time without losing work, and users switch by PIN. Risky actions raise single-use, 2-minute approvals decided by an owner or delegated manager PIN on the device. Every change goes into a hash-chained, append-only audit log. A cash session per counter records cash entries in the same transactions as sales and payments, so day-close shows expected cash, a reasoned variance and a drill-down summary. A problem-report button collects text, photos and voice notes.
 
 ## Technical Context
 
@@ -66,7 +70,7 @@ packages/core/src/control/  # permissions.ts, discountLimit.ts, approvalStateMac
                             # expectedCash.ts, denominations.ts, dayCloseSummary.ts, pinRules.ts
 apps/desktop/src/main/
 ├── session/               # SessionManager (sign-in, lock, switch, touch), pinHasher.ts (scrypt)
-├── ipc/guard.ts           # wraps each handler: session + permission check
+├── ipc/guard.ts           # wraps each handler: declared guard policy
 ├── repositories/          # UserRepository, RoleRepository, ApprovalRepository, AuditRepository, CashRepository, ReportRepository
 ├── services/
 │   ├── users/             # UserService (owner set-up, recovery, users, roles)
@@ -95,7 +99,9 @@ Window 22 February to 21 March 2027 (proposed, 002 research D16), right after 00
 
 **Risks and fallbacks**
 
-- Wrapping every command breaks existing flows: done in one PR with a test that lists every command and its permission, so none is missed.
+- Wrapping every command breaks existing flows: done in one PR with a test that lists every command and its guard policy, so none is missed.
+
+<!-- /coderabbit-ai-generated:v1 -->
 - scrypt too slow on an old Windows PC: lower N to 2^15 (still within OWASP's minimum guidance), stored per hash.
 - Staff share PINs: audit shows it only indirectly; the owner is told in the walkthrough; out of scope to prevent.
 
