@@ -4,17 +4,21 @@ Prerequisites: 002, 004, 005 and 007 merged (010 for server restore). Commands a
 
 ## 1. Load data and readiness (M1; US1)
 
-1. Import 520 items (3 without a unit, 2 duplicate groups) and 100 parties with balances (002 and 004 imports). Enter "credit parties in old books: 100".
-2. Run readiness. Expected: "Not ready: 3 items have no unit; 2 duplicate groups open".
-3. Fix the units; merge the duplicates (002). Run again. Expected: "Ready" when 500 or more items and all 100 parties are loaded (SC-002 date recorded).
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:ca1baa864c3f74981f598028887192f7505cb6c1b07c8ce47f2c526e1f7185c4 -->
+
+1. From the fixture’s old-book ranking select ranks 1–500 and save their distinct item import keys as the readiness reference. Import 520 items (3 without a unit, 2 duplicate groups) and 100 parties with balances (002 and 004 imports). Enter "credit parties in old books: 100".
+2. Run readiness. Expected: "Not ready"; import gaps include 3 items without a unit and 2 open duplicate groups.
+3. Fix the units; merge the duplicates (002). Run again. Compare the reference keys with loaded item keys: the set difference must be empty. Verify all 100 fixture parties and their opening balances; record the SC-002 completion date at G - 14. Import gaps are clear; sign-off and training still keep overall status "Not ready".
 4. Run the same imports again. Expected: nothing double-posts.
 
 ## 2. Sign-off and training (M2; US2)
 
 1. Mark the six settings items signed off.
-2. Enter training mode. Expected: orange "TRAINING" banner; bill numbers start with `TR/` (for example `TR/26-27/000124`).
-3. A trainee saves 5 bills unaided; leave training mode. Expected: real stock, ledgers and bill numbers unchanged (compare counts before and after).
-4. Record both sessions and the 5-bill result; name a champion. A second champion is refused.
+2. Snapshot live stock quantities by item, ledger entries with IDs and amounts, and last_seq by shop, counter and year. Enter training mode. Expected: orange "TRAINING" banner; bill numbers start with `TR/` (for example `TR/26-27/000124`).
+3. A trainee saves 5 bills unaided; leave training mode. Expected: real stock, ledgers and bill numbers unchanged (compare the same keyed values and records with the snapshot, including missing or extra keys).
+4. In live mode record both sessions and the 5-bill result; name a champion. A second champion is refused. After every active staff member meets the session and bill requirements, verify overall "Ready".
 
 ## 3. Parallel run (M3; US3)
 
@@ -30,8 +34,10 @@ Prerequisites: 002, 004, 005 and 007 merged (010 for server restore). Commands a
 ## 5. Releases and rollback (M1; US5)
 
 1. Install version N+1 with a new feature. Expected: the feature is off; switching it on asks for the walkthrough date and attendees.
-2. Roll back to version N (additive migrations only). Expected: the shop's data opens; bills saved on N+1 are there.
+2. Save a bill on N+1 and record its ID, bill number and total. Roll back to version N (additive migrations only). Expected: open that same database and retrieve the bill by ID; its number and total match.
 3. A person other than the builder restores a backup on a clean machine with the guide. Expected: under 30 minutes (SC-006), recorded as a restore drill.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## 6. Both themes
 

@@ -20,7 +20,11 @@ Before go-live the owner imports at least the top 500 items and all credit parti
 
 **Why this priority**: The PRD makes the top 500 items and all credit parties a go-live condition, and dirty data is rated a high-likelihood, high-impact risk.
 
-**Independent Test**: Import 500 items and 100 parties with balances, see the readiness check pass or list gaps, and merge the duplicates found.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:ce00191a6a1c921a10f5dd899c73a9358f715ea785083274879dc838aaf5b44f -->
+
+**Independent Test**: Import 500 items and 100 parties with balances, check that the import gaps clear or list what is missing, and merge the duplicates found.
 
 **Acceptance Scenarios**:
 
@@ -108,7 +112,7 @@ A new version reaches the shop every 2 weeks, with new features switched on only
 ### Functional Requirements
 
 - **FR-001**: System MUST import items, parties and opening balances with previews, duplicate detection and confirmation totals before posting (FR-ITM-012, FR-KHA-008).
-- **FR-002**: System MUST provide a readiness check showing items loaded, credit parties with balances, missing data and unresolved duplicates.
+- **FR-002**: System MUST provide a readiness check showing items loaded, credit parties with balances, missing data and unresolved duplicates. Import completion at G - 14 requires all top 500 items and all credit parties with opening balances, with no import gaps. Overall “Ready” also requires settings sign-off and completed staff training (FR-005).
 - **FR-003**: System SHOULD provide a training mode that does not affect real stock, ledgers or bill numbers.
 - **FR-004**: System MUST let the owner record a settings sign-off checklist (tiers, roles, limits, MRP, paint classes, shelf tags).
 - **FR-005**: System MUST let the owner record each staff member's training and 5-test-bill result and name a champion.
@@ -118,6 +122,8 @@ A new version reaches the shop every 2 weeks, with new features switched on only
 - **FR-009**: System MUST show top-200 accuracy from rack counts against the 95% by day 60 target and let the owner record gate decisions.
 - **FR-010**: Releases MUST reach the shop every 2 weeks, with new features off until switched on, and the previous version MUST remain installable.
 - **FR-011**: A written restore guide MUST exist and be tested by a person other than the builder.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### Key Entities
 

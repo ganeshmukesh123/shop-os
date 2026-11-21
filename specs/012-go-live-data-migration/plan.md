@@ -79,11 +79,15 @@ apps/desktop/src/renderer/features/golive/
 
 ## Go-live runbook (PRD section 15, dated against go-live day G)
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:b55936f142d48ab7af3dffe79731bc06ded6773046e8069d629e8a6efe004449 -->
+
 | When           | Step                                                           | Done when                          | Tool                                      |
 | -------------- | -------------------------------------------------------------- | ---------------------------------- | ----------------------------------------- |
-| G - 14 days    | Import items, parties, opening balances; clean duplicates      | Readiness "Ready" (SC-002)         | Readiness, 002 and 004 imports, 002 merge |
+| G - 14 days    | Import items, parties, opening balances; clean duplicates      | No import gaps; SC-002 date recorded         | Readiness, 002 and 004 imports, 002 merge |
 | G - 7 days     | Set tiers, roles, limits, MRP, paint classes; print shelf tags | Sign-off complete                  | Sign-off list, 002 labels                 |
-| G - 7 to G - 1 | Train each staff member (2 x 1 hour); name a champion          | 5 unaided test bills each (SC-003) | Training mode and records                 |
+| G - 7 to G - 1 | Train each staff member (2 x 1 hour); name a champion          | Both sessions and 5 unaided bills each, champion named; overall readiness "Ready" | Training mode and records                 |
 | Week 1         | Bill in Shop OS; old book for credit only; evening total check | Totals match daily (SC-004)        | Reconciliation                            |
 | Weeks 1 to 4   | Count one rack a day                                           | Top-200 accuracy measured          | 007 counts, accuracy                      |
 | Week 2         | Stop old billing; owner reviews day close and approvals daily  | No bills outside the system        | Share billed, bypass view                 |
@@ -107,7 +111,9 @@ Window 23 August to 12 September 2027 (proposed, 002 research D16), then the run
 
 - The owner's books are not in spreadsheets: 004's manual opening-balance screen; the readiness check counts parties loaded either way.
 - Staff bypass in rush hours (PRD high risk): the share and bypass views reviewed daily by the owner; the champion helps at the counter.
-- A release must be rolled back with a non-additive migration: restore the pre-upgrade backup and re-enter bills from printouts; the release checklist forbids non-additive migrations in the first 60 days.
+- A release must be rolled back with a non-additive migration: follow the preservation and reconciliation gate in research D10 before restoring; the release checklist forbids non-additive migrations in the first 60 days.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Complexity Tracking
 
