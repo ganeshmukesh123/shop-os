@@ -17,7 +17,7 @@ problem_report    device (one row for this computer)    owner_recovery (hash)
 
 ### `app_role`
 
-`code` (`owner`, `manager`, `counter`, `godown`, `accountant`), `label`, `discount_limit_bp` (nullable, basis points of the bill; 1000 = 10%), `discount_limit_paise` (nullable, rupees per bill); seeded; the owner cannot delete roles in this feature (custom roles later). Seeded limits: Manager `discount_limit_bp` 1000, Counter 300, others null (no own limit; `discount.give` mode decides). A user's `discount_limit_bp` or `discount_limit_paise`, when set, overrides the role's value of the same unit.
+`code` (`owner`, `manager`, `counter`, `godown`, `accountant`), `label`, `discount_limit_bp` (nullable, basis points of the bill; 1000 = 10%), `discount_limit_paise` (nullable, rupees per bill); seeded; the owner cannot delete roles in this feature (custom roles later). Seeded limits: Manager `discount_limit_bp` 1000, Counter 300, others null (no own limit; `discount.give` mode decides). A user's `discount_limit_bp` or `discount_limit_paise`, when set, overrides the role's value of the same unit. Every limit that is set then applies on its own, and the discount must be within all of them: `effectiveDiscountLimit(role, user, billTotalPaise)` is the smallest of the set limits, the percent one converted to paise of that bill. Example: Manager role 10%, user ₹50, bill ₹1,000: the limit is ₹50 (not ₹100), so ₹75 needs approval.
 
 ### `role_permission`
 
@@ -60,16 +60,16 @@ One row for this computer: `kind` (`desktop`), `counter_code`, `label`, `revoked
 
 ### `approval_request`
 
-| Field                                                                                     | Rule                                                                                                                                             |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| kind                                                                                      | `below_cost`, `over_discount`, `over_credit`, `cancel`, `return_without_bill`, `tinted_return`, `stock_adjust_over_threshold`, `edit_after_save` |
-| subject_type, subject_id                                                                  | for example `draft_bill` and the `client_bill_id`; `bill` and its id for cancel                                                                  |
-| amount_paise                                                                              | the exact amount allowed (price, discount, credit, bill total), nullable for cancel                                                              |
-| detail_json                                                                               | what the approver sees (item, price, cost, limit)                                                                                                |
-| requested_by, device_id, requested_at, expires_at                                         | expiry = requested + 120,000 ms                                                                                                                  |
-| status                                                                                    | `requested`, `approved`, `rejected`, `expired`, `consumed`; trigger allows only the transitions in the state machine                             |
-| decided_by, decided_at, decision_mode (`pin`, `remote`), reason (required for `rejected`) | `decided_by <> requested_by` (CHECK)                                                                                                             |
-| consumed_by_type, consumed_by_id, consumed_at                                             | set once                                                                                                                                         |
+| Field                                                                                     | Rule                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| kind                                                                                      | `below_cost`, `over_discount`, `over_credit`, `cancel`, `return_without_bill`, `tinted_return`, `stock_adjust_over_threshold`, `edit_after_save`                    |
+| subject_type, subject_id, subject_fingerprint                                             | for example `draft_bill` and the `client_bill_id`; `bill_line` and the draft line key, with a fingerprint of its cost-relevant fields; `bill` and its id for cancel |
+| amount_paise                                                                              | the exact amount allowed (price, discount, credit, bill total), nullable for cancel                                                                                 |
+| detail_json                                                                               | what the approver sees (item, price, cost, limit)                                                                                                                   |
+| requested_by, device_id, requested_at, expires_at                                         | expiry = requested + 120,000 ms                                                                                                                                     |
+| status                                                                                    | `requested`, `approved`, `rejected`, `expired`, `consumed`; trigger allows only the transitions in the state machine                                                |
+| decided_by, decided_at, decision_mode (`pin`, `remote`), reason (required for `rejected`) | `decided_by <> requested_by` (CHECK)                                                                                                                                |
+| consumed_by_type, consumed_by_id, consumed_at                                             | set once                                                                                                                                                            |
 
 ### `audit_log` (append-only)
 
