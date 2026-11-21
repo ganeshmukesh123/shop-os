@@ -2,6 +2,10 @@
 
 Builds on 010's server schema (business, shop, device, `sync_log`, row-level security), 012 (feature switches, readiness, training) and 005 (problem reports). Conventions unchanged. Decisions in `research.md` D1 to D10.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:40cfee031fadcb2b3e2a16c6711282e4c2e24a11b558c20098c07d616d708fe4 -->
+
 ## Scope of records (research D1)
 
 | Kind        | Examples                                                                                                | Scope    | Pulled by a counter |
@@ -9,22 +13,29 @@ Builds on 010's server schema (business, shop, device, `sync_log`, row-level sec
 | Master data | items, families, categories, brands, parties, price tiers, party prices, roles, users                   | business | all of its business |
 | Facts       | bills, lines, tenders, returns, movements, counts, ledger entries, payments, cash, deliveries, receipts | shop     | only its shop       |
 | Settings    | registration, number series, GST rates overrides, limits, locations, counters, feature switches         | shop     | only its shop       |
+| Shared plan definitions | `plan` | global (non-tenant) | never through tenant pull |
 
 `shop_id` on master-data rows records the shop that created them; reads of master data filter by `business_id` only.
 
 ## New server tables
 
+For each of the following three shop tables, both IDs are required. A composite foreign key
+from `(business_id, shop_id)` to the shop's `(business_id, id)` must reject a mismatched pair,
+including when an operation or projection is written.
+
 ### `pilot_shop_status`
 
-`shop_id`, `cohort` (for example `pilot-2028-03`), `recruited_via` (distributor name), `onboarding_started_at`, `first_real_bill_at`, `status` (`recruited`, `onboarding`, `live`, `paused`, `left`), `note`.
+`business_id`, `shop_id`, `cohort` (for example `pilot-2028-03`), `recruited_via` (distributor name), `onboarding_started_at`, `first_real_bill_at`, `status` (`recruited`, `onboarding`, `live`, `paused`, `left`), `note`.
 
 ### `onboarding_step`
 
-`shop_id`, `step` (`data_loaded`, `settings_signed_off`, `staff_trained`, `first_real_bill`), `completed_at` (from the shop's operations).
+`business_id`, `shop_id`, `step` (`data_loaded`, `settings_signed_off`, `staff_trained`, `first_real_bill`), `completed_at` (from the shop's operations).
 
 ### `usage_week` (projection)
 
-`shop_id`, `week_start`, `active_days`, `bill_count`, `sales_paise`, `share_billed_bp` (nullable), `overdue_khata_paise`, `open_problem_reports`. Aggregates only; no party or line data.
+`business_id`, `shop_id`, `week_start`, `active_days`, `bill_count`, `sales_paise`, `share_billed_bp` (nullable), `overdue_khata_paise`, `open_problem_reports`. Aggregates only; no party or line data.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### `plan`, `subscription`, `plan_offer`
 
@@ -40,19 +51,33 @@ Builds on 010's server schema (business, shop, device, `sync_log`, row-level sec
 
 `business_id`, `requested_by`, `reason` (1-200), `approved_by` (owner user id), `starts_at`, `ends_at` (at most 24 hours after start), `revoked_at`. Every read under a grant writes a server `audit_log` row with the grant id.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:f618ad323b9f164fc8adb2b15fb68469aaf011b29f816d83ca6c7a33d6b99947 -->
+
 ### `business_exit`
 
-`business_id`, `export_requested_at`, `export_delivered_at`, `export_confirmed_at`, `server_deletion_done_at`, `note`.
+`business_id`, `shop_id` (nullable; null means whole-business exit), `export_requested_at`, `export_delivered_at`, `export_confirmed_at`, `server_deletion_done_at`, `note`.
+
+For a single-shop exit, the `(business_id, shop_id)` pair must reference that business's shop.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Device additions
 
 - `entitlement_cache(jwt, features_json, expires_at, grace_until)` (one row); premium switches (012 `feature_switch`) read it; core commands never do.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:932bca7fedf88263072230475cfb78b3ca352312494b7778fc2f340497c16ec0 -->
+
 ## Derived values (in `@shopos/core`)
 
-- `recordScope(tableName)` returning `business` or `shop` (one table of truth used by pull filters and tests).
+- `recordScope(tableName)` returning `business`, `shop` or `global` for `plan` (one table of truth used by pull filters and tests). Global tables are explicitly excluded from tenant pull. Any schema table missing from the registry fails the coverage test; no implicit global scope.
 - `isActiveWeek(days)`, `retentionAtWeek8(usageWeeks)` against 7 of 10.
 - `effectiveEntitlement({ cached, nowMs })` with grace.
 - `isAlwaysFree(command)`: billing, stock, khata, backup and export commands are always allowed.
 
 Example: shop A active 6, 5, 7, 6 days in weeks 5 to 8 counts as retained; shop B active 4 days in week 7 does not.
+
+<!-- /coderabbit-ai-generated:v1 -->

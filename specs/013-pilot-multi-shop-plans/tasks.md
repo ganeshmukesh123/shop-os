@@ -25,9 +25,13 @@ description: "Task list for feature 013: multi-shop separation, pilot onboarding
 
 ---
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:efe2225c47b4f330a65ff1296cb2d418d4c1b76322d056246a465df23f8c17d0 -->
+
 ## Phase 2: Foundational
 
-- [ ] T003 [P] Write tests in `core/tests/tenancy/recordScope.test.ts`: every table in the desktop and server schemas has a scope in the table of `data-model.md`; a new table without one fails the test
+- [ ] T003 [P] Write tests in `core/tests/tenancy/recordScope.test.ts`: enumerate both schemas and require every table to be classified as business, shop or explicitly global, as defined in `data-model.md`; a new unclassified table fails the test, and global `plan` rows never enter tenant pull
 - [ ] T004 [P] Write tests in `core/tests/tenancy/entitlement.test.ts` and `alwaysFree.test.ts`: grace of 14 days after expiry; billing, stock, khata, backup and export commands always allowed whatever the entitlement
 - [ ] T005 Implement `core/src/tenancy/*.ts` to pass T003 and T004
 
@@ -38,11 +42,15 @@ description: "Task list for feature 013: multi-shop separation, pilot onboarding
 - [ ] T006 [P] [US1] Write the server suite `server/tests/tenancy/routes.test.ts`: for every route, business B's token with business A's ids returns 404; snapshot and backup links only for the token's business
 - [ ] T007 [P] [US1] Write `server/tests/tenancy/rls.test.ts`: every server query run with B's tenant setting returns none of A's rows; a query with no tenant setting returns nothing
 - [ ] T008 [P] [US1] Write `desktop/tests/tenancy/twoShops.test.ts`: a database with shops A1 and A2 of one business; every list, report and export command scoped to A1 returns no A2 facts; master data is shared
-- [ ] T009 [US1] Filter pull by business for master data and by shop for facts and settings in `server/src/modules/tenancy/pullScope.ts` using `recordScope`, to pass T006 and T007
+- [ ] T009 [US1] Filter pull by business for master data and by shop for facts and settings in `server/src/modules/tenancy/pullScope.ts` using `recordScope`; exclude global tables from tenant pull, to pass T003, T006 and T007
 - [ ] T010 [US1] Add shop predicates where T008 finds leaks in `desktop/src/main/repositories/` and the report queries
-- [ ] T011 [US1] Make the three suites a required check in `.github/workflows/` and record SC-001
+- [ ] T032 [P] [US1] Test per-business cloud backup keys (FR-001, SC-001): A and B use distinct keys; B cannot decrypt A's backup; restore A using A's authorized key and verify all A rows and no B rows
+- [ ] T033 [US1] Implement per-business key provisioning and authorized key selection for cloud backup and restore in 010's backup module (FR-001); pass T032
+- [ ] T011 [US1] Make the isolation suites and backup key tests a required check in `.github/workflows/` and record SC-001
 
 ---
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Phase 4: User Story 2 - Onboard a pilot shop (M2, 13 to 19 Mar; P1)
 
@@ -63,14 +71,20 @@ description: "Task list for feature 013: multi-shop separation, pilot onboarding
 
 ---
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:ff3ab8e7880a618ca301ef1912fce46ad6d6bd65d9caf6716d0aa84ccefeb67c -->
+
 ## Phase 6: Support access and exit (M3, 24 to 26 Mar; FR-008, FR-009)
 
 - [ ] T021 [P] Write tests in `server/src/modules/support/grants.test.ts`: request, owner approval, reads allowed only inside `starts_at` to `ends_at` (at most 24 hours), every read audited, revoke stops reads, no write path exists
 - [ ] T022 Implement `server/src/modules/support/`, `admin support request` and `support read`, and `mobile/src/owner/SupportRequests/` to pass T021
-- [ ] T023 [P] Write tests in `desktop/src/main/exports/exportAll.test.ts`: SQLite file by online backup plus one CSV per table; requires `data.export`; works with a lapsed plan
-- [ ] T024 Implement `exportAll.ts`, `POST /v1/owner/export`, and `admin exit start` and `exit delete-server-data` (deletes the business's log, projections, snapshots and backups only after the export is confirmed), with tests
+- [ ] T023 [P] Write tests in `desktop/src/main/exports/exportAll.test.ts`: with A1 and A2 in the source, reopen the SQLite export and check it and the CSVs contain every authorized A1 row and shared master row and no A2 facts or settings; verify a whole-business export preserves committed WAL data through online backup, permission is required, and plan lapse does not block export (FR-008)
+- [ ] T024 Implement scoped `exportAll.ts` and `POST /v1/owner/export` per the contract, plus `admin exit start` and `exit delete-server-data` per D8. Test that deletion waits for confirmation of the matching scope, and that A2 can still sync and restore after A1 exits (quickstart 5.2, FR-008)
 
 ---
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Phase 7: User Story 4 - Paid plans and willingness to pay (M4, 27 Mar to 2 Apr; P2)
 
