@@ -68,6 +68,25 @@ describe("item form: adding an item", () => {
     expect(callsTo("items.create")).toHaveLength(1);
   });
 
+  it("creates the item once when Enter is pressed twice before the first save finishes", async () => {
+    // The test decides when the save finishes, so the second Enter lands while it is pending.
+    let finishCreate: (result: typeof CREATED) => void = () => undefined;
+    const pendingCreate = () =>
+      new Promise<typeof CREATED>((resolve) => {
+        finishCreate = resolve;
+      });
+    const { callsTo, onDone } = renderForm({ "items.create": pendingCreate });
+    await userEvent.type(field(/Item name/), "Pipe 20mm");
+
+    await userEvent.type(field(/Selling price/), "120{Enter}{Enter}");
+    const callsWhilePending = callsTo("items.create").length;
+    finishCreate(CREATED);
+
+    expect(callsWhilePending).toBe(1);
+    expect(await screen.findByText("Pipe 20mm saved")).toBeTruthy();
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
   it("says what is missing and sends nothing when the name and price are empty", async () => {
     const { callsTo, onDone } = renderForm();
 
