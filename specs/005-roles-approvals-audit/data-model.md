@@ -17,13 +17,9 @@ problem_report    device (one row for this computer)    owner_recovery (hash)
 
 ### `app_role`
 
-`code` (`owner`, `manager`, `counter`, `godown`, `accountant`), `label`; seeded; the owner cannot delete roles in this feature (custom roles later).
+`code` (`owner`, `manager`, `counter`, `godown`, `accountant`), `label`, `discount_limit_bp` (nullable, basis points of the bill; 1000 = 10%), `discount_limit_paise` (nullable, rupees per bill); seeded; the owner cannot delete roles in this feature (custom roles later). Seeded limits: Manager `discount_limit_bp` 1000, Counter 300, others null (no own limit; `discount.give` mode decides). A user's `discount_limit_bp` or `discount_limit_paise`, when set, overrides the role's value of the same unit.
 
 ### `role_permission`
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:515ed21371fd0fcea160511efc226f1e56dae9d8872c78a5cf15d9cd2a463f28 -->
 
 `role_id`, `permission` (text key, list below), `mode` (`allow`, `request`, `deny`), `threshold_paise` (nullable, for "up to threshold"). `UNIQUE(role_id, permission)`. Editable by the owner; every change is audited.
 
@@ -133,5 +129,3 @@ Example: expected ₹18,450.00, counted ₹18,200.00: variance -₹250.00; above
 - `approval_request(status, expires_at)`, `approval_request(subject_type, subject_id)`.
 - `audit_log(device_id, seq)` unique, `audit_log(entity_type, entity_id)`, `audit_log(action, device_time)`.
 - `cash_entry(session_id)`, cash session identity and active-session indexes as defined above.
-
-<!-- /coderabbit-ai-generated:v1 -->

@@ -30,10 +30,6 @@ description: "Task list for feature 005: roles, approvals, audit log, cash day-c
 
 ### Core rules, tests first
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:5c8a60916289977c48a2651965b853438d2acb9e842b4df7e6f5963148c7bfc4 -->
-
 - [ ] T004 [P] Write tests in `core/tests/control/permissions.test.ts`: every cell of the seeded table in `data-model.md` gives the listed mode; "up to threshold" allows at or below `threshold_paise` and requests above; unknown key denies; delegation leaves the manager’s own action mode unchanged
 - [ ] T005 [P] Write tests in `core/tests/control/approvalStateMachine.test.ts`: requested to approved, rejected or expired; approved to consumed or expired; every other transition refused; expiry at requested + 120,000 ms; self-approval refused; approver needs decision authority for the kind
 - [ ] T006 [P] Write tests in `core/tests/control/auditChain.test.ts`: canonical JSON with sorted keys; `row_hash` = SHA-256(prev_hash + canonical row); first `prev_hash` is 64 zeros; chains are per device (two devices' rows with the same `seq` are both valid); changing any field of any row is found at that device and `seq`; a missing interior row is found; a valid prefix alone passes (no trusted head)
@@ -44,7 +40,7 @@ description: "Task list for feature 005: roles, approvals, audit log, cash day-c
 
 ### Schema
 
-- [ ] T011 Add `app_role` (5 seeded), `role_permission` (seeded from the `data-model.md` table; `UNIQUE(role_id, permission)`), `app_user` (name 1-60; `pin_hash`; discount limits; lock fields), `owner_recovery`, `device` (id = the existing device id) to `desktop/src/main/db/schema.ts` and generate the migration
+- [ ] T011 Add `app_role` (5 seeded), `role_permission` (seeded from the `data-model.md` table; `UNIQUE(role_id, permission)`), `app_role.discount_limit_bp` and `discount_limit_paise` (seeded Manager 1000 bp, Counter 300 bp), `app_user` (name 1-60; `pin_hash`; discount limits; lock fields), `owner_recovery`, `device` (id = the existing device id) to `desktop/src/main/db/schema.ts` and generate the migration
 - [ ] T012 Add `approval_request` (kinds and statuses of `data-model.md`; trigger allowing only the state-machine transitions; CHECK `decided_by <> requested_by`; reason required for `rejected`), `audit_log` (append-only triggers; `UNIQUE(device_id, seq)`, one chain per device), `cash_session` (status trigger; reason required when variance is not 0; `UNIQUE(shop_id, counter_code, business_date, session_no)` (positive session number allocated on open); partial unique index on `(shop_id, counter_code) WHERE status IN ('open','counting')`), `cash_entry_kind` lookup (`code`, `sign`, `requires_note`) and `cash_entry` (append-only; kind a foreign key, sign and note checked by a trigger reading the lookup; note required for `cash_expense`, `cash_drop`, `cash_in_other`), `cash_count`, `problem_report`, and the settings `idle_lock_minutes` (1 to 60, default 5), `cash_variance_alert_paise` (default 20000), `denominations_paise`, `manager_delegated_kinds`
 - [ ] T013 Add nullable `user_id` to `bill` and `stock_movement` with `ALTER TABLE ADD COLUMN`
 - [ ] T014 Write `desktop/tests/integration/migrations005.test.ts`: migrations on a 001 plus 002 database; nothing existing changes; append-only triggers reject UPDATE and DELETE on `audit_log` and `cash_entry`; the approval trigger rejects `consumed` to `approved`; reopen on the same date after close, reject concurrent open/counting sessions even across dates, and allow independent shops and counters
@@ -77,6 +73,7 @@ description: "Task list for feature 005: roles, approvals, audit log, cash day-c
 - [ ] T026 [P] [US1] Build `desktop/src/renderer/features/control/Users/` and `Roles/` (permission grid matching the PRD table, action modes and independent per-kind manager delegation)
 - [ ] T027 [US1] Add the throttled `session.touch` on input events in the app shell and hide actions the role cannot use (the main-process guard still decides)
 - [ ] T028 [US1] Write the e2e spec `desktop/tests/e2e/signInRoles.spec.ts` for quickstart 1 (including the `sqlite3` CLI check that no PIN is readable)
+- [ ] T057 [US1] FR-004: persist percent and rupee limits per role and nullable overrides per user; expose both through owner-only role/user settings. Test save, reload, override and removal against T008/T032. _(Listed in US1 so the limits are saved before T032 applies them.)_
 
 ---
 
@@ -110,9 +107,9 @@ description: "Task list for feature 005: roles, approvals, audit log, cash day-c
 
 **Independent Test**: quickstart 4.
 
-- [ ] T041 [P] [US4] Write tests in `desktop/src/main/services/cash/CashService.test.ts`: open with float; cash sale and cancel write `cash_sale` and `cash_sale_reverse` in the bill transaction; out and in need a note; close with variance needs a reason; variance above the setting raises one owner `exception_event`; a closed session cannot change; a sale with no open session opens one with zero float and raises an exception (billing not blocked); assert one audit row per successful open, count transition and close; injected audit failure rolls back the change and a failed change leaves no audit row
+- [ ] T041 [P] [US4] Write tests in `desktop/src/main/services/cash/CashService.test.ts`: open with float; cash sale and cancel write `cash_sale` and `cash_sale_reverse` in the bill transaction; out and in need a note; close with variance needs a reason; variance above the setting raises one owner `exception_event`; a closed session cannot change; a sale with no open session opens one with zero float and raises an exception (billing not blocked); assert one audit row per successful open, count transition, close and standalone cash entry (`cash_expense`, `cash_drop`, `cash_in_other`), with its user and time; injected audit failure rolls back the change and a failed change leaves no audit row
 - [ ] T042 [P] [US4] Write tests in `desktop/src/main/services/cash/DayCloseService.test.ts`: summary figures for a scripted day equal the hand calculation; drill-down ids point at the right documents; match the scripted count and close to their committed audit entries (actor, session, before/after); reading the summary adds none
-- [ ] T043 [US4] Implement `desktop/src/main/repositories/CashRepository.ts`, `desktop/src/main/services/cash/CashService.ts`, the `CashPort` adapter and `DayCloseService.ts` to pass T041 and T042; call `CashPort.record` from the cash-mode bill save and cancel; call AuditPort.record inside each open (including implicit open), count transition and close transaction, including the final denomination count
+- [ ] T043 [US4] Implement `desktop/src/main/repositories/CashRepository.ts`, `desktop/src/main/services/cash/CashService.ts`, the `CashPort` adapter and `DayCloseService.ts` to pass T041 and T042; call `CashPort.record` from the cash-mode bill save and cancel; call AuditPort.record inside each open (including implicit open), count transition and close transaction, including the final denomination count, and inside the transaction of each standalone cash-out or cash-in entry
 - [ ] T044 [US4] Register `cash.*` and `dayClose.summary`; show open owner exceptions (cash variance, clock, audit chain) after the owner signs in
 - [ ] T045 [P] [US4] Build `desktop/src/renderer/features/control/CashSession/` (open, cash out and in, count by denomination with live total, variance and reason) and `DayClose/` (summary with drill-down)
 - [ ] T046 [US4] Write the e2e spec `desktop/tests/e2e/dayClose.spec.ts` for quickstart 4 (steps needing 003 and 004 are skipped with a note until they merge); time SC-003
@@ -141,26 +138,23 @@ description: "Task list for feature 005: roles, approvals, audit log, cash day-c
 
 ---
 
-- [ ] T057 [US1] FR-004: persist percent and rupee limits per role and nullable overrides per user; expose both through owner-only role/user settings. Test save, reload, override and removal against T008/T032.
 - [ ] T058 [US3] FR-005: verify old bill and access audit fixtures remain queryable past seven years and one year respectively after startup and nightly maintenance; no purge job.
 - [ ] T059 [US2] FR-003: verify each risky kind against the on-device decision and expiry contract. Track consumer integration for returns and post-save edits in 003 and credit limits in 004; hand remote decisions and offline timeout tests to 010.
 
 ## Functional requirement coverage
 
-| Requirement | Delivery and verification tasks |
-| --- | --- |
-| FR-001 | T011, T015–T018, T021–T028 |
-| FR-002 | T015–T016, T025, T027–T028 |
-| FR-003 | T005, T029–T035, T059 |
-| FR-004 | T008, T032, T057 |
-| FR-005 | T006, T012–T014, T019–T023, T036–T043, T047–T048, T058 |
-| FR-006 | T007, T041–T046 |
-| FR-007 | T009, T042–T046 |
-| FR-008 | T047–T051 |
-| FR-009 | T016, T021, T028 |
-| FR-010 | T004, T011, T021–T022, T026–T028 |
-
-<!-- /coderabbit-ai-generated:v1 -->
+| Requirement | Delivery and verification tasks                        |
+| ----------- | ------------------------------------------------------ |
+| FR-001      | T011, T015–T018, T021–T028                             |
+| FR-002      | T015–T016, T025, T027–T028                             |
+| FR-003      | T005, T029–T035, T059                                  |
+| FR-004      | T008, T032, T057                                       |
+| FR-005      | T006, T012–T014, T019–T023, T036–T043, T047–T048, T058 |
+| FR-006      | T007, T041–T046                                        |
+| FR-007      | T009, T042–T046                                        |
+| FR-008      | T047–T051                                              |
+| FR-009      | T016, T021, T028                                       |
+| FR-010      | T004, T011, T021–T022, T026–T028                       |
 
 ## Dependencies and execution order
 

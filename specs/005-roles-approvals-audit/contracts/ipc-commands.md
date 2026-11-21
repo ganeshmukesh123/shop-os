@@ -1,10 +1,8 @@
 # Contract: commands added or changed by feature 005
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:632512253cf458a82c3dae64a4e1a6c561299ffec4463aac0ea733509fd00270 -->
-
 Feature 001's IPC validation and sender checks apply to every command. Before dispatch, main requires an explicit guard policy; an undeclared command is refused. Protected commands require an unlocked session and the declared permission checked against current grants. Errors include `NOT_SIGNED_IN`, `SESSION_LOCKED`, `PERMISSION_DENIED` and `APPROVAL_REQUIRED` (`{ kind, amountPaise, detail }`).
+
+**Request-mode commands** (a permission whose mode is `request` for the user's role, for example `bill.cancel` for a Manager): the command input carries `approvalId?`. Without it, the guard returns `APPROVAL_REQUIRED` and the screen opens the approval prompt. With it, the guard admits the call when that request is `approved`, unused, unexpired and of the command's kind, and does **not** return `APPROVAL_REQUIRED`; the service then calls `ApprovalPort.consume` inside its transaction, which also checks the subject and amount, so a wrong or reused approval still fails with `APPROVAL_INVALID` and writes nothing. Example: a Manager cancels C1/26-27/000123, the Owner approves at the counter, and the retry with `approvalId` cancels it once.
 
 Session commands use these guards in main:
 
@@ -30,8 +28,6 @@ Session commands use these guards in main:
 | `roles.list` / `roles.setPermission`                               | `{}` / `{ roleCode, permission, mode, thresholdPaise? }` | `{ roles[{ role, permissions[] }] }`          | `UNKNOWN_PERMISSION`                                                           |
 
 Only an active owner may administer users, roles and the manager delegation setting. The Roles screen saves delegated approval kinds independently of action mode via the owner settings command.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Approvals
 
