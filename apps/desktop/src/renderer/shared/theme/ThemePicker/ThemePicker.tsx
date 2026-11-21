@@ -1,12 +1,8 @@
 import { SegmentedControl, Text } from "@radix-ui/themes";
-import { uiText } from "../text/strings";
-import { THEME_PREFERENCES } from "./theme.constants";
-import type { ThemePreference } from "./theme.types";
-
-interface IThemePickerProps {
-  preference: ThemePreference;
-  onChange: (nextPreference: ThemePreference) => void;
-}
+import { uiText } from "../../text/strings";
+import { THEME_PREFERENCES } from "../constants";
+import type { ThemePreference } from "../types";
+import type { IThemePickerProps } from "./types";
 
 /** System, Light or Dark. Every choice is a word, so nothing depends on how a colour looks. */
 export function ThemePicker({ preference, onChange }: IThemePickerProps) {

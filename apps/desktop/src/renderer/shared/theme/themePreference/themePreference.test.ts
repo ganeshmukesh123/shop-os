@@ -1,5 +1,5 @@
 import { readStoredPreference, resolveAppearance, writeStoredPreference } from "./themePreference";
-import { THEME_STORAGE_KEY } from "./theme.constants";
+import { THEME_STORAGE_KEY } from "../constants";
 
 function buildStorage(initialValue?: string) {
   const savedValues = new Map<string, string>();
