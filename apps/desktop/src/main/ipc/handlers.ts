@@ -2,6 +2,8 @@ import { ZodError, type ZodTypeAny } from "zod";
 import {
   CoreError,
   backupRestoreInput,
+  type BackupRestoreInput,
+  type IBackupRestoreResult,
   billsExportPdfInput,
   billsGetInput,
   billsPrintInput,
@@ -22,6 +24,7 @@ import { validateBackupFile } from "../services/BackupService";
 import type { BillingService } from "../services/BillingService";
 import type { InventoryService } from "../services/InventoryService";
 import type { PrintService } from "../services/PrintService";
+import { planRestoreNumbering, type IRestoreNumberingPlan } from "../services/RestoreNumbering";
 import type { SettingsService } from "../services/SettingsService";
 
 export interface Services {
@@ -38,7 +41,7 @@ export interface Shell {
   pickBackupFile(): Promise<string | null>;
   pickPdfPath(defaultName: string): Promise<string | null>;
   /** Close the database, put the backup in place and relaunch. */
-  scheduleRestore(filePath: string): void;
+  scheduleRestore(filePath: string, numbering?: IRestoreNumberingPlan): void;
 }
 
 export type Handlers = {
@@ -138,10 +141,25 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
     "backup.status": cmd<"backup.status">(none(), () => services.backup.status()),
     "backup.restore": cmd<"backup.restore">(
       backupRestoreInput,
-      (commandInput: { filePath: string }) => {
+      (commandInput: BackupRestoreInput): IBackupRestoreResult => {
         validateBackupFile(commandInput.filePath); // INVALID_BACKUP before anything is touched
-        shell.scheduleRestore(commandInput.filePath);
-        return { restored: true };
+        const numbering = planRestoreNumbering(
+          commandInput.filePath,
+          commandInput.lastIssuedBillNo ?? null,
+          new Date(),
+        ); // INVALID_FIELD for a bill number that does not fit, before anything is touched
+        shell.scheduleRestore(commandInput.filePath, numbering);
+        return {
+          restored: true,
+          nextBillNo: numbering.nextBillNo,
+          ...(numbering.gap && {
+            gapRecorded: {
+              seqFrom: numbering.gap.seqFrom,
+              seqTo: numbering.gap.seqTo,
+              isEstimated: numbering.gap.isEstimated,
+            },
+          }),
+        };
       },
     ),
     "system.pickFolder": cmd<"system.pickFolder">(none(), async () => ({

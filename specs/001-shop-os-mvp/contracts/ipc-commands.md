@@ -20,7 +20,7 @@ The UI (renderer) never touches the database. It calls these typed commands thro
 | `settings.clockCheck` | `{ deviceTimeZone }` (the zone the computer reports) | `{ warnings }`, each `TIME_ZONE_DIFFERS` (the device's clock zone is not the shop's, compared by UTC offset now so `Asia/Calcutta` equals `Asia/Kolkata`) or `CLOCK_BEFORE_LAST_BILL` (now is earlier than the newest saved bill) | `INVALID_FIELD` only for a malformed input. Warnings are data, never an error: billing is not blocked (T080, FR-019a) |
 | `backup.run` | `{}` | `{ path, finishedAt }` | `BACKUP_FAILED` |
 | `backup.status` | `{}` | `{ lastOkAt, lastError? }` | |
-| `backup.restore` | `{ filePath, lastIssuedBillNo? }` | `{ restored, nextBillNo, gapRecorded? }` (app restarts) | `INVALID_BACKUP`, `INVALID_FIELD` (bill number not in this series) |
+| `backup.restore` | `{ filePath, lastIssuedBillNo? }`: the last bill number the owner remembers issuing, as printed (for example `C1/26-27/000126`); blank or left out means "cannot say" | `{ restored, nextBillNo, gapRecorded? }` (app restarts). `gapRecorded` is `{ seqFrom, seqTo, isEstimated }` and is present only when numbers were lost; `isEstimated` is true when the owner could not say and the counter jumped 100 ahead | `INVALID_BACKUP`; `INVALID_FIELD` when the number is not in the shop's number format, is in another series, or has sequence 0. The numbers are recorded in `bill_number_gap` on a prepared copy before the live database is replaced (T083, FR-013b) |
 
 Not in this release: `import.preview` and `import.commit` moved to feature 012 (decision 2026-11-15).
 

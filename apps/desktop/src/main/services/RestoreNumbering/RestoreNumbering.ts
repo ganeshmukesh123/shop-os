@@ -20,7 +20,7 @@ import {
   type IBackupNumberingSettings,
 } from "../../repositories/BackupInspectionRepository";
 import { NumberGapRepository } from "../../repositories/NumberGapRepository";
-import { restoreBackup } from "../BackupService";
+import { restoreBackup, validateBackupFile } from "../BackupService";
 import { EXAMPLE_SEQ, PREPARED_COPY_SUFFIX } from "./RestoreNumbering.constants";
 import type { IRestoreNumberingPlan, IRestoreTarget } from "./RestoreNumbering.types";
 
@@ -211,6 +211,7 @@ export function restoreWithNumbering(
   plan: IRestoreNumberingPlan,
   now: Date,
 ): void {
+  validateBackupFile(backupFile); // INVALID_BACKUP before a copy is made
   const preparedFile = `${target.databasePath}${PREPARED_COPY_SUFFIX}-${process.pid}`;
   try {
     fs.mkdirSync(path.dirname(target.databasePath), { recursive: true });

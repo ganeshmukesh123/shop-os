@@ -198,7 +198,21 @@ export type SettingsUpdateInput = z.infer<typeof settingsUpdateInput>;
 export const settingsClockCheckInput = z.object({ deviceTimeZone: z.string().max(64) });
 export type SettingsClockCheckInput = z.infer<typeof settingsClockCheckInput>;
 
-export const backupRestoreInput = z.object({ filePath: z.string().min(1) });
+export const backupRestoreInput = z.object({
+  filePath: z.string().min(1),
+  /** The last bill number the owner remembers issuing, to keep numbers unique after the restore (FR-013b). */
+  lastIssuedBillNo: z.string().max(40).optional(),
+});
+export type BackupRestoreInput = z.infer<typeof backupRestoreInput>;
+
+/** What a restore tells the owner before the app restarts. */
+export interface IBackupRestoreResult {
+  restored: boolean;
+  /** The number the next bill will get after the restore. */
+  nextBillNo: string;
+  /** Present when numbers were lost: they are recorded and will never be issued again. */
+  gapRecorded?: { seqFrom: number; seqTo: number; isEstimated: boolean };
+}
 
 // ---------- results ----------
 export type Result<T> =

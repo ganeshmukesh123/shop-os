@@ -181,7 +181,7 @@ describe("backup commands", () => {
     const backup = await fixture.handlers["backup.run"]({});
     if (!backup.ok) throw new Error(backup.message);
     const result = await fixture.handlers["backup.restore"]({ filePath: backup.data.path });
-    expect(result).toEqual({ ok: true, data: { restored: true } });
+    expect(result).toMatchObject({ ok: true, data: { restored: true } });
     expect(fixture.shellCalls.restoredFiles).toEqual([backup.data.path]);
   });
 
