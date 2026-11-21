@@ -42,13 +42,19 @@ description: "Task list for feature 016: datasets, benchmarks, offline routine, 
 
 ---
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:1526603a525c6ec08e6eb94ffe7b609105aa5535346c0a9580a4e63e75f0cc03 -->
+
 ## Phase 4: User Story 3 - Backup, restore and reliability (M2, 30 Dec; P1)
 
-- [ ] T010 [P] [US3] Write tests in `desktop/src/main/services/backup/verifyBackup.test.ts` (before code): a good backup passes integrity and count checks and sets `verified_at`; a truncated or corrupted file sets `verify_error`; verification opens the file read-only and never changes it
+- [ ] T010 [P] [US3] Write tests in `desktop/src/main/services/backup/verifyBackup.test.ts` (before code): a good backup restores into a scratch database, passes schema, integrity and row-count checks, and sets `verified_at`; a backup corrupted by the test fixture before automatic verification sets `verify_error`; a backup missing any required table is not marked verified (test each required table, including `shop_profile`, which is outside the four row-count checks); verification opens the source file read-only and never changes it
 - [ ] T011 [US3] Add `backup_log.verified_at` and `verify_error` (migration marked additive) and run verification after every backup in `desktop/src/main/services/BackupService.ts` to pass T010; show unverified backups in 015's health check when it exists
 - [ ] T012 [US3] Add `quality/drills/` with a restore-drill template; record the first drill by someone other than the builder (SC-003)
 
 ---
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Phase 5: User Story 4 - Security and privacy checks (M2, 31 Dec; P1)
 
@@ -57,21 +63,37 @@ description: "Task list for feature 016: datasets, benchmarks, offline routine, 
 
 ---
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:45c2f1f7a23593ba226118eac356f9bb568db7d3ff8c2edd5154a93f7613ac97 -->
+
 ## Phase 6: User Story 5 - Learnability, accessibility, language and traceability (M2, 1 to 2 Jan 2027; P2)
 
 - [ ] T015 [P] [US5] Add `@axe-core/playwright` (if OD-1 approves) and write `desktop/tests/a11y/screens.spec.ts`: every screen in light and dark has no serious or critical violation; counter buttons at least 44 by 44 px
-- [ ] T016 [P] [US5] Write `desktop/tests/print/layouts.spec.ts`: bill layouts at 58 mm, 80 mm, A4 and A5 rendered to PDF and compared with approved snapshots
+- [ ] T016 [P] [US5] Write `desktop/tests/print/layouts.spec.ts`: render available layouts (bill initially) to PDF at 58 mm, 80 mm, A4 and A5 and compare them with approved snapshots via `pnpm quality:print-snapshots`. Extend the suite for return, quote, challan and statement layouts as they become available (T030–T033)
 - [ ] T017 [US5] Write `desktop/tests/integration/rulesWithoutRelease.test.ts`: changing a setting (a discount limit after 005, a GST rate after 008) applies on the next action without a restart; list each rule in `quality/rules-register.md`
 
 ---
 
+<!-- /coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:25d70cc03bb492eada5e279c4ee574ff1278494f188b6f7c61aba78f83d40c4c -->
+
 ## Phase 7: Release gate (M2, 3 Jan 2027)
 
-- [ ] T018 Implement `pnpm quality:release-record <version>` and the template in `tools/quality/src/release/`
-- [ ] T019 Add `.github/workflows/release-gate.yml` (tags `v*`): tests, e2e, `quality:offline`, `quality:print-snapshots`, `quality:a11y`, `quality:security`, a benchmark result for the version within 14 days, a complete release record, zero `bill-integrity` issues
-- [ ] T020 Run quickstart 6 for the first tagged release and commit `quality/releases/<version>.md`
+- [ ] T018 Implement `pnpm quality:release-record <version>` and the template in `tools/quality/src/release/` with CI result and link pending before tagging
+- [ ] T019 Add `.github/workflows/release-gate.yml` (tags `v*`): tests, e2e, `quality:offline`, `quality:print-snapshots`, `quality:a11y`, `quality:security`, a benchmark result for the version within 14 days with each measure within budget or accepted by the owner, a tagged record with applicable manual items complete, zero open `bill-integrity` issues
+- [ ] T020 Run quickstart 6 for the first tagged release by committing the operator-edited record before tagging, then committing the first gate run's result and link before publication
 
 ---
+
+<!-- /coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:6c1b264cb210bf2c5492e35ca957c2390518106ef327895d4ca05293f5a4c4d2 -->
 
 ## Extension points (added by later features; each listed in that feature's tasks)
 
@@ -84,8 +106,14 @@ description: "Task list for feature 016: datasets, benchmarks, offline routine, 
 - [ ] T027 014: add the format scan and `pnpm text:check` to the release gate
 - [ ] T028 015: add save-and-print to the real printer to bench mode
 - [ ] T029 018: add the hardening checks to `quality:security`
+- [ ] T030 003: add return PDF snapshots at 58 mm, 80 mm, A4 and A5 to T016 when the print layout is available
+- [ ] T031 003: add quote PDF snapshots at 58 mm, 80 mm, A4 and A5 to T016 when the print layout is available
+- [ ] T032 006: add challan PDF snapshots at 58 mm, 80 mm, A4 and A5 to T016 when the print layout is available
+- [ ] T033 004: add statement PDF snapshots at 58 mm, 80 mm, A4 and A5 to T016 when the print layout is available
 
 ---
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Dependencies and execution order
 

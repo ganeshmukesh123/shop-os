@@ -26,9 +26,15 @@ quality/
 
 `version`, `checks` (per check: `name`, `passed`, `details`), `simulation` (when 010 exists: devices, days, operations, duplicates found, lost found, negative-stock flags).
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:f56afd9f8c8400596109ebd98b9cb851ad706bc0d78725e053132c1b5d05392c -->
+
 ### Release record (`releases/<version>.md`)
 
-Automated: links to the CI run of `release-gate` with each job's result. Manual: benchmark on the reference machine, hardware run (015), restore drill if due, breach drill if due, open `bill-integrity` issues = 0, owner's acceptance of any budget miss.
+CI evidence: pending in the tagged record; before publication the operator adds the first `release-gate` run's result and link, with each job's result. Manual items completed before tagging: benchmark on the reference machine, hardware run (015), restore drill if due, breach drill if due, open `bill-integrity` issues = 0, owner's acceptance of any budget miss.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## App database change
 

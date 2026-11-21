@@ -50,9 +50,15 @@ The search budget's p95 reading of "about a fifth of a second" is this plan's in
 
 - The release gate fails if any check fails or if any open issue is labelled `bill-integrity` (a GitHub label for defects that can lose, duplicate or mis-total a bill; constitution VI).
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:1937086116d258fbd852f6bd5f2d4e7a2986570f2a7b35d5ed8e9dd22c15d284 -->
+
 ### D4. A backup counts only after a test restore, automatically
 
-After every backup (001's second-drive copy, 010's cloud upload), the app opens the backup file read-only, runs `PRAGMA integrity_check`, compares row counts of bills, lines, movements and ledger entries with the live database at the backup's time, and marks `backup_log.verified_at` (spec edge case "backup succeeds but cannot restore"). An unverified backup shows as a warning in 015's health check. The human restore drill by someone other than the builder stays in 012 and 015 (SC-003).
+After every backup (001's second-drive copy, 010's cloud upload), the app restores it into a temporary scratch database, leaving the source backup read-only and the live database untouched. On the scratch database, run `PRAGMA integrity_check`, validate the app schema and every table required for that schema version, and compare the row counts of bills, lines, movements and ledger entries with the live database at the backup's time. Set `backup_log.verified_at` only after the restore and all checks pass; otherwise leave it unset and set `verify_error`. Remove the scratch database after verification. An unverified backup shows as a warning in 015's health check. The human restore drill by someone other than the builder stays in 012 and 015 (SC-003).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### D5. Security and privacy checks
 
@@ -76,11 +82,17 @@ After every backup (001's second-drive copy, 010's cloud upload), the app opens 
 - **Traceability** (NFR-015): 011's reconciliation test and drill-down e2e.
 - **Rules without a release** (NFR-016): a list of every rule and where it is set (`quality/rules-register.md`); a test that changing a discount limit or a GST rate takes effect on the next action without a restart.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:48d49213d8e723f6a1ee8674a1d5b6b7b8fa82586c7f7d86993c5893340ed567 -->
+
 ### D7. Release gate in CI plus a signed checklist
 
 - A CI job `release-gate` (017's workflow) runs on release tags: unit and integration tests, e2e, offline packaged run, crash test, sync simulation (when present), print snapshots, accessibility scan, dependency audit, `bill-integrity` issue check, and reads the latest benchmark result for that version.
-- Manual items (benchmark on the shop's PC, hardware run, restore drill when due, breach drill when due) are ticked in `quality/releases/<version>.md`, which the release job requires to exist and be complete.
+- Manual items (benchmark on the shop's PC, hardware run, restore drill when due, breach drill when due) are ticked in `quality/releases/<version>.md`, and committed before tagging. Before publication, the operator adds the first gate run's result and link to the same record and commits the update. See the [release record workflow](contracts/quality-commands.md#release-record-workflow).
 - **Where results live**: in the repository under `quality/` (budgets, run results as JSON, release records), not in the shop's database: they are about the software, not the shop.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Open items
 
