@@ -36,7 +36,17 @@ Rules as in `specs/001-shop-os-mvp/contracts/ipc-commands.md`, with 005's sessio
 | `gst.switch.confirm`       | `{ switchId, caName, prices[{ itemId, pricePaise }], seriesTemplate }` | `{ switch, registration, series }`                          | `CHECKLIST_FAILED`, `TEMPLATE_TOO_LONG` |
 | `gst.switch.cancel`        | `{ switchId, reason }`                                                 | `{ switch }`                                                | `ALREADY_EFFECTIVE`                     |
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:2c08441b1dec519793d4054ed3e0ded9182a395b18e08dd9cb281258a3c15136 -->
+
+`gst.switch.confirm` atomically schedules the registration, new series and audited price changes for `effective_from_ms`. Billing retains its current scheme and prices before that instant. `gst.switch.cancel` is allowed only before that instant and prevents all three scheduled changes.
+
+`gst.switch.closingStock` can return a preview before the switch. Generate or refresh the final statement when the switch takes effect, using movements through `effective_from_ms` inclusive, regardless of when the owner confirmed.
+
 ## Privacy (milestone M0)
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 | Command                                             | Input                                                                              | Result                                                                          | Error codes                                     |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------- |

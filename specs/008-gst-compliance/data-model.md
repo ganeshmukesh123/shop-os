@@ -4,19 +4,31 @@ Builds on 001 (bill, numbering), 002 (HSN on variant, family and category; `gst_
 
 ## Overview
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:863fe321380ca62680f82a502be86546a18fad9ea19f87444ef43105e3a112a5 -->
+
 ```
 registration_setting (dated, per shop) --applies at billed_at--> bill.doc_format, registration_type
 hsn_rate (prefix, dated) + item_tax_override (dated) --> bill_line.gst_rate_bp, taxable, cgst, sgst, igst
-number_series (+ doc_format) 1--* bill
+number_series (registration + doc_format) 1--* bill
 turnover_daily (projection)    scheme_switch (wizard state)
 privacy_notice 1--* consent_record (004)    party 1--* data_request
 ```
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## New tables
 
 ### `registration_setting` (append-only)
 
-`registration_type` (`composition`, `regular`), `gstin` (15 characters), `legal_name` (1-100), `trade_name` (nullable), `home_state_code` (2 digits), `effective_from_ms`, `created_by`, `scheme_switch_id` (nullable). The row in force at an instant is the latest with `effective_from_ms <= instant`. A row with a future time can be superseded before it starts only by another row (a draft wizard is cancelled, never edited).
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:76040f6416ae56115fe6195afce8b7160f97716161554718f67533f99b20a881 -->
+
+`registration_type` (`composition`, `regular`), `gstin` (15 characters), `legal_name` (1-100), `trade_name` (nullable), `home_state_code` (2 digits), `effective_from_ms`, `created_by`, `scheme_switch_id` (nullable). `scheme_switch_id` references `scheme_switch.id`. Select the latest row with `effective_from_ms <= instant` whose link is null (initial or manual registration) or whose linked switch is `confirmed` or `effective`. Exclude cancelled switches even after their effective time passes. Reject a second eligible registration for the same shop and effective instant in the write transaction; a cancelled row does not reserve that instant.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### `hsn_rate`
 
@@ -32,7 +44,13 @@ privacy_notice 1--* consent_record (004)    party 1--* data_request
 
 ### `scheme_switch`
 
-`from_type`, `to_type`, `effective_from_ms`, `status` (`draft`, `checklist_ok`, `confirmed`, `effective`, `cancelled`), `checklist_json`, `new_series_template`, `ca_name`, `ca_confirmed_at`, `price_plan_json`, `closing_stock_report_path`, `created_by`. Moves only forward, or to `cancelled` before `effective`.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:f887900c1a2de050d92383bad73baa88277f83abbd5707bb92c22c75b89b6baa -->
+
+`from_type`, `to_type`, `effective_from_ms`, `status` (`draft`, `checklist_ok`, `confirmed`, `effective`, `cancelled`), `checklist_json`, `new_series_template`, `ca_name`, `ca_confirmed_at`, `price_plan_json`, `closing_stock_report_path`, `created_by`. Moves only forward, or to terminal `cancelled` if the current instant is strictly before `effective_from_ms`. Cancellation records the status, `cancelled_at_ms` and `cancel_reason` on the switch in one transaction; linked registration rows remain append-only. Cancelled switches cannot activate their series or scheduled prices.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### `privacy_notice` (append-only)
 
@@ -46,7 +64,13 @@ privacy_notice 1--* consent_record (004)    party 1--* data_request
 
 ### `bill` (per version; append-only except cancel)
 
-Adds `doc_format` (`estimate` for bills before any registration, `bill_of_supply`, `tax_invoice`), `registration_type` (nullable for estimates), `shop_gstin_snapshot`, `party_gstin_snapshot`, `taxable_paise`, `cgst_paise`, `sgst_paise`, `igst_paise` (all 0 for bills of supply and estimates). CHECKs (architecture 8.5): `total_paise = taxable_paise + cgst_paise + sgst_paise + igst_paise + round_off_paise` for tax invoices; `doc_format <> 'bill_of_supply' or (cgst_paise = 0 and sgst_paise = 0 and igst_paise = 0)`; `registration_type = 'regular' or igst_paise = 0`. For bills of supply and estimates `taxable_paise` equals the subtotal after discounts.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:02cf4f523b5c2155aa63a9f5c4430e788aa9876324acbf307a3f808d826981ae -->
+
+Adds `doc_format` (`estimate` for bills before any registration, `bill_of_supply`, `tax_invoice`), `registration_type` (nullable for estimates), `shop_gstin_snapshot`, `party_gstin_snapshot`, `shop_legal_name_snapshot`, `shop_trade_name_snapshot`, `shop_address_snapshot`, `recipient_name_snapshot`, `recipient_address_snapshot`, and amounts `taxable_paise`, `cgst_paise`, `sgst_paise`, `igst_paise`. Store the names and addresses used for printing when each bill version is saved, with null for optional values that are absent. The existing `customer_name` and both GSTIN snapshots are unchanged. Reprint from the saved version, without reading mutable shop or party records for these fields. Leave the new name and address fields null for historical bills where these values were never captured. CHECKs (architecture 8.5): `total_paise = taxable_paise + cgst_paise + sgst_paise + igst_paise + round_off_paise` for tax invoices; `doc_format = 'tax_invoice' or (cgst_paise = 0 and sgst_paise = 0 and igst_paise = 0)`; `registration_type = 'regular' or igst_paise = 0`. For bills of supply and estimates `taxable_paise` equals the subtotal after discounts.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### `bill_line` (append-only)
 
@@ -54,7 +78,15 @@ Adds `hsn_code` (snapshot), `gst_rate_bp`, `taxable_paise`, `cgst_paise`, `sgst_
 
 ### `number_series`
 
-Adds `doc_format`; unique per shop, counter, financial year, `doc_kind` and `doc_format`.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:ba8b53fc6365168fffdadfae01bb1babd1c7f932bd87bf71bbca65af2d06c7b1 -->
+
+Adds `doc_format` and `registration_setting_id`. The series is unique per shop, counter, financial year, `doc_kind`, `doc_format` and registration ID (for estimates use a separate unique key without the registration ID, which is null). Select the series for the registration in force at `billed_at`; the same registration can have a new series in a later financial year. A switch creates a distinct series even when its format was used earlier that year.
+
+Use `UNIQUE(number_series_id, seq)` for issued sequences in place of the counter/year/sequence key, and retain `UNIQUE(shop_id, bill_no)` for printed numbers. To restart at 1, reserve a literal prefix before the first slash that no other series for that shop can use in that financial year, including prior series, cancelled bills and restore gaps. Keep the existing financial year and length rules. Bills retain their original series ID.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### `party` (004)
 
