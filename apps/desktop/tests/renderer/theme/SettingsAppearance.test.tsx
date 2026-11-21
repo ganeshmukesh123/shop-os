@@ -16,6 +16,9 @@ const SHOP_PROFILE: ShopProfile = {
   footer: "",
   receiptWidth: "80mm",
   backupFolder: "",
+  docTitle: "Estimate",
+  roundBillTotal: true,
+  timeZone: "Asia/Kolkata",
 };
 
 function renderSettings() {

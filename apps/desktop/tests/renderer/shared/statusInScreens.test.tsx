@@ -19,6 +19,9 @@ const SHOP_PROFILE: ShopProfile = {
   footer: "",
   receiptWidth: "80mm",
   backupFolder: "/backups",
+  docTitle: "Estimate",
+  roundBillTotal: true,
+  timeZone: "Asia/Kolkata",
 };
 
 const NEGATIVE_INACTIVE_ITEM: Item = {

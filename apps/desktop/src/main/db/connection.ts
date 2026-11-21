@@ -42,8 +42,17 @@ export function migrateConnection(sqlite: Database.Database, migrationsFolder: s
 /** Open (or create) the database, set WAL + foreign keys, and run pending migrations. */
 export function openDatabase(file: string, opts: OpenOptions): Connection {
   const sqlite = new Database(file);
-  applyConnectionPragmas(sqlite);
-  return migrateConnection(sqlite, opts.migrationsFolder);
+  try {
+    applyConnectionPragmas(sqlite);
+    return migrateConnection(sqlite, opts.migrationsFolder);
+  } catch (setupError) {
+    try {
+      sqlite.close();
+    } catch {
+      // Preserve the original setup error if closing also fails.
+    }
+    throw setupError;
+  }
 }
 
 /**

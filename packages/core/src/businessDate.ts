@@ -39,6 +39,17 @@ function formatterFor(
   }
 }
 
+/** True when the platform knows this named time zone (for example Asia/Kolkata). */
+export function isValidTimeZone(timeZone: string): boolean {
+  if (timeZone.trim() === "" || /^[+-]/.test(timeZone)) return false;
+  try {
+    formatterFor(timeZone);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function partValueReader(formatter: Intl.DateTimeFormat, instantMs: number) {
   const dateParts = formatter.formatToParts(new Date(instantMs));
   return (partType: string) =>

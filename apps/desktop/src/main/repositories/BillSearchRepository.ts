@@ -4,7 +4,7 @@ import type { Bill, BillsListInput, PaymentMode } from "@shopos/core";
 import type { Handle } from "../db/connection";
 import { bill, billTender } from "../db/schema";
 import type { Ctx } from "../db/seed";
-import { toBill } from "./BillRepository";
+import { readShopTimeZone, toBill } from "./BillRepository";
 
 /** The most bills one page may hold, whatever the caller asks for (matches the command's limit). */
 export const MAX_BILL_PAGE_SIZE = 500;
@@ -82,10 +82,11 @@ export class BillSearchRepository {
       .offset(filter.offset)
       .all();
     const modes = this.tenderModes(billRows.map((billRow) => billRow.id));
+    const shopTimeZone = readShopTimeZone(this.databaseHandle, this.ctx.shopId);
     const bills = billRows.map((billRow) => {
       const paymentMode = modes.get(billRow.id);
       if (!paymentMode) throw new CoreError("INTERNAL", "This bill has no payment record");
-      return toBill(billRow, paymentMode);
+      return toBill(billRow, paymentMode, shopTimeZone);
     });
     return { bills, total };
   }

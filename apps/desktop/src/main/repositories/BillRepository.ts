@@ -3,20 +3,37 @@ import { CoreError, DEFAULT_TIME_ZONE, localIsoOf } from "@shopos/core";
 import type { Bill, BillLine, PaymentMode } from "@shopos/core";
 import type { Handle } from "../db/connection";
 import { isoOfMs, newId, nowMs } from "../db/ids";
-import { bill, billLine, billTender, draftBill, numberSeries } from "../db/schema";
+import { bill, billLine, billTender, draftBill, numberSeries, shopProfile } from "../db/schema";
 import type { Ctx } from "../db/seed";
+import type { INewBill, INewLine } from "./newBillTypes";
+
+/** The shop's named time zone (FR-019a); the default when the profile has none yet. */
+export function readShopTimeZone(databaseHandle: Handle, shopId: string): string {
+  const profileRow = databaseHandle
+    .select({ timeZone: shopProfile.timeZone })
+    .from(shopProfile)
+    .where(eq(shopProfile.shopId, shopId))
+    .get();
+  return profileRow?.timeZone ?? DEFAULT_TIME_ZONE;
+}
 
 /** The payment mode is not on the bill row: it is the label on the bill's tender (D18). */
-export const toBill = (billRow: typeof bill.$inferSelect, paymentMode: PaymentMode): Bill => ({
+export const toBill = (
+  billRow: typeof bill.$inferSelect,
+  paymentMode: PaymentMode,
+  timeZone: string,
+): Bill => ({
   id: billRow.id,
   number: billRow.billNo,
   seriesCode: billRow.counterCode,
   seq: billRow.seq,
-  billDate: localIsoOf(billRow.billedAt, DEFAULT_TIME_ZONE),
+  billDate: localIsoOf(billRow.billedAt, timeZone),
   customerName: billRow.customerName,
+  docTitle: billRow.docTitle,
   paymentMode,
   linesTotalPaise: billRow.subtotalPaise,
   billDiscountPaise: billRow.billDiscountPaise,
+  roundOffPaise: billRow.roundOffPaise,
   grandTotalPaise: billRow.totalPaise,
   status: billRow.status as Bill["status"],
   cancelReason: billRow.cancelReason,
@@ -35,35 +52,6 @@ const toLine = (lineRow: typeof billLine.$inferSelect): BillLine => ({
   lineDiscountPaise: lineRow.lineDiscountPaise,
   amountPaise: lineRow.amountPaise,
 });
-
-export interface NewBill {
-  number: string;
-  seriesCode: string;
-  financialYear: string;
-  numberSeriesId: string;
-  seq: number;
-  /** The UTC instant of the save, epoch milliseconds. */
-  billedAt: number;
-  /** That instant's calendar date in the shop's time zone, YYYY-MM-DD. */
-  businessDate: string;
-  customerName: string | null;
-  clientBillId: string;
-  paymentMode: PaymentMode;
-  linesTotalPaise: number;
-  billDiscountPaise: number;
-  grandTotalPaise: number;
-}
-
-export interface NewLine {
-  lineNo: number;
-  itemId: string;
-  itemNameSnapshot: string;
-  unitSnapshot: string;
-  quantityMilli: number;
-  ratePaise: number;
-  lineDiscountPaise: number;
-  amountPaise: number;
-}
 
 /** Saved bills are insert-only here; the database triggers also forbid edits and deletes. */
 export class BillRepository {
@@ -109,7 +97,7 @@ export class BillRepository {
    * The domain names (number, seriesCode, ...) are stored as bill_no, counter_code, ... (D18).
    * The payment mode is written as the bill's one tender, in the same transaction as the bill.
    */
-  insertBill(newBill: NewBill): Bill {
+  insertBill(newBill: INewBill): Bill {
     const billRow = this.databaseHandle
       .insert(bill)
       .values({
@@ -126,7 +114,9 @@ export class BillRepository {
         clientBillId: newBill.clientBillId,
         subtotalPaise: newBill.linesTotalPaise,
         billDiscountPaise: newBill.billDiscountPaise,
+        roundOffPaise: newBill.roundOffPaise,
         totalPaise: newBill.grandTotalPaise,
+        docTitle: newBill.docTitle,
         status: "posted",
       })
       .returning()
@@ -141,10 +131,15 @@ export class BillRepository {
         status: "label",
       })
       .run();
-    return toBill(billRow, newBill.paymentMode);
+    return toBill(billRow, newBill.paymentMode, this.shopTimeZone());
   }
 
-  insertLines(billId: string, lines: NewLine[]): BillLine[] {
+  /** The shop's named time zone, which a stored bill time is shown in (FR-019a). */
+  private shopTimeZone(): string {
+    return readShopTimeZone(this.databaseHandle, this.ctx.shopId);
+  }
+
+  insertLines(billId: string, lines: INewLine[]): BillLine[] {
     return lines.map((newLine) =>
       toLine(
         this.databaseHandle
@@ -196,7 +191,10 @@ export class BillRepository {
       .where(eq(billLine.billId, id))
       .orderBy(asc(billLine.lineNo))
       .all();
-    return { bill: toBill(billRow, this.tenderMode(id)), lines: lines.map(toLine) };
+    return {
+      bill: toBill(billRow, this.tenderMode(id), this.shopTimeZone()),
+      lines: lines.map(toLine),
+    };
   }
 
   // ----- draft (crash recovery; not a financial record) -----

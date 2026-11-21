@@ -10,6 +10,9 @@ const profile: ShopProfile = {
   footer: "Goods once sold are not returnable",
   receiptWidth: "80mm",
   backupFolder: "",
+  docTitle: "Estimate",
+  roundBillTotal: true,
+  timeZone: "Asia/Kolkata",
 };
 
 const postedBill: Bill = {
@@ -26,6 +29,8 @@ const postedBill: Bill = {
   status: "posted",
   cancelReason: null,
   cancelledAt: null,
+  docTitle: "Estimate",
+  roundOffPaise: 0,
 };
 
 const billLines: BillLine[] = [
