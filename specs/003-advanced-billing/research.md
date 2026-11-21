@@ -68,7 +68,7 @@ Sources read: the spec, PRD section 6 (FR-BIL-001 to 025), the PRD permissions t
 ### D9. Returns and credit notes
 
 - **Documents**: `sales_return` (number from its own series, `R1/26-27/000012`, at most 16 characters), `sales_return_line` (original `bill_line_id`, `qty_base_milli`, refund amount), and `credit_note` when the refund goes to the party's account. All append-only.
-- **Refund amount**: the original line's net price per base unit (`amount_paise`, which already excludes the line discount (001 data model), minus its bill-discount share, over quantity), times the returned quantity, rounded half up once. A partial return of 2 of 5 pieces bought at ₹110 after a ₹10 share each refunds ₹200. The current tier or price never matters (EC-11, spec edge case "return after tier price changed").
+- **Refund amount**: the original line's net price per base unit (`amount_paise`, which already excludes the line discount (001 data model), minus its bill-discount share, over quantity), times the returned quantity, rounded half up once. A partial return of 2 of 5 pieces bought at ₹110 after a ₹10 share each refunds ₹200. **Several returns of one line** are allocated cumulatively: refund = round(net × (returned before + now) / sold) − refunded before, so the total never exceeds the line's net amount and the last return takes the remainder. Example: a 2-unit line with a 1-paise net returned one unit at a time refunds 1 paise, then 0 (not 1 and 1). The current tier or price never matters (EC-11, spec edge case "return after tier price changed").
 - **Limits**: returned quantity per bill line cannot exceed sold minus already returned (`RETURN_EXCEEDS_SOLD`). A line on a bill with a later version returns against the current version.
 - **Stock**: one `sale_return` movement per line into the chosen location: the shop floor (sellable) or a seeded `defective` location. Tinted lines (002 `is_returnable = 0`) need a `tinted_return` approval and go to the `tinted_returns` location; the value written down is entered by the owner and recorded on the return line (`write_down_paise`). Only the base can is returned: its `sale_return` movement goes to `tinted_returns`; the colorants were mixed in and are not returned to stock.
 - **Refund modes**: cash or UPI (a refund tender, negative direction, on the return) or credit note (ledger entry reducing the party balance, feature 004).
@@ -109,7 +109,7 @@ One shortcut table in `apps/desktop/src/renderer/features/billing/shortcuts.ts`,
 
 ### D16. Bill number gaps (EC-19)
 
-Numbers are taken inside the bill transaction (001), so a crash cannot leave a gap on its own. A start-up check (`findSeriesGaps` in core) compares each series' `last_seq` with the bills present; any gap found is written to `bill_number_gap` with reason `device_crash` and shown in the bill list like 001's `lost_in_restore` gaps.
+Numbers are taken inside the bill transaction (001), so a crash cannot leave a gap on its own. A start-up check (`findSeriesGaps` in core) compares each series' `last_seq` with the documents of its own `doc_kind` (bill series with `bill`, counting each number once whatever its versions; return series with `sales_return`; quotation series with `quotation`; credit-note series with `credit_note`); any gap found is written to `bill_number_gap` with reason `device_crash` and shown in the bill list like 001's `lost_in_restore` gaps.
 
 ## Open items
 

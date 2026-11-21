@@ -31,7 +31,7 @@ held_bill (drafts)   unmet_demand   bill_number_gap (001, new reason)
 | cancel_approval_id    | nullable FK to `approval_request`; required when status becomes `cancelled` from this feature on |
 | user_id               | FK to `app_user` (005): who saved this version                                                   |
 
-Unique indexes change: `(shop_id, bill_no)` becomes `(shop_id, bill_no, version_no, device_id)`, and 001's `bill_counter_fy_seq_uq` on `(counter_code, financial_year, seq)` becomes `(counter_code, financial_year, seq, version_no, device_id)`, because every version shares the number and the sequence of version 1 (without this, no edit can be inserted). `device_id` is in both keys so two counters that edit the same version offline both keep their printed versions (a fork) instead of one being rejected by sync. The 001 trigger (only `posted` to `cancelled` may change) is unchanged. A version row is never updated to mark it superseded: the **current** version is, among versions that no other row names as `previous_version_id`, the one with the latest `hlc` (010; before 010, the latest `billed_at`). When two versions share a `previous_version_id`, a `bill_version_conflict` exception is raised for the owner, who settles it with a further edit (same day) or a return.
+Unique indexes change: `(shop_id, bill_no)` becomes `(shop_id, bill_no, version_no, device_id)`, and 001's `bill_counter_fy_seq_uq` on `(counter_code, financial_year, seq)` becomes `(counter_code, financial_year, seq, version_no, device_id)`, because every version shares the number and the sequence of version 1 (without this, no edit can be inserted). `device_id` is in both keys so two counters that edit the same version offline both keep their printed versions (a fork) instead of one being rejected by sync. The 001 trigger (only `posted` to `cancelled` may change) is unchanged. A version row is never updated to mark it superseded: the **current** version is, among versions that no other row names as `previous_version_id`, the one with the latest `hlc` (010; before 010, the latest `billed_at`). When two versions share a `previous_version_id`, a `bill_version_conflict` exception is raised for the owner, who settles it with a further edit (same day) or a return. **Effects of a losing leaf**: each forked edit reversed the same earlier version and posted its own movements and ledger entries, so both would count. When the fork is detected (sync, 010), one transaction posts the exact opposite of every stock movement and ledger entry the losing leaf wrote (`edit_reverse` movements and opposite ledger entries, linked to the conflict), so stock and balances follow only the current leaf. The losing version row stays, because it was printed. Example: version 1 sold 2 pcs; counter A edits to 3, counter B to 4 offline; A is current, so B's +2 `edit_reverse` and -4 `sale` get -2 and +4, leaving stock down 3.
 
 ### `bill_line` (append-only)
 
@@ -85,7 +85,11 @@ Gains `doc_kind`, a foreign key to a new lookup table `doc_kind` (seeded `bill` 
 
 ### `tender_resolution` (append-only)
 
-`tender_id` FK, `kind` (`confirmed`, `replaced`), `reference` (required for `confirmed`), `replacement_mode` (`cash`, `card`, `upi`, `credit`; required for `replaced`), `replacement_reference`, `user_id`, `resolved_at`. At most one resolution per tender (unique `tender_id`).
+`tender_id` FK, `kind` (`confirmed`, `replaced`), `reference` (required for `confirmed`; claimed in `upi_reference`), `replacement_mode` (`cash`, `card`, `upi`, `credit`; required for `replaced`), `replacement_reference`, `user_id`, `resolved_at`. At most one resolution per tender (unique `tender_id`).
+
+### `upi_reference` (append-only)
+
+`reference` (up to 40), `source_kind` (`bill_tender`, `tender_resolution`, `replacement`), `source_id`. `UNIQUE(shop_id, reference)`. Every UPI reference is inserted here in the same transaction as the row that carries it: a `bill_tender` with mode `upi` and a reference, a `tender_resolution` of kind `confirmed`, and a `replacement_reference` when `replacement_mode` is `upi`. The unique index is the one rule for `DUPLICATE_REFERENCE`, so the same screenshot cannot settle two tenders whichever path it comes through.
 
 ### `held_bill`
 
@@ -106,7 +110,7 @@ Gains `doc_kind`, a foreign key to a new lookup table `doc_kind` (seeded `bill` 
 
 ### `sales_return_line` (append-only)
 
-`return_id`, `bill_line_id` (nullable only for no-bill returns), `variant_id`, `qty_base_milli > 0`, `refund_paise >= 0`, `to_location_id` (shop floor, `defective` or `tinted_returns`), `write_down_paise` (nullable, tinted returns), `approval_id` (nullable, tinted returns). Sum of returned quantity per `bill_line_id` at most the sold quantity (service check, tested).
+`return_id`, `bill_line_id` (nullable only for no-bill returns), `variant_id`, `qty_base_milli > 0`, `refund_paise >= 0`, `to_location_id` (shop floor, `defective` or `tinted_returns`), `write_down_paise` (nullable, tinted returns), `approval_id` (nullable, tinted returns). Sum of returned quantity per `bill_line_id` at most the sold quantity (service check, tested). Returns are made against the current version, and a bill with any return cannot be edited (`BILL_HAS_RETURNS`; fix with another return or a credit note), so a line's earlier returns can never be lost by moving to a new version's line ids.
 
 ### `credit_note` (append-only)
 
@@ -115,7 +119,7 @@ Gains `doc_kind`, a foreign key to a new lookup table `doc_kind` (seeded `bill` 
 ### `quotation` and `quotation_line`
 
 `quotation`: `quotation_no`, `version_no`, `previous_version_id` (as bills), `party_id` or `customer_name`, `price_tier_id`, `valid_until` (business date text), subtotal, discount, round-off and total as on bills, `user_id`. `UNIQUE(shop_id, quotation_no, version_no)`. Append-only.
-`quotation_line`: as `bill_line` without stock fields (`variant_id`, snapshots, `qty_base_milli`, `entered_uom`, `qty_entered_milli`, `unit_price_paise`, `line_discount_paise`, `amount_paise`). Append-only. Open quantity is derived.
+`quotation_line`: as `bill_line` without stock fields (`variant_id`, snapshots, `qty_base_milli`, `entered_uom`, `qty_entered_milli`, `unit_price_paise`, `line_discount_paise`, `amount_paise`). Append-only. Open quantity is derived: quoted minus the converted quantity on `bill_line` rows of the **current, non-cancelled version** of each bill. An edit copies `quotation_line_id` onto the new version's lines, and superseded versions are not counted, so one quoted quantity is never counted twice.
 
 ### `unmet_demand`
 
