@@ -118,6 +118,9 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 ### Number Series (`number_series`) (migration 0011, task T078)
 `counter_code`, `financial_year`, `template` (the bill number template last used with the series) and `last_seq`; unique per shop, counter and financial year; `last_seq` is incremented in the same transaction as the bill insert. Replaces `number_counter`; each bill points at its series with `number_series_id`.
 
+### Bill Number Gap (`bill_number_gap`) (migration 0014, task T083)
+`number_series_id` (foreign key to `number_series`, not null), `seq_from` (1 or more), `seq_to` (at least `seq_from`), `reason` (`lost_in_restore` in this release) and `recorded_at` (integer epoch milliseconds). One row records numbers that were printed but are not in a restored database, so they are never issued again (research D21, FR-013b, EC-19). Example: the backup ended at 120, bills 121 to 126 were printed, the owner confirms 126: one row with `seq_from` 121 and `seq_to` 126, and the series' `last_seq` becomes 126. Append-only (triggers). Whether a block was a guess (the owner could not say, a block of 100) is not stored; it is reported once, in the restore result.
+
 ### Draft Bill (`draft_bill`)
 `payload` JSON of an unsaved bill, written on every edit and cleared on save or discard; supports crash recovery. Not a financial record.
 
@@ -128,6 +131,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - `stock_movement`: update and delete are rejected ("append-only").
 - `bill_line`: update and delete are rejected.
+- `bill_number_gap`: update and delete are rejected ("append-only", migration 0014).
 <!-- coderabbit-ai-generated:v1 -->
 
 <!-- coderabbit-ai-generated-section:v1:a653a6c71cd3957f52050d00eac469ff0dc40e4249e250bfa6b10553f61d42ef -->

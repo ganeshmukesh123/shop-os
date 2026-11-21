@@ -297,6 +297,31 @@ export const numberSeries = sqliteTable(
   ],
 );
 
+// Bill numbers that a restore lost: numbers seq_from to seq_to of a series were printed but are not in the
+// restored database, so they will never be issued again (FR-013b, EC-19, research D21). Append-only.
+export const billNumberGap = sqliteTable(
+  "bill_number_gap",
+  {
+    ...base,
+    numberSeriesId: text("number_series_id")
+      .notNull()
+      .references(() => numberSeries.id),
+    seqFrom: integer("seq_from").notNull(),
+    seqTo: integer("seq_to").notNull(),
+    // reason: 'lost_in_restore' in this release
+    reason: text("reason").notNull(),
+    recordedAt: integer("recorded_at").notNull(),
+  },
+  (tableColumns) => [
+    index("bill_number_gap_series_idx").on(tableColumns.numberSeriesId, tableColumns.seqFrom),
+    check(
+      "bill_number_gap_range",
+      sql`${tableColumns.seqFrom} >= 1 and ${tableColumns.seqTo} >= ${tableColumns.seqFrom}`,
+    ),
+    check("bill_number_gap_reason", sql`${tableColumns.reason} in ('lost_in_restore')`),
+  ],
+);
+
 export const draftBill = sqliteTable("draft_bill", {
   ...base,
   payload: text("payload").notNull(), // JSON; not a financial record
