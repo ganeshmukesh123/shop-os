@@ -1,36 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Box,
-  Button,
-  Flex,
-  Heading,
-  SegmentedControl,
-  Select,
-  Table,
-  Text,
-  TextField,
-} from "@radix-ui/themes";
+import { Box, Flex, Heading, Table, Text, TextField } from "@radix-ui/themes";
 import {
   evaluateDraft,
   formatQuantity,
   formatRupees,
   paiseToInput,
-  PAYMENT_MODES,
   type Bill,
   type BillLine,
   type DraftLine,
   type Item,
-  type PaymentMode,
 } from "@shopos/core";
 import { BillLineRow } from "../BillLineRow";
 import { useToast } from "../../../shared/components/Toast";
 import { LAYOUT } from "../../../shared/constants/layout";
-import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
 import { uiText } from "../../../shared/text/strings";
 import { call, messageOf } from "../../../shared/api/api";
-import { emptyForm, isEmptyForm, loadDraftForm, type IBillForm } from "../billForm";
+import { emptyForm, loadDraftForm, type IBillForm } from "../billForm";
 import { useDraftAutosave } from "../hooks/useDraftAutosave";
 import { BillView } from "../BillView";
+import { BillSummaryPanel } from "./components/BillSummaryPanel";
 import { RecoverDraftDialog } from "./components/RecoverDraftDialog";
 
 interface Saved {
@@ -301,106 +289,15 @@ export function NewBillScreen() {
         </Table.Root>
       )}
 
-      <Flex gap="4" wrap="wrap" align="start">
-        <Flex direction="column" gap="3" flexGrow="1" minWidth={LAYOUT.formColumnMinWidth}>
-          <label>
-            <Text as="div" size="2" weight="bold" mb="1">
-              {uiText.bill.customerName}
-            </Text>
-            <TextField.Root
-              size="3"
-              maxLength={80}
-              value={form.customerName}
-              onChange={(changeEvent) =>
-                setForm((previousForm) => ({
-                  ...previousForm,
-                  customerName: changeEvent.target.value,
-                }))
-              }
-            />
-          </label>
-          <div>
-            <Text as="div" size="2" weight="bold" mb="1" id="pay-label">
-              {uiText.bill.payment}
-            </Text>
-            <Select.Root
-              value={form.paymentMode}
-              onValueChange={(selectedPaymentMode) =>
-                setForm((previousForm) => ({
-                  ...previousForm,
-                  paymentMode: selectedPaymentMode as PaymentMode,
-                }))
-              }
-            >
-              <Select.Trigger aria-labelledby="pay-label" className="shopos-payment-select" />
-              <Select.Content>
-                {PAYMENT_MODES.map((paymentMode) => (
-                  <Select.Item key={paymentMode} value={paymentMode}>
-                    {uiText.payment[paymentMode]}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select.Root>
-          </div>
-        </Flex>
-        <Flex direction="column" gap="2" align="end" minWidth={LAYOUT.formColumnMinWidth}>
-          <Text>
-            {uiText.bill.total}: <b>{formatRupees(ev.linesTotalPaise)}</b>
-          </Text>
-          <Flex gap="2" align="center">
-            <Text size="2" weight="bold">
-              {uiText.bill.billDiscount}
-            </Text>
-            <Box width={LAYOUT.discountFieldWidth}>
-              <TextField.Root
-                size="3"
-                inputMode="decimal"
-                aria-label={uiText.bill.billDiscount}
-                value={form.draft.billDisc}
-                onChange={(changeEvent) => setDraft({ billDisc: changeEvent.target.value })}
-              />
-            </Box>
-            <SegmentedControl.Root
-              size="2"
-              value={form.draft.billDiscMode}
-              onValueChange={(selectedDiscountMode) =>
-                setDraft({ billDiscMode: selectedDiscountMode as "rupees" | "percent" })
-              }
-              aria-label="Bill discount type"
-            >
-              <SegmentedControl.Item value="rupees">₹</SegmentedControl.Item>
-              <SegmentedControl.Item value="percent">%</SegmentedControl.Item>
-            </SegmentedControl.Root>
-          </Flex>
-          {ev.billDiscountPaise > 0 && <Text>-{formatRupees(ev.billDiscountPaise)}</Text>}
-          <Text size="7" weight="bold" aria-live="polite">
-            {uiText.bill.grandTotal}: {formatRupees(ev.grandTotalPaise)}
-          </Text>
-          {ev.errors
-            .filter(
-              (errorMessage) => !errorMessage.startsWith("Fix") && !errorMessage.startsWith("Add"),
-            )
-            .map((errorMessage) => (
-              <StatusMessage key={errorMessage} role="danger" label={uiText.status.error}>
-                {errorMessage}
-              </StatusMessage>
-            ))}
-          <Flex gap="3">
-            <Button
-              size="3"
-              variant="soft"
-              color="gray"
-              disabled={isEmptyForm(form)}
-              onClick={() => setForm(emptyForm())}
-            >
-              {uiText.bill.clear}
-            </Button>
-            <Button size="4" onClick={() => void save()} loading={saving} disabled={!ev.valid}>
-              {uiText.bill.save} (Ctrl+S)
-            </Button>
-          </Flex>
-        </Flex>
-      </Flex>
+      <BillSummaryPanel
+        form={form}
+        evaluation={ev}
+        isSaving={saving}
+        onFormChange={(patch) => setForm((previousForm) => ({ ...previousForm, ...patch }))}
+        onDraftChange={setDraft}
+        onClear={() => setForm(emptyForm())}
+        onSave={() => void save()}
+      />
 
       {recover && (
         <RecoverDraftDialog
