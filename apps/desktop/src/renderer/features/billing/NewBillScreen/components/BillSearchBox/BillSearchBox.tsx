@@ -1,6 +1,7 @@
 import { forwardRef, type KeyboardEvent } from "react";
 import { Box, Text, TextField } from "@radix-ui/themes";
 import { formatQuantity, formatRupees } from "@shopos/core";
+import { fillText } from "../../../../../shared/text/fillText";
 import { uiText } from "../../../../../shared/text/strings";
 import { MIN_QUERY_LENGTH } from "../../constants";
 import type { IBillSearchBoxProps } from "./types";
@@ -39,7 +40,11 @@ export const BillSearchBox = forwardRef<HTMLInputElement, IBillSearchBoxProps>(
           onKeyDown={handleKeyDown}
         />
         {query.trim().length >= MIN_QUERY_LENGTH && (
-          <ul role="listbox" aria-label="Matching items" className="shopos-search-results">
+          <ul
+            role="listbox"
+            aria-label={uiText.bill.matchingItems}
+            className="shopos-search-results"
+          >
             {matches.length === 0 && (
               <li className="shopos-search-empty">
                 <Text color="gray">{uiText.bill.noMatch}</Text>
@@ -64,9 +69,11 @@ export const BillSearchBox = forwardRef<HTMLInputElement, IBillSearchBoxProps>(
                   </Text>
                 </span>
                 <span>
-                  {formatRupees(matchingItem.pricePaise)} · stock{" "}
-                  {formatQuantity(matchingItem.stockMilli)}
-                  {matchingItem.needsCorrection ? " (negative)" : ""}
+                  {fillText(uiText.bill.searchResultStock, {
+                    price: formatRupees(matchingItem.pricePaise),
+                    quantity: formatQuantity(matchingItem.stockMilli),
+                  })}
+                  {matchingItem.needsCorrection && ` ${uiText.bill.searchResultNegative}`}
                 </span>
               </li>
             ))}

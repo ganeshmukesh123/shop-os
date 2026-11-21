@@ -74,7 +74,7 @@ export function BillSummaryPanel({
             onValueChange={(selectedDiscountMode) =>
               onDraftChange({ billDiscMode: selectedDiscountMode as "rupees" | "percent" })
             }
-            aria-label="Bill discount type"
+            aria-label={uiText.bill.billDiscountType}
           >
             <SegmentedControl.Item value="rupees">₹</SegmentedControl.Item>
             <SegmentedControl.Item value="percent">%</SegmentedControl.Item>
@@ -106,7 +106,7 @@ export function BillSummaryPanel({
             {uiText.bill.clear}
           </Button>
           <Button size="4" onClick={onSave} loading={isSaving} disabled={!evaluation.valid}>
-            {uiText.bill.save} (Ctrl+S)
+            {uiText.bill.save} {uiText.bill.saveShortcut}
           </Button>
         </Flex>
       </Flex>

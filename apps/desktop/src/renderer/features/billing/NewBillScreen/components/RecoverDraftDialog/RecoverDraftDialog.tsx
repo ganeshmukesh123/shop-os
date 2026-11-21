@@ -1,5 +1,6 @@
 import { Box, Button, Dialog, Flex } from "@radix-ui/themes";
 import { StatusMessage } from "../../../../../shared/components/StatusMessage/StatusMessage";
+import { fillText } from "../../../../../shared/text/fillText";
 import { uiText } from "../../../../../shared/text/strings";
 import type { IRecoverDraftDialogProps } from "./types";
 
@@ -13,7 +14,9 @@ export function RecoverDraftDialog({ draftForm, onDiscard, onContinue }: IRecove
         <Dialog.Description>{uiText.bill.recoverBody}</Dialog.Description>
         <Box mt="3">
           <StatusMessage role="neutral" label={uiText.status.draft}>
-            {lineCount} line{lineCount === 1 ? "" : "s"}:{" "}
+            {fillText(lineCount === 1 ? uiText.bill.draftLineOne : uiText.bill.draftLineOther, {
+              count: lineCount,
+            })}{" "}
             {draftForm.draft.lines.map((draftLine) => draftLine.name).join(", ")}
           </StatusMessage>
         </Box>
