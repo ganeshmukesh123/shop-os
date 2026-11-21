@@ -22,6 +22,10 @@ const MODE_LABEL: Record<string, string> = {
   unpaid: "Unpaid",
 };
 
+/** A signed amount for the round-off line: 40 -> "+₹0.40", -49 -> "-₹0.49". */
+const formatSignedRupees = (paise: number): string =>
+  paise > 0 ? `+${formatRupees(paise)}` : `-${formatRupees(-paise)}`;
+
 /** "2026-12-07T14:05:09" -> "07/12/2026 14:05" (no Date object, so output never depends on the machine's zone). */
 function formatLocal(iso: string): string {
   const dateMatch = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso);
@@ -81,6 +85,7 @@ ${spec.css}
 * { box-sizing: border-box; }
 body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #000; margin: 0 auto; }
 .c { text-align: center; } .shop { font-size: 1.4em; font-weight: 700; }
+.doc-title { font-weight: 700; letter-spacing: .08em; margin-bottom: 2px; }
 .meta { margin: 6px 0; } .meta div { margin: 1px 0; }
 table { width: 100%; border-collapse: collapse; margin-top: 6px; }
 th, td { padding: 2px 3px; vertical-align: top; border-bottom: 1px dotted #888; }
@@ -93,6 +98,7 @@ th { text-align: left; border-bottom: 1px solid #000; } .r { text-align: right; 
 tr { page-break-inside: avoid; } .totals, .footer { page-break-inside: avoid; }
 </style></head>
 <body>
+<div class="c doc-title">${esc(bill.docTitle)}</div>
 <div class="c"><div class="shop">${esc(profile.name)}</div>
 ${profile.address ? `<div>${esc(profile.address)}</div>` : ""}
 ${profile.phone ? `<div>${esc(profile.phone)}</div>` : ""}</div>
@@ -110,6 +116,7 @@ ${rows}
 <div class="totals">
   <div><span>Total</span><span>${formatRupees(bill.linesTotalPaise)}</span></div>
   ${bill.billDiscountPaise > 0 ? `<div><span>Discount</span><span>-${formatRupees(bill.billDiscountPaise)}</span></div>` : ""}
+  ${bill.roundOffPaise !== 0 ? `<div><span>Round off</span><span>${formatSignedRupees(bill.roundOffPaise)}</span></div>` : ""}
   <div class="grand"><span>Grand Total</span><span>${formatRupees(bill.grandTotalPaise)}</span></div>
 </div>
 <div class="footer">${profile.footer ? `<div>${esc(profile.footer)}</div>` : ""}<div>Thank you</div></div>
