@@ -1,3 +1,4 @@
+import { DEFAULT_TIME_ZONE, businessDateOf, financialYearOfBusinessDate } from "./businessDate";
 import { CoreError } from "./errors";
 
 export const DEFAULT_NUMBER_TEMPLATE = "{series}/{fy}/{seq}";
@@ -27,9 +28,15 @@ export function formatBillNumber(
 
 const LEGAL = /^[A-Za-z0-9\-/]+$/;
 
+/**
+ * Check a number template and show an example. The example's financial year is the one of the
+ * shop's zone at `now` (never the device's), so the preview matches the number the next bill gets.
+ */
 export function validateNumberTemplate(
   template: string,
   series: string,
+  now: Date = new Date(),
+  timeZone: string = DEFAULT_TIME_ZONE,
 ): { ok: true; example: string } | { ok: false; reason: string } {
   if (!template.includes("{seq}")) return { ok: false, reason: "Template must contain {seq}" };
   if (!LEGAL.test(series))
@@ -43,5 +50,6 @@ export function validateNumberTemplate(
       reason: `Number could be ${worst.length} characters; the limit is ${MAX_NUMBER_LENGTH}`,
     };
   }
-  return { ok: true, example: formatBillNumber(template, series, financialYear(new Date()), 1) };
+  const exampleFinancialYear = financialYearOfBusinessDate(businessDateOf(now.getTime(), timeZone));
+  return { ok: true, example: formatBillNumber(template, series, exampleFinancialYear, 1) };
 }

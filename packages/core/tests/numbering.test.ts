@@ -44,6 +44,43 @@ describe("numbering", () => {
   });
 });
 
+describe("the template preview takes its financial year from the shop's zone (FR-019a)", () => {
+  // 00:10 IST on 1 April 2027 is 18:40 UTC on 31 March.
+  const justAfterMidnightInIndia = new Date(Date.UTC(2027, 2, 31, 18, 40));
+
+  it("shows 27-28 for a shop in India at that moment", () => {
+    const validation = validateNumberTemplate(
+      DEFAULT_NUMBER_TEMPLATE,
+      "C1",
+      justAfterMidnightInIndia,
+      "Asia/Kolkata",
+    );
+
+    expect(validation).toEqual({ ok: true, example: "C1/27-28/000001" });
+  });
+
+  it("shows 26-27 for a shop in Los Angeles at the same moment", () => {
+    const validation = validateNumberTemplate(
+      DEFAULT_NUMBER_TEMPLATE,
+      "C1",
+      justAfterMidnightInIndia,
+      "America/Los_Angeles",
+    );
+
+    expect(validation).toEqual({ ok: true, example: "C1/26-27/000001" });
+  });
+
+  it("uses the shop's default zone when none is given", () => {
+    const validation = validateNumberTemplate(
+      DEFAULT_NUMBER_TEMPLATE,
+      "C1",
+      justAfterMidnightInIndia,
+    );
+
+    expect(validation).toEqual({ ok: true, example: "C1/27-28/000001" });
+  });
+});
+
 describe("numbering edge cases", () => {
   it("refuses a sequence below 1 or a fractional sequence", () => {
     const template = DEFAULT_NUMBER_TEMPLATE;
