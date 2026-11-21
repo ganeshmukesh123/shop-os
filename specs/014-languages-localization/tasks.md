@@ -25,13 +25,9 @@ description: "Task list for feature 014: text catalogues, Indian formats, Devana
 
 ---
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:4f4297d24cae7653a751a76044c3761fa63cf87462d8c56701859e955083c8dc -->
-
 ## Phase 2: Foundational
 
-- [ ] T003 [P] Write tests in `text/tests/translate.test.ts`: English source; Hindi text when present; fallback to English for a missing key with the key counted; named placeholders in any order; type checks for valid values, missing values and misspelled fields, and calls without values for plain keys; a placeholder missing at runtime from an untyped caller is left visible as `{name}`; plural `one` and `other` with `Intl.PluralRules`
+- [ ] T003 [P] Write tests in `text/tests/translate.test.ts`: English source; Hindi text when present; fallback to English for a missing key with the key counted; named placeholders in any order; type checks for valid values, missing values and misspelled fields, and calls without values for plain keys; a placeholder missing at runtime from an untyped caller is left visible as `{name}`; plural `one` and `other` with `Intl.PluralRules`, including a type error for a plural key called without `count`
 - [ ] T004 [P] Write tests in `text/tests/missing.test.ts`: `listMissingKeys("hi")` lists exactly the keys absent from `hi.json`; `exportForTranslator` gives key, English, current and note; add an unregistered `xx.json` fixture before building with the production catalogue discovery and verify that the build recognizes `xx`, renders its translations, falls back to English for omitted keys and lists them as missing, with only the JSON file added (SC-001)
 - [ ] T005 Implement `text/src/translate.ts`, `plural.ts`, `missing.ts` and generate `TextKey` and placeholder value types from `en.ts`. Discover and bundle language JSON files by filename without a registration list (SC-001); pass T003 and T004
 - [ ] T006 [P] Write tests in `core/tests/format/amountInWords.test.ts`, `formatIndianNumber.test.ts`, `formatBusinessDate.test.ts`: ₹12,34,567.50 in words with lakh; ₹1,00,00,000.00 as "One Crore"; zero paise omitted; 12345678 as 1,23,45,678; `01-04-2027` and `01 Apr 2027` in the shop's zone
@@ -44,14 +40,12 @@ description: "Task list for feature 014: text catalogues, Indian formats, Devana
 
 - [ ] T008 [US1] Move `desktop/src/renderer/strings.ts` into `text/src/en.ts` and add a `useText()` hook in `desktop/src/renderer/shared/text/` that reads the signed-in user's language (after T029)
 - [ ] T009 [US1] Replace literal text in every renderer feature folder with `useText()` keys, one PR per feature area (items, billing, khata, control, stock, delivery, gst, privacy, purchasing, reports, golive, sync), each with its e2e specs green and the D3 review gate passed
-- [ ] T010 [US1] Map every IPC error `code` to `errors.<CODE>` in the renderer's shared message component; add a test that every code in `core/src/errors.ts` and the feature error lists has an English key
+- [ ] T010 [US1] Map every IPC error `code` to `errors.<CODE>` in the renderer's shared message component; fill placeholders from the error result's raw `values`, formatted in the renderer (contract rule 2), and add `values` to the IPC error result; add a test that every code in `core/src/errors.ts` and the feature error lists has an English key, and that `ABOVE_MRP` shows the formatted MRP
 - [ ] T011 [US1] Move printed-document and statement text in `desktop/src/main/services/**/*Html.ts` to catalogue keys rendered with the shop's bill language (after T029); legal wording under fixed English `legal.*` keys
 - [ ] T012 [US1] Turn on ESLint `react/jsx-no-literals` for `apps/desktop/src/renderer/**` (allowing punctuation and "₹") and add `scripts/text-check.mjs` as `pnpm text:check` in CI for catalogue key checks and completeness reporting; add the D3 review gate to the renderer PR checklist for user-facing text defined outside JSX
 - [ ] T013 [US1] Run quickstart 1 with a test language file and record SC-001
 
 ---
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Phase 4: User Story 3 - Indian formats (M1, 19 to 20 Feb; P1)
 
@@ -60,10 +54,6 @@ description: "Task list for feature 014: text catalogues, Indian formats, Devana
 - [ ] T016 [US3] Check 011's exports keep raw numbers and ISO dates in data columns (quickstart 3 step 3)
 
 ---
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:de86bbf53ca010cbaee3129beca259224023853afadd116ae051db59b965d6ad -->
 
 ## Phase 5: User Story 2 - Hindi and trade names in search and templates (M2, 21 to 27 Feb; P1)
 
@@ -99,8 +89,6 @@ Setup --> Foundational --> US1 (move text, enforce) --> US3 (formats) --> US2 (D
 ```
 
 T029 supplies the persisted fields and reads before T008 and T011 consume them. T022 adds the language update and translation management commands in M3 using those fields.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Parallel examples
 
