@@ -232,6 +232,20 @@ describe("other bill commands", () => {
     expect(isAccepted(billsListInput, { ...page, to: "" })).toBe(false);
   });
 
+  it.each([
+    ["2026-02-28", true],
+    ["2026-02-29", false],
+    ["2028-02-29", true],
+    ["2028-02-30", false],
+    ["2026-04-31", false],
+    ["1900-02-29", false],
+    ["2000-02-29", true],
+  ])("checks whether %s exists on the calendar for both date bounds", (date, isValid) => {
+    const page = { limit: 10, offset: 0 };
+    expect(isAccepted(billsListInput, { ...page, from: date })).toBe(isValid);
+    expect(isAccepted(billsListInput, { ...page, to: date })).toBe(isValid);
+  });
+
   it("limits the bill list's search text: number 40 characters, customer 80", () => {
     const page = { limit: 10, offset: 0 };
     expect(isAccepted(billsListInput, { ...page, number: "n".repeat(40) })).toBe(true);

@@ -144,10 +144,10 @@ describe("bill commands", () => {
     expect(cancelledOnly).toEqual({ ok: true, data: { bills: [], total: 0 } });
   });
 
-  it("refuses a bill list request with a date that is not YYYY-MM-DD", async () => {
+  it.each(["yesterday", "2026-02-29"])("refuses a bill list date of %s", async (from) => {
     const { handlers } = buildHandlersFixture();
 
-    const result = await handlers["bills.list"]({ from: "yesterday", limit: 10, offset: 0 });
+    const result = await handlers["bills.list"]({ from, limit: 10, offset: 0 });
 
     expect(result).toMatchObject({ ok: false, code: "INVALID_FIELD" });
   });

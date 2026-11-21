@@ -146,7 +146,8 @@ export type BillsSaveInput = z.infer<typeof billsSaveInput>;
 /** A calendar day as the bill stores it, YYYY-MM-DD (the shop's business date). */
 const businessDateText = z
   .string()
-  .regex(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, "Use a date like 2026-12-07");
+  .regex(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, "Use a date like 2026-12-07")
+  .pipe(z.iso.date("Enter a valid calendar date"));
 
 export const billsListInput = z.object({
   number: z.string().max(40).optional(),
