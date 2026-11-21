@@ -19,7 +19,7 @@ const buildConfig = (overrides: Partial<IAppConfig> = {}): IAppConfig => ({
 
 /** A fake window that records what the app asked of it. */
 function buildFakeWindow() {
-  type NavigationListener = (navigationEvent: { preventDefault(): void }, url: string) => void;
+  type NavigationListener = (navigationEvent: { url: string; preventDefault(): void }) => void;
   const navigationListeners = new Map<string, NavigationListener>();
   const calls = {
     openHandler: undefined as (() => { action: string }) | undefined,
@@ -43,7 +43,7 @@ function buildFakeWindow() {
     calls,
     navigateTo: (url: string, eventName = "will-navigate") => {
       const preventDefault = vi.fn();
-      navigationListeners.get(eventName)?.({ preventDefault }, url);
+      navigationListeners.get(eventName)?.({ url, preventDefault });
       return { wasBlocked: preventDefault.mock.calls.length > 0 };
     },
   };

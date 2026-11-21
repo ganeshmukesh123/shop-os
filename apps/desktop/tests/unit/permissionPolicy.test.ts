@@ -22,28 +22,52 @@ describe("isPermissionGranted", () => {
 });
 
 describe("installPermissionPolicy", () => {
-  type RequestHandler = (webContents: unknown, permissionName: string, respond: () => void) => void;
-  type CheckHandler = (webContents: unknown, permissionName: string) => boolean;
+  // Handler types come from the session contract, so a change in Electron's signature fails typecheck.
+  type RequestHandler = NonNullable<Parameters<IPermissionSession["setPermissionRequestHandler"]>[0]>;
+  type CheckHandler = NonNullable<Parameters<IPermissionSession["setPermissionCheckHandler"]>[0]>;
+  type RequestArguments = Parameters<RequestHandler>;
+  type CheckArguments = Parameters<CheckHandler>;
+
+  // Explicit fixtures for the arguments the policy ignores.
+  const FAKE_WEB_CONTENTS = {} as RequestArguments[0];
+  const FAKE_REQUEST_DETAILS = {} as RequestArguments[3];
+  const FAKE_CHECK_DETAILS = {} as CheckArguments[3];
+  const REQUESTING_ORIGIN = "file://";
 
   function installOnFakeSession() {
     const handlers: { request?: RequestHandler; check?: CheckHandler } = {};
-    const fakeSession = {
-      setPermissionRequestHandler: (handler: RequestHandler) => void (handlers.request = handler),
-      setPermissionCheckHandler: (handler: CheckHandler) => void (handlers.check = handler),
+    const fakeSession: IPermissionSession = {
+      setPermissionRequestHandler: (handler) => void (handlers.request = handler ?? undefined),
+      setPermissionCheckHandler: (handler) => void (handlers.check = handler ?? undefined),
     };
-    installPermissionPolicy(fakeSession as unknown as IPermissionSession);
+    installPermissionPolicy(fakeSession);
     return handlers;
   }
 
   it.each(PERMISSION_NAMES)("answers a request for %s with denied", (permissionName) => {
     const handlers = installOnFakeSession();
-    const callback = vi.fn();
-    handlers.request?.({}, permissionName, callback);
-    expect(callback).toHaveBeenCalledExactlyOnceWith(false);
+    const respond = vi.fn<RequestArguments[2]>();
+
+    handlers.request?.(
+      FAKE_WEB_CONTENTS,
+      permissionName as RequestArguments[1],
+      respond,
+      FAKE_REQUEST_DETAILS,
+    );
+
+    expect(respond).toHaveBeenCalledExactlyOnceWith(false);
   });
 
   it.each(PERMISSION_NAMES)("reports %s as not granted on a check", (permissionName) => {
     const handlers = installOnFakeSession();
-    expect(handlers.check?.({}, permissionName)).toBe(false);
+
+    const isGranted = handlers.check?.(
+      null,
+      permissionName as CheckArguments[1],
+      REQUESTING_ORIGIN,
+      FAKE_CHECK_DETAILS,
+    );
+
+    expect(isGranted).toBe(false);
   });
 });

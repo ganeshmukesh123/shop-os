@@ -1,5 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
 import { COMMAND_NAMES } from "@shopos/core";
 import { buildMainWindowOptions } from "../../src/main/app/mainWindow";
 import { contentSecurityPolicy } from "../../src/main/app/securityHeaders";
@@ -21,11 +19,14 @@ describe("window security defaults", () => {
     expect(webPreferences?.nodeIntegrationInWorker).toBeFalsy();
     expect(webPreferences?.webSecurity).not.toBe(false);
     expect(webPreferences?.allowRunningInsecureContent).toBeFalsy();
+    expect(webPreferences?.experimentalFeatures).toBeFalsy();
+    expect(webPreferences?.enableBlinkFeatures).toBeFalsy();
   });
 
   it("keeps the packaged content security policy closed", () => {
     const policy = contentSecurityPolicy(false);
     expect(policy).toContain("default-src 'self'");
+    expect(policy.match(/script-src[^;]*/)?.[0]).toBe("script-src 'self'");
     expect(policy).toContain("connect-src 'none'");
     expect(policy).toContain("object-src 'none'");
     expect(policy).not.toContain("'unsafe-eval'");
@@ -38,11 +39,6 @@ describe("window security defaults", () => {
     expect(Object.keys(bridge).sort()).toEqual([...COMMAND_NAMES].sort());
   });
 
-  it("never lets the preload hand the raw ipcRenderer to the page", () => {
-    const preloadSource = fs.readFileSync(
-      path.resolve(__dirname, "../../src/preload/index.ts"),
-      "utf8",
-    );
-    expect(preloadSource).not.toMatch(/exposeInMainWorld\(\s*"[^"]+",\s*ipcRenderer/);
-  });
+  // The preload entry itself is run with a mocked contextBridge in preload.test.ts, which fails
+  // if anything beyond the contract's commands (raw ipcRenderer included) reaches the page.
 });

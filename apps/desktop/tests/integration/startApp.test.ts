@@ -117,9 +117,10 @@ describe("startApp", () => {
       buildDependencies();
     await startApp(dependencies, buildConfig());
     const respond = vi.fn();
-    setPermissionRequestHandler.mock.calls[0]?.[0]({}, "media", respond);
+    // The last handler set is the one in force, so a later permissive one would fail this test.
+    setPermissionRequestHandler.mock.lastCall?.[0]({}, "media", respond);
     expect(respond).toHaveBeenCalledExactlyOnceWith(false);
-    expect(setPermissionCheckHandler.mock.calls[0]?.[0]({}, "media")).toBe(false);
+    expect(setPermissionCheckHandler.mock.lastCall?.[0]({}, "media")).toBe(false);
   });
 
   it("starts the periodic backup timer", async () => {

@@ -35,8 +35,9 @@ export function createMainWindow(
 ): void {
   const mainWindow = createBrowserWindow(buildMainWindowOptions(config.preloadPath));
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-  const blockForeignAddress = (navigationEvent: { preventDefault(): void }, url: string): void => {
-    const isAllowed = isNavigationAllowed(url, config);
+  // Electron 43 deprecates the positional url argument; the address is read from the event.
+  const blockForeignAddress = (navigationEvent: { url: string; preventDefault(): void }): void => {
+    const isAllowed = isNavigationAllowed(navigationEvent.url, config);
     if (isAllowed) {
       return;
     }
