@@ -50,7 +50,7 @@ description: "Task list for feature 015: printer profiles, scanning, location ta
 
 - [ ] T014 [US2] Implement `desktop/src/renderer/shared/scanner/useScannerListener.ts` (window-level key listener using `isScannerBurst`, normalisation from the scanner profile, calls 002's `items.lookupBarcode`, reports `scanners.recordScan`) and mount it on the bill, count and move screens
 - [ ] T015 [P] [US2] Build `desktop/src/renderer/features/devices/UnknownBarcode/` (Search, Create item with this barcode, Record as unmet demand) and `Scanners/` (profiles)
-- [ ] T016 [US2] Write the e2e spec `desktop/tests/e2e/scanning.spec.ts`: simulated bursts add items without focusing a field; a scan in a focused text field leaves its value unchanged; hand-typed text and Enter reach the field unchanged; UPC-A matches stored EAN-13 and EAN-13 matches stored UPC-A; duplicate barcode chooser; unknown barcode panel
+- [ ] T016 [US2] Write the e2e spec `desktop/tests/e2e/scanning.spec.ts`: simulated bursts add items without focusing a field; a scan in a focused text field leaves its value unchanged; hand-typed text and Enter reach the field unchanged; UPC-A matches stored EAN-13 and EAN-13 matches stored UPC-A; duplicate barcode chooser; unknown barcode panel; a scan while the stock-adjust quantity field has focus does not call `save()`, and a scan in a bill line's quantity does not run `onEnterQty()`; after a scan in the quantity field, the draft line's quantity is what it was before the burst
 - [ ] T017 [US2] Measure SC-003 with the real scanner and SC-004 on the phone (010's godown app) and record them
 
 ---
