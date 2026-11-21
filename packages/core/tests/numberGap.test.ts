@@ -1,6 +1,11 @@
 import { CoreError } from "../src/errors";
 import { DEFAULT_NUMBER_TEMPLATE } from "../src/numbering";
-import { UNCONFIRMED_GAP_SIZE, parseBillNumber, planNumberGap } from "../src/numberGap";
+import {
+  UNCONFIRMED_GAP_SIZE,
+  assertNotBeforeBackupYear,
+  parseBillNumber,
+  planNumberGap,
+} from "../src/numberGap";
 
 function errorCodeOf(action: () => unknown): string | undefined {
   try {
@@ -132,5 +137,17 @@ describe("planNumberGap (task T083, FR-013b, research D21)", () => {
     const plan = planNumberGap(120, 130)!;
 
     expect(plan.seqFrom).toBeGreaterThan(120);
+  });
+});
+
+describe("assertNotBeforeBackupYear (FR-013b, research D21)", () => {
+  it("refuses a typed number from a year before the backup's last bill", () => {
+    expect(errorCodeOf(() => assertNotBeforeBackupYear("25-26", "26-27"))).toBe("INVALID_FIELD");
+  });
+
+  it("accepts the backup's own year, a later year, and a backup with no bills", () => {
+    expect(errorCodeOf(() => assertNotBeforeBackupYear("26-27", "26-27"))).toBeUndefined();
+    expect(errorCodeOf(() => assertNotBeforeBackupYear("27-28", "26-27"))).toBeUndefined();
+    expect(errorCodeOf(() => assertNotBeforeBackupYear("25-26", null))).toBeUndefined();
   });
 });
