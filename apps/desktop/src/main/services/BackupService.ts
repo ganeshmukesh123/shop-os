@@ -52,11 +52,17 @@ export function validateBackupFile(file: string): void {
  */
 export function restoreBackup(backupFile: string, liveDbPath: string): void {
   validateBackupFile(backupFile);
-  const tmp = `${liveDbPath}.restore-${process.pid}`;
-  fs.copyFileSync(backupFile, tmp);
-  fs.rmSync(`${liveDbPath}-wal`, { force: true });
-  fs.rmSync(`${liveDbPath}-shm`, { force: true });
-  fs.renameSync(tmp, liveDbPath);
+  const installCopy = `${liveDbPath}.restore-${process.pid}`;
+  try {
+    fs.copyFileSync(backupFile, installCopy);
+    fs.rmSync(`${liveDbPath}-wal`, { force: true });
+    fs.rmSync(`${liveDbPath}-shm`, { force: true });
+    fs.renameSync(installCopy, liveDbPath);
+  } catch (restoreError) {
+    // A failed restore must not leave a full copy of the shop's data behind.
+    fs.rmSync(installCopy, { force: true });
+    throw restoreError;
+  }
 }
 
 export class BackupService {
