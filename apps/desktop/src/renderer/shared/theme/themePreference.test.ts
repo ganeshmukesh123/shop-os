@@ -1,9 +1,5 @@
-import {
-  readStoredPreference,
-  resolveAppearance,
-  writeStoredPreference,
-} from "../../../src/renderer/shared/theme/themePreference";
-import { THEME_STORAGE_KEY } from "../../../src/renderer/shared/theme/theme.constants";
+import { readStoredPreference, resolveAppearance, writeStoredPreference } from "./themePreference";
+import { THEME_STORAGE_KEY } from "./theme.constants";
 
 function buildStorage(initialValue?: string) {
   const savedValues = new Map<string, string>();
