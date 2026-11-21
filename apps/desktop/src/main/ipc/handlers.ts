@@ -177,7 +177,7 @@ function createSystemHandlers(services: Services, shell: Shell): Pick<Handlers, 
   };
 }
 
-/** One handler per command in contracts/ipc-commands.md. Every handler validates input with the shared Zod schemas. */
+/** One handler per command in contracts/ipc-commands.md. */
 export function createHandlers(services: Services, shell: Shell): Handlers {
   return {
     ...createItemHandlers(services),
