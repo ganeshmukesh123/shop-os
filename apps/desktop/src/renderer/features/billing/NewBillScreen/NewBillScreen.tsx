@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Flex, Heading } from "@radix-ui/themes";
-import type { Bill, BillLine, Item } from "@shopos/core";
-import { useToast } from "../../../shared/components/Toast";
+import type { Item } from "@shopos/core";
 import { LAYOUT } from "../../../shared/constants/layout";
 import { uiText } from "../../../shared/text/strings";
-import { call, messageOf } from "../../../shared/api/api";
+import { call } from "../../../shared/api/api";
 import { loadDraftForm, type IBillForm } from "../billForm";
 import { useDraftAutosave } from "../hooks/useDraftAutosave";
 import { useBillForm } from "./hooks/useBillForm";
+import { useBillSave } from "./hooks/useBillSave";
 import { useItemSearch } from "./hooks/useItemSearch";
 import { BillView } from "../BillView";
 import { BillLinesTable } from "./components/BillLinesTable";
@@ -15,18 +15,9 @@ import { BillSearchBox } from "./components/BillSearchBox";
 import { BillSummaryPanel } from "./components/BillSummaryPanel";
 import { RecoverDraftDialog } from "./components/RecoverDraftDialog";
 
-interface Saved {
-  bill: Bill;
-  lines: BillLine[];
-  negativeStockItems: Item[];
-}
-
 export function NewBillScreen() {
-  const toast = useToast();
   const [ready, setReady] = useState(false);
   const [recover, setRecover] = useState<IBillForm | null>(null);
-  const [saved, setSaved] = useState<Saved | null>(null);
-  const [saving, setSaving] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const qtyRefs = useRef(new Map<string, HTMLInputElement>());
   const focusLine = useRef<string | null>(null);
@@ -44,6 +35,7 @@ export function NewBillScreen() {
     removeLine,
     addItem,
   } = useBillForm(rememberLineToFocus);
+  const { saved, isSaving, save, startNewBill } = useBillSave(form, evaluation, resetForm);
   const { query, matches, highlightedIndex, setQuery, setHighlightedIndex, clearSearch } =
     useItemSearch();
 
@@ -66,6 +58,10 @@ export function NewBillScreen() {
     }
   });
 
+  useEffect(() => {
+    if (!saved && ready) searchRef.current?.focus();
+  }, [saved, ready]);
+
   const addItemAndClearSearch = useCallback(
     (item: Item) => {
       addItem(item);
@@ -74,60 +70,13 @@ export function NewBillScreen() {
     [addItem, clearSearch],
   );
 
-  const save = useCallback(async () => {
-    if (!evaluation.valid || !evaluation.input || saving) {
-      if (!evaluation.valid) toast("error", evaluation.errors[0] ?? "Check the bill");
-      return;
-    }
-    setSaving(true);
-    try {
-      const saveResult = await call("bills.save", {
-        clientBillId: form.clientBillId,
-        customerName: form.customerName.trim() || undefined,
-        paymentMode: form.paymentMode,
-        billDiscountPaise: evaluation.billDiscountPaise,
-        lines: evaluation.input.map(({ itemId, quantityMilli, ratePaise, lineDiscountPaise }) => ({
-          itemId,
-          quantityMilli,
-          ratePaise,
-          lineDiscountPaise,
-        })),
-      });
-      setSaved(saveResult);
-      resetForm();
-    } catch (caughtError) {
-      toast("error", messageOf(caughtError));
-    } finally {
-      setSaving(false);
-    }
-  }, [evaluation, form, resetForm, saving, toast]);
-
-  // Ctrl/Cmd+S saves the bill.
-  useEffect(() => {
-    const handleKeyDown = (keyboardEvent: KeyboardEvent) => {
-      if (
-        (keyboardEvent.ctrlKey || keyboardEvent.metaKey) &&
-        keyboardEvent.key.toLowerCase() === "s"
-      ) {
-        keyboardEvent.preventDefault();
-        void save();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [save]);
-
-  useEffect(() => {
-    if (!saved && ready) searchRef.current?.focus();
-  }, [saved, ready]);
-
   if (saved) {
     return (
       <BillView
         bill={saved.bill}
         lines={saved.lines}
         negativeStockItems={saved.negativeStockItems}
-        onNew={() => setSaved(null)}
+        onNew={startNewBill}
       />
     );
   }
@@ -162,7 +111,7 @@ export function NewBillScreen() {
       <BillSummaryPanel
         form={form}
         evaluation={evaluation}
-        isSaving={saving}
+        isSaving={isSaving}
         onFormChange={updateForm}
         onDraftChange={updateDraft}
         onClear={resetForm}
