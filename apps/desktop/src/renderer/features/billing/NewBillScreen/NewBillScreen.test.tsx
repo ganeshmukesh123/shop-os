@@ -1,10 +1,10 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Item } from "@shopos/core";
-import { ToastProvider } from "../../../src/renderer/shared/components/Toast";
-import { NewBillScreen } from "../../../src/renderer/screens/NewBillScreen";
-import { installFakeShopos } from "../../helpers/fakeShopos";
-import { renderWithTheme } from "../../helpers/renderWithTheme";
+import { ToastProvider } from "../../../shared/components/Toast";
+import { NewBillScreen } from "./NewBillScreen";
+import { installFakeShopos } from "../../../../../tests/helpers/fakeShopos";
+import { renderWithTheme } from "../../../../../tests/helpers/renderWithTheme";
 
 const PIPE: Item = {
   id: "item-1",

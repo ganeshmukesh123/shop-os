@@ -23,20 +23,15 @@ import {
   type Item,
   type PaymentMode,
 } from "@shopos/core";
-import { BillLineRow } from "../components/BillLineRow";
-import { useToast } from "../shared/components/Toast";
-import { LAYOUT } from "../shared/constants/layout";
-import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
-import { uiText } from "../shared/text/strings";
-import { call, messageOf } from "../shared/api/api";
-import {
-  emptyForm,
-  isEmptyForm,
-  loadDraftForm,
-  useDraftAutosave,
-  type BillForm,
-} from "../state/billDraft";
-import { BillView } from "./BillView";
+import { BillLineRow } from "../BillLineRow";
+import { useToast } from "../../../shared/components/Toast";
+import { LAYOUT } from "../../../shared/constants/layout";
+import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
+import { uiText } from "../../../shared/text/strings";
+import { call, messageOf } from "../../../shared/api/api";
+import { emptyForm, isEmptyForm, loadDraftForm, type IBillForm } from "../billForm";
+import { useDraftAutosave } from "../hooks/useDraftAutosave";
+import { BillView } from "../BillView";
 
 interface Saved {
   bill: Bill;
@@ -46,9 +41,9 @@ interface Saved {
 
 export function NewBillScreen() {
   const toast = useToast();
-  const [form, setForm] = useState<BillForm>(emptyForm());
+  const [form, setForm] = useState<IBillForm>(emptyForm());
   const [ready, setReady] = useState(false);
-  const [recover, setRecover] = useState<BillForm | null>(null);
+  const [recover, setRecover] = useState<IBillForm | null>(null);
   const [saved, setSaved] = useState<Saved | null>(null);
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
@@ -99,7 +94,7 @@ export function NewBillScreen() {
 
   const ev = useMemo(() => evaluateDraft(form.draft), [form.draft]);
 
-  const setDraft = (patch: Partial<BillForm["draft"]>) =>
+  const setDraft = (patch: Partial<IBillForm["draft"]>) =>
     setForm((previousForm) => ({ ...previousForm, draft: { ...previousForm.draft, ...patch } }));
   const patchLine = (key: string, patch: Partial<DraftLine>) =>
     setDraft({
