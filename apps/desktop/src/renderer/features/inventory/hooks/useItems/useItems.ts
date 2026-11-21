@@ -1,15 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Item } from "@shopos/core";
-import { call } from "../shared/api/api";
-
-export interface ItemFilter {
-  query: string;
-  includeInactive: boolean;
-  needsCorrection: boolean;
-}
+import { call } from "../../../../shared/api/api";
+import type { IItemFilter } from "./types";
 
 /** Item list with filters; reload() after any change. */
-export function useItems(filter: ItemFilter, limit = 200) {
+export function useItems(filter: IItemFilter, limit = 200) {
   const [items, setItems] = useState<Item[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);

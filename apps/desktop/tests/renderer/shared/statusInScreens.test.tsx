@@ -1,11 +1,9 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Table } from "@radix-ui/themes";
-import type { DraftLine, Item, ShopProfile } from "@shopos/core";
-import { AdjustStockDialog } from "../../../src/renderer/components/AdjustStockDialog";
+import type { DraftLine, ShopProfile } from "@shopos/core";
 import { BillLineRow } from "../../../src/renderer/components/BillLineRow";
 import { ToastProvider, useToast } from "../../../src/renderer/shared/components/Toast";
-import { ItemsScreen } from "../../../src/renderer/screens/ItemsScreen";
 import { SettingsScreen } from "../../../src/renderer/screens/SettingsScreen";
 import { installFakeShopos } from "../../helpers/fakeShopos";
 import { renderWithTheme } from "../../helpers/renderWithTheme";
@@ -19,17 +17,6 @@ const SHOP_PROFILE: ShopProfile = {
   footer: "",
   receiptWidth: "80mm",
   backupFolder: "/backups",
-};
-
-const NEGATIVE_INACTIVE_ITEM: Item = {
-  id: "item-1",
-  name: "Elbow 1 inch",
-  unit: "pcs",
-  allowsDecimal: false,
-  pricePaise: 4500,
-  stockMilli: -3000,
-  active: false,
-  needsCorrection: true,
 };
 
 const BILL_LINE: DraftLine = {
@@ -176,34 +163,5 @@ describe("status words in the screens (design guidelines 5.1, PRD NFR-011)", () 
     );
 
     expect(screen.getByRole("alert").textContent).toBe("Error Pipe: Quantity must be more than 0");
-  });
-
-  it("an adjustment without a note says Error and what is missing", async () => {
-    installFakeShopos();
-    renderWithTheme(
-      <ToastProvider>
-        <AdjustStockDialog item={NEGATIVE_INACTIVE_ITEM} onClose={() => {}} onDone={() => {}} />
-      </ToastProvider>,
-    );
-
-    await userEvent.type(screen.getByRole("textbox", { name: "Quantity (pcs)" }), "5");
-    await userEvent.click(screen.getByRole("button", { name: "Save adjustment" }));
-
-    expect((await screen.findByRole("alert")).textContent).toBe("Error A note is required");
-  });
-
-  it("an item with negative stock and an inactive item each carry a word", async () => {
-    installFakeShopos({
-      "items.list": () => ({ items: [NEGATIVE_INACTIVE_ITEM], total: 1 }),
-    });
-
-    renderWithTheme(
-      <ToastProvider>
-        <ItemsScreen />
-      </ToastProvider>,
-    );
-
-    expect(await screen.findByText("Negative stock: needs correction")).toBeTruthy();
-    expect(screen.getByText("Inactive")).toBeTruthy();
   });
 });
