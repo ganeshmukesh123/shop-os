@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Box, Flex, Heading, Table, Text, TextField } from "@radix-ui/themes";
+import { Box, Flex, Heading, Text, TextField } from "@radix-ui/themes";
 import {
   evaluateDraft,
   formatQuantity,
@@ -10,7 +10,6 @@ import {
   type DraftLine,
   type Item,
 } from "@shopos/core";
-import { BillLineRow } from "../BillLineRow";
 import { useToast } from "../../../shared/components/Toast";
 import { LAYOUT } from "../../../shared/constants/layout";
 import { uiText } from "../../../shared/text/strings";
@@ -18,6 +17,7 @@ import { call, messageOf } from "../../../shared/api/api";
 import { emptyForm, loadDraftForm, type IBillForm } from "../billForm";
 import { useDraftAutosave } from "../hooks/useDraftAutosave";
 import { BillView } from "../BillView";
+import { BillLinesTable } from "./components/BillLinesTable";
 import { BillSummaryPanel } from "./components/BillSummaryPanel";
 import { RecoverDraftDialog } from "./components/RecoverDraftDialog";
 
@@ -252,42 +252,20 @@ export function NewBillScreen() {
         )}
       </Box>
 
-      {form.draft.lines.length === 0 ? (
-        <Text color="gray">{uiText.bill.empty}</Text>
-      ) : (
-        <Table.Root variant="surface">
-          <Table.Header>
-            <Table.Row>
-              <Table.ColumnHeaderCell>{uiText.bill.item}</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>{uiText.bill.qty}</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>{uiText.bill.rate}</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>{uiText.bill.discount}</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell justify="end">{uiText.bill.amount}</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell />
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {form.draft.lines.map((draftLine, listIndex) => (
-              <BillLineRow
-                key={draftLine.key}
-                line={draftLine}
-                result={ev.lines[listIndex]!}
-                ref={(el) => {
-                  if (el) qtyRefs.current.set(draftLine.key, el);
-                  else qtyRefs.current.delete(draftLine.key);
-                }}
-                onChange={(linePatch) => patchLine(draftLine.key, linePatch)}
-                onRemove={() =>
-                  setDraft({
-                    lines: form.draft.lines.filter((otherLine) => otherLine.key !== draftLine.key),
-                  })
-                }
-                onEnterQty={() => searchRef.current?.focus()}
-              />
-            ))}
-          </Table.Body>
-        </Table.Root>
-      )}
+      <BillLinesTable
+        lines={form.draft.lines}
+        results={ev.lines}
+        onLineChange={patchLine}
+        onLineRemove={(lineKey) =>
+          setDraft({ lines: form.draft.lines.filter((draftLine) => draftLine.key !== lineKey) })
+        }
+        onEnterQty={() => searchRef.current?.focus()}
+        onQtyFieldRef={(lineKey, quantityField) =>
+          quantityField
+            ? qtyRefs.current.set(lineKey, quantityField)
+            : qtyRefs.current.delete(lineKey)
+        }
+      />
 
       <BillSummaryPanel
         form={form}
