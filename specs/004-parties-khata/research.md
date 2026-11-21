@@ -30,21 +30,11 @@ Sources read: the spec, PRD section 8 (FR-KHA-001 to 014), US-05, US-08, US-15, 
 
 ### D4. Allocation links credits to bills; ageing is derived
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:24916b60e70f39296a0d0ad5bd1a07777bdac0c88b758948cdffb14f8e747f5d -->
-
 - **Decision**: `ledger_allocation(settling_entry_id, settled_entry_id, amount_paise)`, append-only, with absolute bounds so the same table serves distributor payables in 009 (whose purchase bills are negative entries). A payment or credit note (the settling entry) is allocated to open bill entries (the settled entries) oldest first, or to the bills the user selected (FR-003). A remainder stays unallocated as an advance (spec edge case "payment larger than all open bills"); later bills are allocated against the advance automatically, including credit from a negative opening balance for the same customer. A `payment_reverse` writes negative allocation rows for that payment's still-active allocations, never edits them.
 
-<!-- /coderabbit-ai-generated:v1 -->
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:57af2daead9bf6d33fd242f197660eef603742c0f380f57284c99a12a719a351 -->
-
-- Open magnitude = absolute entry amount minus net allocated magnitude. The signed open amount keeps the entry's original sign; ageing (`ageOpenItems`) groups the magnitude by days since the bill's `business_date` into 0-30, 31-60, 61-90 and 90+ (cut points a setting, architecture 11.5). A −₹4,000 payable with ₹2,000 allocated has −₹2,000 open; a full allocation leaves zero. Receivables still subtract allocated magnitude from the positive bill amount.
+- Open magnitude = absolute entry amount minus net allocated magnitude. The signed open amount keeps the entry's original sign; ageing (`ageOpenItems`) groups the magnitude by days since the bill's `business_date` into 0-30, 31-60, 61-90 and 91+ days, each item in exactly one band (cut points a setting, architecture 11.5). A −₹4,000 payable with ₹2,000 allocated has −₹2,000 open; a full allocation leaves zero. Receivables still subtract allocated magnitude from the positive bill amount.
 - Apply the [credit bill cancellation rule](data-model.md#ledger_allocation-append-only): append release rows in the cancellation transaction, report zero open on the cancelled bill and omit it from ageing and reminders.
 
-<!-- /coderabbit-ai-generated:v1 -->
 - **Example**: bills ₹3,000 (1 Jan), ₹5,000 (20 Jan), ₹2,000 (10 Feb); payment ₹6,000 on 15 Feb with none selected: ₹3,000 to the first, ₹3,000 to the second; open ₹2,000 + ₹2,000 = ₹4,000.
 
 ### D5. Credit checks at billing
@@ -66,14 +56,9 @@ Sources read: the spec, PRD section 8 (FR-KHA-001 to 014), US-05, US-08, US-15, 
 - **Conflict with the spec's assumption**: the spec assumes "wa.me plus a hosted PDF". Hosting needs a server, which arrives with feature 010. Until then the PDF stays local. Recorded as OI-2.
 - **Bulk reminders** (FR-007): the owner picks a template (English or Hindi, with placeholders `{name}`, `{amount}`, `{oldest_bill}`, `{upi_id}`) and the app steps through the overdue list, opening one chat at a time with a "Next" button. Each opening is logged in `reminder_log` with the template, channel `whatsapp_link` and time. The log records that the message was **prepared**, not that it was delivered, because a link cannot report delivery.
 - **Risk**: SC-003 (50 parties in under 2 minutes of owner time) needs about 2 seconds per party with the link method. Measured in the trial; the WhatsApp Business Platform (feature 013, pilot) is the fallback.
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:9c265c27c5f5fd51d0d8c03494788d86168ae9389eb750f228e9c235c8c6e0c2 -->
 
 - **Consent**: statements and reminders about money owed are transactional and send regardless of marketing consent (EC-17); promotions are not built here.
 - **M4 link opener**: Feature 018's current plan does not supply a WhatsApp opener. T037 uses a dedicated main-process action that constructs the HTTPS URL for the exact `wa.me` host from the validated phone and encoded message and opens it in the system browser. The renderer cannot submit an arbitrary URL. Use a shared 018 policy if it becomes available.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### D8. Consent records start here
 

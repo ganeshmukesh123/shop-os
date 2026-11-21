@@ -65,16 +65,10 @@ Triggers reject UPDATE and DELETE.
 
 ### `ledger_allocation` (append-only)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:ebc07707f3873574035adb35ec6d6ab378d7b2b11ae91a50abc8bbd8f2e6ab46 -->
-
 - `settling_entry_id` identifies the credit applied: a `payment`, `credit_note` or negative customer `opening_balance` in 004; a `payment_out` or `debit_note` in 009.
 - `settled_entry_id` identifies the debt reduced: a `bill_credit` or positive `opening_balance` in 004; a `purchase_bill` in 009. Both entries must belong to the same party. Reject the entire payment before writing anything if any requested `allocateTo` bill belongs to a party other than `partyId`, including for distributor payables.
 - `amount_paise` is the signed change in allocated magnitude: positive applies credit, negative releases it. For each settling entry and each settled entry, its net allocated magnitude must stay between zero and the absolute value of its entry amount. For example, a −₹1,000 customer opening balance settling a later ₹600 bill uses the opening entry as settling, the bill as settled and +60,000 paise as the allocation; the bill has zero open amount and ₹400 remains available.
-- **Credit bill cancellation:** In the same transaction as `bill_cancel_reverse`, append a negative allocation for the outstanding net allocation of each settling/settled pair on that bill, using the same IDs. This zeros those pairs and returns the released amounts to the original sources as unallocated credit. A cancelled bill has zero open amount and cannot receive new allocations. Exclude it from ageing and reminders. Later reversals unwind only still-active allocations, so they cannot release the same allocation twice.
-
-<!-- /coderabbit-ai-generated:v1 -->
+- **Credit bill cancellation:** In the same transaction as `bill_cancel_reverse`, append a negative allocation for the outstanding net allocation of each settling/settled pair on that bill, using the same IDs. This zeros those pairs and returns the released amounts to the original sources as unallocated credit. In the same transaction, the released credit is applied to the party's other open bills, oldest `business_date` first (the D4 rule for payments), and only what is left stays as an advance. Example: credit bill A ₹100 had ₹40 paid; bill B ₹50 is open and overdue; cancelling A releases ₹40 onto B, so B shows ₹10 open in ageing and reminders, and no advance remains. A cancelled bill has zero open amount and cannot receive new allocations. Exclude it from ageing and reminders. Later reversals unwind only still-active allocations, so they cannot release the same allocation twice.
 
 ### `party_balance` (projection)
 
@@ -105,14 +99,10 @@ Triggers reject UPDATE and DELETE.
 ## Changed tables
 
 - `bill`: adds `party_id` (nullable FK to `party`), research D3.
-- `bill_tender`: lookup row `tender_mode` `credit` (no rebuild); a `credit` tender needs `bill.party_id` (service check and test); `approval_id` nullable.
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:db36c3bae894bb6150089e84f8cc3a17b1a19150902758fdf08d9a3175c10d6f -->
+- `bill_tender`: lookup row `tender_mode` `credit` (no rebuild: 002 D17 already replaced 001's `bill_tender_mode` CHECK with a foreign key to `tender_mode`, and 004 requires 002, confirmed by T001); a `credit` tender needs `bill.party_id` (service check and test); `approval_id` nullable.
 
 - `number_series`: `doc_kind` adds `receipt`. If 003 has not added the lookup and column, seed `bill` as the default, backfill existing rows as `bill`, and extend `number_series_uq` to `(shop_id, counter_code, financial_year, doc_kind)`.
 
-<!-- /coderabbit-ai-generated:v1 -->
 - `shop_profile`: adds `upi_vpa` and `upi_payee_name` if 003 has not yet; `ageing_buckets` JSON default `[30, 60, 90]`.
 
 ## Derived values (in `@shopos/core`)
@@ -128,13 +118,9 @@ Example: limit ₹50,000, balance ₹45,000, new credit ₹8,000: after the sale
 ## State
 
 - Party: active, inactive.
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:467c98f0f76ee1e90d08aa2f81c9ac3b50bea196abb3c2155c6f03856ac0e216 -->
 
 - Bill credit entry: cancelled (zero open amount by the credit bill cancellation rule above); otherwise open (open amount above 0) or settled (0), derived from allocations.
 
-<!-- /coderabbit-ai-generated:v1 -->
 - Payment: posted; reversed (a `payment_reverse` exists); derived.
 
 ## Indexes
