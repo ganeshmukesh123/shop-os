@@ -105,3 +105,27 @@ export function planNumberGap(
   if (newLastSeq === restoredLastSeq) return null;
   return { seqFrom: restoredLastSeq + 1, seqTo: newLastSeq, newLastSeq, isEstimated };
 }
+
+/** The calendar year a financial year starts in, as two digits: "26-27" gives 26 (valid until 2099). */
+function financialYearStart(financialYear: string): number {
+  return Number(financialYear.slice(0, 2));
+}
+
+/**
+ * A typed "last bill printed" cannot be from a financial year before the backup's own last bill.
+ * Example: backup's last bill C1/26-27/000001, typed C1/25-26/000126: refused, nothing changes.
+ */
+export function assertNotBeforeBackupYear(
+  typedYear: string,
+  backupLatestYear: string | null,
+): void {
+  const isBeforeBackup =
+    backupLatestYear !== null &&
+    financialYearStart(typedYear) < financialYearStart(backupLatestYear);
+  if (isBeforeBackup) {
+    throw new CoreError(
+      "INVALID_FIELD",
+      `That number is from ${typedYear}, before this backup's last bill in ${backupLatestYear}; enter the last bill you printed`,
+    );
+  }
+}

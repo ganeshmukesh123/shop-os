@@ -35,6 +35,17 @@ export class BackupInspectionRepository {
     };
   }
 
+  /** The latest financial year in which the backup issued a number for this counter, or null. */
+  latestFinancialYear(counterCode: string): string | null {
+    const hasNumberSeries = this.tableColumns("number_series").length > 0;
+    const yearQuery = hasNumberSeries
+      ? "select financial_year from number_series where counter_code = ? and last_seq > 0 order by substr(financial_year, 1, 2) desc limit 1"
+      : "select financial_year from number_counter where series_code = ? and last_seq > 0 order by substr(financial_year, 1, 2) desc limit 1";
+    const yearRow = this.backupDatabase.prepare(yearQuery).get(counterCode) as
+      { financial_year: string } | undefined;
+    return yearRow?.financial_year ?? null;
+  }
+
   /** The last number the backup issued in a series, or 0 when it has no such series (older backups call it a counter). */
   lastSeq(counterCode: string, financialYear: string): number {
     const hasNumberSeries = this.tableColumns("number_series").length > 0;
