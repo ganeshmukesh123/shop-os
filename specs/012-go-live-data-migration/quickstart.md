@@ -4,11 +4,7 @@ Prerequisites: 002, 004, 005 and 007 merged (010 for server restore). Commands a
 
 ## 1. Load data and readiness (M1; US1)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:ca1baa864c3f74981f598028887192f7505cb6c1b07c8ce47f2c526e1f7185c4 -->
-
-1. From the fixture’s old-book ranking select ranks 1–500 and save their distinct item import keys as the readiness reference. Import 520 items (3 without a unit, 2 duplicate groups) and 100 parties with balances (002 and 004 imports). Enter "credit parties in old books: 100".
+1. From the fixture’s old-book ranking select ranks 1–500 and save their distinct item import keys as the readiness reference. Import 520 items (3 without a unit, 2 duplicate groups) and 100 parties with balances (002 and 004 imports). Enter the 100 import keys of the old books' credit parties. Expected: no party gap. Then remove one party from the import and re-check: expected one party gap naming it.
 2. Run readiness. Expected: "Not ready"; import gaps include 3 items without a unit and 2 open duplicate groups.
 3. Fix the units; merge the duplicates (002). Run again. Compare the reference keys with loaded item keys: the set difference must be empty. Verify all 100 fixture parties and their opening balances; record the SC-002 completion date at G - 14. Import gaps are clear; sign-off and training still keep overall status "Not ready".
 4. Run the same imports again. Expected: nothing double-posts.
@@ -36,8 +32,6 @@ Prerequisites: 002, 004, 005 and 007 merged (010 for server restore). Commands a
 1. Install version N+1 with a new feature. Expected: the feature is off; switching it on asks for the walkthrough date and attendees.
 2. Save a bill on N+1 and record its ID, bill number and total. Roll back to version N (additive migrations only). Expected: open that same database and retrieve the bill by ID; its number and total match.
 3. A person other than the builder restores a backup on a clean machine with the guide. Expected: under 30 minutes (SC-006), recorded as a restore drill.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## 6. Both themes
 

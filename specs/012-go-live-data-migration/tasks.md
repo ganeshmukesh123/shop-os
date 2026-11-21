@@ -28,11 +28,7 @@ description: "Task list for feature 012: go-live tools, training mode, reconcili
 
 ## Phase 2: Foundational
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:acfeb40b2d6ecceab023a492ddaa8f058051a24c85330d9aa0a3846039455315 -->
-
-- [ ] T004 [P] Write tests in `core/tests/golive/readiness.test.ts`: 512 items with 3 missing units and 96 of 100 parties gives "Not ready" with both gaps; clean import with all 500 reference keys and parties gives "Ready" only with settings and training complete. Test a missing reference key despite 500 items, missing sign-off alone and incomplete training alone; each gives "Not ready" with the relevant gap
+- [ ] T004 [P] Write tests in `core/tests/golive/readiness.test.ts`: 512 items with 3 missing units and 96 of 100 parties gives "Not ready" with both gaps; clean import with all 500 reference keys and parties gives "Ready" only with settings and training complete. Test a missing reference key despite 500 items, missing sign-off alone and incomplete training alone; each gives "Not ready" with the relevant gap Parties are matched by key: old books list A and B, import loads C and D, so both counts are 2 but readiness reports A and B missing. No champion named gives "Not ready" even with every staff member trained.
 - [ ] T005 [P] Write tests in `core/tests/golive/shareBilled.test.ts`, `bypassSignals.test.ts`, `top200Accuracy.test.ts`, `trainingSeries.test.ts`: ₹38,200 / ₹40,000 = 9550 bp; bills per footfall over 14 days; 19 of 20 within tolerance gives 9500 bp; `trainingTemplate` turns `C1/26-27/000123` into `TR/26-27/000123` (15 characters); a one-character series with a full-length literal template also produces the 15-character canonical training number
 - [ ] T006 Implement `core/src/golive/*.ts` to pass T004 and T005
 - [ ] T007 Add `readiness_input`, `signoff_item` (seeded six), `training_record` (one champion per shop), `daily_reconciliation` (append-only), `gate_review` (append-only), `feature_switch`, `release_marker`, `bill.paper_bill_ref` and `number_series.doc_kind` value `paper_backfill` to `desktop/src/main/db/schema.ts`; generate the migration (marked additive)
@@ -50,7 +46,7 @@ description: "Task list for feature 012: go-live tools, training mode, reconcili
 
 ## Phase 4: User Story 5 - Safe releases and rollback (M1, 27 to 29 Aug; P1)
 
-- [ ] T012 [US5] Test OI-2: build version N and N+1 (N+1 with one additive migration), open N+1's database with N, and record what 001's `migrateValidated` and start-up safety do in `specs/012-go-live-data-migration/research.md`
+- [ ] T012 [US5] Test OI-2: build version N and N+1 (N+1 with one additive migration), open N+1's database with N, and record what 001's `migrateValidated` and start-up safety do in `specs/012-go-live-data-migration/research.md` Also check the write-compatibility declaration: a migration marked additive with neither `independent` nor `rebuilt_on_start` is refused as non-additive for rollback.
 - [ ] T013 [US5] Write tests in `desktop/tests/integration/additiveMigrations.test.ts` and change the start-up check in `desktop/src/main/db/startupSafety.ts` so an older app opens a database with unknown newer migrations only when every unknown applied journal entry has exactly one matching compatibility row with flag true. Ship the reader and table in N; N+1 derives each flag from the migration header and stores it with its Drizzle timestamp and SQL hash in the same transaction as the applied journal entry. Before migration or normal use, N checks each unknown entry against that table. Test all-true and mixed releases, absent table/row, mismatched hash and invalid or false flag; refuse unverifiable or non-additive data and direct the owner to D10. The release summary flag cannot authorize opening
 - [ ] T014 [US5] Label the pre-migration backup with the app version and write a `release_marker` row at the first start of a new version in `desktop/src/main/golive/ReleaseMarker.ts`, with a test
 - [ ] T015 [P] [US5] Write tests in `desktop/src/main/golive/FeatureSwitchService.test.ts`: switches off by default; switching on needs a walkthrough date and attendees; entry points of a switched-off feature return `FEATURE_OFF`; changes audited
@@ -77,8 +73,6 @@ description: "Task list for feature 012: go-live tools, training mode, reconcili
 - [ ] T026 [US3] Implement `ReconciliationService.ts` to pass T025; register `reconcile.*`
 - [ ] T027 [P] [US3] Build `desktop/src/renderer/features/golive/Reconciliation/` (evening entry, share against 95%, 14-day bypass view)
 - [ ] T028 [US3] Write the e2e spec `desktop/tests/e2e/parallelRun.spec.ts` for quickstart 3
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ---
 
