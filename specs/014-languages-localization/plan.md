@@ -4,9 +4,15 @@
 
 **Input**: Feature specification from `/specs/014-languages-localization/spec.md`, the PRD's English-first decision and NFR-012, the constitution v2.1.0, the current `strings.ts`, and the designs of 002, 004, 008 and 015.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:b236f0442ada4e6129bd1b40a00ca3d9ea6040e51c0fce3c17f5fd1e6851c43d -->
+
 ## Summary
 
-Move every user-facing string (screens, errors, printed documents, statements) into a small shared package of typed catalogues with English as the source and fallback; enforce it with a lint rule and a key check in CI; keep Indian number, date and amount-in-words formatting in one place; make search treat Devanagari by grapheme cluster and mixed-script names by word; bundle a Devanagari font so screens and PDFs render on every OS; then add Hindi screen text per user, with the bill language set per shop and legal wording in English until the CA agrees.
+Move every user-facing string (screens, errors, printed documents, statements) into a small shared package of typed catalogues with English as the source and fallback; enforce it with JSX lint, a key check in CI and a review gate for indirect renderer text; keep Indian number, date and amount-in-words formatting in one place; make search treat Devanagari by grapheme cluster and mixed-script names by word; bundle a Devanagari font so screens and PDFs render on every OS; then add Hindi screen text per user, with the bill language set per shop and legal wording in English until the CA agrees.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Technical Context
 

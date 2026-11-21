@@ -2,10 +2,14 @@
 
 Prerequisites: features 001 to 011 merged (their screens are moved to the catalogue). Commands as in 001, plus `pnpm text:check`. Contract: `contracts/text-catalogue.md`.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:e472a1fec8378bbb4add771ac05bc2b694da2ae214ad76b1b0518569c4e11406 -->
+
 ## 1. Text separate from code (M1; US1)
 
-1. Run `pnpm lint` and `pnpm text:check`. Expected: no literal text in renderer JSX or print templates; every used key exists in English.
-2. Add a test language file `xx.json` with 5 keys (test-only language code). Expected: those 5 show, everything else falls back to English, and `text.missing` lists the rest; no code changed (SC-001).
+1. Run `pnpm lint` and `pnpm text:check`. Expected: the JSX rule passes and every used key exists in English. Apply the D3 review gate to text supplied indirectly to the renderer and scan print and message templates for literals outside the catalogue.
+2. Add a test language file `xx.json` with 5 keys (test-only language code) and rebuild. Expected: those 5 show, everything else falls back to English, and `listMissingKeys("xx")` lists the rest; no code changed (SC-001).
 3. A key with placeholders whose order differs in the test language ("{amount} बाकी है {customerName} पर"). Expected: correct order.
 
 ## 2. Hindi in search and templates (M2; US2)
@@ -13,8 +17,10 @@ Prerequisites: features 001 to 011 merged (their screens are moved to the catalo
 1. Item "Elbow 1 in" with search name "कोहनी". Type "कोहनी" and "कोहिनी" (one wrong vowel sign). Expected: found both times.
 2. "Supreme कोहनी" found by "supreme" and by "कोहनी".
 3. Run 50 searches by Hindi, Hinglish or trade name (scripted list from the owner). Expected: 95% pick the intended item in the top 3 (SC-002).
-4. Send a reminder in Hindi and one in English (004). Expected: previews show the chosen text; 20 Hindi test sends arrive correctly formatted on two phones (SC-003).
+4. With English as the shop's bill language, preview the default reminder in English, then select a Hindi template and preview again with the same screen language (004). Expected: the selected template's Hindi text appears and the bill language stays English; 20 Hindi test sends arrive correctly formatted on two phones (SC-003).
 5. Print an A4 bill with a Hindi customer name on macOS, Windows and Linux. Expected: no broken characters (bundled font).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## 3. Indian formats (M1; US3)
 

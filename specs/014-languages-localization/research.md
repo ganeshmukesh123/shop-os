@@ -8,9 +8,13 @@ Sources read: the spec, the PRD decisions of 12 November 2026 (English first), N
 
 ## Decisions
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:1f2292038bb4710ff852954f6991d8e73bfe3ac4e93c351559044f94520e303e -->
+
 ### D1. Text catalogues in a small shared package, typed by the English source
 
-- **Decision**: a new workspace package `packages/text` (`@shopos/text`, pure TypeScript, no runtime dependencies) holds the catalogues and a `translate(language, key, values)` function. `en.ts` is the source of keys (a typed object like today's `uiText`); other languages are JSON files (`hi.json`) holding any subset of keys. Missing keys fall back to English and are reported (FR-001, FR-007).
+- **Decision**: a new workspace package `packages/text` (`@shopos/text`, pure TypeScript, no runtime dependencies) holds the catalogues and a `translate(language, key, values)` function. `en.ts` is the source of keys (a typed object like today's `uiText`); other languages are JSON files (`hi.json`) holding any subset of keys. Discover these files by filename at build time so a new catalogue requires no code changes or manual registration (SC-001). Missing keys fall back to English and are reported (FR-001, FR-007).
 - **Why a package**: the renderer shows screen text and the main process renders printed bills, statements and messages (001, 004, 008). Both need the same catalogue, and the layering rules forbid the renderer importing main-process code and vice versa. `packages/core` is for business rules; text is not one, so it gets its own package rather than growing core.
 - **Placeholders**: named, `{customerName}` and `{amount}`, so word order can change per language (US1 scenario 4). Plurals with the built-in `Intl.PluralRules` (`one`, `other` keys). No ICU message syntax beyond that.
 - **Alternatives**:
@@ -25,13 +29,16 @@ Sources read: the spec, the PRD decisions of 12 November 2026 (English first), N
 
 ### D2. The main process sends codes, the renderer shows text
 
-Every IPC error result already carries a stable `code` (001 contract). The renderer maps codes to text through the catalogue (`errors.<CODE>`); the main process's `message` field stays English for logs only. Printed documents, statements and message templates are rendered by the main process with the **shop's bill language** (D6), never the screen language.
+Every IPC error result already carries a stable `code` (001 contract). The renderer maps codes to text through the catalogue (`errors.<CODE>`); the main process's `message` field stays English for logs only. The main process renders printed documents and statements in the shop's bill language, subject to the legal wording rule in D6. Message templates default to the shop's bill language; selecting a template for a message uses that template's `message_template.language` instead. None of these outputs use the user's screen language.
 
 ### D3. Enforce "no hard-coded text"
 
-- ESLint `react/jsx-no-literals` (from `eslint-plugin-react`, which needs owner approval if not already present; `jsx-no-literals` is its standard rule) on `apps/desktop/src/renderer/**`, allowing only punctuation and symbols such as "₹", "/", ":".
+- Use ESLint `react/jsx-no-literals` (from `eslint-plugin-react`, which needs owner approval if absent) in `apps/desktop/src/renderer/**` to catch direct JSX literals, allowing punctuation and symbols such as "₹", "/", ":".
 - A test (`pnpm text:check`) that every key used in code exists in `en.ts`, lists keys missing per language, and fails CI if English is missing a key.
-- A scan of printed-document templates for literal text outside the catalogue.
+- The automated checks do not trace strings defined outside JSX into the UI. Before approving each renderer PR, the reviewer traces new or changed user-facing children and props (including accessibility labels), messages and toasts to their sources, including variables, helpers and configuration. Block approval if app-authored copy comes from a literal outside the catalogue, for example `const label = "Save"; <Button>{label}</Button>`.
+- A scan of print and message templates for literal text outside the catalogue.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### D4. Indian formats in one place
 
@@ -47,13 +54,17 @@ Every IPC error result already carries a stable `code` (001 contract). The rende
 - **Display**: Devanagari needs a font on every OS. macOS has Kohinoor Devanagari; Windows has Nirmala UI; many Linux installs have no Devanagari font. Decision: bundle **Noto Sans Devanagari** (SIL Open Font License) as an app asset, used as the fallback in the font stack and embedded in PDFs by Chromium's print-to-PDF.
 - **Receipt printers**: whether the shop's 80 mm printer prints Devanagari through the OS driver is unverified (001 D24); feature 015 decides raster printing or the English fallback with a warning.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:da0b4c499f6a2de946287a6b202dff34a3dc92b98025a1845f974db57d5fac5f -->
+
 ### D6. Screen language per user, bill language per shop
 
-`app_user.language` (`en` default, `hi`) changes only that user's screens (FR-006); `shop_profile.bill_language` (`en` default) sets printed documents, statements and templates' default. Legal wording on bills (composition declaration, document titles) stays English until the CA confirms otherwise (spec assumption, OI-2).
+`app_user.language` (`en` default, `hi`) changes only that user's screens (FR-006); `shop_profile.bill_language` (`en` default) sets the language for printed documents and statements and the default for message templates. An explicitly selected template uses its `message_template.language` for that message (004 FR-007; this feature’s US2). The user's screen language never selects a message template or determines its rendering language. Legal wording on bills (composition declaration, document titles) stays English until the CA confirms otherwise (spec assumption, OI-2).
 
 ### D7. Hindi translation and review
 
-A person fluent in the shop's trade translates `hi.json` from an exported list of keys with English text and context notes; the translator never edits code. A layout review in Hindi checks wrapping on every screen (long words overflowing buttons, spec edge case); Radix components wrap by default, fixed-width buttons are avoided. Machine translation may draft but a person signs off (spec assumption).
+A person fluent in the shop's trade translates `hi.json` from an exported list of keys with English text and context notes; the translator never edits code. Avoid fixed-width buttons. Wrapping of long Hindi labels in Radix components is unverified; check it on every screen in the Hindi layout review (OI-5, T025). Machine translation may draft but a person signs off (spec assumption).
 
 ## Open items
 
@@ -63,6 +74,9 @@ A person fluent in the shop's trade translates `hi.json` from an exported list o
 | OI-2 | Whether bills, legal wording and amount in words may be printed in Hindi | CA                       | M3        |
 | OI-3 | Devanagari on the shop's receipt printer                                 | 015                      | M3        |
 | OI-4 | `eslint-plugin-react` already in the lint setup or to be added           | Check `eslint.config.js` | M1        |
+| OI-5 | Whether Radix components wrap long Hindi labels; verify on every screen in Hindi in light and dark (T025) | Renderer maintainer | M3 |
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Owner decisions needed
 

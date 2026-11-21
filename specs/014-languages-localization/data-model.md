@@ -21,14 +21,22 @@ Rules:
 - A key with plural forms holds `{ one, other }`.
 - Missing keys fall back to English and are counted.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:d3f8d58dc75f308e5f382a31f4dfa9d03714cdc7ace773153a44da61cc6b9cee -->
+
 ## Database changes
 
 | Table                    | Column          | Rule                                                                        |
 | ------------------------ | --------------- | --------------------------------------------------------------------------- |
 | `app_user` (005)         | `language`      | `en` default, `hi`; per user                                                |
-| `shop_profile`           | `bill_language` | `en` default, `hi`; printed documents and the default for message templates |
-| `message_template` (004) | `language`      | exists (`en`, `hi`)                                                         |
+| `shop_profile`           | `bill_language` | `en` default, `hi`; printed documents and statements; default for message templates |
+| `message_template` (004) | `language`      | language of the selected template (`en`, `hi`); overrides the shop default for that message                                                         |
 | `privacy_notice` (008)   | `language`      | exists                                                                      |
+
+The renderer uses `app_user.language` for screens only. The main process never uses it for printed documents, statements or message templates (research D2 and D6).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Derived values
 
