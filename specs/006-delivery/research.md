@@ -45,7 +45,7 @@ The delivery address carries a state code. Saving a delivery whose state differs
 
 ### D7. Challan
 
-A challan has its own number from 001's `number_series` with `doc_kind` `challan` (`DC{counter}/{fy}/{seq5}`, at most 16 characters), lists the bill number and version, the delivery address, contact, site, date and slot, the lines with quantities and units, and, when chosen, prices and totals. Every print is a `challan_print` row; any print after the first is marked "DUPLICATE" on the paper (spec edge case). The layout is in `contracts/challan-layout.md`.
+A challan has its own number from 001's `number_series` with `doc_kind` `challan` (`DC{counter}/{fy}/{seq5}`, at most 16 characters), lists the bill number and version, the delivery address, contact, site, date and slot, the lines with quantities and units, and, when chosen, prices and totals. **Quantities still owed**: each line prints the bill line's quantity minus the returns recorded against it when the challan is made; a fully returned line is left out. Example: after the 10 pipes come back, the re-dispatch challan lists only the 2 elbows. The printed quantities are stored (`challan_line`), so a reprint shows the same paper. Every print is a `challan_print` row; any print after the first is marked "DUPLICATE" on the paper (spec edge case). The layout is in `contracts/challan-layout.md`.
 
 ### D8. Proof of delivery at the counter for now
 

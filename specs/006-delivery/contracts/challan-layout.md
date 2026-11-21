@@ -12,7 +12,7 @@ Printed on A5 (default) or A4, always black on white (constitution X). Thermal r
 
 ## Lines
 
-`#`, item name, quantity with unit (the entered unit and the base quantity when they differ, for example "2 roll (180 m)"). With prices: rate and amount. The delivery charge line appears only on the priced challan.
+`#`, item name, quantity with unit (the entered unit and the base quantity when they differ, for example "2 roll (180 m)"). The quantity is what is still owed: the bill line's quantity minus returns recorded against it when the challan was made, as stored in `challan_line`; fully returned lines are not printed. Example: bill of 10 pipes and 2 elbows, 10 pipes returned: the re-dispatch challan shows one line, 2 elbows. With prices: rate and amount. The delivery charge line appears only on the priced challan.
 
 ## Footer
 

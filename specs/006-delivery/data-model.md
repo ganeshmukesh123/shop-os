@@ -56,7 +56,7 @@ Address fields may be corrected before the delivery is out (audited); not after.
 
 ### `challan` and `challan_print` (append-only)
 
-`challan`: `challan_no` from `number_series` `doc_kind` `challan`, `UNIQUE(shop_id, challan_no)`, at most 16 characters; `delivery_id`; `bill_version`; `with_prices` (0 or 1). `challan_print`: `challan_id`, `printed_at`, `user_id`, `is_duplicate` (1 for every print after the first).
+`challan`: `challan_no` from `number_series` `doc_kind` `challan`, `UNIQUE(shop_id, challan_no)`, at most 16 characters; `delivery_id`; `bill_version`; `with_prices` (0 or 1). `challan_print`: `challan_id`, `printed_at`, `user_id`, `is_duplicate` (1 for every print after the first). `challan_line` (append-only): `challan_id`, `bill_line_id`, `qty_base_milli` (> 0, the quantity still owed when the challan was made), written with the challan; reprints read these rows, never recompute.
 
 ### `driver_handover` (append-only)
 
