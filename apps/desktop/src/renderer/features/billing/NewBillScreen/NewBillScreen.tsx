@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
-  Dialog,
   Flex,
   Heading,
   SegmentedControl,
@@ -32,6 +31,7 @@ import { call, messageOf } from "../../../shared/api/api";
 import { emptyForm, isEmptyForm, loadDraftForm, type IBillForm } from "../billForm";
 import { useDraftAutosave } from "../hooks/useDraftAutosave";
 import { BillView } from "../BillView";
+import { RecoverDraftDialog } from "./components/RecoverDraftDialog";
 
 interface Saved {
   bill: Bill;
@@ -403,44 +403,17 @@ export function NewBillScreen() {
       </Flex>
 
       {recover && (
-        <Dialog.Root open>
-          <Dialog.Content maxWidth="440px">
-            <Dialog.Title>{uiText.bill.recoverTitle}</Dialog.Title>
-            <Dialog.Description>{uiText.bill.recoverBody}</Dialog.Description>
-            <Box mt="3">
-              <StatusMessage role="neutral" label={uiText.status.draft}>
-                {recover.draft.lines.length} line{recover.draft.lines.length === 1 ? "" : "s"}:{" "}
-                {recover.draft.lines.map((draftLine) => draftLine.name).join(", ")}
-              </StatusMessage>
-            </Box>
-            <Flex gap="3" mt="4" justify="end">
-              <Button
-                variant="soft"
-                color="gray"
-                size="3"
-                onClick={() => {
-                  setRecover(null);
-                  void call("bills.draft.save", { payload: null });
-                }}
-              >
-                {uiText.bill.discard}
-              </Button>
-              <Button
-                size="3"
-                autoFocus
-                onClick={() => {
-                  setForm({
-                    ...recover,
-                    clientBillId: recover.clientBillId ?? crypto.randomUUID(),
-                  });
-                  setRecover(null);
-                }}
-              >
-                {uiText.bill.recover}
-              </Button>
-            </Flex>
-          </Dialog.Content>
-        </Dialog.Root>
+        <RecoverDraftDialog
+          draftForm={recover}
+          onDiscard={() => {
+            setRecover(null);
+            void call("bills.draft.save", { payload: null });
+          }}
+          onContinue={() => {
+            setForm({ ...recover, clientBillId: recover.clientBillId ?? crypto.randomUUID() });
+            setRecover(null);
+          }}
+        />
       )}
     </Flex>
   );
