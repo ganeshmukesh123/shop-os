@@ -9,18 +9,12 @@ Run each scenario when the milestone named beside it is done (milestones in `pla
 
 ## 1. Families and variants (M2; US1)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:649aa26fbeccda6429a58b67fa68afdab48278312c1db22b5768c6dc544f8702 -->
-
 1. Create family "PVC Pipe Supreme", kind general, axes size (0.5 in, 0.75 in, 1 in) and class (4 kg, 6 kg). Preview shows 6 combinations; untick "1 in x 4 kg"; save.
 2. Try a fifth axis. Expected: refused with "A family can have at most 4 variant attributes".
 3. On a new bill type "supreme", press Enter. Expected: a grid with sizes as rows and classes as columns, stock in each cell, the unticked cell absent; arrow keys and Enter add "0.75 in x 6 kg".
 4. Wire variant with base metre and roll = 90 m: bill 2 rolls. Expected: stock falls by 180 m; the bill shows "2 roll". On a separate wire variant with roll = 90.5 m (`factor_milli = 90500`), bill 0.333 roll. Expected: `INEXACT_CONVERSION`.
 5. Enter 2.5 on a pcs variant. Expected: rejected.
 6. Deactivate a variant that is on a saved bill. Expected: allowed; the bill still shows it; no delete is offered.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 Expected overall: 001 items appear as one-variant families with their old codes, stock and bills.
 
@@ -35,17 +29,7 @@ Expected overall: 001 items appear as one-variant families with their old codes,
 
 ## 3. Tinting (M4; US3)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:7539ee7476ef735a3c04d22cf0ce2637596087b58e79d198d2d4a306cf00585c -->
-
 Setup: base family "Royale" (`base_type`: White, Pastel, Deep; `pack_size`: 1 L, 4 L), colorants Blue and Black in ml, shade "Sky Blue" with a formula for Pastel 4 L (Blue 12.5 ml, Black 0.75 ml), 4 L charge ₹60.00, Pastel 4 L price ₹1,450.00.
-
-<!-- /coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:3cf5bad25669a29b401717ad84824947f970703cb75bc3e81a313495f58fa97a -->
 
 1. Bill Royale, Sky Blue, 4 L for customer "Sharma". Expected: colorant amounts shown; line ₹1,510.00; after save, stock of the Pastel 4 L can falls by 1, Blue by 12.5 ml and Black by 0.75 ml; the line is marked non-returnable.
 2. Load a shade price of ₹1,550.00 for Sky Blue on Pastel 4 L and bill again. Expected: line ₹1,550.00, no charge added.
@@ -54,21 +38,13 @@ Setup: base family "Royale" (`base_type`: White, Pastel, Deep; `pack_size`: 1 L,
 5. Cancel the first tinted bill. Expected: base and both colorants restored exactly.
 6. Twenty tinted sales (scripted). Expected: colorant and base stock equal the formula totals to the millilitre (SC-004).
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ## 4. Paint fields, labels, import (M5; US4)
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:d0b7954a2ecbfcc0074974000f74afe340a7068df7a1cd15c8b6ca37d17891ed -->
 
 1. Create a thinner without a petroleum class. Expected: refused with "Petroleum class is required for paint, thinner and solvent items".
 2. Import a 3,000-row file with 20 error rows and 5 duplicate groups. Expected: preview in under 30 s listing all of them; confirm; 2,980 rows saved (SC-005).
 3. Export barcode labels for 10 items to PDF. Expected: 10 labels on one 65-up sheet; each scans back to its item with a USB scanner.
 4. Set warranty 24 months and serial tracking on a power tool. Expected: stored and shown on the item.
 5. Import a shade library file with 2 bad rows. Expected: preview lists both; nothing saved until confirmed.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## 5. Both themes
 

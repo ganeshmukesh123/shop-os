@@ -24,17 +24,11 @@ The owner creates a family such as "PVC Pipe Supreme" with attributes (size, cla
 
 **Acceptance Scenarios**:
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:af82c5623ebe7793f5a0aca34d1332528750d57c96885ee47cdeab44429a4c89 -->
-
 1. **Given** a family with sizes 0.5", 0.75", 1" and classes 4 kg and 6 kg, **When** the owner generates variants, **Then** 6 variants are created and each can be deleted if not stocked.
 2. **Given** a family is selected on a bill, **When** the user presses Enter, **Then** a grid opens (rows one attribute, columns another) with stock in each cell.
 3. **Given** a variant with base unit metre and 1 roll = 90 m, **When** billing or receiving, **Then** the user may use either unit and quantities convert exactly.
 4. **Given** a unit that does not allow decimals (pcs, sealed packs), **When** 2.5 is entered, **Then** it is rejected.
 5. **Given** a variant has several attributes of the seeded set in FR-001, **When** more than 4 are chosen, **Then** the system refuses and says why.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ---
 
@@ -59,29 +53,13 @@ Staff find items by typing partial, misspelled, Hindi, Hinglish or trade names (
 
 ### User Story 3 - Bill tinted paint (Priority: P1)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:634c8ed8074916568a9ec234e229aa1e2edc3667acd6414a3f63b291ee69e762 -->
-
 Staff bill a tinted paint by picking product, shade and pack size. The system picks the base and formula, shows colorant amounts for the tinter, deducts one base can and the colorant millilitres from stock, and prices base plus tinting charge. Staff can enter a custom shade, repeat a customer's earlier shade in one tap, and tinted paint is marked non-returnable. The owner-approved exception is implemented in feature 003 using approvals from 005.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 **Why this priority**: The shop tints paint today, and the PRD makes tinting an MVP requirement.
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:db0bf6b4e59d6fc4c42b3d8b72e0fd71b276d79fd8b710256cfa385142f20f2f -->
-
 **Independent Test**: Bill a tinted 4 L pack of a shade with a loaded formula: stock of base and each colorant falls by the formula amounts, price equals base plus charge; repeat it from the customer's page; verify the saved line is marked non-returnable.
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 **Acceptance Scenarios**:
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:44427a599d13bdbb11e66658a54eb4bd583a863fb0b4aba8ee115983f0148509 -->
 
 1. **Given** base paints (brand, product, base type, pack size) and colorants stocked in ml, **When** a shade with a formula is billed, **Then** colorant amounts show and stock deducts 1 base can and the formula ml.
 2. **Given** a fixed tinting charge per pack size (or a loaded brand shade price list), **When** billed, **Then** price = base can price + charge (or the list price).
@@ -90,8 +68,6 @@ Staff bill a tinted paint by picking product, shade and pack size. The system pi
 5. **Given** a tinted sale, **Then** the saved line is marked non-returnable and the shop has a "Tinted returns" location ready for feature 003.
 6. **Given** a shade library file with formulas, **When** imported in M5 from a supported spreadsheet file, **Then** formulas load with a preview of errors.
 7. **Given** colorant cost, **Then** it counts in landed cost for margin.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ---
 
@@ -138,10 +114,6 @@ These come after the items above prove themselves: ISI/BIS number capture at pur
 
 ### Functional Requirements
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:8555b500fe62624a5bf17c08086eae22a25ee9559957302d916e63da4f12caaf -->
-
 - **FR-001**: System MUST store items as a family with one or more variants, each with up to 4 attributes from the eight Generic keys (size, gauge, shade, pack size, colour, length, rating, brand; FR-ITM-001) plus the two axes used by this feature: class and base type.
 - **FR-002**: System MUST generate all variant combinations in one step and allow deleting combinations not stocked (FR-ITM-002).
 - **FR-003**: Each variant MUST hold automatic item code, barcode(s), HSN, GST rate, base unit, purchase price, selling price per tier, MRP per batch, reorder level, location tag and active flag (FR-ITM-003).
@@ -161,8 +133,6 @@ These come after the items above prove themselves: ISI/BIS number capture at pur
 - **FR-017**: Tinted paint MUST be marked non-returnable and the shop MUST have a seeded `tinted_returns` location. The reduced-value return to that location with owner approval (FR-TNT-007) is deferred to feature 003 FR-015 using feature 005 approvals.
 - **FR-018 [V2]**: ISI/BIS number capture (FR-ITM-014), kits (FR-ITM-015), substitutes (FR-ITM-016), colorant alerts and usage monitoring (FR-TNT-008).
 - **FR-019 [V3 / Later]**: Item notes (FR-ITM-017); tinting machine import (FR-TNT-009).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### Key Entities
 

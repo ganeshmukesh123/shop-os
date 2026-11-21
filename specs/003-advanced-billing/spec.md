@@ -79,18 +79,12 @@ Staff find the original bill by number, phone or by scanning the printed QR, cho
 
 **Acceptance Scenarios**:
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:535626b85de6905f84d0ab74e67422d0afc62d7826e99e89b6f1958c4a617d73 -->
-
 1. **Given** a printed bill with QR, **When** scanned in Return mode, **Then** its lines appear for selection.
 2. **Given** refund by credit note, **Then** the party ledger reduces and stock goes to the chosen location.
 3. **Given** no original bill, **Then** the return needs owner approval.
 4. **Given** an item sold at contractor price returned by a retail customer, **Then** the refund is at the original price (EC-11).
 5. **Given** a partial return of a kit, **Then** the refund is prorated by component value (EC-12).
 6. **Given** a tinted line marked non-returnable, **Then** no return posts without owner approval; with approval, the return credits a reduced value and routes the tinted pack to the shop's `tinted_returns` location (FR-TNT-007).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ---
 
@@ -152,10 +146,6 @@ Inter-state check and format by registration come from 008. Site return of unuse
 
 ### Functional Requirements
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:9a26ece1dee94abca4ec307fcc1ead320ac8d2f5087c31887eb0853eee2c3c96 -->
-
 - **FR-001**: Counter MUST open on a new bill with the search box ready; add lines by 2+ characters or scan; Enter adds top match at quantity 1; a family opens the variant grid (FR-BIL-001, FR-BIL-002).
 - **FR-002**: System MUST provide shortcuts for new, hold, recall, quote, return, customer, pay, print, and keyboard navigation of the grid (FR-BIL-003).
 - **FR-003**: Price MUST fill from the customer tier or customer-specific price; changing the tier reprices all lines (FR-BIL-004).
@@ -170,13 +160,11 @@ Inter-state check and format by registration come from 008. Site return of unuse
 - **FR-012**: Bill format MUST follow the shop's registration at the bill date; output MUST include thermal, A4/A5 and WhatsApp share, and printer failure MUST NOT block save (FR-BIL-014, FR-BIL-015).
 - **FR-013**: System MUST hold up to 10 bills per counter (FR-BIL-016).
 - **FR-014**: Same-day edit (same business date in the shop's time zone, roles with permission from 005) MUST save a new bill version that keeps the bill number; the previous version MUST stay stored, unchanged and readable, and the edit MUST be written to the audit log with user, time and reason. No version is ever overwritten. Stock and ledger changes from an edit are new opposite and new entries, never edits. Cancel MUST need reason and owner approval and keep the number (FR-BIL-017, FR-BIL-018; constitution v2.0.0 principle I, owner decision 2026-11-15).
-- **FR-015**: Returns MUST work against an original bill by number, phone or QR, with refund by cash, UPI or credit note and sellable or defective routing; no-bill returns need approval (FR-BIL-019). The tinted-paint exception requires owner approval via 005, a reduced refund value and routing to `tinted_returns` (FR-TNT-007, deferred from 002).
+- **FR-015**: Returns MUST work against an original bill by number, phone or QR, with refund by cash, UPI or credit note and sellable or defective routing; no-bill returns need approval (FR-BIL-019). The tinted-paint exception requires owner approval via 005, a reduced refund value and routing to `tinted_returns` (FR-TNT-007, deferred from 002). The reduced value is not defined yet and is an **owner decision needed before 003 is planned**: the rule (fixed percentage, fixed amount, or an amount the owner enters at approval in 005) and its bounds (at least ₹0, at most the returned line's amount). This requirement is the one definition FR-TNT-007 cites; tests check that rule once it is recorded here.
 - **FR-016**: Quotations MUST support validity (default 7 days), WhatsApp share, full or partial conversion with locked or refreshed prices, and version numbers (FR-BIL-020).
 - **FR-017**: System SHOULD capture unmet demand in one tap (FR-BIL-021).
 - **FR-018**: System MUST block inter-state sales under composition with an explanation (FR-BIL-022, shared with 008).
 - **FR-019 [V2/V3]**: Challan and partial delivery (FR-BIL-023, with 006); site return (FR-BIL-024); quote from list (FR-BIL-025).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### Key Entities
 

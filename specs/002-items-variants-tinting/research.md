@@ -8,15 +8,9 @@ Sources read: the spec, PRD section 5 (FR-ITM-001 to 017, FR-TNT-001 to 009), PR
 
 ### D1. Catalogue engine: Generic template and a category tree now, packs later
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:79c66b7544abdc0ff8d6d7c5e2df31ce270df74ce01c59a784314f5ef113341e -->
-
 - **Decision**: Build the category tree (3 to 4 levels, with default HSN, base unit and title template per node) and a single **Generic template** whose attributes are the PRD's eight (size, gauge, shade, pack size, colour, length, rating, brand). Seed two additional axes for the feature scenarios: `class` for PVC pipe and `base_type` for base paint. Each family chooses up to 4 of the defined keys as variant axes. Versioned catalogue packs, scoped options, conditional requirements, compliance schemes and QCO rules (architecture 6.2 to 6.10) are not built here.
 - **Rationale**: The spec asks for families, up to 4 axes from a fixed set, and a category on the family (FR-001, Key Entities). The architecture says the eight PRD attributes "become the attributes of a Generic fallback template", so building only that template keeps the data in the long-term shape (`category`, `attribute_def`, `category_attribute`) without the pack loader, YAML validator and CI work. Constitution VII: build only what the spec asks for.
 - **Alternatives considered**: (a) Full engine with packs now: about 11 extra tables and a CI validator, none required by the spec. (b) Axes as fixed columns (`size`, `colour` ...) on the variant: needs a migration for every new product type, which the architecture rejects (6.4).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### D2. Variant axes as JSON plus a canonical signature
 
@@ -54,21 +48,15 @@ Sources read: the spec, PRD section 5 (FR-ITM-001 to 017, FR-TNT-001 to 009), PR
 
 ### D6. Merge is a pointer plus stock movements, never an edit of history
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:07e0a1777b13008aff381022cfd9271a99a02bc5ecab2be7b17e2c901d256de2 -->
-
 - **Decision**: Merging variant B into survivor A:
   1. sets `item_variant.merged_into_id = A` and `is_active = 0` on B (master data, may change);
-  2. moves B's noncolliding barcode and search-name rows to A; a duplicate code or case-insensitive name keeps both original rows and their metadata on their original variants. Search and barcode lookup show A via its own row for each collision, and B's retained rows cannot be edited while merged (data-model.md);
+  2. moves B's noncolliding barcode and search-name rows to A; a duplicate code or case-insensitive name keeps both original rows and their metadata on their original variants. Search and barcode lookup show A via its own row for each collision, and B's retained rows cannot be edited while merged; if A's colliding row is later removed, the retained row resolves to A through `merged_into_id` (data-model.md);
   3. inserts, **for each location and batch where B has a non-zero balance**, one `merge_out` from B and one `merge_in` to A for the same quantity, location and batch (negative stock is moved the other way round), so stock per location (007) and MRP per batch are kept;
   4. reassigns B's `item_batch.variant_id` rows to A without changing their IDs, receipt times or MRP. A's oldest-batch lookup includes the reassigned batches, so feature 003 can apply their MRP caps;
   5. inserts an `item_merge_log` row with `action = 'merge'`, who, when, reason, the reassigned batch IDs, the moved barcode and name IDs and original row contents, the moved quantity and `reversible_until` = merged time + 30 days.
      Bill lines and old movements still point at B; reports and the item history follow `merged_into_id`, so "all history moves to the survivor" (FR-ITM-009) without changing a saved bill line (constitution I and II).
 - **Reversal** (within 30 days): opposite movements for the quantity moved, ownership of the logged batches restored to B, only the logged moved barcodes and names restored from their original contents to B, pointer cleared, B re-activated, and a second `item_merge_log` row with `action = 'reverse'`. Rows retained on B and unrelated rows on A are untouched; if A was merged again, reverse that later merge first (otherwise reject with `SURVIVOR_MERGED`). Sales of A after the merge stay on A; the reversal screen says so.
 - **Alternative rejected**: rewriting `bill_line.variant_id` to the survivor. It breaks the append-only triggers and the 72-month record rule.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### D7. Barcodes in their own table, duplicates allowed and reported
 
@@ -93,10 +81,6 @@ Sources read: the spec, PRD section 5 (FR-ITM-001 to 017, FR-TNT-001 to 009), PR
 
 ### D11. Tinting model
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:c46252d86e60f04f773f14ba8674cc260067e5befdddad028520c401ca96c4f9 -->
-
 - **Base paints** are families of kind `base_paint` (brand and product on the family, axes `base_type` x `pack_size`). **Colorants** are families of kind `colorant` with base unit `ml`, decimals on, so 0.25 ml is 250 milli.
 - **Shade library**: `tint_shade` (code, name, brand, shade card, `source` `library` or `custom`, and for custom shades a customer label, a site label and a nullable `party_id` that feature 004 connects). `tint_formula` (shade, base variant, version; the current one is the highest version) and `tint_formula_line` (colorant variant, `qty_milli` in thousandths of a ml).
 - **Formulas are versioned, not edited**: once a formula has been used on a bill, a change saves a new version; the current formula is the highest version (no flag is updated on the old row, so the immutability trigger never blocks a new version). Each tinted bill line also stores its own snapshot of colorant amounts and costs in `bill_line_tint` (append-only), so a reprint and a repeat order show exactly what was mixed.
@@ -106,8 +90,6 @@ Sources read: the spec, PRD section 5 (FR-ITM-001 to 017, FR-TNT-001 to 009), PR
 - **Repeat** (FR-016): shades used on earlier bills of the same customer name (case-insensitive) and custom shades with that customer or site label, newest first. For a billed shade, selecting the saved line repeats its snapshot even after the formula is superseded; an unbilled custom shade uses its current formula. When feature 004 adds parties, the lookup uses `party_id`.
 - **Returns** (FR-017): a tinted line is saved with `is_returnable = 0`, and a `tinted_returns` location is seeded. The return flow, owner approval and reduced value are features 003 (FR-015 returns) and 005 (approvals); this feature records what they need.
 - **Cancel**: 001 cancels by reversing one movement per line. With colorant movements a bill can have more movements than lines, so cancel changes to "reverse every `sale` movement of the bill". Task in Phase 5.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### D12. Spreadsheet import: built here, reused by 012
 
@@ -154,13 +136,7 @@ This table is the **single source** for dates: when a window moves, update it he
 
 001's remaining milestones (M3b, M5, the M6 trial in March 2027) run alongside 002 and 005.
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:e0e3c956a07e3ff8cf2f27510c9f2cfdd4ef323fb5ba8ca2b6fab0e3b262d270 -->
-
 **Risk (owner decision OD-4)**: with every MVP feature in full, go-live lands around 1 October 2027, four months after the PRD's 1 June 2027. Options: (a) accept the later date; (b) start a limited 1 June 2027 go-live with completed features 002, 005 and 004 and the 001 no-tax billing scope, where that scope is suitable; roll out 003 after its 6 June finish and 008 after its 4 July finish, with 007, 006 and 012 following the calendar; (c) work part of 007 and 006 in parallel. Recommendation: (b), if the shop can start within that limited scope; advanced billing and both bill formats remain later rollout gates.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### D17. Enum values live in lookup tables, so later features add values without rebuilding tables (staff review 2026-11-18)
 

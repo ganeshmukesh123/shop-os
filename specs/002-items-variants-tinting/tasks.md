@@ -34,10 +34,6 @@ description: "Task list for feature 002: item families, variants, search, merge,
 
 ### Core rules, tests first
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:319b45e443763592ab1c7111ecb01fd37e2b8070e0bbbfc24756f29edcbc8417 -->
-
 - [ ] T004 [P] Write tests in `core/tests/catalogue/axisSignature.test.ts`: keys sorted, `key=value` joined by `|` (for `{ size: "0.5 in", class: "4 kg" }` the signature is `class=4 kg|size=0.5 in`), empty axes give `''`, values trimmed, unknown keys rejected; `base_type` and `pack_size` are valid keys
 - [ ] T005 [P] Write tests in `core/tests/catalogue/variantCombinations.test.ts`: 3 sizes x 2 classes give 6 combinations in grid order; 5 axes rejected with `TOO_MANY_AXES` and the message "A family can have at most 4 variant attributes"; the 8 Generic keys (size, gauge, shade, pack_size, colour, length, rating, brand) plus `class` and `base_type` are accepted; unknown keys give `UNKNOWN_ATTRIBUTE`
 - [ ] T006 [P] Write tests in `core/tests/units/unitConversion.test.ts`: 2 rolls at `factor_milli` 90000 give 180000 milli; 0.33 roll at 90000 gives 29700 milli (29.7 m); 0.333 roll at 90500 gives `INEXACT_CONVERSION`; 0.5 box of 10 pcs gives 5000 milli; a factor of 0 or below is rejected; results above the safe integer limit are rejected
@@ -51,13 +47,7 @@ description: "Task list for feature 002: item families, variants, search, merge,
 - [ ] T014 [P] Implement `core/src/catalogue/variantDraft.ts` to pass T009
 - [ ] T015 Add new movement types `merge_in` and `merge_out` to `core/src/stock.ts` with tests in `core/tests/stock.test.ts` (signed quantity follows the locations, as 001)
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ### Schema and migrations (tests on a copy of real data)
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:8e3b4602ce6727286edc8be7c50dec9198dc2cf42fc033b9a66c78e7eb5e5aaa -->
 
 - [ ] T016 Add catalogue tables to `desktop/src/main/db/schema.ts`: `category` (name 1-80 trimmed, unique among siblings case-insensitive; `default_hsn` 4, 6 or 8 digits), `attribute_def` (8 Generic keys plus `class` and `base_type`), `brand` (name 1-60, unique per business case-insensitive), `uom` (seeded rows of data-model.md), then run `pnpm --filter @shopos/desktop db:generate` (migration 0013)
 - [ ] T017 Add family and variant columns to `desktop/src/main/db/schema.ts`: `item_family.kind` (`general` default, `base_paint`, `colorant`, `paint`, `thinner_solvent`), `category_id`, `brand_id`, `spec` (JSON, default `{}`), `axis_keys` (JSON array, `json_array_length(axis_keys) <= 4`); `item_variant.axes`, `axis_signature` (`UNIQUE(family_id, axis_signature)`), `purchase_price_paise`, `reorder_level_milli`, `location_tag`, `petroleum_class` (`A`,`B`,`C`,`NA`, default `NA`), `declared_qty_milli` with `declared_uom` (both null or both set), `trade_label`, `sealed_pack_only` (CHECK `sealed_pack_only = 0 or allow_decimal = 0`), `warranty_months` (0-120), `is_serial_tracked`, `merged_into_id` (CHECK `merged_into_id <> id`); generate migration 0014 that sets 001 rows to kind `general`, axes `{}`, signature `''`
@@ -66,8 +56,6 @@ description: "Task list for feature 002: item families, variants, search, merge,
 - [ ] T020 Add `item_merge_log` (append-only triggers; `action` `merge` or `reverse`; `merge_log_id` unique), `exception_event` (status `open` to `resolved` only, by trigger), tinting tables `tint_shade`, `tint_formula` (`UNIQUE(shade_id, base_variant_id, version)`; no `is_current` column: the current formula is the highest version), `tint_formula_line` (`qty_milli > 0`), `tint_charge_rule`, `tint_shade_price`, and `bill_line` columns `entered_uom`, `qty_entered_milli`, `tint_formula_id`, `tint_charge_paise`, `cost_paise`, `is_returnable` (default 1), plus `bill_line_tint` (append-only) in migration 0017; trigger blocking UPDATE or DELETE of a `tint_formula` or its lines once a `bill_line` points at it; also block INSERT of a line into a used formula and UPDATE that moves a line into a used formula. Allow inserts into unused versions
 - [ ] T021 Write `desktop/tests/integration/migrations002.test.ts`: apply 0013 to 0017 to a database seeded like 001 (items, bills, cancelled bill, movements); every item is a one-variant family with the same id, code and stock; every bill and line is unchanged byte for byte; triggers reject UPDATE and DELETE on `stock_movement`, `bill_line_tint`, `item_merge_log`; INSERT of a new colorant line into a used formula fails even with a distinct colorant, and the same insert into an unused formula version succeeds
 - [ ] T022 Run the migrations on a backup copy of the owner's database (restored with the backup API, never a copied live file) and record the result in `specs/002-items-variants-tinting/research.md` under D14
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### Search index and benchmark
 
@@ -87,22 +75,12 @@ description: "Task list for feature 002: item families, variants, search, merge,
 
 ### Tests first
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:75194b43d5d0026a72a09500b112ddd686600060417ebe819425ee5d9a22c668 -->
-
 - [ ] T026 [P] [US1] Write tests in `core/tests/catalogue/variantGrid.test.ts`: axis 1 rows, axis 2 columns, axes 3 and 4 as tabs, missing combinations are empty cells, inactive cells marked
 - [ ] T027 [P] [US1] Write tests in `core/tests/catalogue/titleRender.test.ts` and `core/tests/catalogue/categoryDefaults.test.ts`: `{brand} {size} {class}` renders "Supreme 0.5 in 4 kg"; missing values are skipped without double spaces; a child category inherits empty defaults from its nearest ancestor
 - [ ] T028 [P] [US1] Write tests in `desktop/src/main/services/families/FamilyService.test.ts`: create with 5 of 6 combinations; `DUPLICATE_SIGNATURE`; opening stock writes one `opening` movement per variant; deactivate never deletes; a variant on a saved bill can be deactivated and the bill still reads it
 - [ ] T029 [P] [US1] Write tests in `desktop/tests/integration/billConversion.test.ts`: `bills.save` with `enteredUom` `roll` stores `entered_uom`, `qty_entered_milli` 2000 and `qty_base_milli` 180000, and deducts 180 m; 0.33 roll at 90000 stores 330 entered and 29700 base milli and deducts 29.7 m; 0.333 roll on a separate variant at 90500 fails with `INEXACT_CONVERSION` and writes nothing; `UNKNOWN_UNIT` when no conversion exists
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ### Implementation
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:d4922c0944bd2459587ce0835887fe23d80387ead54cdc25e4c49108f98209fa -->
 
 - [ ] T030 [P] [US1] Implement `core/src/catalogue/variantGrid.ts`, `titleRender.ts`, `categoryDefaults.ts` to pass T026 and T027
 - [ ] T031 [US1] Add Zod schemas and command types for `catalogue.*`, `families.*` and `variants.*` (first table of `contracts/ipc-commands.md`) in `core/src/commands.ts` and `core/src/types.ts`
@@ -117,8 +95,6 @@ description: "Task list for feature 002: item families, variants, search, merge,
 - [ ] T039 [US1] Add a unit selector to the bill line in `desktop/src/renderer/features/billing/` that lists the base unit and the variant's conversions; show "2 roll (180 m)"
 - [ ] T040 [US1] Write the e2e spec `desktop/tests/e2e/families.spec.ts` for quickstart scenario 1 and time SC-001 (family with 6 variants in under 2 minutes)
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 **Checkpoint**: US1 works alone; quickstart 1 passes.
 
 ---
@@ -131,15 +107,9 @@ description: "Task list for feature 002: item families, variants, search, merge,
 
 ### Tests first
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:72648d1fba25e5cdf0deed7db2dd085725b3fa1071a96d5ddc9ac892bb1aecf2 -->
-
 - [ ] T041 [P] [US2] Write tests in `core/tests/search/likelyDuplicates.test.ts`: same brand, category and signature flags; names within distance 2 or sharing 60% of trigrams flag; different brand and different name do not
 - [ ] T042 [P] [US2] Write tests in `desktop/src/main/services/merge/MergeService.test.ts` (writes stock, so before code): merge B (stock 4) into A (stock 10) gives A 14 and B 0 through one `merge_out` and one `merge_in` per location and batch with a non-zero balance (B with 3 on Shop floor and 1 in Godown gives two pairs), doc `item_merge`; barcodes and names move; B inactive with `merged_into_id`; bill lines unchanged; reversal within 30 days restores 10 and 4 and writes a `reverse` log row; reversal on day 31 gives `REVERSAL_WINDOW_CLOSED`; second reversal gives `ALREADY_REVERSED`; different base units give `UNIT_MISMATCH`; negative stock on B moves the other way; duplicate codes and case-insensitive names retain both original rows and metadata through reversal, while noncolliding rows move and are restored per D6; a chained merge must be reversed newest first (`SURVIVOR_MERGED`); A's oldest-batch lookup includes B's reassigned batch with its original MRP, and reversal restores ownership to B
 - [ ] T043 [P] [US2] Write tests in `desktop/tests/integration/barcodeLookup.test.ts`: one code on two variants returns both and logs one `duplicate_barcode` exception (not one per scan)
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ### Implementation
 
@@ -166,23 +136,13 @@ description: "Task list for feature 002: item families, variants, search, merge,
 
 ### Tests first
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:2e20538dc2c13229bd0363fac2c0b9c6d0ea6b703d1581fcea676ff4c393a201 -->
-
 - [ ] T054 [P] [US3] Write tests in `core/tests/tinting/resolveTintFormula.test.ts`: picks the base variant for product, base type and pack; returns the current formula; `NO_FORMULA` when none; `NOT_A_BASE` for a non-base variant
 - [ ] T055 [P] [US3] Write tests in `core/tests/tinting/tintPricing.test.ts` and `tintCost.test.ts`: ₹1,450.00 + ₹60.00 = ₹1,510.00; a shade price ₹1,550.00 wins and adds no charge; cost = base purchase price + colorant price per ml x ml, rounded half up once (Blue at ₹2.40 per ml x 12.5 ml = ₹30.00)
 - [ ] T056 [P] [US3] Write tests in `desktop/tests/integration/tintedBill.test.ts` (bill-writing, before code): one transaction writes the base line with `tint_formula_id`, `tint_charge_paise`, `cost_paise`, `is_returnable` 0, one `bill_line_tint` row per colorant, one `sale` movement for the base and one per colorant; retry with the same `clientBillId` writes nothing new; base out of stock still saves and is listed in `negativeStockItems`; an ordinary sale using a superseded formula gives `FORMULA_NOT_CURRENT`; a current formula for a different base gives `FORMULA_BASE_MISMATCH` with no writes; a repeat using a saved `sourceBillLineId` after supersession uses the original formula ID and colorant snapshots for the new bill and movements; a repeat with a different base gives `FORMULA_BASE_MISMATCH`, and an invalid source gives `INVALID_TINT_REPEAT_SOURCE`, both with no writes
 - [ ] T057 [P] [US3] Write tests in `desktop/tests/integration/cancelByMovement.test.ts`: cancelling a tinted bill writes one `sale_cancel` per `sale` movement (base and colorants), so stock returns exactly; a 001 bill still cancels as before
 - [ ] T058 [P] [US3] Write tests in `desktop/src/main/services/tinting/TintService.test.ts`: saving a changed formula already used on a bill creates version 2 and leaves version 1's row unchanged; the current formula is version 2 because it is the highest; the trigger rejects a direct UPDATE of a used formula line; custom shade needs a customer or site label (`LABEL_REQUIRED`); repeat list for "sharma" matches "Sharma" newest first and includes `sourceBillLineId` for billed shades
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ### Implementation
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:3c5f09e51cc122f78c886ab8132ddb74071ef6f9a01d3d6d65a24d93504bb60b -->
 
 - [ ] T059 [P] [US3] Implement `core/src/tinting/resolveTintFormula.ts`, `tintPricing.ts`, `tintCost.ts` to pass T054 and T055
 - [ ] T060 [US3] Implement `desktop/src/main/repositories/TintRepository.ts` and `desktop/src/main/services/tinting/TintService.ts` to pass T058
@@ -196,42 +156,24 @@ description: "Task list for feature 002: item families, variants, search, merge,
 - [ ] T068 [US3] Write the e2e spec `desktop/tests/e2e/tinting.spec.ts` for quickstart scenario 3 steps 1 to 5; script step 6 (20 sales, SC-004) as an integration test in `desktop/tests/integration/tintStockAccuracy.test.ts`; time SC-003
 - [ ] T069 [US3] Record OI-5 (shade-card file format) in `specs/002-items-variants-tinting/research.md` from the owner's real file
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 **Checkpoint**: US1 to US3 work; quickstart 3 passes.
 
 ---
 
 ## Phase 6: User Story 4 - Paint class, warranty and serial flags, labels and import (M5, 15 to 21 Feb; P2)
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:1dc511bc334847d5b3dfdafe88cbe5da87c366e2bde00b87d57c139073dd88ac -->
-
 **Goal**: Barcode labels and shelf tags, plus item and shade import with preview. Paint, warranty and serial controls land in T079 during M2.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 **Independent Test**: quickstart scenario 4.
 
 ### Tests first
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:eea7ca1a92b26ce9cf9094a046d65f990a3cb4d28cec034d883e557c54b46180 -->
 
 - [ ] T070 [P] [US4] Write tests in `core/tests/import/itemImportRows.test.ts`: maps columns to family, axes, unit, price, opening quantity, HSN (4, 6 or 8 digits), paint fields; reports missing unit, bad HSN, bad number, missing paint fields with row and column; groups duplicate rows by `findLikelyDuplicates`
 - [ ] T071 [P] [US4] Write tests in `core/tests/import/shadeImportRows.test.ts`: shade code, name, brand, base type, pack, colorant, ml; unknown colorant and non-positive ml reported
 - [ ] T072 [P] [US4] If OD-3 is in-house: write tests in `core/tests/barcode/code128.test.ts` against known encodings (checksum and bar pattern for `ITM-0042` and three more strings from ISO/IEC 15417 examples)
 - [ ] T073 [P] [US4] Write tests in `desktop/src/main/services/import/ImportService.test.ts`: preview saves nothing; commit refuses `PREVIEW_HAS_ERRORS` unless error rows are excluded; commit is one transaction; running the same file twice finds every row as a duplicate and creates nothing new; shade preview returns the `previewId` used by shade commit
 
-<!-- /coderabbit-ai-generated:v1 -->
-
 ### Implementation
-
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:9c10b98008351055f7428a1dd4097c64935d7a8fca56f7321f069224a7ebdbbc -->
 
 - [ ] T074 [P] [US4] Implement `core/src/import/itemImportRows.ts` and `shadeImportRows.ts` to pass T070 and T071
 - [ ] T075 [P] [US4] Implement `core/src/barcode/code128.ts` to pass T072 (or add the approved package under OD-3 and write the same tests against it)
@@ -241,8 +183,6 @@ description: "Task list for feature 002: item families, variants, search, merge,
 - [ ] T080 [P] [US4] Build `desktop/src/renderer/features/import/ImportPreview/` (rows OK, errors with row and column, duplicate groups, missing units; confirm button disabled until errors are excluded)
 - [ ] T081 [P] [US4] Build `desktop/src/renderer/features/labels/LabelPrint/` (pick items, layout, kind; export PDF or print)
 - [ ] T082 [US4] Write the e2e spec `desktop/tests/e2e/importLabels.spec.ts` for quickstart scenario 4; measure SC-005 with a generated 3,000-row file; scan 10 printed labels with a USB scanner (manual, result in `specs/002-items-variants-tinting/research.md`); cover shade-file preview and confirmation in scenario 4 step 5
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 **Checkpoint**: all four stories work; quickstart 4 passes.
 
@@ -267,16 +207,10 @@ Phase 1 Setup --> Phase 2 Foundational (M1) --> US1 (M2) --> US2 (M3)
                                                  +--> US3 (M4) --> US4 (M5) --> Polish
 ```
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:50017a64ff9e5b18063d92f3f491a91347a6251c9275a5dbf91e36aec018b31d -->
-
 - US1 is needed by US2 (names and merge act on variants) and US3 (base paints and colorants are families).
 - US2 and US3 do not depend on each other after US1; done in that order by one builder.
 - US3 requires the T017 paint schema and the T079 FamilyForm controls from M2 (after T036) to create base paint and colorant variants.
 - Within each story: tests, then core, then repositories and services, then commands, then screens, then e2e.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Parallel examples
 
@@ -286,13 +220,7 @@ Phase 1 Setup --> Phase 2 Foundational (M1) --> US1 (M2) --> US2 (M3)
 
 ## Implementation strategy
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:e3187be04315d11b7b14831238835eb2a44bc4ceaec3d701bacb57b1b6a81647 -->
-
 1. MVP slice: Phase 1, Phase 2, US1. The shop can enter variant families and bill from the grid; stop and use it.
 2. Add US2 (search and merge), then US3 (tinting); each is used at the counter before the next starts.
 3. Finish US4 with labels and import after US3; the paint field controls are already available from M2. Labels and import come when the owner's files (OI-3, OI-5, OI-6) are in hand.
 4. One concern per pull request: the stock-movement rebuild (T019) is its own PR.
-
-<!-- /coderabbit-ai-generated:v1 -->
