@@ -27,8 +27,8 @@ export function installFakeShopos(handlers: FakeCommandHandlers = {}): IFakeShop
       return { ok: true, data: await handler(input) };
     } catch (caughtError) {
       // A handler that throws stands for the main process answering with an error result.
-      const code = (caughtError as { code?: string }).code ?? "INTERNAL";
-      return { ok: false, code, message: (caughtError as Error).message };
+      const { code = "INTERNAL", details } = caughtError as { code?: string; details?: unknown };
+      return { ok: false, code, message: (caughtError as Error).message, details };
     }
   };
   window.shopos = buildShopOsApi(invoke);
