@@ -8,10 +8,15 @@ Reports read the tables of 001 to 009 (bills and versions, lines with cost, tend
 
 `name` (1-40, unique per shop, case-insensitive), `is_active`. Seeded: Rent, Electricity, Salaries, Transport, Tea and snacks, Repairs, Other.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:7459a13c22e4e1f16883e20c94354ce3569c6d37e2ec2c52ceb05f20ad4bc276 -->
+
 ### `expense` (append-only)
 
 | Field                                  | Rule                                                                                           |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| client_expense_id                      | required for `expenses.add`; unique per shop; null for a correction                             |
 | category_id                            | FK                                                                                             |
 | amount_paise                           | integer, not 0; negative only for a correction, which needs `corrects_expense_id` and a reason |
 | business_date                          | `YYYY-MM-DD`                                                                                   |
@@ -21,9 +26,13 @@ Reports read the tables of 001 to 009 (bills and versions, lines with cost, tend
 | corrects_expense_id, correction_reason | nullable; set together                                                                         |
 | user_id                                |                                                                                                |
 
+The expense and its optional cash entry are saved atomically. A retry looks up the original expense by key and returns it with the same linked cash entry, if any, even after restart. No new rows are written.
+
 ### `owner_drawing` (append-only)
 
 Same shape as `expense` without `category_id`; cash drawings write a `cash_drop`-like 005 entry of kind `owner_drawing` (new, negative).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ### `compliance_calendar`
 
@@ -52,11 +61,15 @@ interface IReportDefinition {
 
 Planned definitions: `sales_by_day`, `sales_by_item`, `sales_by_category`, `sales_by_brand`, `sales_by_staff`, `sales_by_customer`, `sales_by_payment_mode`, `exceptions`, `stock_value_by_location`, `stock_value_by_category`, `real_profit`, `expenses_by_category`, `distributor_scorecard`.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:a02960aa1faf82f63316035ed778a10e40183983b8806bc198db41ebef0d961a -->
+
 ## Derived values (in `@shopos/core`)
 
 - `salesFigures(lines, returns)`: gross, discounts, returns, net; cancelled excluded; returns in their own period.
-- `costCompleteness(lines)`: share of line value with a cost, in basis points.
-- `realProfit({ salesPaise, returnsPaise, cogsPaise, rollVariancePaise?, rejectedClaimsPaise?, writeOffsPaise?, expensesPaise })` with "not tracked" for absent terms.
+- `costCompleteness(lines)`: share of non-service line value with a cost, in basis points. Service lines such as delivery are excluded from both the numerator and the denominator (Research D5).
+- `realProfit({ salesPaise, returnsPaise, cogsPaise, rollVariancePaise?, rejectedClaimsPaise?, writeOffsPaise?, expensesPaise })` with "not tracked" for absent terms. `cogsPaise` reverses the cost of restocked return quantities in the return period. Prorate the original sale line’s `bill_line.cost_paise` by returned quantity using the link `sales_return_line.bill_line_id`; a return without a linked cost snapshot has no known original cost.
 - `stockValueAtCost(balances, costs)`.
 - `exceptionRows({ cancels, edits, overDiscount, belowCost, negativeStock, returnsWithoutBill })`.
 - `caTurnover(period)` equal to 008's `turnoverForYear` for the same days.
@@ -64,3 +77,5 @@ Planned definitions: `sales_by_day`, `sales_by_item`, `sales_by_category`, `sale
 - `scorecardMeasures(receipts, priceHistory, debitNotes)`.
 
 Example: a month with sales ₹4,52,000, returns ₹12,000, cost of goods ₹3,41,000 (cost completeness 96%), expenses ₹38,500: real profit ₹60,500, shown with "Roll variance, rejected claims, write-offs: not tracked yet".
+
+<!-- /coderabbit-ai-generated:v1 -->
