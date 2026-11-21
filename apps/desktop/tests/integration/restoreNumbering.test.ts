@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { CoreError } from "@shopos/core";
 import { openDatabase, type Connection } from "../../src/main/db/connection";
@@ -239,6 +240,36 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
     expect(
       fs.readdirSync(path.dirname(livePath)).filter((name) => name.includes("restore")),
     ).toEqual([]);
+  });
+
+  it("refuses a plan made from another backup, so the counter never moves back", async () => {
+    const backupEndingAt120 = await takeBackup(createShop(3, 120));
+    const backupEndingAt200 = await takeBackup(createShop(3, 200));
+    const planFor120 = planRestoreNumbering(backupEndingAt120, "C1/26-27/000126", NOW);
+    const livePath = path.join(makeTempFolder("shopos-restored-"), "shopos.sqlite");
+
+    const failure = errorCodeOf(() =>
+      restoreWithNumbering(
+        backupEndingAt200,
+        { databasePath: livePath, migrationsFolder: MIGRATIONS },
+        planFor120,
+        NOW,
+      ),
+    );
+
+    expect(failure).toBe("INVALID_BACKUP");
+    expect(fs.existsSync(livePath)).toBe(false);
+  });
+
+  it("leaves no copy of the backup in the temp folder when the backup cannot be copied", () => {
+    const planFolders = () =>
+      fs.readdirSync(os.tmpdir()).filter((name) => name.startsWith("shopos-plan-"));
+    const foldersBefore = planFolders();
+
+    const failure = errorCodeOf(() => planRestoreNumbering("/no/such/backup.sqlite", null, NOW));
+
+    expect(failure).toBeDefined();
+    expect(planFolders()).toEqual(foldersBefore);
   });
 });
 

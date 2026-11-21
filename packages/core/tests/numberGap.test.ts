@@ -54,6 +54,14 @@ describe("parseBillNumber (task T083, FR-013b, research D21)", () => {
     expect(parseBillNumber("{series}.{seq}", "C1x000005")).toBeNull();
     expect(parseBillNumber("({series}){seq}", "(C1)000005")?.seq).toBe(5);
   });
+  it("reads a template whose literal text is a built-in object name, such as toString", () => {
+    expect(parseBillNumber("toString{seq}", "toString000042")).toEqual({
+      seriesCode: null,
+      financialYear: null,
+      seq: 42,
+    });
+    expect(parseBillNumber("constructor-{seq}", "constructor-000007")?.seq).toBe(7);
+  });
 });
 
 describe("planNumberGap (task T083, FR-013b, research D21)", () => {
