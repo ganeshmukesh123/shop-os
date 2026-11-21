@@ -27,6 +27,8 @@ describe("window security defaults", () => {
     const policy = contentSecurityPolicy(false);
     expect(policy).toContain("default-src 'self'");
     expect(policy.match(/script-src[^;]*/)?.[0]).toBe("script-src 'self'");
+    // script-src-elem and script-src-attr would override script-src for those cases.
+    expect(policy).not.toMatch(/script-src-(elem|attr)/);
     expect(policy).toContain("connect-src 'none'");
     expect(policy).toContain("object-src 'none'");
     expect(policy).not.toContain("'unsafe-eval'");
