@@ -16,7 +16,7 @@ Turn 001's single "Shop floor" into a tree of locations (Shop floor and Godown w
 
 **Primary Dependencies**: Unchanged; no new package.
 
-**Storage**: Same SQLite file. `location` gains `parent_id`; `stock_movement` gets new lookup rows and nullable columns only (`reason_code`, `approval_id`, reserved `roll_id`), no rebuild (002 research D17); new `stock_balance`, `count_session`, `count_line`, `counter_setting`; `item_variant.home_location_id`, reserved `is_sold_from_rolls`.
+**Storage**: Same SQLite file. `location` gains `parent_id`; `stock_movement` gets new lookup rows and nullable columns only (`approval_id`, reserved `roll_id`; 001's existing `reason_code` is reused and checked against the new lookup by trigger), no rebuild (002 research D17); new `stock_balance`, `count_session`, `count_line`, `counter_setting`; `item_variant.home_location_id`, reserved `is_sold_from_rolls`.
 
 **Testing**: Vitest test-first for core (balances at a time, corrections, sale location) and every movement writer; a property test (random movements, every balance equals the sum); Playwright for the quickstart.
 

@@ -2,7 +2,7 @@
 
 Prerequisites: 002, 003 and 005 merged. Commands as in 001. Commands and codes: `contracts/ipc-commands.md`.
 
-Setup: locations Shop floor (R1 to R5), Godown (G1, G2), Defective; item "PVC Pipe 1 in", 30 in Godown, 10 in R3, home location R3; one more item assigned to each of R1, R2, R4 and R5, so all five racks count toward progress.
+Setup: locations Shop floor (R1 to R5), Godown (G1, G2), Defective; item "PVC Pipe 1 in", 30 in Godown, 10 in R3, home location R3; 24 more items on R3 (25 in all, for the timed count in section 2) and one item assigned to each of R1, R2, R4 and R5, so all five racks count toward progress.
 
 ## 1. Movements by location (M2; US1)
 
