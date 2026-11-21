@@ -1,8 +1,10 @@
 import type { ClockWarning } from "./clockCheck";
 import type {
   Bill,
+  BackupRestoreInput,
   BackupStatus,
   BillLine,
+  IBackupRestoreResult,
   BillsSaveInput,
   Item,
   ItemsCreateInput,
@@ -34,7 +36,7 @@ export interface CommandMap {
   "settings.clockCheck": [SettingsClockCheckInput, { warnings: ClockWarning[] }];
   "backup.run": [Record<string, never>, { path: string; finishedAt: string }];
   "backup.status": [Record<string, never>, BackupStatus];
-  "backup.restore": [{ filePath: string }, { restored: boolean }];
+  "backup.restore": [BackupRestoreInput, IBackupRestoreResult];
   /** Native file dialogs live in the main process; the renderer only receives the chosen path. */
   "system.pickFolder": [Record<string, never>, { path: string | null }];
   "system.pickBackupFile": [Record<string, never>, { path: string | null }];
