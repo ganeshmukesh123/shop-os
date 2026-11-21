@@ -109,14 +109,20 @@ apps/desktop/tests/     # integration/ and e2e/ specs for the scenarios
 
 Window 4 January to 21 February 2027 (proposed, research D16; re-date when the feature starts). Each milestone ends with its quickstart scenario passing.
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:f6be68310cce7c2e12b39eb350db92a05356ca1a374c66a4f4d6e741d09c3625 -->
+
 | #     | Dates        | Milestone                             | Exit criteria                                                                                                                                                           |
 | ----- | ------------ | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | M1    | 4 to 10 Jan  | Core rules and schema                 | Core modules test-first and green; migrations 0013 onward apply to a copy of the owner's database with every 001 test still green; search benchmark run (OI-2 answered) |
-| M2    | 11 to 24 Jan | Families, variants, units, grid (US1) | Quickstart 1 passes; SC-001 timed                                                                                                                                       |
+| M2    | 11 to 24 Jan | Families, variants, units, grid (US1) | Quickstart 1 passes; SC-001 timed; T079 form controls ready for tinting                                                                                                                                       |
 | M3    | 25 to 31 Jan | Search names, duplicates, merge (US2) | Quickstart 2 passes; SC-002 and SC-006 measured                                                                                                                         |
-| M4    | 1 to 14 Feb  | Tinting (US3)                         | Quickstart 3 passes; SC-003 and SC-004 measured; OI-5 answered                                                                                                          |
-| M5    | 15 to 21 Feb | Paint fields, labels, import (US4)    | Quickstart 4 and 5 pass; SC-005 measured; OD-1 to OD-3 answered                                                                                                         |
+| M4    | 1 to 14 Feb  | Tinted sales (US3)                    | Quickstart 3 passes; SC-003 and SC-004 measured; OI-5 answered; owner-approved returns deferred to 003 with 005 approvals                                                                                                          |
+| M5    | 15 to 21 Feb | Labels, item and shade import (US4)    | Quickstart 4 and 5 pass; SC-005 measured; OD-1 to OD-3 answered                                                                                                         |
 | Trial | from 22 Feb  | Used at the counter                   | Owner enters the real catalogue's top families and tints for 2 weeks; top 3 complaints fixed                                                                            |
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 **Risks and fallbacks**
 
