@@ -48,7 +48,12 @@ export function SettingsScreen() {
   }, [refresh, toast]);
   if (!shopProfile) return <Text>{uiText.common.loading}…</Text>;
 
-  const tpl = validateNumberTemplate(shopProfile.numberTemplate, shopProfile.seriesCode);
+  const tpl = validateNumberTemplate(
+    shopProfile.numberTemplate,
+    shopProfile.seriesCode,
+    new Date(),
+    shopProfile.timeZone,
+  );
   const set = (patch: Partial<ShopProfile>) => setP({ ...shopProfile, ...patch });
 
   async function save(next = shopProfile!) {

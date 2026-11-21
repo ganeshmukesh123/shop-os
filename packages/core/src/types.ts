@@ -194,6 +194,10 @@ export const settingsUpdateInput = z.object({
 });
 export type SettingsUpdateInput = z.infer<typeof settingsUpdateInput>;
 
+/** The renderer reports the zone the computer is set to; the main process compares it with the shop's. */
+export const settingsClockCheckInput = z.object({ deviceTimeZone: z.string().max(64) });
+export type SettingsClockCheckInput = z.infer<typeof settingsClockCheckInput>;
+
 export const backupRestoreInput = z.object({ filePath: z.string().min(1) });
 
 // ---------- results ----------
