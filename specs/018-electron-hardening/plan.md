@@ -31,7 +31,7 @@ Example: a foreign frame sends "bill:save" for C1/26-27/000123 (2 pcs x ₹120)
 
 **Primary Dependencies**: existing only. electron-builder 26.15.7 has a built-in `electronFuses` option (found in its `scheme.json`; it passes the options to `@electron/fuses`, which it already depends on), so no new package is expected (research O1, resolved below). Ask the owner before adding any package (CLAUDE.md rule 6).
 
-**Storage**: N/A. No tables, no migrations, no change to bills, stock or ledger.
+**Storage**: T035 adds a `theme` column (default `system`) to the existing `shop_profile` table through one additive migration before PR C. No new tables, no other migrations, and no change to bills, stock or ledger.
 
 **Testing**: Vitest unit tests with fake Electron objects (pattern of `tests/unit/mainWindow.test.ts` and `securityHeaders.test.ts`), integration test for IPC registration (`tests/integration/ipcRegistration.test.ts`), Playwright packaged-app checks (`scripts/e2e-packaged.mjs`), and a fuse-report script run on the packaged output.
 
@@ -95,7 +95,7 @@ specs/018-electron-hardening/
 └── contracts/hardening-policies.md     behaviour contract for the three checks and the fuse set
 ```
 
-No `data-model.md`: the spec lists no entities and no tables change.
+No `data-model.md`: T035 adds one preference column to an existing table, as described under Storage.
 
 ### Source (new and changed files)
 
@@ -146,7 +146,7 @@ A1 ─► A2 ─► B ─► C0 (spike) ─► C
 | `senderFrame` of a `file:` page behaves differently from expectation (O11) | Medium | High (could refuse every command) | Test against real Electron first; e2e packaged check saves a bill |
 | Fuses flipped on the dev binary break `pnpm test` | Low | High | Flip only inside electron-builder's packaging step; SC-005 check |
 | ASAR integrity refuses a valid build on Windows (O10) | Low | Medium | Verify on a Windows build before release; keep it behind the packaged-app check |
-| Custom protocol loses saved theme (O7) | Medium | Low | Theme moved into main-process storage in a release before the protocol switch (T035), so nothing is left in the old origin. The PR C release requires the T035 release to be installed first (one shop, one install: the owner upgrades through it); a skipped release falls back to System once |
+| Custom protocol loses saved theme (O7) | Medium | Low | Before shipping PR C, launch the installed T035 build, load its `file:` page and verify that the first-load copy saved the existing `localStorage` theme to `shop_profile.theme`. Installing T035 alone is insufficient; skipping the copy falls back to System |
 | Navigation rule blocks the dev server | Medium | Low | Parse host and port exactly; dev server only when `isDev` |
 
 ## Complexity Tracking

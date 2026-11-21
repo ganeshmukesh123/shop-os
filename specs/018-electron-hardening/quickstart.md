@@ -30,8 +30,12 @@ pnpm test && pnpm test:e2e      # dev binary untouched (SC-005)
 |---|---|
 | Fuse report | run-as-node, node-options, node-inspect off; integrity and only-from-asar on |
 | Run-as-node on packaged app | does not print `1`; app starts normally or exits |
-| Alter `app.asar` header (Mac or Windows) | app will not start (US4 scenario 3); then restore the original archive or re-run `package` before the next row |
+| Alter `app.asar` header on both macOS and Windows (check each packaged build) | app will not start on either platform (US4 scenario 3); on each platform, restore the original archive or re-run `package` before the next row |
 | Packaged app: save and print bill C1/26-27/000123 | works; database opens (US4 scenario 5) |
+
+## Before shipping PR C (US6)
+
+Launch the installed T035 build and let its `file:` page load. The one-time copy runs on the first load of that page; installing T035 alone is insufficient. Verify that the theme previously saved in `localStorage` matches `shop_profile.theme` before proceeding with the PR C release.
 
 ## After PR C (US6)
 
@@ -39,5 +43,5 @@ pnpm test && pnpm test:e2e      # dev binary untouched (SC-005)
 |---|---|
 | Packaged app: every screen in System, Light, Dark | renders; fonts and icons load from the private address |
 | Request `../` path outside the bundle | refused (SC-006) |
-| Theme preference after upgrade from the T035 release | kept: it lives in the database before the switch (T035) |
+| Theme preference after upgrading from the verified T035 build | matches the value copied into `shop_profile.theme` before the switch |
 | Fuse report | file-protocol extra privileges off |
