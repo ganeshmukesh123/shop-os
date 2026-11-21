@@ -15,7 +15,7 @@ The same content is rendered for the 80 mm receipt (58 mm narrows the item colum
 ## Totals
 1. Lines total.
 2. Bill discount (only if non-zero).
-3. Round off, signed (only if non-zero), for example "Round off +0.40".
+3. Round off, signed (only if non-zero), for example "Round off +₹0.40" or "Round off -₹0.49" (same ₹ form as the discount line; it sits after the discount and before the grand total).
 4. **Grand total**, with amounts in rupees and paise using Indian grouping (for example ₹1,00,000.00).
 
 ## Footer

@@ -143,3 +143,115 @@ describe("bill layout", () => {
     );
   });
 });
+
+describe("bill layout: document title (task T081, FR-015a, research D23)", () => {
+  const titleOf = (html: string): string | undefined =>
+    /<div class="c doc-title">([^<]*)<\/div>/.exec(html)?.[1];
+
+  it("prints the title 'Estimate' above the shop name by default", () => {
+    const html = renderBillHtml(bill, lines, profile, "receipt");
+
+    expect(titleOf(html)).toBe("Estimate");
+    expect(html.indexOf("Estimate")).toBeLessThan(html.indexOf("Prabhat Hardware"));
+  });
+
+  it("prints the title stored on the bill, not the shop's current setting (a reprint is identical)", () => {
+    const storedTitle = renderBillHtml(
+      { ...bill, docTitle: "Estimate" },
+      lines,
+      { ...profile, docTitle: "Cash Memo" },
+      "receipt",
+    );
+    const customTitle = renderBillHtml({ ...bill, docTitle: "Cash Memo" }, lines, profile, "a4");
+
+    expect(titleOf(storedTitle)).toBe("Estimate");
+    expect(titleOf(customTitle)).toBe("Cash Memo");
+  });
+
+  it("escapes the title", () => {
+    const html = renderBillHtml({ ...bill, docTitle: "<b>Memo</b> & Co" }, lines, profile, "a5");
+
+    expect(titleOf(html)).toBe("&lt;b&gt;Memo&lt;/b&gt; &amp; Co");
+    expect(html).not.toContain("<b>Memo</b>");
+  });
+
+  it("prints the title on every paper size and on a cancelled bill", () => {
+    for (const printTarget of ["receipt", "a4", "a5"] as const) {
+      expect(titleOf(renderBillHtml(bill, lines, profile, printTarget))).toBe("Estimate");
+    }
+    const cancelled = renderBillHtml(
+      { ...bill, status: "cancelled", cancelReason: "Wrong item" },
+      lines,
+      profile,
+      "receipt",
+    );
+    expect(titleOf(cancelled)).toBe("Estimate");
+    expect(cancelled).toContain("CANCELLED");
+  });
+
+  it("shows no tax wording with the default title", () => {
+    expect(renderBillHtml(bill, lines, profile, "receipt")).not.toMatch(/\b(tax|gst)\b/i);
+  });
+});
+
+describe("bill layout: round-off (task T081, FR-010a, research D20)", () => {
+  // lines total 849.60, round-off +0.40, grand total 850.00
+  const roundedUp = {
+    ...bill,
+    linesTotalPaise: 84960,
+    billDiscountPaise: 0,
+    roundOffPaise: 40,
+    grandTotalPaise: 85000,
+  };
+
+  it("hides the round-off line when it is zero", () => {
+    const html = renderBillHtml({ ...bill, roundOffPaise: 0 }, lines, profile, "a4");
+
+    expect(html).not.toMatch(/Round off/i);
+  });
+
+  it("shows a positive round-off with a plus sign, between the discount and the grand total", () => {
+    const html = renderBillHtml(roundedUp, lines, profile, "receipt");
+
+    expect(html).toContain("Round off");
+    expect(html).toContain("+₹0.40");
+    expect(html.indexOf("Round off")).toBeLessThan(html.indexOf("Grand Total"));
+    expect(html).toContain("₹850.00");
+  });
+
+  it("shows a negative round-off with a minus sign", () => {
+    const html = renderBillHtml(
+      {
+        ...bill,
+        linesTotalPaise: 84949,
+        billDiscountPaise: 0,
+        roundOffPaise: -49,
+        grandTotalPaise: 84900,
+      },
+      lines,
+      profile,
+      "receipt",
+    );
+
+    expect(html).toContain("-₹0.49");
+    expect(html).toContain("₹849.00");
+  });
+
+  it("puts the discount before the round-off when a bill has both", () => {
+    const html = renderBillHtml(
+      { ...roundedUp, linesTotalPaise: 100000, billDiscountPaise: 15040 },
+      lines,
+      profile,
+      "receipt",
+    );
+
+    expect(html.indexOf("Discount")).toBeLessThan(html.indexOf("Round off"));
+    expect(html.indexOf("Round off")).toBeLessThan(html.indexOf("Grand Total"));
+  });
+
+  it("prints the same round-off every time the bill is printed (reprint)", () => {
+    expect(renderBillHtml(roundedUp, lines, profile, "receipt")).toBe(
+      renderBillHtml(roundedUp, lines, profile, "receipt"),
+    );
+  });
+});
