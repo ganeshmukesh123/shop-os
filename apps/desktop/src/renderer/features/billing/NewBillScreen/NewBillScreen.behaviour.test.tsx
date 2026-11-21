@@ -132,16 +132,21 @@ describe("new bill screen: save", () => {
   });
 
   it("saves only once when Save is pressed and then Ctrl+S before the first save finishes", async () => {
-    const slowSave = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 40));
-      return SAVE_RESULT;
-    };
-    const fake = renderBillScreen({ "bills.save": slowSave });
+    // The test decides when the first save finishes, so Ctrl+S always lands while it is pending.
+    let finishFirstSave: (result: typeof SAVE_RESULT) => void = () => undefined;
+    const pendingSave = () =>
+      new Promise<typeof SAVE_RESULT>((resolve) => {
+        finishFirstSave = resolve;
+      });
+    const fake = renderBillScreen({ "bills.save": pendingSave });
     await addPipeWithQuantity("1");
 
     await userEvent.click(screen.getByRole("button", { name: /Save bill/ }));
     await userEvent.keyboard("{Control>}s{/Control}");
+    const callsWhilePending = savedBillInputs(fake).length;
+    finishFirstSave(SAVE_RESULT);
 
+    expect(callsWhilePending).toBe(1);
     expect(await screen.findByText(/Bill saved/)).toBeTruthy();
     expect(savedBillInputs(fake)).toHaveLength(1);
   });
