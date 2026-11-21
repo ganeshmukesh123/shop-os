@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Button, Flex, Text } from "@radix-ui/themes";
+import { ClockWarnings } from "./components/ClockWarnings/ClockWarnings";
+import { useClockWarnings } from "./components/ClockWarnings/useClockWarnings";
 import { LAYOUT } from "./layout";
 import { StatusBadge } from "./shared/components/StatusBadge/StatusBadge";
 import { ItemsScreen } from "./screens/ItemsScreen";
@@ -13,6 +15,7 @@ type Route = "items" | "bill" | "settings";
 export function App() {
   const [route, setRoute] = useState<Route>("bill");
   const [negatives, setNegatives] = useState(0);
+  const clockWarnings = useClockWarnings(route);
 
   // Keyboard: Ctrl/Cmd+1..3 to switch screens.
   useEffect(() => {
@@ -71,6 +74,7 @@ export function App() {
       </Flex>
       <Box flexGrow="1" p="4" overflow="auto" asChild>
         <main>
+          <ClockWarnings warnings={clockWarnings} />
           {route === "items" && <ItemsScreen />}
           {route === "bill" && <NewBillScreen />}
           {route === "settings" && <SettingsScreen />}
