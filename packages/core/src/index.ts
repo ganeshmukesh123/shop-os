@@ -4,6 +4,7 @@ export * from "./quantity";
 export * from "./billing";
 export * from "./stock";
 export * from "./numbering";
+export * from "./numberGap";
 export * from "./businessDate";
 export * from "./clockCheck";
 export * from "./types";
