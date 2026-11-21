@@ -16,6 +16,7 @@ export function BillSettingsFields({ settings, onChange }: IBillSettingsFieldsPr
         </Text>
         <TextField.Root
           id="bill-doc-title"
+          required
           aria-describedby="bill-doc-title-help"
           size="3"
           maxLength={DOC_TITLE_MAX_LENGTH}
@@ -49,6 +50,7 @@ export function BillSettingsFields({ settings, onChange }: IBillSettingsFieldsPr
         </Text>
         <TextField.Root
           id="bill-time-zone"
+          required
           aria-describedby="bill-time-zone-help"
           size="3"
           maxLength={64}

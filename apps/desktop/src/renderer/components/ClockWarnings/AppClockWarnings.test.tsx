@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { installFakeShopos } from "../../../../tests/helpers/fakeShopos";
 import { renderWithTheme } from "../../../../tests/helpers/renderWithTheme";
 import { App } from "../../App";
+import { uiText } from "../../strings";
 import { ToastProvider } from "../Toast";
 
 function renderApp(warnings: ("TIME_ZONE_DIFFERS" | "CLOCK_BEFORE_LAST_BILL")[]) {
@@ -25,7 +26,8 @@ describe("the clock warning in the app shell (task T080, FR-019a)", () => {
     const warning = await screen.findByText("Check the clock");
 
     expect(warning.closest("[role=alert]")?.textContent).toContain("earlier than your last bill");
-    expect(screen.getByRole("button", { name: "New bill" })).toBeTruthy();
+    // The bill search box exists only on the billing screen, so it proves billing is still usable.
+    expect(screen.getByRole("textbox", { name: uiText.bill.search })).toBeTruthy();
   });
 
   it("shows nothing when the clock and the time zone are fine", async () => {
