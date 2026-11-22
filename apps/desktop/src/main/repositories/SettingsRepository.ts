@@ -27,13 +27,20 @@ export class SettingsRepository {
       footer: profileRow.footer,
       receiptWidth: profileRow.receiptWidth as ReceiptWidth,
       backupFolder: profileRow.backupFolder,
+      docTitle: profileRow.docTitle,
+      roundBillTotal: profileRow.roundBillTotal === 1,
+      timeZone: profileRow.timeZone,
     };
   }
 
   update(newProfile: ShopProfile): ShopProfile {
     this.databaseHandle
       .update(shopProfile)
-      .set({ ...newProfile, updatedAt: nowMs() })
+      .set({
+        ...newProfile,
+        roundBillTotal: newProfile.roundBillTotal ? 1 : 0,
+        updatedAt: nowMs(),
+      })
       .where(eq(shopProfile.shopId, this.ctx.shopId))
       .run();
     return this.get();

@@ -1,7 +1,7 @@
 import { Button } from "@radix-ui/themes";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { call } from "../../src/renderer/state/api";
+import { call } from "../../src/renderer/shared/api/api";
 import { installFakeMatchMedia } from "../helpers/fakeMatchMedia";
 import { installFakeShopos } from "../helpers/fakeShopos";
 import { renderWithTheme } from "../helpers/renderWithTheme";

@@ -1,6 +1,7 @@
 import type { BrowserWindow, Dialog } from "electron";
 import type { Shell } from "../ipc/handlers";
 import { restoreBackup } from "../services/BackupService";
+import { restoreWithNumbering, type IRestoreNumberingPlan } from "../services/RestoreNumbering";
 import { stopBackupTimer, type IAppState } from "./appState";
 
 const RESTORE_DELAY_MILLISECONDS = 200;
@@ -12,6 +13,8 @@ export interface IShellDependencies {
   app: { relaunch(): void; exit(exitCode: number): void };
   state: IAppState;
   databasePath: string;
+  /** The migrations that bring a restored older backup up to date. */
+  migrationsFolder: string;
   scheduleLater?: (task: () => void, delayMilliseconds: number) => unknown;
 }
 
@@ -20,13 +23,23 @@ function messageOf(caughtError: unknown): string {
 }
 
 /** Close the database, put the backup file in place, and restart. Runs after the reply reached the renderer. */
-function restoreAndRelaunch(filePath: string, dependencies: IShellDependencies): void {
-  const { app, dialog, state, databasePath } = dependencies;
+function restoreAndRelaunch(
+  filePath: string,
+  dependencies: IShellDependencies,
+  numbering?: IRestoreNumberingPlan,
+): void {
+  const { app, dialog, state, databasePath, migrationsFolder } = dependencies;
   try {
     state.isQuitting = true;
     stopBackupTimer(state);
     state.connection?.sqlite.close();
-    restoreBackup(filePath, databasePath);
+    if (numbering) {
+      // The lost bill numbers are recorded on a prepared copy first (FR-013b), so a failure here
+      // leaves the live database as it was.
+      restoreWithNumbering(filePath, { databasePath, migrationsFolder }, numbering, new Date());
+    } else {
+      restoreBackup(filePath, databasePath);
+    }
     app.relaunch();
   } catch (caughtError) {
     dialog.showErrorBox("Restore failed", messageOf(caughtError));
@@ -59,8 +72,11 @@ export function createShell(dependencies: IShellDependencies): Shell {
       });
       return saveDialogResult.canceled ? null : (saveDialogResult.filePath ?? null);
     },
-    scheduleRestore(filePath) {
-      scheduleLater(() => restoreAndRelaunch(filePath, dependencies), RESTORE_DELAY_MILLISECONDS);
+    scheduleRestore(filePath, numbering) {
+      scheduleLater(
+        () => restoreAndRelaunch(filePath, dependencies, numbering),
+        RESTORE_DELAY_MILLISECONDS,
+      );
     },
   };
 }

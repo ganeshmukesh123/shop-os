@@ -44,7 +44,7 @@ function targetBase(ctx: Ctx, id: string): Record<string, ColumnValue> {
 
 /**
  * A number series and one posted bill of 240.00 in it, with no line, tender or movement yet.
- * (doc_title and round_off_paise arrive with task T080 and have defaults, so they are not set here.)
+ * doc_title and round_off_paise take their defaults ('Estimate' and 0) unless `billOverrides` sets them.
  */
 export function insertTargetSeriesAndBill(
   sqlite: Database.Database,
@@ -53,6 +53,7 @@ export function insertTargetSeriesAndBill(
     billId: "bill-1",
     numberSeriesId: "series-1",
   },
+  billOverrides: Record<string, ColumnValue> = {},
 ): void {
   insertRow(sqlite, "number_series", {
     ...targetBase(ctx, ids.numberSeriesId),
@@ -79,6 +80,7 @@ export function insertTargetSeriesAndBill(
     total_paise: 24000,
     cancel_reason: null,
     cancelled_at: null,
+    ...billOverrides,
   });
 }
 
@@ -156,6 +158,7 @@ export function insertTargetNumberGap(
     seq_from: 121,
     seq_to: 126,
     reason: "lost_in_restore",
+    is_estimated: 0,
     recorded_at: EPOCH_MS,
   });
   return "gap-1";

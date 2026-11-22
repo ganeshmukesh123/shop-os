@@ -1,7 +1,14 @@
+import type { ClockWarning } from "./clockCheck";
 import type {
   Bill,
+  BackupPlanRestoreInput,
+  BackupRestoreInput,
   BackupStatus,
   BillLine,
+  IBackupRestoreResult,
+  IRestorePreview,
+  BillsCancelInput,
+  BillsListInput,
   BillsSaveInput,
   Item,
   ItemsCreateInput,
@@ -9,6 +16,7 @@ import type {
   ItemsUpdateInput,
   PrintTarget,
   Result,
+  SettingsClockCheckInput,
   ShopProfile,
   StockAdjustInput,
   StockMovement,
@@ -23,14 +31,20 @@ export interface CommandMap {
   "bills.draft.save": [{ payload: unknown }, Record<string, never>];
   "bills.draft.load": [Record<string, never>, { payload: unknown | null }];
   "bills.save": [BillsSaveInput, { bill: Bill; lines: BillLine[]; negativeStockItems: Item[] }];
+  "bills.list": [BillsListInput, { bills: Bill[]; total: number }];
   "bills.get": [{ id: string }, { bill: Bill; lines: BillLine[] }];
+  "bills.cancel": [BillsCancelInput, { bill: Bill }];
   "bills.print": [{ id: string; target: PrintTarget }, { printed: boolean }];
   "bills.exportPdf": [{ id: string; target: PrintTarget; filePath: string }, { filePath: string }];
   "settings.get": [Record<string, never>, ShopProfile];
   "settings.update": [ShopProfile, ShopProfile];
+  /** Warnings only, never an error: the device zone differs from the shop's, or the clock went back. */
+  "settings.clockCheck": [SettingsClockCheckInput, { warnings: ClockWarning[] }];
   "backup.run": [Record<string, never>, { path: string; finishedAt: string }];
   "backup.status": [Record<string, never>, BackupStatus];
-  "backup.restore": [{ filePath: string }, { restored: boolean }];
+  /** Read only: what a restore of this file would do to the bill numbers (FR-013b). */
+  "backup.planRestore": [BackupPlanRestoreInput, IRestorePreview];
+  "backup.restore": [BackupRestoreInput, IBackupRestoreResult];
   /** Native file dialogs live in the main process; the renderer only receives the chosen path. */
   "system.pickFolder": [Record<string, never>, { path: string | null }];
   "system.pickBackupFile": [Record<string, never>, { path: string | null }];
@@ -47,13 +61,17 @@ export const COMMAND_NAMES = [
   "bills.draft.save",
   "bills.draft.load",
   "bills.save",
+  "bills.list",
   "bills.get",
+  "bills.cancel",
   "bills.print",
   "bills.exportPdf",
   "settings.get",
   "settings.update",
+  "settings.clockCheck",
   "backup.run",
   "backup.status",
+  "backup.planRestore",
   "backup.restore",
   "system.pickFolder",
   "system.pickBackupFile",

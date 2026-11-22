@@ -1,6 +1,7 @@
 import {
   MOVEMENT_REASONS,
   PAYMENT_MODES,
+  backupPlanRestoreInput,
   backupRestoreInput,
   billLineInput,
   billsCancelInput,
@@ -46,6 +47,9 @@ const buildSettings = (overrides: object = {}) => ({
   footer: "Thank you",
   receiptWidth: "80mm",
   backupFolder: "/Volumes/Backup",
+  docTitle: "Estimate",
+  roundBillTotal: true,
+  timeZone: "Asia/Kolkata",
   ...overrides,
 });
 const isAccepted = (
@@ -220,6 +224,48 @@ describe("other bill commands", () => {
     expect(isAccepted(billsListInput, { limit: 10, offset: 0, status: "deleted" })).toBe(false);
   });
 
+  it("takes the bill list's day range as YYYY-MM-DD text, either end optional", () => {
+    const page = { limit: 10, offset: 0 };
+    expect(isAccepted(billsListInput, { ...page, from: "2026-12-07", to: "2026-12-09" })).toBe(
+      true,
+    );
+    expect(isAccepted(billsListInput, { ...page, from: "2026-12-07" })).toBe(true);
+    expect(isAccepted(billsListInput, { ...page, from: "07/12/2026" })).toBe(false);
+    expect(isAccepted(billsListInput, { ...page, to: "2026-13-01" })).toBe(false);
+    expect(isAccepted(billsListInput, { ...page, from: "2026-12-7" })).toBe(false);
+    expect(isAccepted(billsListInput, { ...page, to: "" })).toBe(false);
+  });
+
+  it.each([
+    ["2026-02-28", true],
+    ["2026-02-29", false],
+    ["2028-02-29", true],
+    ["2028-02-30", false],
+    ["2026-04-31", false],
+    ["1900-02-29", false],
+    ["2000-02-29", true],
+  ])("checks whether %s exists on the calendar for both date bounds", (date, isValid) => {
+    const page = { limit: 10, offset: 0 };
+    expect(isAccepted(billsListInput, { ...page, from: date })).toBe(isValid);
+    expect(isAccepted(billsListInput, { ...page, to: date })).toBe(isValid);
+  });
+
+  it("limits the bill list's search text: number 40 characters, customer 80", () => {
+    const page = { limit: 10, offset: 0 };
+    expect(isAccepted(billsListInput, { ...page, number: "n".repeat(40) })).toBe(true);
+    expect(isAccepted(billsListInput, { ...page, number: "n".repeat(41) })).toBe(false);
+    expect(isAccepted(billsListInput, { ...page, customer: "c".repeat(80) })).toBe(true);
+    expect(isAccepted(billsListInput, { ...page, customer: "c".repeat(81) })).toBe(false);
+  });
+
+  it("limits a cancel reason to 200 characters and leaves 'empty' to the domain rule", () => {
+    expect(isAccepted(billsCancelInput, { id: "b1", reason: "r".repeat(200) })).toBe(true);
+    expect(isAccepted(billsCancelInput, { id: "b1", reason: "r".repeat(201) })).toBe(false);
+    expect(isAccepted(billsCancelInput, { id: "b1", reason: "" })).toBe(true); // REASON_REQUIRED
+    expect(isAccepted(billsCancelInput, { id: "", reason: "wrong item" })).toBe(false);
+    expect(isAccepted(billsCancelInput, { id: "b1" })).toBe(false);
+  });
+
   it("needs a bill id to get, cancel, print or export", () => {
     expect(isAccepted(billsGetInput, { id: "b1" })).toBe(true);
     expect(isAccepted(billsGetInput, { id: "" })).toBe(false);
@@ -235,9 +281,25 @@ describe("other bill commands", () => {
     expect(isAccepted(billsExportPdfInput, { id: "b1", target: "a5", filePath: "" })).toBe(false);
   });
 
-  it("needs a file path to restore a backup", () => {
-    expect(isAccepted(backupRestoreInput, { filePath: "/tmp/backup.sqlite" })).toBe(true);
-    expect(isAccepted(backupRestoreInput, { filePath: "" })).toBe(false);
+  it("needs a file path to plan a restore", () => {
+    expect(isAccepted(backupPlanRestoreInput, { filePath: "/tmp/backup.sqlite" })).toBe(true);
+    expect(isAccepted(backupPlanRestoreInput, { filePath: "" })).toBe(false);
+  });
+
+  it("restores only with the whole plan the owner confirmed: next number and lost range", () => {
+    const confirmed = {
+      filePath: "/tmp/backup.sqlite",
+      confirmedPreview: {
+        nextBillNo: "C1/26-27/000127",
+        gapRecorded: { seqFrom: 121, seqTo: 126, isEstimated: false },
+      },
+    };
+
+    expect(isAccepted(backupRestoreInput, confirmed)).toBe(true);
+    expect(isAccepted(backupRestoreInput, { filePath: "/tmp/backup.sqlite" })).toBe(false);
+    expect(
+      isAccepted(backupRestoreInput, { ...confirmed, confirmedPreview: { nextBillNo: "" } }),
+    ).toBe(false);
   });
 });
 
@@ -269,8 +331,40 @@ describe("settings.update input", () => {
     );
   });
 
-  it("accepts receipt widths 58mm and 80mm only", () => {
+  it("accepts receipt widths 58mm, 80mm, a4 and a5 only", () => {
     expect(isAccepted(settingsUpdateInput, buildSettings({ receiptWidth: "58mm" }))).toBe(true);
+    expect(isAccepted(settingsUpdateInput, buildSettings({ receiptWidth: "a4" }))).toBe(true);
+    expect(isAccepted(settingsUpdateInput, buildSettings({ receiptWidth: "a5" }))).toBe(true);
     expect(isAccepted(settingsUpdateInput, buildSettings({ receiptWidth: "100mm" }))).toBe(false);
+  });
+
+  it("returns the document title, the rounding switch and the time zone (FR-010a, FR-015a, FR-019a)", () => {
+    const parsed = settingsUpdateInput.parse(buildSettings({ docTitle: "  Cash Memo  " }));
+
+    expect(parsed.docTitle).toBe("Cash Memo");
+    expect(parsed.roundBillTotal).toBe(true);
+    expect(parsed.timeZone).toBe("Asia/Kolkata");
+  });
+
+  it("requires a document title of 1 to 30 characters", () => {
+    expect(isAccepted(settingsUpdateInput, buildSettings({ docTitle: "  " }))).toBe(false);
+    expect(isAccepted(settingsUpdateInput, buildSettings({ docTitle: "t".repeat(31) }))).toBe(
+      false,
+    );
+    expect(isAccepted(settingsUpdateInput, buildSettings({ docTitle: "t".repeat(30) }))).toBe(true);
+  });
+
+  it("refuses a time zone the platform does not know", () => {
+    expect(isAccepted(settingsUpdateInput, buildSettings({ timeZone: "Mars/Olympus" }))).toBe(
+      false,
+    );
+  });
+
+  it("refuses a profile that leaves out the document title, rounding or time zone", () => {
+    expect(isAccepted(settingsUpdateInput, buildSettings({ docTitle: undefined }))).toBe(false);
+    expect(isAccepted(settingsUpdateInput, buildSettings({ roundBillTotal: undefined }))).toBe(
+      false,
+    );
+    expect(isAccepted(settingsUpdateInput, buildSettings({ timeZone: undefined }))).toBe(false);
   });
 });
