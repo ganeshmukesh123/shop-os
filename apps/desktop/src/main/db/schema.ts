@@ -93,6 +93,9 @@ export const bill = sqliteTable(
     totalPaise: integer("total_paise").notNull(),
     // doc_title: the heading printed on this bill, stored so a reprint is identical (FR-015a)
     docTitle: text("doc_title").notNull().default("Estimate"),
+    // time_zone: the shop's zone when the bill was saved; its date and time are always shown in it,
+    // so a reprint matches even after the shop changes its zone (FR-019a)
+    timeZone: text("time_zone").notNull().default("Asia/Kolkata"),
     // status: posted or cancelled
     status: text("status").notNull(),
     cancelReason: text("cancel_reason"),
@@ -128,6 +131,7 @@ export const bill = sqliteTable(
       sql`${tableColumns.totalPaise} = ${tableColumns.subtotalPaise} - ${tableColumns.billDiscountPaise} + ${tableColumns.roundOffPaise}`,
     ),
     check("bill_doc_title_len", sql`length(trim(${tableColumns.docTitle})) between 1 and 30`),
+    check("bill_time_zone_len", sql`length(${tableColumns.timeZone}) between 1 and 64`),
   ],
 );
 

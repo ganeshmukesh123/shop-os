@@ -88,6 +88,7 @@ The app and the screens still call these fields `number`, `seriesCode`, `linesTo
 | round_off_paise | integer, not null, default 0, `abs(round_off_paise) <= 50`: the signed difference to the nearest rupee (migration 0013, T080) |
 | total_paise | integer, not null = subtotal_paise minus bill_discount_paise plus round_off_paise (check `bill_total_eq`); was `grand_total_paise` |
 | doc_title | text, not null, 1 to 30 characters, default `Estimate`: the heading printed on this bill, copied from the shop setting when saved so a reprint is identical (migration 0013, T080). Bills saved before it get `Estimate` |
+| time_zone | text, not null, 1 to 64 characters, default `Asia/Kolkata`: the shop's zone when the bill was saved; the bill's date and time are always shown in it, so a reprint matches after the shop changes its zone (FR-019a; migration 0013). Bills saved before it get `Asia/Kolkata`, the zone they were saved in |
 | status | `posted` or `cancelled`, not null; a bill moves from `posted` to `cancelled` once and never back; was `saved` |
 | cancel_reason | text, required when status is `cancelled` |
 | cancelled_at | integer epoch milliseconds (UTC), set on cancel |
@@ -132,7 +133,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 <!-- coderabbit-ai-generated-section:v1:a653a6c71cd3957f52050d00eac469ff0dc40e4249e250bfa6b10553f61d42ef -->
 
-- `bill`: delete is rejected (also the key `client_bill_id` is protected); update is allowed only for the change `status` `posted` to `cancelled` (with its cancel fields) while every other column stays identical.
+- `bill`: delete is rejected (also the key `client_bill_id` is protected); update is allowed only for the change `status` `posted` to `cancelled` (with its cancel fields) while every other column stays identical, including `business_id`, `shop_id`, `created_at` and `time_zone` (trigger recreated in migration 0013).
 
 <!-- /coderabbit-ai-generated:v1 -->
 - Consequence: the optional `customer_name` on a saved bill cannot be edited or erased later. Customer phone was removed from the bill (migration `0002`, 2026-11-13) so this release holds no contact details. When contact details arrive (features 004 and 008) they live in a separate, erasable party record referenced by id (review B6).
