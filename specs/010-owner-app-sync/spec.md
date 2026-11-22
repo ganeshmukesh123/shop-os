@@ -16,7 +16,7 @@
 
 ### User Story 1 - Sync that never loses or duplicates a bill (Priority: P1)
 
-Devices work offline and exchange immutable operations with the server when connected. Changes sync within a minute of reconnecting. Two counters that change the same stock keep both changes. No bill is lost or duplicated.
+Devices work offline and exchange immutable operations with the server when connected. Changes sync within a minute of reconnecting. Two counters that change the same stock keep both changes. No bill is lost or duplicated, except bills on a lost or destroyed computer that never synced, which are listed as "at risk" (US5).
 
 **Why this priority**: Zero lost or duplicated bills is the top risk in the PRD register, and every phone feature depends on sync.
 
@@ -112,7 +112,7 @@ Encrypted cloud backup runs every 15 minutes when online, plus a daily copy to a
 - **FR-003**: Alerts MUST be ranked by money at stake (FR-OWN-003).
 - **FR-004**: Approve or reject MUST work with a reason, notifying within 10 seconds when online (FR-OWN-004).
 - **FR-005**: App MUST work on weak signal and show how fresh the data is (FR-OWN-005).
-- **FR-006**: Counter functions MUST work for at least 7 days offline, syncing within a minute of reconnecting, with zero lost or duplicated bills and both stock changes kept (NFR-004, NFR-005).
+- **FR-006**: Counter functions MUST work for at least 7 days offline, syncing within a minute of reconnecting, with zero lost or duplicated bills and both stock changes kept (NFR-004, NFR-005); bills that never left a lost or destroyed computer are the one stated exception and are reported as "at risk" (FR-008, EC-03).
 - **FR-007**: System MUST keep an encrypted cloud backup every 15 minutes when online and a daily second-drive copy, with 30-minute restore (NFR-006).
 - **FR-008**: System MUST protect data in storage and transit, keep PINs unreadable, and let the owner remotely log out a lost device (NFR-008).
 - **FR-009**: Server time MUST be recorded with device time and gaps over 10 minutes alerted (EC-20).
@@ -135,7 +135,7 @@ Encrypted cloud backup runs every 15 minutes when online, plus a daily copy to a
 
 ### Measurable Outcomes
 
-- **SC-001**: Zero lost or duplicated bills across a 7-day offline test with 2 counters and a phone.
+- **SC-001**: Zero lost or duplicated bills across a 7-day offline test with 2 counters and a phone, all of which stay working (a lost computer's unsynced bills are covered by the "at risk" report, not this test).
 - **SC-002**: The Today card opens within 3 seconds and approvals reach the phone within 10 seconds when online.
 - **SC-003**: The owner opens the Today card on 6 of 7 days.
 - **SC-004**: Days with unsynced data older than 24 hours: 0.
