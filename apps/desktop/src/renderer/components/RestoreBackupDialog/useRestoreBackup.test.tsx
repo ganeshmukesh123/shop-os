@@ -18,19 +18,28 @@ const PROFILE: ShopProfile = {
 };
 const BACKUP_FILE = "/backups/shopos-20261120-231500.sqlite";
 
+const PLAN = {
+  nextBillNo: "C1/26-27/000127",
+  gapRecorded: { seqFrom: 121, seqTo: 126, isEstimated: false },
+};
+
 function setup(handlers: Parameters<typeof installFakeShopos>[0] = {}) {
   const fake = installFakeShopos({
     "system.pickBackupFile": () => ({ path: BACKUP_FILE }),
-    "backup.restore": () => ({
-      restored: true,
-      nextBillNo: "C1/26-27/000127",
-      gapRecorded: { seqFrom: 121, seqTo: 126, isEstimated: false },
-    }),
+    "backup.planRestore": () => PLAN,
+    "backup.restore": () => ({ restored: true, ...PLAN }),
     ...handlers,
   });
   const toast = vi.fn();
   const hook = renderHook(() => useRestoreBackup(PROFILE, toast));
   return { fake, toast, hook };
+}
+
+/** Opens the dialog, types a number and checks it, as the owner does before restoring. */
+async function openTypeAndCheck(hook: ReturnType<typeof setup>["hook"], typedNumber: string) {
+  await act(() => hook.result.current.start());
+  act(() => hook.result.current.dialog.onTypedNumberChange(typedNumber));
+  await act(() => hook.result.current.dialog.onCheck());
 }
 
 describe("useRestoreBackup (task T084)", () => {
@@ -48,6 +57,7 @@ describe("useRestoreBackup (task T084)", () => {
     expect(hook.result.current.dialog.isOpen).toBe(true);
     expect(hook.result.current.dialog.backupFileName).toBe("shopos-20261120-231500.sqlite");
     expect(hook.result.current.dialog.example).toMatch(/^C1\/\d{2}-\d{2}\/000126$/);
+    expect(hook.result.current.dialog.planText).toBeNull();
   });
 
   it("stays closed when the owner cancels the file dialog", async () => {
@@ -59,15 +69,54 @@ describe("useRestoreBackup (task T084)", () => {
     expect(fake.calls.map((call) => call.commandName)).toEqual(["system.pickBackupFile"]);
   });
 
-  it("restores with the typed number, tells the owner the next bill, and closes", async () => {
-    const { hook, fake, toast } = setup();
-    await act(() => hook.result.current.start());
+  it("checks the typed number, without its spaces, and shows the plan; nothing is restored", async () => {
+    const { hook, fake } = setup();
 
-    await act(() => hook.result.current.dialog.onRestore("C1/26-27/000126"));
+    await openTypeAndCheck(hook, " C1/26-27/000126 ");
+
+    expect(fake.calls.at(-1)).toEqual({
+      commandName: "backup.planRestore",
+      input: { filePath: BACKUP_FILE, lastIssuedBillNo: "C1/26-27/000126" },
+    });
+    expect(hook.result.current.dialog.planText).toBe(
+      "The next bill will be C1/26-27/000127. Bill numbers 121 to 126 will be recorded as lost in the restore.",
+    );
+    expect(fake.calls.some((call) => call.commandName === "backup.restore")).toBe(false);
+  });
+
+  it("checks with no number at all when the field is blank", async () => {
+    const { hook, fake } = setup();
+
+    await openTypeAndCheck(hook, "  ");
+
+    expect(fake.calls.at(-1)).toEqual({
+      commandName: "backup.planRestore",
+      input: { filePath: BACKUP_FILE },
+    });
+  });
+
+  it("forgets the plan when the owner changes the number, so it must be checked again", async () => {
+    const { hook } = setup();
+    await openTypeAndCheck(hook, "C1/26-27/000126");
+
+    act(() => hook.result.current.dialog.onTypedNumberChange("C1/26-27/000128"));
+
+    expect(hook.result.current.dialog.planText).toBeNull();
+  });
+
+  it("restores the plan the owner saw, tells them the next bill, and closes", async () => {
+    const { hook, fake, toast } = setup();
+    await openTypeAndCheck(hook, "C1/26-27/000126");
+
+    await act(() => hook.result.current.dialog.onRestore());
 
     expect(fake.calls.at(-1)).toEqual({
       commandName: "backup.restore",
-      input: { filePath: BACKUP_FILE, lastIssuedBillNo: "C1/26-27/000126" },
+      input: {
+        filePath: BACKUP_FILE,
+        lastIssuedBillNo: "C1/26-27/000126",
+        confirmedNextBillNo: "C1/26-27/000127",
+      },
     });
     expect(toast).toHaveBeenCalledWith(
       "success",
@@ -76,38 +125,37 @@ describe("useRestoreBackup (task T084)", () => {
     expect(hook.result.current.dialog.isOpen).toBe(false);
   });
 
-  it("sends no number at all when the field is blank", async () => {
-    const { hook, fake } = setup();
-    await act(() => hook.result.current.start());
-
-    await act(() => hook.result.current.dialog.onRestore(""));
-
-    expect(fake.calls.at(-1)).toEqual({
-      commandName: "backup.restore",
-      input: { filePath: BACKUP_FILE },
-    });
-  });
-
   it("keeps the dialog open and shows the reason when the number is refused", async () => {
     // With no handler the fake answers with an error result, as the real command does for a refused number.
-    const { hook } = setup({ "backup.restore": undefined });
-    await act(() => hook.result.current.start());
+    const { hook } = setup({ "backup.planRestore": undefined });
 
-    await act(() => hook.result.current.dialog.onRestore("126"));
+    await openTypeAndCheck(hook, "126");
 
     expect(hook.result.current.dialog.isOpen).toBe(true);
-    expect(hook.result.current.dialog.errorMessage).toBe("no fake for backup.restore");
+    expect(hook.result.current.dialog.errorMessage).toBe("no fake for backup.planRestore");
+    expect(hook.result.current.dialog.planText).toBeNull();
     expect(hook.result.current.dialog.isBusy).toBe(false);
   });
 
-  it("clears the error and closes on cancel", async () => {
+  it("asks for a new check when the restore is refused, for example because the file changed", async () => {
     const { hook } = setup({ "backup.restore": undefined });
-    await act(() => hook.result.current.start());
-    await act(() => hook.result.current.dialog.onRestore("126"));
+    await openTypeAndCheck(hook, "C1/26-27/000126");
+
+    await act(() => hook.result.current.dialog.onRestore());
+
+    expect(hook.result.current.dialog.isOpen).toBe(true);
+    expect(hook.result.current.dialog.errorMessage).toBe("no fake for backup.restore");
+    expect(hook.result.current.dialog.planText).toBeNull();
+  });
+
+  it("clears the number, the plan and the error, and closes, on cancel", async () => {
+    const { hook } = setup({ "backup.planRestore": undefined });
+    await openTypeAndCheck(hook, "126");
 
     act(() => hook.result.current.dialog.onCancel());
 
     expect(hook.result.current.dialog.isOpen).toBe(false);
     expect(hook.result.current.dialog.errorMessage).toBeNull();
+    expect(hook.result.current.dialog.typedNumber).toBe("");
   });
 });

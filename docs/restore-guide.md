@@ -30,8 +30,9 @@ Open **Settings > Backup**. "Last good backup" should show today's date and a re
 3. Open **Settings > Backup > Restore from file**.
 4. Choose the newest `shopos-….sqlite` file (the file name has the date and time).
 5. A window asks for **the last bill number you printed**. Look at your last printed bill (or your paper bill book) and type its number exactly, for example `C1/26-27/000126`. The window shows an example in your own number format.
-6. Click **Restore and restart**. The app **replaces all current data** with the backup and restarts.
-7. Check **Items** and look at the last bill you made. Anything entered after the backup's time is not in it.
+6. Click **Check bill numbers**. Nothing is replaced yet: the window shows the number the next bill will get and which numbers will be recorded as lost. If the number is wrong, correct it and check again.
+7. If that is right, click **Restore and restart**. The app **replaces all current data** with the backup and restarts. If the backup file changed after you checked it, the app refuses and asks you to check again.
+8. Check **Items** and look at the last bill you made. Anything entered after the backup's time is not in it.
 
 ### Why the app asks for the last bill number
 

@@ -5,6 +5,7 @@ import {
   formatBillNumber,
   isValidTimeZone,
   type IBackupRestoreResult,
+  type IRestorePreview,
 } from "@shopos/core";
 import { uiText } from "../../strings";
 import { EXAMPLE_SEQUENCE } from "./RestoreBackupDialog.constants";
@@ -40,6 +41,18 @@ export function restoreStartedMessage(result: IBackupRestoreResult): string {
   const parts = [
     fillText(text.started, { next: result.nextBillNo }),
     gapRecorded && fillText(text.lostRange, { from: gapRecorded.seqFrom, to: gapRecorded.seqTo }),
+    gapRecorded?.isEstimated && text.lostGuess,
+  ];
+  return parts.filter((part): part is string => typeof part === "string").join(" ");
+}
+
+/** What the owner is shown before they confirm: the next bill number and the numbers that will be lost. */
+export function restorePlanMessage(preview: IRestorePreview): string {
+  const text = uiText.restore;
+  const { gapRecorded } = preview;
+  const parts = [
+    fillText(text.planNext, { next: preview.nextBillNo }),
+    gapRecorded && fillText(text.planLost, { from: gapRecorded.seqFrom, to: gapRecorded.seqTo }),
     gapRecorded?.isEstimated && text.lostGuess,
   ];
   return parts.filter((part): part is string => typeof part === "string").join(" ");
