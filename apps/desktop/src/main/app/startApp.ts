@@ -103,7 +103,12 @@ export function startApp(
       installSecurityHeaders(dependencies.getDefaultSession(), config.isDev);
       registerIpc(
         services,
-        createShell({ ...dependencies, state, databasePath: config.databasePath }),
+        createShell({
+          ...dependencies,
+          state,
+          databasePath: config.databasePath,
+          migrationsFolder: config.migrationsFolder,
+        }),
       );
       createMainWindow(dependencies.createBrowserWindow, config);
       startBackupTimer(state, BACKUP_EVERY_MILLISECONDS);

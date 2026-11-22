@@ -1,7 +1,12 @@
 import { ZodError, type ZodTypeAny } from "zod";
 import {
   CoreError,
+  backupPlanRestoreInput,
   backupRestoreInput,
+  type BackupPlanRestoreInput,
+  type BackupRestoreInput,
+  type IBackupRestoreResult,
+  type IRestorePreview,
   billsCancelInput,
   billsExportPdfInput,
   billsGetInput,
@@ -20,11 +25,12 @@ import {
   type Result,
 } from "@shopos/core";
 import type { BackupService } from "../services/BackupService";
-import { validateBackupFile } from "../services/BackupService";
 import type { BillingService } from "../services/BillingService";
 import type { InventoryService } from "../services/InventoryService";
 import type { PrintService } from "../services/PrintService";
+import type { IRestoreNumberingPlan } from "../services/RestoreNumbering";
 import type { SettingsService } from "../services/SettingsService";
+import { assertPlanIsConfirmed, planRestoreFor, toRestorePreview } from "./restoreCommands";
 
 export interface Services {
   inventory: InventoryService;
@@ -40,7 +46,7 @@ export interface Shell {
   pickBackupFile(): Promise<string | null>;
   pickPdfPath(defaultName: string): Promise<string | null>;
   /** Close the database, put the backup in place and relaunch. */
-  scheduleRestore(filePath: string): void;
+  scheduleRestore(filePath: string, numbering?: IRestoreNumberingPlan): void;
 }
 
 export type Handlers = {
@@ -160,12 +166,19 @@ function createSystemHandlers(services: Services, shell: Shell): Pick<Handlers, 
     ),
     "backup.run": cmd<"backup.run">(none(), () => services.backup.run()),
     "backup.status": cmd<"backup.status">(none(), () => services.backup.status()),
+    "backup.planRestore": cmd<"backup.planRestore">(
+      backupPlanRestoreInput,
+      async (commandInput: BackupPlanRestoreInput): Promise<IRestorePreview> =>
+        toRestorePreview(await planRestoreFor(commandInput, new Date())),
+    ),
     "backup.restore": cmd<"backup.restore">(
       backupRestoreInput,
-      (commandInput: { filePath: string }) => {
-        validateBackupFile(commandInput.filePath); // INVALID_BACKUP before anything is touched
-        shell.scheduleRestore(commandInput.filePath);
-        return { restored: true };
+      async (commandInput: BackupRestoreInput): Promise<IBackupRestoreResult> => {
+        // Worked out again, never taken from the renderer; nothing is touched unless it still matches.
+        const numbering = await planRestoreFor(commandInput, new Date());
+        assertPlanIsConfirmed(numbering, commandInput.confirmedPreview);
+        shell.scheduleRestore(commandInput.filePath, numbering);
+        return { restored: true, ...toRestorePreview(numbering) };
       },
     ),
     "system.pickFolder": cmd<"system.pickFolder">(none(), async () => ({

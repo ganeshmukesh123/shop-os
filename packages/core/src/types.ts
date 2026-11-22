@@ -205,7 +205,45 @@ export type SettingsUpdateInput = z.infer<typeof settingsUpdateInput>;
 export const settingsClockCheckInput = z.object({ deviceTimeZone: z.string().max(64) });
 export type SettingsClockCheckInput = z.infer<typeof settingsClockCheckInput>;
 
-export const backupRestoreInput = z.object({ filePath: z.string().min(1) });
+export const backupPlanRestoreInput = z.object({
+  filePath: z.string().min(1),
+  /** The last bill number the owner remembers issuing, to keep numbers unique after the restore (FR-013b). */
+  lastIssuedBillNo: z.string().max(40).optional(),
+});
+export type BackupPlanRestoreInput = z.infer<typeof backupPlanRestoreInput>;
+
+/** What a restore will do to the bill numbers, shown to the owner before they confirm. */
+export interface IRestorePreview {
+  /** The number the next bill will get after the restore. */
+  nextBillNo: string;
+  /** Present when numbers will be lost: they are recorded and will never be issued again. */
+  gapRecorded?: { seqFrom: number; seqTo: number; isEstimated: boolean };
+}
+
+const restorePreview = z.object({
+  nextBillNo: z.string().min(1).max(40),
+  gapRecorded: z
+    .object({
+      seqFrom: z.number().int().min(1),
+      seqTo: z.number().int().min(1),
+      isEstimated: z.boolean(),
+    })
+    .optional(),
+}) satisfies z.ZodType<IRestorePreview>;
+
+/**
+ * A restore runs only with the whole plan the owner saw (next number and lost range), so a backup that
+ * changed after the check is never applied unseen.
+ */
+export const backupRestoreInput = backupPlanRestoreInput.extend({
+  confirmedPreview: restorePreview,
+});
+export type BackupRestoreInput = z.infer<typeof backupRestoreInput>;
+
+/** What a restore tells the owner before the app restarts: the plan it is applying. */
+export interface IBackupRestoreResult extends IRestorePreview {
+  restored: boolean;
+}
 
 // ---------- results ----------
 export type Result<T> =

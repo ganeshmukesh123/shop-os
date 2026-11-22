@@ -8,6 +8,7 @@ import { BackupService } from "../../src/main/services/BackupService";
 import { BillingService } from "../../src/main/services/BillingService";
 import { InventoryService } from "../../src/main/services/InventoryService";
 import { PrintService, type HtmlRenderer } from "../../src/main/services/PrintService";
+import type { IRestoreNumberingPlan } from "../../src/main/services/RestoreNumbering";
 import { SettingsService } from "../../src/main/services/SettingsService";
 import { BillRepository } from "../../src/main/repositories/BillRepository";
 import { SettingsRepository } from "../../src/main/repositories/SettingsRepository";
@@ -16,6 +17,8 @@ import { createTestDb, type TestDb } from "./testDb";
 export interface IShellCalls {
   pickedPdfNames: string[];
   restoredFiles: string[];
+  /** The bill-number plan the command gave the shell for each scheduled restore. */
+  restoredPlans: (IRestoreNumberingPlan | undefined)[];
 }
 
 export interface IHandlersFixture {
@@ -37,7 +40,7 @@ const FAKE_PDF_BYTES = Buffer.from("%PDF-fake");
 /** Real services on an in-memory database, with the Electron-only shell replaced by a recording fake. */
 export function buildHandlersFixture(options: IFixtureOptions = {}): IHandlersFixture {
   const testDb = createTestDb();
-  const shellCalls: IShellCalls = { pickedPdfNames: [], restoredFiles: [] };
+  const shellCalls: IShellCalls = { pickedPdfNames: [], restoredFiles: [], restoredPlans: [] };
   const htmlRenderer: HtmlRenderer = options.htmlRenderer ?? {
     print: async () => ({ success: true }),
     toPdf: async () => FAKE_PDF_BYTES,
@@ -60,8 +63,9 @@ export function buildHandlersFixture(options: IFixtureOptions = {}): IHandlersFi
       shellCalls.pickedPdfNames.push(defaultName);
       return options.pickedPdfPath ?? null;
     },
-    scheduleRestore: (filePath) => {
+    scheduleRestore: (filePath, numbering) => {
       shellCalls.restoredFiles.push(filePath);
+      shellCalls.restoredPlans.push(numbering);
     },
   };
   return { handlers: createHandlers(services, shell), services, testDb, shellCalls };

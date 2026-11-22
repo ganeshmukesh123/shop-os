@@ -1,7 +1,5 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
-import Database from "better-sqlite3";
 import {
   CoreError,
   assertNotAfterCurrentYear,
@@ -21,43 +19,16 @@ import {
   type IBackupNumberingSettings,
 } from "../../repositories/BackupInspectionRepository";
 import { NumberGapRepository } from "../../repositories/NumberGapRepository";
-import { restoreBackup } from "../BackupService";
+import { restoreBackup, validateBackupFile } from "../BackupService";
 import { EXAMPLE_SEQ, PREPARED_COPY_SUFFIX } from "./RestoreNumbering.constants";
 import type { IRestoreNumberingPlan, IRestoreTarget } from "./RestoreNumbering.types";
+import { readDatabaseFile, withBackupCopy } from "./backupCopy";
 
 interface ISeriesChoice {
   counterCode: string;
   financialYear: string;
   /** The last number the owner says was issued, or null when they cannot say. */
   confirmedSeq: number | null;
-}
-
-/** Open a throwaway copy of the backup in the system temp folder, so the backup itself is never touched. */
-function withBackupCopy<Result>(
-  backupFile: string,
-  readCopy: (copyDatabase: Database.Database) => Result,
-): Result {
-  const copyFolder = fs.mkdtempSync(path.join(os.tmpdir(), "shopos-plan-"));
-  // The folder holds a full copy of the shop's data, so it goes even when the copy or open fails.
-  try {
-    const copyFile = path.join(copyFolder, "backup.sqlite");
-    fs.copyFileSync(backupFile, copyFile);
-    return readDatabaseFile(copyFile, readCopy);
-  } finally {
-    fs.rmSync(copyFolder, { recursive: true, force: true });
-  }
-}
-
-function readDatabaseFile<Result>(
-  databaseFile: string,
-  readDatabase: (database: Database.Database) => Result,
-): Result {
-  const database = new Database(databaseFile, { fileMustExist: true });
-  try {
-    return readDatabase(database);
-  } finally {
-    database.close();
-  }
 }
 
 /**
@@ -90,9 +61,8 @@ function currentFinancialYear(timeZone: string, now: Date): string {
 function chooseSeries(
   settings: IBackupNumberingSettings,
   lastIssuedBillNo: string | null,
-  now: Date,
+  currentYear: string,
 ): ISeriesChoice {
-  const currentYear = currentFinancialYear(settings.timeZone, now);
   const typedNumber = lastIssuedBillNo?.trim() ?? "";
   if (typedNumber === "") {
     return { counterCode: settings.seriesCode, financialYear: currentYear, confirmedSeq: null };
@@ -130,11 +100,12 @@ export function planRestoreNumbering(
   backupFile: string,
   lastIssuedBillNo: string | null,
   now: Date,
-): IRestoreNumberingPlan {
+): Promise<IRestoreNumberingPlan> {
   return withBackupCopy(backupFile, (copyDatabase) => {
     const inspection = new BackupInspectionRepository(copyDatabase);
     const settings = inspection.readNumberingSettings();
-    const series = chooseSeries(settings, lastIssuedBillNo, now);
+    const currentYear = currentFinancialYear(settings.timeZone, now);
+    const series = chooseSeries(settings, lastIssuedBillNo, currentYear);
     const isTypedNumber = series.confirmedSeq !== null;
     if (isTypedNumber) {
       assertNotBeforeBackupYear(
@@ -144,7 +115,12 @@ export function planRestoreNumbering(
     }
     const restoredLastSeq = inspection.lastSeq(series.counterCode, series.financialYear);
     const gap = planNumberGap(restoredLastSeq, series.confirmedSeq);
-    const nextSeq = (gap?.newLastSeq ?? restoredLastSeq) + 1;
+    // Billing numbers the next bill in the year of its own date, which is the current year, even when
+    // the lost range belongs to last year (a last bill typed from March, restored in May).
+    const isCurrentYearSeries = series.financialYear === currentYear;
+    const currentYearLastSeq = isCurrentYearSeries
+      ? (gap?.newLastSeq ?? restoredLastSeq)
+      : inspection.lastSeq(series.counterCode, currentYear);
     return {
       counterCode: series.counterCode,
       financialYear: series.financialYear,
@@ -154,8 +130,8 @@ export function planRestoreNumbering(
       nextBillNo: formatBillNumber(
         settings.numberTemplate,
         series.counterCode,
-        series.financialYear,
-        nextSeq,
+        currentYear,
+        currentYearLastSeq + 1,
       ),
     };
   });
@@ -210,6 +186,7 @@ export function restoreWithNumbering(
   plan: IRestoreNumberingPlan,
   now: Date,
 ): void {
+  validateBackupFile(backupFile); // INVALID_BACKUP before a copy is made
   const preparedFile = `${target.databasePath}${PREPARED_COPY_SUFFIX}-${process.pid}`;
   try {
     fs.mkdirSync(path.dirname(target.databasePath), { recursive: true });

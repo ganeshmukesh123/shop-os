@@ -142,12 +142,13 @@ describe("SettingsScreen backup: Back up now", () => {
 describe("SettingsScreen backup: Restore from file", () => {
   const RESTORE_HANDLERS: FakeCommandHandlers = {
     "system.pickBackupFile": () => ({ path: "/backups/shopos-20261115.sqlite" }),
-    "backup.restore": () => ({ restored: true }),
+    "backup.planRestore": () => ({ nextBillNo: "C1/26-27/000121" }),
+    "backup.restore": () => ({ restored: true, nextBillNo: "C1/26-27/000121" }),
   };
 
   afterEach(() => vi.restoreAllMocks());
 
-  it("asks first, then restores the chosen file and says the app will restart", async () => {
+  it("asks first, naming the next bill number, then restores the plan the owner saw", async () => {
     const askUser = vi.spyOn(window, "confirm").mockReturnValue(true);
     const { callsTo } = renderSettings(RESTORE_HANDLERS);
 
@@ -155,8 +156,10 @@ describe("SettingsScreen backup: Restore from file", () => {
 
     expect(await screen.findByText("Restoring… the app will restart.")).toBeTruthy();
     expect(askUser).toHaveBeenCalledWith(expect.stringContaining("replaces ALL current data"));
+    expect(askUser).toHaveBeenCalledWith(expect.stringContaining("C1/26-27/000121"));
     expect(callsTo("backup.restore")[0]!.input).toEqual({
       filePath: "/backups/shopos-20261115.sqlite",
+      confirmedPreview: { nextBillNo: "C1/26-27/000121" },
     });
   });
 
@@ -180,11 +183,11 @@ describe("SettingsScreen backup: Restore from file", () => {
     expect(askUser).not.toHaveBeenCalled();
   });
 
-  it("shows why when the file is not a valid backup, and keeps the app as it was", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    renderSettings({
+  it("shows why when the file is not a valid backup, before asking anything", async () => {
+    const askUser = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const { callsTo } = renderSettings({
       ...RESTORE_HANDLERS,
-      "backup.restore": () => {
+      "backup.planRestore": () => {
         throw Object.assign(new Error("This is not a valid Shop OS backup"), {
           code: "INVALID_BACKUP",
         });
@@ -196,5 +199,7 @@ describe("SettingsScreen backup: Restore from file", () => {
     expect((await screen.findByRole("alert")).textContent).toBe(
       "Error This is not a valid Shop OS backup",
     );
+    expect(askUser).not.toHaveBeenCalled();
+    expect(callsTo("backup.restore")).toHaveLength(0);
   });
 });

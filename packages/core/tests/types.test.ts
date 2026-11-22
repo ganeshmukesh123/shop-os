@@ -1,6 +1,7 @@
 import {
   MOVEMENT_REASONS,
   PAYMENT_MODES,
+  backupPlanRestoreInput,
   backupRestoreInput,
   billLineInput,
   billsCancelInput,
@@ -280,9 +281,25 @@ describe("other bill commands", () => {
     expect(isAccepted(billsExportPdfInput, { id: "b1", target: "a5", filePath: "" })).toBe(false);
   });
 
-  it("needs a file path to restore a backup", () => {
-    expect(isAccepted(backupRestoreInput, { filePath: "/tmp/backup.sqlite" })).toBe(true);
-    expect(isAccepted(backupRestoreInput, { filePath: "" })).toBe(false);
+  it("needs a file path to plan a restore", () => {
+    expect(isAccepted(backupPlanRestoreInput, { filePath: "/tmp/backup.sqlite" })).toBe(true);
+    expect(isAccepted(backupPlanRestoreInput, { filePath: "" })).toBe(false);
+  });
+
+  it("restores only with the whole plan the owner confirmed: next number and lost range", () => {
+    const confirmed = {
+      filePath: "/tmp/backup.sqlite",
+      confirmedPreview: {
+        nextBillNo: "C1/26-27/000127",
+        gapRecorded: { seqFrom: 121, seqTo: 126, isEstimated: false },
+      },
+    };
+
+    expect(isAccepted(backupRestoreInput, confirmed)).toBe(true);
+    expect(isAccepted(backupRestoreInput, { filePath: "/tmp/backup.sqlite" })).toBe(false);
+    expect(
+      isAccepted(backupRestoreInput, { ...confirmed, confirmedPreview: { nextBillNo: "" } }),
+    ).toBe(false);
   });
 });
 
