@@ -1,3 +1,4 @@
+import type { ClockWarning } from "./clockCheck";
 import type {
   Bill,
   BackupStatus,
@@ -11,6 +12,7 @@ import type {
   ItemsUpdateInput,
   PrintTarget,
   Result,
+  SettingsClockCheckInput,
   ShopProfile,
   StockAdjustInput,
   StockMovement,
@@ -32,6 +34,8 @@ export interface CommandMap {
   "bills.exportPdf": [{ id: string; target: PrintTarget; filePath: string }, { filePath: string }];
   "settings.get": [Record<string, never>, ShopProfile];
   "settings.update": [ShopProfile, ShopProfile];
+  /** Warnings only, never an error: the device zone differs from the shop's, or the clock went back. */
+  "settings.clockCheck": [SettingsClockCheckInput, { warnings: ClockWarning[] }];
   "backup.run": [Record<string, never>, { path: string; finishedAt: string }];
   "backup.status": [Record<string, never>, BackupStatus];
   "backup.restore": [{ filePath: string }, { restored: boolean }];
@@ -58,6 +62,7 @@ export const COMMAND_NAMES = [
   "bills.exportPdf",
   "settings.get",
   "settings.update",
+  "settings.clockCheck",
   "backup.run",
   "backup.status",
   "backup.restore",

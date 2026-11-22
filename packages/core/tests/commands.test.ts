@@ -17,6 +17,7 @@ const EXPECTED_COMMAND_NAMES = [
   "bills.exportPdf",
   "settings.get",
   "settings.update",
+  "settings.clockCheck",
   "backup.run",
   "backup.status",
   "backup.restore",

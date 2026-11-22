@@ -12,6 +12,7 @@ import {
   itemsCreateInput,
   itemsListInput,
   itemsUpdateInput,
+  settingsClockCheckInput,
   settingsUpdateInput,
   stockAdjustInput,
   type CommandMap,
@@ -151,6 +152,11 @@ function createSystemHandlers(services: Services, shell: Shell): Pick<Handlers, 
     "settings.get": cmd<"settings.get">(none(), () => services.settings.get()),
     "settings.update": cmd<"settings.update">(settingsUpdateInput, (commandInput) =>
       services.settings.update(commandInput),
+    ),
+    "settings.clockCheck": cmd<"settings.clockCheck">(
+      settingsClockCheckInput,
+      (commandInput: { deviceTimeZone: string }) =>
+        services.settings.clockCheck(commandInput.deviceTimeZone),
     ),
     "backup.run": cmd<"backup.run">(none(), () => services.backup.run()),
     "backup.status": cmd<"backup.status">(none(), () => services.backup.status()),
