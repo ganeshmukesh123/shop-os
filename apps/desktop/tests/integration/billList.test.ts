@@ -172,6 +172,16 @@ describe("BillRepository.list (T067, FR-016)", () => {
     });
   });
 
+  it("shows each listed bill's time in the shop's zone, as the saved bill does (FR-019a)", () => {
+    testDb.sqlite.prepare("update shop_profile set time_zone = 'America/Los_Angeles'").run();
+    saveBill({ now: DEC_7 });
+
+    const listed = bills.list({ limit: 10, offset: 0 });
+
+    // 10:00 UTC on 7 December is 02:00 in Los Angeles.
+    expect(listed.bills[0]?.billDate).toBe("2026-12-07T02:00:00");
+  });
+
   it("returns nothing, with a total of 0, when no bill matches", () => {
     saveBill({ now: DEC_7 });
 

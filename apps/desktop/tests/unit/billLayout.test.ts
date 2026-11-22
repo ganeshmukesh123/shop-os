@@ -10,6 +10,9 @@ const profile: ShopProfile = {
   footer: "Goods once sold are not returnable",
   receiptWidth: "80mm",
   backupFolder: "",
+  docTitle: "Estimate",
+  roundBillTotal: true,
+  timeZone: "Asia/Kolkata",
 };
 const bill: Bill = {
   id: "b1",
@@ -18,9 +21,11 @@ const bill: Bill = {
   seq: 123,
   billDate: "2026-12-07T14:05:09",
   customerName: "Ravi Kumar",
+  docTitle: "Estimate",
   paymentMode: "upi",
   linesTotalPaise: 10000000 + 12500,
   billDiscountPaise: 2500,
+  roundOffPaise: 0,
   grandTotalPaise: 10010000,
   status: "posted",
   cancelReason: null,

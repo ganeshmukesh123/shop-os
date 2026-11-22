@@ -18,6 +18,9 @@ const PROFILE_WITH_FOLDER: ShopProfile = {
   footer: "",
   receiptWidth: "80mm",
   backupFolder: "/backups",
+  docTitle: "Estimate",
+  roundBillTotal: true,
+  timeZone: "Asia/Kolkata",
 };
 
 const NO_BACKUP_YET: BackupStatus = { lastOkAt: null, lastError: null, folder: "/backups" };

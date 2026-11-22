@@ -250,6 +250,9 @@ describe("billing", () => {
       footer: "",
       receiptWidth: "80mm",
       backupFolder: "",
+      docTitle: "Estimate",
+      roundBillTotal: true,
+      timeZone: "Asia/Kolkata",
     });
     const firstItem = mk("A");
     expect(billing.saveBill(bill([line(firstItem.id)])).bill.number).toBe("B2-000001");
@@ -355,6 +358,9 @@ describe("billing", () => {
   });
 
   it("totals match a manual calculation on a 20-bill set (SC-007)", () => {
+    // Exact line arithmetic is under test here; rounding the grand total has its own tests (billRoundOff.test.ts).
+    const settingsService = new SettingsService(testDb.db, testDb.ctx);
+    settingsService.update({ ...settingsService.get(), roundBillTotal: false });
     const firstItem = mk("A", "metre", 1234, 1_000_000_000);
     for (let billIndex = 1; billIndex <= 20; billIndex++) {
       const quantityMilli = billIndex * 250; // i/4 metre
