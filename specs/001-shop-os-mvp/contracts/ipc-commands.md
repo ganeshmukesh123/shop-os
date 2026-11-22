@@ -11,9 +11,9 @@ The UI (renderer) never touches the database. It calls these typed commands thro
 | `bills.draft.save` | `{ payload }` | `{}` | |
 | `bills.draft.load` | `{}` | `{ payload or null }` | |
 | `bills.save` | `{ clientBillId, customerName?, paymentMode, billDiscountPaise, lines[{ itemId, quantityMilli, ratePaise, lineDiscountPaise }] }` | `{ bill, negativeStockItems[] }` | `EMPTY_BILL`, `INVALID_QUANTITY`, `INVALID_DISCOUNT`, `ITEM_INACTIVE` |
-| `bills.list` | `{ number?, from?, to?, customer?, status?, limit, offset }` | `{ bills[], total }` | `status` is `posted` or `cancelled` (T076; it was `saved`) |
+| `bills.list` | `{ number?, from?, to?, customer?, status?, limit, offset }` | `{ bills[], total }` | `INVALID_FIELD`. Newest first; `number` is part of the bill number (up to 40 characters), `customer` part of the name (up to 80), both ignoring case and matching `%`, `_` and `\` as plain characters; `from` and `to` are business dates `YYYY-MM-DD`, both ends included, either optional; `status` is `posted` or `cancelled` (T076; it was `saved`); `limit` 1 to 500; `total` counts every match, not only the page |
 | `bills.get` | `{ id }` | `{ bill, lines[] }` | `NOT_FOUND` |
-| `bills.cancel` | `{ id, reason }` | `{ bill }` | `ALREADY_CANCELLED`, `REASON_REQUIRED` |
+| `bills.cancel` | `{ id, reason }` | `{ bill }` | `REASON_REQUIRED` (empty or only spaces), `ALREADY_CANCELLED`, `NOT_FOUND`, `INVALID_FIELD` (reason over 200 characters; a limit chosen in T069, not in the spec) |
 | `bills.print` | `{ id, target: "receipt" or "a4" or "a5" }` | `{ printed }` | `PRINT_FAILED` (bill is unaffected) |
 | `bills.exportPdf` | `{ id, target, filePath }` | `{ filePath }` | `WRITE_FAILED` |
 | `settings.get` / `settings.update` | shop profile fields | shop profile | `INVALID_FIELD` |
@@ -23,11 +23,14 @@ The UI (renderer) never touches the database. It calls these typed commands thro
 
 Not in this release: `import.preview` and `import.commit` moved to feature 012 (decision 2026-11-15).
 
-Status (2026-11-15): `bills.list` and `bills.cancel` are not yet in `packages/core/src/commands.ts` (tasks T067 to T069). `settings.get` and `settings.update` gain `docTitle` (1 to 30 characters), `roundBillTotal` and `timeZone` (a named zone the platform knows, else `INVALID_FIELD`) and `receiptWidth` (`58mm`, `80mm`, `a4`, `a5`). Built in T080 (2026-11-16): `bills.save` returns a bill carrying `docTitle` and `roundOffPaise`, and `grandTotalPaise` is the rounded total. The bill's `business_date` is stored in the database but is not a field of the returned `Bill`.
+Status (2026-11-22): `bills.list` and `bills.cancel` are in `packages/core/src/commands.ts` (tasks T067 to T069, 2026-11-17). `settings.get` and `settings.update` gain `docTitle` (1 to 30 characters), `roundBillTotal` and `timeZone` (a named zone the platform knows, else `INVALID_FIELD`) and `receiptWidth` (`58mm`, `80mm`, `a4`, `a5`). Built in T080 (2026-11-16): `bills.save` returns a bill carrying `docTitle` and `roundOffPaise`, and `grandTotalPaise` is the rounded total. The bill's `business_date` is stored in the database but is not a field of the returned `Bill`.
 
 ## Guarantees
 
 - `bills.save` runs in one transaction: counter increment, bill, lines, stock movements and cached stock updates either all commit or none do. The saved bill is returned before any printing begins.
 - `bills.save` is idempotent: `clientBillId` (a UUID the screen makes when the bill is started) is unique per shop; saving the same id again returns the first bill and its lines and changes nothing (no second bill, number or stock movement), so a double-click, retry or crash-and-retry can never duplicate a bill.
+
+- `bills.cancel` runs in one transaction: it changes the bill's status from Posted to Cancelled, stores the trimmed reason, records the cancellation and update timestamps, and appends one equal and opposite `sale_cancel` movement per line to restore stock. If any step fails, nothing changes. The bill's other fields, its lines, and the original `sale` movements remain unchanged, and its number is never reused. Cancelling again returns `ALREADY_CANCELLED` and changes nothing.
 - `bills.save` never rejects for insufficient stock; items that end below zero are reported in `negativeStockItems`.
-- No command edits or deletes a saved bill, bill line or stock movement.
+- No command edits or deletes a saved bill, bill line or stock movement, except that `bills.cancel` may update only the bill's status, trimmed cancellation reason, and cancellation and update timestamps as described above.
+
