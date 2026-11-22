@@ -7,7 +7,7 @@ import { bill, billLine, billTender, draftBill, numberSeries } from "../db/schem
 import type { Ctx } from "../db/seed";
 
 /** The payment mode is not on the bill row: it is the label on the bill's tender (D18). */
-const toBill = (billRow: typeof bill.$inferSelect, paymentMode: PaymentMode): Bill => ({
+export const toBill = (billRow: typeof bill.$inferSelect, paymentMode: PaymentMode): Bill => ({
   id: billRow.id,
   number: billRow.billNo,
   seriesCode: billRow.counterCode,
