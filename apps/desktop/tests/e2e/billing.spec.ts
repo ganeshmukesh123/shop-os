@@ -30,8 +30,9 @@ test("billing: totals, stock, negative stock, draft recovery, exactly-once save"
     await addToBill(page, "glu");
     await page.getByLabel("Qty Glue").fill("5"); // more than the 2 in stock
     await page.getByLabel("Customer name (optional)").fill("Ravi");
-    // 100 + (75 - 5) + 277.50 = 447.50
-    await expect(page.getByText("Grand total: ₹447.50")).toBeVisible();
+    // 100 + (75 - 5) + 277.50 = 447.50, rounded to the rupee (on by default): +0.50, so 448.00 (FR-010a)
+    await expect(page.getByText("Round off: +₹0.50")).toBeVisible();
+    await expect(page.getByText("Grand total: ₹448.00")).toBeVisible();
 
     // draft recovery: force-quit before saving, reopen
     await page.waitForTimeout(800);
@@ -39,7 +40,7 @@ test("billing: totals, stock, negative stock, draft recovery, exactly-once save"
     ({ app, page } = await launch(dataDir));
     await expect(page.getByText("Unsaved bill found")).toBeVisible();
     await page.getByRole("button", { name: "Continue bill" }).click();
-    await expect(page.getByText("Grand total: ₹447.50")).toBeVisible();
+    await expect(page.getByText("Grand total: ₹448.00")).toBeVisible();
 
     await page.getByRole("button", { name: /Save bill/ }).click();
     await expect(page.getByText(/Bill saved: .*000001/)).toBeVisible();
@@ -54,6 +55,10 @@ test("billing: totals, stock, negative stock, draft recovery, exactly-once save"
         .toString()
         .trim();
     expect(queryDatabase("select count(*) from bill")).toBe("1");
+    // The screen showed what the bill stores: the cashier collected the saved amount.
+    expect(queryDatabase("select subtotal_paise, round_off_paise, total_paise from bill")).toBe(
+      "44750|50|44800",
+    );
     expect(queryDatabase("select stock_milli from item_variant where display_name='Glue'")).toBe(
       "-3000",
     );

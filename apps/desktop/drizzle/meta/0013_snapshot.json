@@ -234,6 +234,14 @@
           "autoincrement": false,
           "default": "'Estimate'"
         },
+        "time_zone": {
+          "name": "time_zone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'Asia/Kolkata'"
+        },
         "status": {
           "name": "status",
           "type": "text",
@@ -346,6 +354,10 @@
         "bill_doc_title_len": {
           "name": "bill_doc_title_len",
           "value": "length(trim(\"bill\".\"doc_title\")) between 1 and 30"
+        },
+        "bill_time_zone_len": {
+          "name": "bill_time_zone_len",
+          "value": "length(\"bill\".\"time_zone\") between 1 and 64"
         }
       }
     },

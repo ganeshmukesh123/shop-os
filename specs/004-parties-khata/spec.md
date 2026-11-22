@@ -34,7 +34,7 @@ Each party has contact details, a price tier, a credit limit and credit days, an
 
 ### User Story 2 - Ageing and receiving payments (Priority: P1)
 
-The owner sees overdue amounts in buckets 0-30, 31-60, 61-90 and 90+ days, bill by bill. Payments (cash, UPI with reference, cheque, bank transfer) apply to the oldest bills unless one is selected, and a receipt is printed or sent on WhatsApp.
+The owner sees overdue amounts in buckets 0-30, 31-60, 61-90 and 91+ days, bill by bill. Payments (cash, UPI with reference, cheque, bank transfer) apply to the oldest bills unless one is selected, and a receipt is printed or sent on WhatsApp.
 
 **Why this priority**: Faster collection is business objective BO-2 (overdue down 30% in 90 days).
 
@@ -125,7 +125,7 @@ A contractor can have several sites; bills tag a site; statements and balances a
 
 - **FR-001**: System MUST store parties of type Customer, Contractor, Dealer, Distributor or Staff with name, phone(s), address, area/pin, optional GSTIN, tier, credit limit, credit days, referrer, consent status and notes (FR-KHA-001).
 - **FR-002**: System MUST keep a per-party ledger whose balance equals the sum of its entries (FR-KHA-002).
-- **FR-003**: System MUST show bill-by-bill ageing in buckets 0-30, 31-60, 61-90, 90+ with payments applied oldest first unless a bill is selected (FR-KHA-003).
+- **FR-003**: System MUST show bill-by-bill ageing in buckets 0-30, 31-60, 61-90, 91+ days with payments applied oldest first unless a bill is selected (FR-KHA-003).
 - **FR-004**: System MUST warn at 80% of limit and block above the limit or past credit days unless the owner approves (FR-KHA-004).
 - **FR-005**: System MUST receive payments by cash, UPI with reference, cheque and bank transfer, applied automatically or manually, with a printable or WhatsApp receipt (FR-KHA-005).
 - **FR-006**: System MUST send a WhatsApp statement with a UPI payment link per party (FR-KHA-006).
