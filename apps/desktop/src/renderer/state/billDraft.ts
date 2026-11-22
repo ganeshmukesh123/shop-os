@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { DraftBill, PaymentMode } from "@shopos/core";
-import { call } from "./api";
+import { call } from "../shared/api/api";
 
 export interface BillForm {
   /** Made when the bill is started; sent with the save so a retry can never create a second bill. */

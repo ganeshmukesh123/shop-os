@@ -145,6 +145,8 @@ export default tseslint.config(
     rules: {
       "max-lines": ["warn", { max: 300, skipBlankLines: true, skipComments: true }],
       "max-lines-per-function": "off",
+      // A test may sit beside its code under src/ (T093), where the rule above bans the globals.
+      "no-restricted-globals": "off",
     },
   },
 );

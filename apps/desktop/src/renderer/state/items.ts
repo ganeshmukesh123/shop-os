@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Item } from "@shopos/core";
-import { call } from "./api";
+import { call } from "../shared/api/api";
 
 export interface ItemFilter {
   query: string;

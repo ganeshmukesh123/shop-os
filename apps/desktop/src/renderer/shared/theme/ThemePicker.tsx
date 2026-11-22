@@ -1,5 +1,5 @@
 import { SegmentedControl, Text } from "@radix-ui/themes";
-import { uiText } from "../../strings";
+import { uiText } from "../text/strings";
 import { THEME_PREFERENCES } from "./theme.constants";
 import type { ThemePreference } from "./theme.types";
 

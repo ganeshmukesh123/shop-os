@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ToastProvider } from "../../../src/renderer/components/Toast";
+import { ToastProvider } from "../../../src/renderer/shared/components/Toast";
 import { ItemForm } from "../../../src/renderer/screens/ItemForm";
 import { installFakeShopos } from "../../helpers/fakeShopos";
 import { renderWithTheme } from "../../helpers/renderWithTheme";
