@@ -121,4 +121,11 @@ describe("RestoreBackupDialog (task T084, FR-013b, research D21)", () => {
     expect(isDisabled("Check bill numbers")).toBe(true);
     expect(isDisabled("Cancel")).toBe(true);
   });
+
+  it("locks the number while a check or restore runs, so the plan always matches the field", () => {
+    renderWithTheme(<RestoreBackupDialog {...buildProps({ isBusy: true })} />);
+
+    const numberField = screen.getByLabelText("Last bill number you printed") as HTMLInputElement;
+    expect(numberField.disabled).toBe(true);
+  });
 });

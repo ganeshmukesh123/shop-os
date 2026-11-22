@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { IRestorePreview, ShopProfile } from "@shopos/core";
 import { call, messageOf } from "../../state/api";
 import type { IRestoreBackupDialogProps, ToastFunction } from "./RestoreBackupDialog.types";
@@ -39,6 +39,8 @@ export function useRestoreBackup(
   const [checkedPlan, setCheckedPlan] = useState<ICheckedPlan | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+  // Counts number changes, so a check that finishes after the number changed is ignored.
+  const numberVersion = useRef(0);
 
   const start = useCallback(async () => {
     try {
@@ -53,6 +55,7 @@ export function useRestoreBackup(
   }, [toast]);
 
   const changeTypedNumber = (nextNumber: string) => {
+    numberVersion.current += 1;
     setTypedNumber(nextNumber);
     setCheckedPlan(null);
   };
@@ -75,8 +78,12 @@ export function useRestoreBackup(
   const check = () =>
     runStep(async (filePath) => {
       const lastIssuedBillNo = typedNumber.trim();
+      const checkedVersion = numberVersion.current;
       const preview = await call("backup.planRestore", restoreSource(filePath, lastIssuedBillNo));
-      setCheckedPlan({ lastIssuedBillNo, preview });
+      const isStillTheTypedNumber = checkedVersion === numberVersion.current;
+      if (isStillTheTypedNumber) {
+        setCheckedPlan({ lastIssuedBillNo, preview });
+      }
     });
 
   const restore = () =>
@@ -84,7 +91,7 @@ export function useRestoreBackup(
       if (!checkedPlan) return;
       const result = await call("backup.restore", {
         ...restoreSource(filePath, checkedPlan.lastIssuedBillNo),
-        confirmedNextBillNo: checkedPlan.preview.nextBillNo,
+        confirmedPreview: checkedPlan.preview,
       });
       toast("success", restoreStartedMessage(result));
       close();

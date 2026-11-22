@@ -53,6 +53,7 @@ export function RestoreBackupDialog({
               size="3"
               maxLength={LAST_BILL_MAX_LENGTH}
               placeholder={example}
+              disabled={isBusy}
               value={typedNumber}
               onChange={(changeEvent) => onTypedNumberChange(changeEvent.target.value)}
             />

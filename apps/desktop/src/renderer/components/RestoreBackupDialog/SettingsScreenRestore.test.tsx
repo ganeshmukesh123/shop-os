@@ -78,7 +78,10 @@ describe("Restore from file on the Settings screen (task T084, FR-013b)", () => 
       input: {
         filePath: "/backups/shopos-20261120-231500.sqlite",
         lastIssuedBillNo: "C1/26-27/000126",
-        confirmedNextBillNo: "C1/26-27/000127",
+        confirmedPreview: {
+          nextBillNo: "C1/26-27/000127",
+          gapRecorded: { seqFrom: 121, seqTo: 126, isEstimated: false },
+        },
       },
     });
     expect(await screen.findByText(/The next bill will be C1\/26-27\/000127\./)).toBeTruthy();

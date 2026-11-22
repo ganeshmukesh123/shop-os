@@ -104,6 +104,28 @@ describe("useRestoreBackup (task T084)", () => {
     expect(hook.result.current.dialog.planText).toBeNull();
   });
 
+  it("ignores a check that finishes after the owner changed the number", async () => {
+    // Check 000126; while it runs, the owner types 000128. The old answer must not enable Restore.
+    let finishCheck: (preview: typeof PLAN) => void = () => {};
+    const slowCheck = () => new Promise<typeof PLAN>((resolve) => (finishCheck = resolve));
+    const { hook } = setup({ "backup.planRestore": slowCheck });
+    await act(() => hook.result.current.start());
+    act(() => hook.result.current.dialog.onTypedNumberChange("C1/26-27/000126"));
+    let checkDone: Promise<void> = Promise.resolve();
+    act(() => {
+      checkDone = Promise.resolve(hook.result.current.dialog.onCheck());
+    });
+
+    act(() => hook.result.current.dialog.onTypedNumberChange("C1/26-27/000128"));
+    await act(async () => {
+      finishCheck(PLAN);
+      await checkDone;
+    });
+
+    expect(hook.result.current.dialog.typedNumber).toBe("C1/26-27/000128");
+    expect(hook.result.current.dialog.planText).toBeNull();
+  });
+
   it("restores the plan the owner saw, tells them the next bill, and closes", async () => {
     const { hook, fake, toast } = setup();
     await openTypeAndCheck(hook, "C1/26-27/000126");
@@ -115,7 +137,7 @@ describe("useRestoreBackup (task T084)", () => {
       input: {
         filePath: BACKUP_FILE,
         lastIssuedBillNo: "C1/26-27/000126",
-        confirmedNextBillNo: "C1/26-27/000127",
+        confirmedPreview: PLAN,
       },
     });
     expect(toast).toHaveBeenCalledWith(
