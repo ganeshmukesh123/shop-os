@@ -571,6 +571,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "is_estimated": {
+          "name": "is_estimated",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "recorded_at": {
           "name": "recorded_at",
           "type": "integer",
@@ -614,6 +621,10 @@
         "bill_number_gap_reason": {
           "name": "bill_number_gap_reason",
           "value": "\"bill_number_gap\".\"reason\" in ('lost_in_restore')"
+        },
+        "bill_number_gap_estimated_bool": {
+          "name": "bill_number_gap_estimated_bool",
+          "value": "\"bill_number_gap\".\"is_estimated\" in (0, 1)"
         }
       }
     },

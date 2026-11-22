@@ -22,15 +22,16 @@ describe("upgrading a database for the bill-number gap table (FR-013b, EC-19)", 
       seq_from: 121,
       seq_to: 126,
       reason: "lost_in_restore",
+      is_estimated: 0,
       recorded_at: EPOCH_MS,
       ...overrides,
     };
     sqlite
       .prepare(
         `insert into bill_number_gap (id, business_id, shop_id, created_at, updated_at,
-           number_series_id, seq_from, seq_to, reason, recorded_at)
+           number_series_id, seq_from, seq_to, reason, is_estimated, recorded_at)
          values (@id, @business_id, @shop_id, @created_at, @updated_at,
-           @number_series_id, @seq_from, @seq_to, @reason, @recorded_at)`,
+           @number_series_id, @seq_from, @seq_to, @reason, @is_estimated, @recorded_at)`,
       )
       .run(row);
   }
@@ -59,6 +60,36 @@ describe("upgrading a database for the bill-number gap table (FR-013b, EC-19)", 
       seq_to: 126,
       reason: "lost_in_restore",
     });
+  });
+
+  it("records whether the range was confirmed by the owner or is the guessed block of 100", () => {
+    const sqlite = upgradeDatabaseWithOneBill();
+
+    insertGap(sqlite, { id: "gap-confirmed", seq_from: 121, seq_to: 126, is_estimated: 0 });
+    insertGap(sqlite, { id: "gap-guessed", seq_from: 127, seq_to: 226, is_estimated: 1 });
+
+    expect(
+      sqlite.prepare("select id, is_estimated from bill_number_gap order by seq_from").all(),
+    ).toEqual([
+      { id: "gap-confirmed", is_estimated: 0 },
+      { id: "gap-guessed", is_estimated: 1 },
+    ]);
+  });
+
+  it("refuses a gap that does not say whether it was guessed", () => {
+    const sqlite = upgradeDatabaseWithOneBill();
+
+    expect(() => insertGap(sqlite, { is_estimated: 2 })).toThrow(/CHECK|constraint/i);
+    expect(() =>
+      sqlite
+        .prepare(
+          `insert into bill_number_gap (id, business_id, shop_id, created_at, updated_at,
+             number_series_id, seq_from, seq_to, reason, recorded_at)
+           select 'gap-x', business_id, shop_id, 1, 1, (select id from number_series), 1, 1,
+             'lost_in_restore', 1 from shop_profile`,
+        )
+        .run(),
+    ).toThrow(/NOT NULL/i);
   });
 
   it("accepts a range of one number", () => {

@@ -102,7 +102,14 @@ export const SCHEMA_STEPS: ISchemaStep[] = [
   {
     task: "T083",
     presentColumns: {
-      bill_number_gap: ["number_series_id", "seq_from", "seq_to", "reason", "recorded_at"],
+      bill_number_gap: [
+        "number_series_id",
+        "seq_from",
+        "seq_to",
+        "reason",
+        "is_estimated",
+        "recorded_at",
+      ],
     },
     absentColumns: {},
     removedTables: [],
