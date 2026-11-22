@@ -44,14 +44,9 @@ A purchase bill links to one or more receipts, with the due date from the distri
 1. **Given** a purchase bill, **When** linked to receipts, **Then** its payment due date is calculated from distributor credit terms.
 2. **Given** a cash purchase without a GST bill, **When** entered, **Then** it is saved with an unbilled compliance flag.
 3. **Given** the distributor ledger, **When** viewed, **Then** payables ageing and due-this-week amounts are displayed.
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:112d162fc6f49664df7353c7e912e25b04f7f405b3ffaa7bdf12ccd285e82f5a -->
 
 4. **Given** GST charged per purchase line, **When** recorded, **Then** it is stored for input tax credit tracking upon switching to regular GST (FR-CMP-012).
 5. **Given** a distributor payment with `allocateTo` containing a purchase bill for another distributor, **When** submitted, **Then** the service rejects the entire request before writing the payment, ledger entry or allocations. Cover this in the payables allocation test (T017 in the 009 plan).
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ---
 
