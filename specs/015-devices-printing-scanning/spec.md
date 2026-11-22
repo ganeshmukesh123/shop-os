@@ -102,7 +102,7 @@ A device health check lists the connected printer, scanner and camera status, la
 - Two printers (receipt and A4): the user chooses a default per bill type.
 - Scanner sends extra characters: the app strips trailing control characters.
 - Low light in the godown: camera scanning offers a torch toggle.
-- Printer paper width 58 mm vs 80 mm: layout follows the shop setting.
+- Printer paper width 58 mm vs 80 mm: layout follows the selected printer profile's width; the shop setting only seeds the default receipt profile (plan, T007).
 - Barcode with leading zeros or check digit variants: matched consistently.
 
 ## Requirements *(mandatory)*
