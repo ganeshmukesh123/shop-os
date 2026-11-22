@@ -23,7 +23,7 @@ number_series 1--* bill            shop_profile (one row)
 | `bill_line` | `bill_id`, `line_no`, `variant_id`, `item_name_snapshot`, `unit_snapshot`, `qty_base_milli`, `unit_price_paise`, `line_discount_paise`, `amount_paise` | Append-only |
 | `bill_tender` | `bill_id`, `mode` (`cash`, `upi`, `card`, `unpaid`), `amount_paise`, `status` (`label` in this release) | One row per bill in this release; append-only |
 | `number_series` | `counter_code`, `financial_year`, `template`, `last_seq` | Incremented in the bill transaction |
-| `bill_number_gap` | `number_series_id`, `seq_from`, `seq_to`, `reason` (`lost_in_restore`), `recorded_at` | Append-only; shown in the bill list (D21) |
+| `bill_number_gap` | `number_series_id`, `seq_from`, `seq_to`, `reason` (`lost_in_restore`), `is_estimated` (0 or 1), `recorded_at` | Append-only; shown in the bill list (D21) |
 | `shop_profile` | name, address, phone, `doc_title` (default `Estimate`), `number_template`, `round_bill_total` (default 1), `time_zone` (default `Asia/Kolkata`), `receipt_width` (`58mm`, `80mm` default, `a4`, `a5`), footer, backup folder | One row |
 | `draft_bill`, `backup_log` | as today | Not financial records |
 
@@ -119,6 +119,9 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 ### Number Series (`number_series`) (migration 0011, task T078)
 `counter_code`, `financial_year`, `template` (the bill number template last used with the series) and `last_seq`; unique per shop, counter and financial year; `last_seq` is incremented in the same transaction as the bill insert. Replaces `number_counter`; each bill points at its series with `number_series_id`.
 
+### Bill Number Gap (`bill_number_gap`) (migration 0014, task T083)
+`number_series_id` (foreign key to `number_series`, not null), `seq_from` (1 or more), `seq_to` (at least `seq_from`), `reason` (`lost_in_restore` in this release), `is_estimated` (not null, 0 or 1: 1 when the owner could not say and the block of 100 was assumed, 0 when they confirmed the last bill number) and `recorded_at` (integer epoch milliseconds). One row records numbers that were printed but are not in a restored database, so they are never issued again (research D21, FR-013b, EC-19). Example: the backup ended at 120, bills 121 to 126 were printed, the owner confirms 126: one row with `seq_from` 121 and `seq_to` 126, and the series' `last_seq` becomes 126. Append-only (triggers). `is_estimated` keeps that distinction for an audit; the restore result also reports it to the owner.
+
 ### Draft Bill (`draft_bill`)
 `payload` JSON of an unsaved bill, written on every edit and cleared on save or discard; supports crash recovery. Not a financial record.
 
@@ -129,6 +132,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - `stock_movement`: update and delete are rejected ("append-only").
 - `bill_line`: update and delete are rejected.
+- `bill_number_gap`: update and delete are rejected ("append-only", migration 0014).
 <!-- coderabbit-ai-generated:v1 -->
 
 <!-- coderabbit-ai-generated-section:v1:a653a6c71cd3957f52050d00eac469ff0dc40e4249e250bfa6b10553f61d42ef -->
