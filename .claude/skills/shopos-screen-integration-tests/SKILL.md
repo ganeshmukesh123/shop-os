@@ -25,10 +25,14 @@ Proof it matters: making the screen send `quantityMilli` as a string fails 9 of 
 | One transaction, idempotent retry, numbering, snapshots | Electron transport and sender checks (`ipc.test.ts`, e2e) |
 | Money the cashier sees equals money saved | Real printing and PDF bytes (`print.test.ts`, e2e) |
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:ad9737df3c33b0bb3cf3373038d0d3f0937a2c3ce4050477e574f462e474c07c -->
+
 ## 2. Where and how
 
 - Files: `apps/desktop/tests/renderer/integration/*.test.tsx` (the renderer project already runs jsdom there). Shared steps: `billingHarness.tsx` beside them.
-- Harness: `apps/desktop/tests/helpers/realShopos.ts`:
+- Harness: `apps/desktop/tests/helpers/realShopos.ts` comes from [the companion PR (#108)](https://github.com/ganeshmukesh123/shop-os/pull/108), which must be merged before running this recipe:
   - `installRealShopos(options?)` wires `window.shopos` to `buildHandlersFixture()`; only the native dialogs and the printer stay fake.
   - `countRows(table, condition?)` counts rows in the real database.
   - `loseNextReplyOf(commandName)` runs the command for real, then throws as if the reply was lost.
@@ -39,8 +43,13 @@ Proof it matters: making the screen send `quantityMilli` as a string fails 9 of 
 ## 3. One test, start to finish
 
 ```tsx
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 it("IT-BIL-01 saves 2 pipes at ₹120 as one bill, one line, one tender and one sale movement", async () => {
   const realShopos = installRealShopos();
+  freezeShopClock();
   await createItemDirectly(realShopos, PIPE); // pcs, ₹120, 10 in stock
 
   renderShopApp();
@@ -52,10 +61,31 @@ it("IT-BIL-01 saves 2 pipes at ₹120 as one bill, one line, one tender and one 
   expect(await screen.findByRole("heading", { name: "Bill saved: C1/26-27/000001" })).toBeTruthy();
   // Rows: what was committed, in integer paise and thousandths.
   expect(readBills(realShopos)).toMatchObject([{ seq: 1, subtotal_paise: 24_000, total_paise: 24_000 }]);
+  const sqlite = realShopos.fixture.testDb.sqlite;
+  expect(
+    sqlite
+      .prepare(
+        "select item_name_snapshot, unit_snapshot, qty_base_milli, unit_price_paise, amount_paise from bill_line",
+      )
+      .all(),
+  ).toEqual([
+    {
+      item_name_snapshot: "PVC pipe",
+      unit_snapshot: "pcs",
+      qty_base_milli: 2_000,
+      unit_price_paise: 12_000,
+      amount_paise: 24_000,
+    },
+  ]);
+  expect(sqlite.prepare("select mode, amount_paise from bill_tender").all()).toEqual([
+    { mode: "upi", amount_paise: 24_000 },
+  ]);
   expect(realShopos.countRows("stock_movement", "movement_type = 'sale' and qty_base_milli = 2000")).toBe(1);
   expect(await stockOf(realShopos, "PVC pipe")).toBe(8_000); // stock is the sum of movements
 });
 ```
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 Each test asserts **both** sides: what the screen shows and which rows exist. Stock is read through `items.list` (the sum of movements); a movement's `qty_base_milli` is always positive and `movement_type` gives the direction.
 
