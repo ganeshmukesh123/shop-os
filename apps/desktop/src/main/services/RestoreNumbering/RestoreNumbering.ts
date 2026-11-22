@@ -4,6 +4,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import {
   CoreError,
+  assertNotAfterCurrentYear,
   assertNotBeforeBackupYear,
   DEFAULT_TIME_ZONE,
   businessDateOf,
@@ -115,11 +116,9 @@ function chooseSeries(
       `That bill number is in series ${parsed.seriesCode}, but this shop's series is ${settings.seriesCode}.`,
     );
   }
-  return {
-    counterCode: settings.seriesCode,
-    financialYear: parsed.financialYear ?? currentYear,
-    confirmedSeq: parsed.seq,
-  };
+  const typedYear = parsed.financialYear ?? currentYear;
+  assertNotAfterCurrentYear(typedYear, currentYear);
+  return { counterCode: settings.seriesCode, financialYear: typedYear, confirmedSeq: parsed.seq };
 }
 
 /**
