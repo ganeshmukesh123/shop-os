@@ -70,6 +70,7 @@ Each test asserts **both** sides: what the screen shows and which rows exist. St
 
 ## 5. Pitfalls found while writing these
 
+- **The machine's time zone shows on screen.** The real clock check warns "Time zone differs" when the machine is not on Asia/Kolkata (CI runs on UTC), which is a second `role="alert"`. Never query "the" alert: use `findErrorAlert()` from `billingHarness.tsx`, which picks the Error message by its word. Before pushing, run once with `TZ=UTC`.
 - **Faking all timers** freezes userEvent and the draft autosave. Fake only `Date`.
 - **The correction count beside Items reloads only when the screen changes.** Open Items before asserting it.
 - **Discard does not delete the draft row**: it saves a row with payload `null`, which loads as "no draft". Assert what the user sees (no offer on the next start), not a row count of zero.
@@ -100,4 +101,4 @@ Name each test with its ID so the plan and the code match.
 - [ ] Asserts the screen **and** the rows (paise and thousandths, never rupees)
 - [ ] Clock frozen with `freezeShopClock()`; real timers restored after
 - [ ] Fresh `installRealShopos()` per test; no shared database
-- [ ] Ran three times green; for a new write, broken on purpose once to see it fail
+- [ ] Ran three times green, once with `TZ=UTC` (as on CI); for a new write, broken on purpose once to see it fail
