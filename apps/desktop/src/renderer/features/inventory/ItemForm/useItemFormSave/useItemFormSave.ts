@@ -1,10 +1,28 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Item } from "@shopos/core";
 import { ApiError, call, messageOf } from "../../../../shared/api/api";
 import { useToast } from "../../../../shared/components/Toast";
 import { validateItemForm } from "../validateItemForm";
 import type { IItemFormFields } from "../useItemFormFields";
 import type { IItemFormSave } from "./types";
+
+interface IItemToSend {
+  name: string;
+  unit: string;
+  allowsDecimal: boolean;
+  pricePaise: number;
+  openingQtyMilli: number;
+}
+
+/** Updates the item being edited, or creates a new one with its opening stock. */
+async function sendItem(item: Item | undefined, itemToSend: IItemToSend): Promise<void> {
+  const { name, unit, pricePaise } = itemToSend;
+  if (item) {
+    await call("items.update", { id: item.id, name, unit, pricePaise });
+    return;
+  }
+  await call("items.create", itemToSend);
+}
 
 /** Checks the form, then creates or updates the item; a duplicate name lists the existing items. */
 export function useItemFormSave(
@@ -16,8 +34,23 @@ export function useItemFormSave(
   const [errors, setErrors] = useState<string[]>([]);
   const [duplicateItems, setDuplicateItems] = useState<Item[]>([]);
   const [isBusy, setIsBusy] = useState(false);
+  // State updates only on the next render, so a second Enter in the same moment would still see
+  // isBusy false; the ref blocks it at once.
+  const isSaveRunning = useRef(false);
 
   async function save() {
+    if (isSaveRunning.current) {
+      return;
+    }
+    isSaveRunning.current = true;
+    try {
+      await validateAndSend();
+    } finally {
+      isSaveRunning.current = false;
+    }
+  }
+
+  async function validateAndSend() {
     const { name, unit, allowsDecimal, isEditing } = fields;
     const {
       errors: foundErrors,
@@ -36,15 +69,7 @@ export function useItemFormSave(
     if (foundErrors.length || pricePaise === null) return;
     setIsBusy(true);
     try {
-      if (item) await call("items.update", { id: item.id, name: name.trim(), unit, pricePaise });
-      else
-        await call("items.create", {
-          name: name.trim(),
-          unit,
-          allowsDecimal,
-          pricePaise,
-          openingQtyMilli,
-        });
+      await sendItem(item, { name: name.trim(), unit, allowsDecimal, pricePaise, openingQtyMilli });
       toast("success", `${name.trim()} saved`);
       onDone();
     } catch (caughtError) {
