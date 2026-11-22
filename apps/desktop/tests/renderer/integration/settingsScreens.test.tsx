@@ -38,8 +38,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
   createdFolders.splice(0).forEach((backupFolder) => {
-    fs.chmodSync(backupFolder, 0o700);
     fs.rmSync(backupFolder, { recursive: true, force: true });
   });
 });
@@ -141,8 +141,9 @@ describe("screen to database: backup (US-5, FR-020 SQLite online backup)", () =>
     await openScreen("Settings");
     await userEvent.click(screen.getByRole("button", { name: "Choose folder" }));
     await waitFor(() => expect(hasDoneToast("Settings saved")).toBe(true));
-    // A missing folder is simply created again, so make the folder read-only instead.
-    fs.chmodSync(backupFolder, 0o500);
+    vi.spyOn(realShopos.fixture.testDb.sqlite, "backup").mockRejectedValueOnce(
+      new Error("Could not write backup"),
+    );
 
     await userEvent.click(screen.getByRole("button", { name: "Back up now" }));
 
