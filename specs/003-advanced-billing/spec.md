@@ -165,10 +165,6 @@ Inter-state check and format by registration come from 008. Site return of unuse
 - **FR-018**: System MUST block inter-state sales under composition with an explanation (FR-BIL-022, shared with 008).
 - **FR-019 [V2/V3]**: Challan and partial delivery (FR-BIL-023, with 006); site return (FR-BIL-024); quote from list (FR-BIL-025).
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:03196afe267f72f061952b9844e13e30604ace8181b1f197296f446ce4f9fb8e -->
-
 ### Key Entities
 
 - **Bill / Bill Line / Bill Version**: Existing from 001, extended with tier, versions, batch and UPI status. Save nullable integer `bill_line.warranty_months_at_sale` in the bill transaction: snapshot the variant’s warranty duration at sale, or store NULL for an item without warranty. The saved line is immutable and supplies 009’s original coverage on rebuild (FR-PUR-010).
@@ -180,8 +176,6 @@ Before 003 implementation starts, resolve [009’s OD-1 decision in T000](../009
 - **Held Bill**: Parked draft by counter.
 - **Unmet Demand**: Text or item the customer asked for.
 - **Price Tier / Customer Price**: Tier prices per item and party-specific overrides.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 ## Success Criteria *(mandatory)*
 
