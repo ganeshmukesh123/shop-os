@@ -16,6 +16,8 @@ import { uiText } from "../../../shared/text/strings";
 import { call, messageOf } from "../../../shared/api/api";
 import { BillSettingsFields } from "../BillSettingsFields/BillSettingsFields";
 import { isBillSettingsValid } from "../BillSettingsFields/billSettingsValidity";
+import { RestoreBackupDialog } from "../RestoreBackupDialog/RestoreBackupDialog";
+import { useRestoreBackup } from "../RestoreBackupDialog/useRestoreBackup";
 
 const field = (label: string, node: React.ReactNode, help?: string) => (
   <label>
@@ -37,6 +39,7 @@ export function SettingsScreen() {
   const [shopProfile, setP] = useState<ShopProfile | null>(null);
   const [status, setStatus] = useState<BackupStatus | null>(null);
   const [busy, setBusy] = useState(false);
+  const restoreBackup = useRestoreBackup(shopProfile, toast);
 
   const refresh = useCallback(async () => {
     setP(await call("settings.get", {}));
@@ -88,22 +91,6 @@ export function SettingsScreen() {
     } finally {
       setBusy(false);
       setStatus(await call("backup.status", {}));
-    }
-  }
-
-  async function restore() {
-    const { path } = await call("system.pickBackupFile", {});
-    if (!path) return;
-    try {
-      // The owner sees the next bill number before anything is replaced (FR-013b).
-      const preview = await call("backup.planRestore", { filePath: path });
-      const question = `${uiText.settings.restoreConfirm}\n\n${uiText.settings.restoreNextBill} ${preview.nextBillNo}`;
-      const isConfirmed = window.confirm(question);
-      if (isConfirmed === false) return;
-      await call("backup.restore", { filePath: path, confirmedPreview: preview });
-      toast("success", "Restoring… the app will restart.");
-    } catch (caughtError) {
-      toast("error", messageOf(caughtError));
     }
   }
 
@@ -230,7 +217,7 @@ export function SettingsScreen() {
         >
           {uiText.settings.runNow}
         </Button>
-        <Button size="3" variant="soft" color="gray" onClick={() => void restore()}>
+        <Button size="3" variant="soft" color="gray" onClick={() => void restoreBackup.start()}>
           {uiText.settings.restore}
         </Button>
       </Flex>
@@ -238,6 +225,7 @@ export function SettingsScreen() {
       <Separator size="4" my="3" />
       <Heading size="3">{uiText.theme.title}</Heading>
       <ThemePicker preference={themePreference} onChange={setThemePreference} />
+      <RestoreBackupDialog {...restoreBackup.dialog} />
     </Flex>
   );
 }
