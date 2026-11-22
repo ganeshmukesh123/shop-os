@@ -205,7 +205,7 @@ describe("scheduleRestore with a bill-number plan (task T083, FR-013b, EC-19)", 
   it("records the lost numbers in the restored database, then relaunches", async () => {
     let task: (() => void) | undefined;
     const { fixture, backupFile, financialYear } = await shopWithBackup();
-    const plan = planRestoreNumbering(backupFile, `C1/${financialYear}/000005`, new Date());
+    const plan = await planRestoreNumbering(backupFile, `C1/${financialYear}/000005`, new Date());
     const { shell, app, databasePath, state } = buildShell({
       scheduleLater: (scheduledTask) => void (task = scheduledTask),
     });
@@ -227,7 +227,7 @@ describe("scheduleRestore with a bill-number plan (task T083, FR-013b, EC-19)", 
   it("leaves the live database as it was, says why, and does not relaunch when the numbering cannot be applied", async () => {
     let task: (() => void) | undefined;
     const { fixture, backupFile, financialYear } = await shopWithBackup();
-    const plan = planRestoreNumbering(backupFile, `C1/${financialYear}/000005`, new Date());
+    const plan = await planRestoreNumbering(backupFile, `C1/${financialYear}/000005`, new Date());
     const { shell, app, dialog, databasePath, state } = buildShell({
       scheduleLater: (scheduledTask) => void (task = scheduledTask),
       migrationsFolder: "/no/such/migrations",

@@ -1,9 +1,12 @@
 import { ZodError, type ZodTypeAny } from "zod";
 import {
   CoreError,
+  backupPlanRestoreInput,
   backupRestoreInput,
+  type BackupPlanRestoreInput,
   type BackupRestoreInput,
   type IBackupRestoreResult,
+  type IRestorePreview,
   billsExportPdfInput,
   billsGetInput,
   billsPrintInput,
@@ -20,12 +23,12 @@ import {
   type Result,
 } from "@shopos/core";
 import type { BackupService } from "../services/BackupService";
-import { validateBackupFile } from "../services/BackupService";
 import type { BillingService } from "../services/BillingService";
 import type { InventoryService } from "../services/InventoryService";
 import type { PrintService } from "../services/PrintService";
-import { planRestoreNumbering, type IRestoreNumberingPlan } from "../services/RestoreNumbering";
+import type { IRestoreNumberingPlan } from "../services/RestoreNumbering";
 import type { SettingsService } from "../services/SettingsService";
+import { assertPlanIsConfirmed, planRestoreFor, toRestorePreview } from "./restoreCommands";
 
 export interface Services {
   inventory: InventoryService;
@@ -139,27 +142,19 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
     ),
     "backup.run": cmd<"backup.run">(none(), () => services.backup.run()),
     "backup.status": cmd<"backup.status">(none(), () => services.backup.status()),
+    "backup.planRestore": cmd<"backup.planRestore">(
+      backupPlanRestoreInput,
+      async (commandInput: BackupPlanRestoreInput): Promise<IRestorePreview> =>
+        toRestorePreview(await planRestoreFor(commandInput, new Date())),
+    ),
     "backup.restore": cmd<"backup.restore">(
       backupRestoreInput,
-      (commandInput: BackupRestoreInput): IBackupRestoreResult => {
-        validateBackupFile(commandInput.filePath); // INVALID_BACKUP before anything is touched
-        const numbering = planRestoreNumbering(
-          commandInput.filePath,
-          commandInput.lastIssuedBillNo ?? null,
-          new Date(),
-        ); // INVALID_FIELD for a bill number that does not fit, before anything is touched
+      async (commandInput: BackupRestoreInput): Promise<IBackupRestoreResult> => {
+        // Worked out again, never taken from the renderer; nothing is touched unless it still matches.
+        const numbering = await planRestoreFor(commandInput, new Date());
+        assertPlanIsConfirmed(numbering, commandInput.confirmedPreview);
         shell.scheduleRestore(commandInput.filePath, numbering);
-        return {
-          restored: true,
-          nextBillNo: numbering.nextBillNo,
-          ...(numbering.gap && {
-            gapRecorded: {
-              seqFrom: numbering.gap.seqFrom,
-              seqTo: numbering.gap.seqTo,
-              isEstimated: numbering.gap.isEstimated,
-            },
-          }),
-        };
+        return { restored: true, ...toRestorePreview(numbering) };
       },
     ),
     "system.pickFolder": cmd<"system.pickFolder">(none(), async () => ({

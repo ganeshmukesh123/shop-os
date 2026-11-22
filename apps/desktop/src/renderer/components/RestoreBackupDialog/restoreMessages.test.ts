@@ -1,4 +1,4 @@
-import { restoreExampleNumber, restoreStartedMessage } from "./restoreMessages";
+import { restoreExampleNumber, restorePlanMessage, restoreStartedMessage } from "./restoreMessages";
 
 describe("restoreExampleNumber (task T084, research D21)", () => {
   const profile = {
@@ -63,6 +63,34 @@ describe("restoreStartedMessage (task T084)", () => {
     });
 
     expect(message).toContain("Bill numbers 121 to 220 are recorded as lost in the restore.");
+    expect(message).toContain("That is a block of 100, because the last number was not entered.");
+  });
+});
+
+describe("restorePlanMessage (task T084, FR-013b)", () => {
+  it("names the next bill when no number will be lost", () => {
+    expect(restorePlanMessage({ nextBillNo: "C1/26-27/000121" })).toBe(
+      "The next bill will be C1/26-27/000121.",
+    );
+  });
+
+  it("names the numbers that will be recorded as lost, before anything is replaced", () => {
+    const message = restorePlanMessage({
+      nextBillNo: "C1/26-27/000127",
+      gapRecorded: { seqFrom: 121, seqTo: 126, isEstimated: false },
+    });
+
+    expect(message).toBe(
+      "The next bill will be C1/26-27/000127. Bill numbers 121 to 126 will be recorded as lost in the restore.",
+    );
+  });
+
+  it("says when the block of 100 is a guess", () => {
+    const message = restorePlanMessage({
+      nextBillNo: "C1/26-27/000221",
+      gapRecorded: { seqFrom: 121, seqTo: 220, isEstimated: true },
+    });
+
     expect(message).toContain("That is a block of 100, because the last number was not entered.");
   });
 });

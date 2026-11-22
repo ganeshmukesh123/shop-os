@@ -137,6 +137,11 @@ export const uiText = {
     cannotSay:
       'If you cannot find it, leave this empty. Shop OS then skips the next 100 bill numbers and marks them "Lost in restore". This is safe only if you printed fewer than 100 bills after this backup; if you printed more, find the last bill number first, or a new bill could repeat one a customer already has.',
     cancel: "Cancel",
+    check: "Check bill numbers",
+    checking: "Checking…",
+    planLabel: "Check",
+    planNext: "The next bill will be {next}.",
+    planLost: "Bill numbers {from} to {to} will be recorded as lost in the restore.",
     confirm: "Restore and restart",
     busy: "Restoring…",
     started: "Restoring… the app will restart. The next bill will be {next}.",

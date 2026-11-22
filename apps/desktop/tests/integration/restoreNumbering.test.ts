@@ -92,14 +92,14 @@ async function takeBackup(shop: IShop): Promise<string> {
 }
 
 /** Plans, restores into a fresh database file, and opens it: what a restore on a new computer does. */
-function restoreAndOpen(backupFile: string, lastIssuedBillNo: string | null) {
-  const plan = planRestoreNumbering(backupFile, lastIssuedBillNo, NOW);
+async function restoreAndOpen(backupFile: string, lastIssuedBillNo: string | null, now = NOW) {
+  const plan = await planRestoreNumbering(backupFile, lastIssuedBillNo, now);
   const livePath = path.join(tempFolder("shopos-restored-"), "shopos.sqlite");
   restoreWithNumbering(
     backupFile,
     { databasePath: livePath, migrationsFolder: MIGRATIONS },
     plan,
-    NOW,
+    now,
   );
   const connection = openTracked(livePath, { migrationsFolder: MIGRATIONS });
   return { plan, connection, ctx: ensureSeed(connection.db), livePath };
@@ -114,17 +114,28 @@ function errorCodeOf(action: () => unknown): string | undefined {
   return undefined;
 }
 
+async function errorCodeOfAsync(action: () => Promise<unknown>): Promise<string | undefined> {
+  try {
+    await action();
+  } catch (error) {
+    return error instanceof CoreError ? error.code : `other:${String(error)}`;
+  }
+  return undefined;
+}
+
 describe("restoring a backup never reuses a bill number (task T082 and T083, FR-013b, EC-19, research D21)", () => {
   it("continues at 127 and records 121 to 126 as lost, when the backup ended at 120 and the owner confirms 126", async () => {
     const backupFile = await takeBackup(createShop(3, 120));
 
-    const { plan, connection, ctx } = restoreAndOpen(backupFile, "C1/26-27/000126");
+    const { plan, connection, ctx } = await restoreAndOpen(backupFile, "C1/26-27/000126");
 
     expect(plan.gap).toEqual({ seqFrom: 121, seqTo: 126, newLastSeq: 126, isEstimated: false });
     expect(plan.nextBillNo).toBe("C1/26-27/000127");
     expect(
-      connection.sqlite.prepare("select seq_from, seq_to, reason from bill_number_gap").all(),
-    ).toEqual([{ seq_from: 121, seq_to: 126, reason: "lost_in_restore" }]);
+      connection.sqlite
+        .prepare("select seq_from, seq_to, reason, is_estimated from bill_number_gap")
+        .all(),
+    ).toEqual([{ seq_from: 121, seq_to: 126, reason: "lost_in_restore", is_estimated: 0 }]);
     expect(saveBill({ connection, ctx, itemId: firstItemId(connection) }, NOW)).toBe(
       "C1/26-27/000127",
     );
@@ -133,12 +144,12 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
   it("jumps 100 ahead and records the block when the owner cannot say what the last bill was", async () => {
     const backupFile = await takeBackup(createShop(3, 120));
 
-    const { plan, connection, ctx } = restoreAndOpen(backupFile, null);
+    const { plan, connection, ctx } = await restoreAndOpen(backupFile, null);
 
     expect(plan.gap).toEqual({ seqFrom: 121, seqTo: 220, newLastSeq: 220, isEstimated: true });
-    expect(connection.sqlite.prepare("select seq_from, seq_to from bill_number_gap").all()).toEqual(
-      [{ seq_from: 121, seq_to: 220 }],
-    );
+    expect(
+      connection.sqlite.prepare("select seq_from, seq_to, is_estimated from bill_number_gap").all(),
+    ).toEqual([{ seq_from: 121, seq_to: 220, is_estimated: 1 }]);
     expect(saveBill({ connection, ctx, itemId: firstItemId(connection) }, NOW)).toBe(
       "C1/26-27/000221",
     );
@@ -147,7 +158,7 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
   it("records nothing when the backup already has the last bill the owner confirms", async () => {
     const backupFile = await takeBackup(createShop(3, 120));
 
-    const { plan, connection, ctx } = restoreAndOpen(backupFile, "C1/26-27/000120");
+    const { plan, connection, ctx } = await restoreAndOpen(backupFile, "C1/26-27/000120");
 
     expect(plan.gap).toBeNull();
     expect(
@@ -167,7 +178,7 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
       .run();
     const backupFile = await takeBackup(shop);
 
-    const { connection, ctx } = restoreAndOpen(backupFile, "C1/26-27/000005");
+    const { connection, ctx } = await restoreAndOpen(backupFile, "C1/26-27/000005");
     const nextNumber = saveBill({ connection, ctx, itemId: firstItemId(connection) }, NOW);
 
     const usedNumbers = connection.sqlite.prepare("select bill_no from bill order by seq").all();
@@ -180,10 +191,33 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
     ]);
   });
 
+  it("shows the number billing really gives next when the typed last bill is from last year", async () => {
+    // May 2027 (27-28): the last bill printed was C1/26-27/000126, in March. The lost range stays in
+    // 26-27, but the next bill is numbered in 27-28, because billing takes the year from its own date.
+    const backupFile = await takeBackup(createShop(3, 120));
+
+    const { plan, connection, ctx } = await restoreAndOpen(
+      backupFile,
+      "C1/26-27/000126",
+      NEXT_YEAR,
+    );
+
+    expect(plan.gap).toEqual({ seqFrom: 121, seqTo: 126, newLastSeq: 126, isEstimated: false });
+    expect(plan.nextBillNo).toBe("C1/27-28/000001");
+    expect(saveBill({ connection, ctx, itemId: firstItemId(connection) }, NEXT_YEAR)).toBe(
+      plan.nextBillNo,
+    );
+  });
+
   it("protects the financial year the owner typed, and starts it when the backup has none yet", async () => {
+    // Backup from 26-27, restored in May 2027 after four bills of 27-28 were printed.
     const backupFile = await takeBackup(createShop(3, 3));
 
-    const { plan, connection, ctx } = restoreAndOpen(backupFile, "C1/27-28/000004");
+    const { plan, connection, ctx } = await restoreAndOpen(
+      backupFile,
+      "C1/27-28/000004",
+      NEXT_YEAR,
+    );
 
     expect(plan.gap).toEqual({ seqFrom: 1, seqTo: 4, newLastSeq: 4, isEstimated: false });
     expect(
@@ -202,20 +236,35 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
   it("refuses a number that is not in the shop's format, or in another series, or older than the backup", async () => {
     const backupFile = await takeBackup(createShop(3, 120));
 
-    expect(errorCodeOf(() => planRestoreNumbering(backupFile, "126", NOW))).toBe("INVALID_FIELD");
-    expect(errorCodeOf(() => planRestoreNumbering(backupFile, "B2/26-27/000126", NOW))).toBe(
+    expect(await errorCodeOfAsync(() => planRestoreNumbering(backupFile, "126", NOW))).toBe(
       "INVALID_FIELD",
     );
-    expect(errorCodeOf(() => planRestoreNumbering(backupFile, "C1/26-27/000100", NOW))).toBe(
-      "INVALID_FIELD",
-    );
+    expect(
+      await errorCodeOfAsync(() => planRestoreNumbering(backupFile, "B2/26-27/000126", NOW)),
+    ).toBe("INVALID_FIELD");
+    expect(
+      await errorCodeOfAsync(() => planRestoreNumbering(backupFile, "C1/26-27/000100", NOW)),
+    ).toBe("INVALID_FIELD");
   });
 
   it("refuses a number from an earlier financial year than the backup's last bill", async () => {
     // The backup's last bill is in 26-27, so a 25-26 number cannot be the last one printed.
     const backupFile = await takeBackup(createShop(1, 1));
 
-    const failure = errorCodeOf(() => planRestoreNumbering(backupFile, "C1/25-26/000126", NOW));
+    const failure = await errorCodeOfAsync(() =>
+      planRestoreNumbering(backupFile, "C1/25-26/000126", NOW),
+    );
+
+    expect(failure).toBe("INVALID_FIELD");
+  });
+
+  it("refuses a number from a financial year that has not started yet, so this year's numbers stay protected", async () => {
+    // It is 26-27; a typed 27-28 number would move 27-28's counter and leave 26-27's printed numbers free.
+    const backupFile = await takeBackup(createShop(3, 120));
+
+    const failure = await errorCodeOfAsync(() =>
+      planRestoreNumbering(backupFile, "C1/27-28/000126", NOW),
+    );
 
     expect(failure).toBe("INVALID_FIELD");
   });
@@ -225,16 +274,16 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
     const bytesBefore = fs.readFileSync(backupFile);
     const filesBefore = fs.readdirSync(path.dirname(backupFile)).sort();
 
-    restoreAndOpen(backupFile, "C1/26-27/000126");
+    await restoreAndOpen(backupFile, "C1/26-27/000126");
 
     expect(fs.readFileSync(backupFile).equals(bytesBefore)).toBe(true);
     expect(fs.readdirSync(path.dirname(backupFile)).sort()).toEqual(filesBefore);
   });
 
-  it("upgrades an older backup (migration 0004) while recording the gap", () => {
+  it("upgrades an older backup (migration 0004) while recording the gap", async () => {
     const oldBackup = createDatabaseFileAtMigration0004WithOneBill();
 
-    const { plan, connection } = restoreAndOpen(oldBackup, "C1/26-27/000005");
+    const { plan, connection } = await restoreAndOpen(oldBackup, "C1/26-27/000005");
 
     expect(plan.gap).toEqual({ seqFrom: 2, seqTo: 5, newLastSeq: 5, isEstimated: false });
     expect(connection.sqlite.prepare("select bill_no from bill").all()).toEqual([
@@ -253,7 +302,7 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
     const live = createShop(2, 2);
     live.connection.sqlite.close();
     const livePath = live.connection.sqlite.name;
-    const plan = planRestoreNumbering(backupFile, "C1/26-27/000126", NOW);
+    const plan = await planRestoreNumbering(backupFile, "C1/26-27/000126", NOW);
 
     const failure = errorCodeOf(() =>
       restoreWithNumbering(
@@ -278,7 +327,7 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
   it("refuses a plan made from another backup, so the counter never moves back", async () => {
     const backupEndingAt120 = await takeBackup(createShop(3, 120));
     const backupEndingAt200 = await takeBackup(createShop(3, 200));
-    const planFor120 = planRestoreNumbering(backupEndingAt120, "C1/26-27/000126", NOW);
+    const planFor120 = await planRestoreNumbering(backupEndingAt120, "C1/26-27/000126", NOW);
     const livePath = path.join(tempFolder("shopos-restored-"), "shopos.sqlite");
 
     const failure = errorCodeOf(() =>
@@ -294,18 +343,20 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
     expect(fs.existsSync(livePath)).toBe(false);
   });
 
-  it("leaves no copy of the backup in the temp folder when the backup cannot be copied", () => {
+  it("leaves no copy of the backup in the temp folder when the backup cannot be copied", async () => {
     const planFolders = () =>
       fs.readdirSync(os.tmpdir()).filter((name) => name.startsWith("shopos-plan-"));
     const foldersBefore = planFolders();
 
-    const failure = errorCodeOf(() => planRestoreNumbering("/no/such/backup.sqlite", null, NOW));
+    const failure = await errorCodeOfAsync(() =>
+      planRestoreNumbering("/no/such/backup.sqlite", null, NOW),
+    );
 
     expect(failure).toBeDefined();
     expect(planFolders()).toEqual(foldersBefore);
   });
 
-  it("removes its install copy when putting the restored file in place fails", () => {
+  it("removes its install copy when putting the restored file in place fails", async () => {
     const backupFile = path.join(tempFolder("shopos-backup-file-"), "backup.sqlite");
     openTracked(backupFile, { migrationsFolder: MIGRATIONS }).sqlite.close();
     // A folder in the database's place makes the final rename fail.

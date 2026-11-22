@@ -95,7 +95,10 @@ describe("IPC handlers", () => {
       }),
     ).toMatchObject({ ok: false, code: "EMPTY_BILL" });
     expect(
-      await handlers["backup.restore"]({ filePath: "/definitely/not/here.sqlite" }),
+      await handlers["backup.restore"]({
+        filePath: "/definitely/not/here.sqlite",
+        confirmedPreview: { nextBillNo: "C1/26-27/000002" },
+      }),
     ).toMatchObject({
       ok: false,
       code: "INVALID_BACKUP",
