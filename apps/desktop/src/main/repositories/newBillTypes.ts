@@ -15,6 +15,8 @@ export interface INewBill {
   clientBillId: string;
   /** The shop's document title when the bill was saved; stored so a reprint is identical. */
   docTitle: string;
+  /** The shop's zone when the bill was saved; its date and time are always shown in it. */
+  timeZone: string;
   paymentMode: PaymentMode;
   linesTotalPaise: number;
   billDiscountPaise: number;

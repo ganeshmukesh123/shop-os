@@ -99,6 +99,7 @@ export class BillingService {
         customerName: input.customerName?.trim() || null,
         clientBillId: input.clientBillId,
         docTitle: profile.docTitle,
+        timeZone: profile.timeZone,
         paymentMode: input.paymentMode,
         linesTotalPaise: totals.linesTotalPaise,
         billDiscountPaise: totals.billDiscountPaise,
