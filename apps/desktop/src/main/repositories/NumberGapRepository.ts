@@ -58,6 +58,7 @@ export class NumberGapRepository {
         seqFrom: gap.seqFrom,
         seqTo: gap.seqTo,
         reason: GAP_REASON_LOST_IN_RESTORE,
+        isEstimated: gap.isEstimated ? 1 : 0,
         recordedAt: nowMs,
       })
       .run();
