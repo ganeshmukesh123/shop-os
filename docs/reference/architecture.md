@@ -1954,9 +1954,9 @@ stateDiagram-v2
 When goods arrive, charges that were not on the item lines (freight, loading, insurance) are spread over the lines so each item carries its true cost.
 
 1. Choose the allocation basis per charge: by value (default), by quantity or by weight.
-2. Share of a line = charge x basis of line / total basis of all lines, in paise, rounded down.
-3. The remainder (at most a few paise) goes to the line with the largest basis, so the shares add up exactly to the charge.
-4. Landed unit cost = (line value + shares) / quantity, stored in item\_price\_history so margins in reports use real cost.
+2. Share of a line = charge x basis of line / total basis of received lines, in paise, rounded down.
+3. Assign leftover paise one at a time by descending fractional remainder, breaking ties by ascending receipt line number, so the shares add up exactly to the charge.
+4. Landed unit cost = (line value + shares) / received quantity, stored in item\_price\_history so margins in reports use real cost. A line with zero received quantity has zero received value and charge shares, and no landed unit cost.
 
 The purchase bill from the supplier can arrive after the goods. Receipts and bills are separate documents linked in purchase\_bill\_receipt, so a mismatch between what arrived and what was billed is visible instead of hidden.
 
