@@ -11,6 +11,7 @@ import {
   type Item,
   type PrintTarget,
 } from "@shopos/core";
+import { RoundOffLine } from "../components/RoundOffLine/RoundOffLine";
 import { useToast } from "../components/Toast";
 import { uiText } from "../strings";
 import { ApiError, call, messageOf } from "../state/api";
@@ -119,6 +120,7 @@ export function BillView({
             {uiText.bill.billDiscount}: -{formatRupees(bill.billDiscountPaise)}
           </Text>
         )}
+        <RoundOffLine roundOffPaise={bill.roundOffPaise} />
         <Text size="6" weight="bold">
           {uiText.bill.grandTotal}: {formatRupees(bill.grandTotalPaise)}
         </Text>

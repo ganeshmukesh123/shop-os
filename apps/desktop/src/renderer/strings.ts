@@ -59,6 +59,7 @@ export const uiText = {
     payment: "Payment",
     billDiscount: "Bill discount",
     total: "Total",
+    roundOff: "Round off",
     grandTotal: "Grand total",
     save: "Save bill",
     clear: "Clear bill",
