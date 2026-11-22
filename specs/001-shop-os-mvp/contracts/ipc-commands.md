@@ -29,12 +29,8 @@ Status (2026-11-15): `bills.list` and `bills.cancel` are in `packages/core/src/c
 
 - `bills.save` runs in one transaction: counter increment, bill, lines, stock movements and cached stock updates either all commit or none do. The saved bill is returned before any printing begins.
 - `bills.save` is idempotent: `clientBillId` (a UUID the screen makes when the bill is started) is unique per shop; saving the same id again returns the first bill and its lines and changes nothing (no second bill, number or stock movement), so a double-click, retry or crash-and-retry can never duplicate a bill.
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:0d5b417f7713cdc3984ca5731829aa0ae456297e76437e0edbdc4bea40091e41 -->
 
 - `bills.cancel` runs in one transaction: it changes the bill's status from Posted to Cancelled, stores the trimmed reason, records the cancellation and update timestamps, and appends one equal and opposite `sale_cancel` movement per line to restore stock. If any step fails, nothing changes. The bill's other fields, its lines, and the original `sale` movements remain unchanged, and its number is never reused. Cancelling again returns `ALREADY_CANCELLED` and changes nothing.
 - `bills.save` never rejects for insufficient stock; items that end below zero are reported in `negativeStockItems`.
 - No command edits or deletes a saved bill, bill line or stock movement, except that `bills.cancel` may update only the bill's status, trimmed cancellation reason, and cancellation and update timestamps as described above.
 
-<!-- /coderabbit-ai-generated:v1 -->
