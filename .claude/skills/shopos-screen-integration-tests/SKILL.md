@@ -87,7 +87,7 @@ it("IT-BIL-01 saves 2 pipes at ₹120 as one bill, one line, one tender and one 
 
 <!-- /coderabbit-ai-generated:v1 -->
 
-Each test asserts **both** sides: what the screen shows and which rows exist. Stock is read through `items.list` (the sum of movements); a movement's `qty_base_milli` is always positive and `movement_type` gives the direction.
+Each test asserts **both** sides: what the screen shows and which rows exist. `stockOf` reads the **cached** stock through `items.list`; that the cache equals the movements is checked after every test by `checkLedgerAfterEachTest()` from `tests/helpers/stockLedger.ts` (IT-STK-01): call it once at the top of every file. A movement's `qty_base_milli` is always positive and its direction is in `from_location_id` / `to_location_id`, so assert movements with `readSignedMovements()` (stock out is minus), never by type and size alone.
 
 ## 4. Recipes for the hard cases
 
@@ -96,12 +96,19 @@ Each test asserts **both** sides: what the screen shows and which rows exist. St
 | Fail halfway through a save (atomicity) | `sqlite.exec("create temp trigger ... before insert on stock_movement when new.movement_type = 'sale' begin select raise(abort, 'disk I/O error'); end")`. Assert zero bill, line, tender and sale rows, unchanged stock, lines still on screen. Drop the trigger, save again, and expect seq 1 (no number used up). |
 | Retry after a lost reply (idempotency) | `realShopos.loseNextReplyOf("bills.save")`, save, see the Error, save again. Assert one bill, one line, one movement. |
 | Crash recovery | Wait for `countRows("draft_bill")` to be 1, `unmount()`, render again on the same `realShopos`, then answer the "Unsaved bill found" dialog. |
+| Financial-year boundary | `freezeShopClock(LAST_MINUTE_OF_FY)` (31 Mar 23:59 IST), save, then `vi.setSystemTime(FIRST_MINUTE_OF_NEXT_FY)` and save again: `C1/26-27/000001` then `C1/27-28/000001`. |
+| Restore | Pass a `fixtureOptions` object to `installRealShopos`, make the backup, then set `fixtureOptions.pickedBackupFile`: the fixture reads it when the dialog asks. Assert `fixture.shellCalls.restoredPlans` (`gap`, `nextBillNo`) and that live rows are unchanged before the restart. |
+| A failed backup | A missing folder is created again, so it does not fail. Make the folder read-only (`chmod 0o500`) and restore it in `afterEach`. |
 | Two buttons with one name | Scope the query: `within(screen.getByRole("main"))` for the screen, `within(screen.getByRole("navigation", { name: "Main" }))` for the side menu. |
 
 ## 5. Pitfalls found while writing these
 
 - **The machine's time zone shows on screen.** The real clock check warns "Time zone differs" when the machine is not on Asia/Kolkata (CI runs on UTC), which is a second `role="alert"`. Never query "the" alert: use `findErrorAlert()` from `billingHarness.tsx`, which picks the Error message by its word. Before pushing, run once with `TZ=UTC`.
 - **Faking all timers** freezes userEvent and the draft autosave. Fake only `Date`.
+- **A refusal can show two Error alerts** (on the line and as a toast). Use `findErrorAlertTexts()` and check that one of them says why.
+- **A hook that throws stops the later hooks**, including Testing Library's `cleanup`, and the next test then finds two apps on screen. An `afterEach` check must unmount and restore real time before it asserts (as `checkLedgerAfterEachTest` does).
+- **`expect(findBy…())` without `await`** checks a promise, which is always truthy. Always `await` a `findBy` query.
+- **Look up the real type before asserting a shape** (for example the restore plan is `gap`, not `gapRecorded`). A Radix `Switch` has the role `switch`, not `checkbox`.
 - **The correction count beside Items reloads only when the screen changes.** Open Items before asserting it.
 - **Discard does not delete the draft row**: it saves a row with payload `null`, which loads as "no draft". Assert what the user sees (no offer on the next start), not a row count of zero.
 - **A quantity field keeps its old value** when typed into; `userEvent.clear` it first.
@@ -122,6 +129,12 @@ Name each test with its ID so the plan and the code match.
 | IT-BIL-07 | Saved line keeps ₹120 after a price change | `billSave` |
 | IT-BIL-08 | Failure halfway leaves nothing, number not used | `billRecovery` |
 | IT-BIL-09 | Draft recovered after close; save clears it | `billRecovery` |
+| IT-BIL-10 | Several lines: `line_no` order, one sale per line, one tender | `billEdges` |
+| IT-BIL-11 | Financial-year boundary by shop time on a UTC machine | `billEdges` |
+| IT-BIL-12 | Ctrl+S twice quickly: one bill | `billEdges` |
+| IT-BIL-13 | 2.5 m saved as 2500; 1.5 pcs refused, no rows | `billEdges` |
+| IT-BIL-14 | Discount above the total refused; equal to it saves ₹0.00 | `billEdges` |
+| IT-BIL-15 | Unpaid: `unpaid` tender for the full amount | `billEdges` |
 | IT-INV-01 | Add item with opening 10: one `opening` movement | `inventoryScreens` |
 | IT-INV-02 | Duplicate name refused; existing item listed | `inventoryScreens` |
 | IT-INV-03 | Remove 3 with a note: `adjustment` of 3000, stock 7 | `inventoryScreens` |
@@ -129,14 +142,25 @@ Name each test with its ID so the plan and the code match.
 | IT-INV-05 | Set to the current count: no movement | `inventoryScreens` |
 | IT-INV-06 | 2.5 metres stored as 2500 | `inventoryScreens` |
 | IT-INV-07 | Deactivate: hidden, no movement | `inventoryScreens` |
+| IT-INV-08 | Duplicate name in other letter case refused | `inventoryScreens` |
+| IT-INV-09 | Price edit on screen: no movement, old bill keeps ₹120 | `inventoryScreens` |
+| IT-INV-10 | Negative item set to 0: stock-in of 2000, warning cleared | `inventoryScreens` |
+| IT-INV-11 | 2.5 on pcs refused, no movement | `inventoryScreens` |
 | IT-SET-01 | New series and format used by the next bill | `settingsScreens` |
 | IT-SET-02 | Backup: log row and a copy that holds the bill | `settingsScreens` |
+| IT-SET-03 | Number format over 16 characters cannot be saved | `settingsScreens` |
+| IT-SET-04 | Failed backup: `failed` log row and "Last backup failed" | `settingsScreens` |
+| IT-SET-05 | Rounding off: ₹99.60 saved exactly | `settingsScreens` |
+| IT-RES-01 | Restore with the last printed bill: plan first, gap recorded | `restoreScreens` |
+| IT-RES-02 | Restore with no last bill: 100-number guess | `restoreScreens` |
+| IT-STK-01 | Cached stock equals the signed sum of movements, after every test | `stockLedger` (all files) |
 
 ## 7. Checklist
 
 - [ ] Test name starts with its case ID and says the behaviour
 - [ ] Arranged through handlers or the screen; never by inserting rows by hand
 - [ ] Asserts the screen **and** the rows (paise and thousandths, never rupees)
+- [ ] `checkLedgerAfterEachTest()` called in the file; movements asserted signed
 - [ ] Clock frozen with `freezeShopClock()`; real timers restored after
 - [ ] Fresh `installRealShopos()` per test; no shared database
 - [ ] Ran three times green, once with `TZ=UTC` (as on CI); for a new write, broken on purpose once to see it fail
