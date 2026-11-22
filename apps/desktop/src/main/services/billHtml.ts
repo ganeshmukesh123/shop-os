@@ -1,6 +1,7 @@
 import {
   formatQuantity,
   formatRupees,
+  formatSignedRupees,
   type Bill,
   type BillLine,
   type PrintTarget,
@@ -21,10 +22,6 @@ const MODE_LABEL: Record<string, string> = {
   card: "Card",
   unpaid: "Unpaid",
 };
-
-/** A signed amount for the round-off line: 40 -> "+₹0.40", -49 -> "-₹0.49". */
-const formatSignedRupees = (paise: number): string =>
-  paise > 0 ? `+${formatRupees(paise)}` : `-${formatRupees(-paise)}`;
 
 /** "2026-12-07T14:05:09" -> "07/12/2026 14:05" (no Date object, so output never depends on the machine's zone). */
 function formatLocal(iso: string): string {

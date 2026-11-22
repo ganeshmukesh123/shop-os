@@ -7,8 +7,10 @@ import {
   type BackupRestoreInput,
   type IBackupRestoreResult,
   type IRestorePreview,
+  billsCancelInput,
   billsExportPdfInput,
   billsGetInput,
+  billsListInput,
   billsPrintInput,
   billsSaveInput,
   draftSaveInput,
@@ -90,8 +92,14 @@ function cmd<K extends CommandName>(
   };
 }
 
-/** One handler per command in contracts/ipc-commands.md. Every handler validates input with the shared Zod schemas. */
-export function createHandlers(services: Services, shell: Shell): Handlers {
+type ItemCommandName = "items.list" | "items.create" | "items.update" | "stock.adjust";
+type SystemCommandName = Extract<
+  CommandName,
+  `settings.${string}` | `backup.${string}` | `system.${string}`
+>;
+type BillCommandName = Exclude<CommandName, ItemCommandName | SystemCommandName>;
+
+function createItemHandlers(services: Services): Pick<Handlers, ItemCommandName> {
   return {
     "items.list": cmd<"items.list">(itemsListInput, (commandInput) =>
       services.inventory.listItems(commandInput),
@@ -105,6 +113,11 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
     "stock.adjust": cmd<"stock.adjust">(stockAdjustInput, (commandInput) =>
       services.inventory.adjustStock(commandInput),
     ),
+  };
+}
+
+function createBillHandlers(services: Services): Pick<Handlers, BillCommandName> {
+  return {
     "bills.draft.save": cmd<"bills.draft.save">(
       draftSaveInput,
       (commandInput: { payload: unknown }) => {
@@ -118,8 +131,14 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
     "bills.save": cmd<"bills.save">(billsSaveInput, (commandInput) =>
       services.billing.saveBill(commandInput),
     ),
+    "bills.list": cmd<"bills.list">(billsListInput, (commandInput) =>
+      services.billing.listBills(commandInput),
+    ),
     "bills.get": cmd<"bills.get">(billsGetInput, (commandInput: { id: string }) =>
       services.billing.getBill(commandInput.id),
+    ),
+    "bills.cancel": cmd<"bills.cancel">(billsCancelInput, (commandInput) =>
+      services.billing.cancelBill(commandInput),
     ),
     "bills.print": cmd<"bills.print">(
       billsPrintInput,
@@ -131,6 +150,11 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
       (commandInput: { id: string; target: "receipt" | "a4" | "a5"; filePath: string }) =>
         services.print.exportPdf(commandInput.id, commandInput.target, commandInput.filePath),
     ),
+  };
+}
+
+function createSystemHandlers(services: Services, shell: Shell): Pick<Handlers, SystemCommandName> {
+  return {
     "settings.get": cmd<"settings.get">(none(), () => services.settings.get()),
     "settings.update": cmd<"settings.update">(settingsUpdateInput, (commandInput) =>
       services.settings.update(commandInput),
@@ -169,5 +193,14 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
         path: await shell.pickPdfPath(commandInput.defaultName),
       }),
     ),
+  };
+}
+
+/** One handler per command in contracts/ipc-commands.md. */
+export function createHandlers(services: Services, shell: Shell): Handlers {
+  return {
+    ...createItemHandlers(services),
+    ...createBillHandlers(services),
+    ...createSystemHandlers(services, shell),
   };
 }

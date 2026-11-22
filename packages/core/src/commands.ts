@@ -7,6 +7,8 @@ import type {
   BillLine,
   IBackupRestoreResult,
   IRestorePreview,
+  BillsCancelInput,
+  BillsListInput,
   BillsSaveInput,
   Item,
   ItemsCreateInput,
@@ -29,7 +31,9 @@ export interface CommandMap {
   "bills.draft.save": [{ payload: unknown }, Record<string, never>];
   "bills.draft.load": [Record<string, never>, { payload: unknown | null }];
   "bills.save": [BillsSaveInput, { bill: Bill; lines: BillLine[]; negativeStockItems: Item[] }];
+  "bills.list": [BillsListInput, { bills: Bill[]; total: number }];
   "bills.get": [{ id: string }, { bill: Bill; lines: BillLine[] }];
+  "bills.cancel": [BillsCancelInput, { bill: Bill }];
   "bills.print": [{ id: string; target: PrintTarget }, { printed: boolean }];
   "bills.exportPdf": [{ id: string; target: PrintTarget; filePath: string }, { filePath: string }];
   "settings.get": [Record<string, never>, ShopProfile];
@@ -57,7 +61,9 @@ export const COMMAND_NAMES = [
   "bills.draft.save",
   "bills.draft.load",
   "bills.save",
+  "bills.list",
   "bills.get",
+  "bills.cancel",
   "bills.print",
   "bills.exportPdf",
   "settings.get",

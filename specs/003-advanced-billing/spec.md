@@ -84,6 +84,7 @@ Staff find the original bill by number, phone or by scanning the printed QR, cho
 3. **Given** no original bill, **Then** the return needs owner approval.
 4. **Given** an item sold at contractor price returned by a retail customer, **Then** the refund is at the original price (EC-11).
 5. **Given** a partial return of a kit, **Then** the refund is prorated by component value (EC-12).
+6. **Given** a tinted line marked non-returnable, **Then** no return posts without owner approval; with approval, the return credits a reduced value and routes the tinted pack to the shop's `tinted_returns` location (FR-TNT-007).
 
 ---
 
@@ -159,7 +160,7 @@ Inter-state check and format by registration come from 008. Site return of unuse
 - **FR-012**: Bill format MUST follow the shop's registration at the bill date; output MUST include thermal, A4/A5 and WhatsApp share, and printer failure MUST NOT block save (FR-BIL-014, FR-BIL-015).
 - **FR-013**: System MUST hold up to 10 bills per counter (FR-BIL-016).
 - **FR-014**: Same-day edit (same business date in the shop's time zone, roles with permission from 005) MUST save a new bill version that keeps the bill number; the previous version MUST stay stored, unchanged and readable, and the edit MUST be written to the audit log with user, time and reason. No version is ever overwritten. Stock and ledger changes from an edit are new opposite and new entries, never edits. Cancel MUST need reason and owner approval and keep the number (FR-BIL-017, FR-BIL-018; constitution v2.0.0 principle I, owner decision 2026-11-15).
-- **FR-015**: Returns MUST work against an original bill by number, phone or QR, with refund by cash, UPI or credit note and sellable or defective routing; no-bill returns need approval (FR-BIL-019).
+- **FR-015**: Returns MUST work against an original bill by number, phone or QR, with refund by cash, UPI or credit note and sellable or defective routing; no-bill returns need approval (FR-BIL-019). The tinted-paint exception requires owner approval via 005, a reduced refund value and routing to `tinted_returns` (FR-TNT-007, deferred from 002). The reduced value is not defined yet and is an **owner decision needed before 003 is planned**: the rule (fixed percentage, fixed amount, or an amount the owner enters at approval in 005) and its bounds (at least ₹0, at most the returned line's amount). This requirement is the one definition FR-TNT-007 cites; tests check that rule once it is recorded here.
 - **FR-016**: Quotations MUST support validity (default 7 days), WhatsApp share, full or partial conversion with locked or refreshed prices, and version numbers (FR-BIL-020).
 - **FR-017**: System SHOULD capture unmet demand in one tap (FR-BIL-021).
 - **FR-018**: System MUST block inter-state sales under composition with an explanation (FR-BIL-022, shared with 008).
@@ -167,7 +168,9 @@ Inter-state check and format by registration come from 008. Site return of unuse
 
 ### Key Entities
 
-- **Bill / Bill Line / Bill Version**: Existing from 001, extended with tier, versions, batch and UPI status.
+- **Bill / Bill Line / Bill Version**: Existing from 001, extended with tier, versions, batch and UPI status. Save nullable integer `bill_line.warranty_months_at_sale` in the bill transaction: snapshot the variant’s warranty duration at sale, or store NULL for an item without warranty. The saved line is immutable and supplies 009’s original coverage on rebuild (FR-PUR-010).
+
+Before 003 implementation starts, resolve [009’s OD-1 decision in T000](../009-purchases-warranty/tasks.md#phase-0-decision-before-feature-003). Record the outcome before 003 merges and include serial capture in 003 if the owner approves it.
 - **Payment Split**: One bill's list of payment parts with mode, amount, reference, confirmation status.
 - **Quotation / Quotation Version / Conversion**: Quote with validity and its link to resulting bills.
 - **Return / Credit Note**: Return lines against a bill, refund mode, destination location.
