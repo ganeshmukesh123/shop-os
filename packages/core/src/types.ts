@@ -143,17 +143,26 @@ export const billsSaveInput = z.object({
 });
 export type BillsSaveInput = z.infer<typeof billsSaveInput>;
 
+/** A calendar day as the bill stores it, YYYY-MM-DD (the shop's business date). */
+const businessDateText = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, "Use a date like 2026-12-07")
+  .pipe(z.iso.date("Enter a valid calendar date"));
+
 export const billsListInput = z.object({
-  number: z.string().optional(),
-  from: z.string().optional(),
-  to: z.string().optional(),
-  customer: z.string().optional(),
+  number: z.string().max(40).optional(),
+  from: businessDateText.optional(),
+  to: businessDateText.optional(),
+  customer: z.string().max(80).optional(),
   status: z.enum(["posted", "cancelled"]).optional(),
   limit: z.number().int().min(1).max(500),
   offset: z.number().int().min(0),
 });
+export type BillsListInput = z.infer<typeof billsListInput>;
 export const billsGetInput = z.object({ id: z.string().min(1) });
-export const billsCancelInput = z.object({ id: z.string().min(1), reason: z.string() });
+/** An empty reason is refused by the cancel rule (REASON_REQUIRED), not here; 200 characters at most. */
+export const billsCancelInput = z.object({ id: z.string().min(1), reason: z.string().max(200) });
+export type BillsCancelInput = z.infer<typeof billsCancelInput>;
 export const billsPrintInput = z.object({
   id: z.string().min(1),
   target: z.enum(["receipt", "a4", "a5"]),
