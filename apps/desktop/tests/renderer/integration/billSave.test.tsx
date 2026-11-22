@@ -4,7 +4,6 @@ import { createItemDirectly, freezeShopClock, installRealShopos } from "../../he
 import {
   addToBill,
   choosePayment,
-  findErrorAlert,
   PIPE,
   readBills,
   renderShopApp,
@@ -67,7 +66,11 @@ describe("screen to database: saving a bill (US-2, one transaction, then print)"
     realShopos.loseNextReplyOf("bills.save");
 
     await saveWithKeyboard();
-    expect((await findErrorAlert()).textContent).toBe("Error The reply to bills.save was lost");
+    const saveError = await screen.findByRole("alert", {
+      name: (_accessibleName, element) =>
+        element.textContent?.includes("The reply to bills.save was lost") ?? false,
+    });
+    expect(saveError.textContent).toBe("Error The reply to bills.save was lost");
     await saveWithKeyboard();
 
     expect(
