@@ -35,7 +35,8 @@ describe("isNavigationAllowed", () => {
     ["a look-alike with the dev address as a prefix", "http://localhost:51730/", DEV_CONFIG, false],
     ["the dev host on another port", "http://localhost:9999/", DEV_CONFIG, false],
     ["the dev host over another scheme", "https://localhost:5173/", DEV_CONFIG, false],
-    ["a dev address with credentials", "http://localhost:5173@evil.example/", DEV_CONFIG, false],
+    // A made-up address that hides evil.example behind the dev server's name; not a credential.
+    ["a dev address with credentials", "http://localhost:5173@evil.example/", DEV_CONFIG, false], // trufflehog:ignore
     ["text that cannot be parsed", "not a url", PACKAGED_CONFIG, false],
     ["an empty address", "", DEV_CONFIG, false],
     [
