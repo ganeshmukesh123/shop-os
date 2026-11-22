@@ -28,7 +28,7 @@ Use roles, not colour names. Each role maps to a Radix colour through the compon
 | Success | `green` | Done: saved, backup OK | The word "Saved" or "OK" |
 | Neutral | gray (slate) | Everything else | n/a |
 
-Current theme baseline (`apps/desktop/src/renderer/main.tsx`): accent indigo, gray slate, radius medium, scaling 110%. **Open**: whether desktop scaling stays 110% or goes to 100% for the dense counter style; decide after trying both on the counter computer.
+Current theme baseline (`apps/desktop/src/renderer/shared/theme/constants.ts`): accent indigo, gray slate, radius medium, scaling 110%. **Open**: whether desktop scaling stays 110% or goes to 100% for the dense counter style; decide after trying both on the counter computer.
 
 **Radix 12-step scale** (verified in the Radix Themes colour docs): steps 1 to 2 are backgrounds, 3 to 5 interactive states, 6 to 8 borders and separators, 9 to 10 solid colours, 11 to 12 text. Tokens are named `--accent-9`, `--gray-12`, `--red-9` and so on. Rules:
 
