@@ -18,6 +18,7 @@ const EXPECTED_COMMAND_NAMES = [
   "settings.clockCheck",
   "backup.run",
   "backup.status",
+  "backup.planRestore",
   "backup.restore",
   "system.pickFolder",
   "system.pickBackupFile",

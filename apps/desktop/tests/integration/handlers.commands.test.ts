@@ -180,7 +180,12 @@ describe("backup commands", () => {
     await chooseBackupFolder(fixture);
     const backup = await fixture.handlers["backup.run"]({});
     if (!backup.ok) throw new Error(backup.message);
-    const result = await fixture.handlers["backup.restore"]({ filePath: backup.data.path });
+    const preview = await fixture.handlers["backup.planRestore"]({ filePath: backup.data.path });
+    if (!preview.ok) throw new Error(preview.message);
+    const result = await fixture.handlers["backup.restore"]({
+      filePath: backup.data.path,
+      confirmedPreview: preview.data,
+    });
     expect(result).toMatchObject({ ok: true, data: { restored: true } });
     expect(fixture.shellCalls.restoredFiles).toEqual([backup.data.path]);
   });
@@ -189,7 +194,10 @@ describe("backup commands", () => {
     const fixture = buildHandlersFixture();
     const notABackup = path.join(makeTempFolder(), "notes.sqlite");
     fs.writeFileSync(notABackup, "not a database");
-    const result = await fixture.handlers["backup.restore"]({ filePath: notABackup });
+    const result = await fixture.handlers["backup.restore"]({
+      filePath: notABackup,
+      confirmedPreview: { nextBillNo: "C1/26-27/000002" },
+    });
     expect(result).toMatchObject({ ok: false, code: "INVALID_BACKUP" });
     expect(fixture.shellCalls.restoredFiles).toEqual([]);
   });

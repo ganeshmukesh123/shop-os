@@ -2,6 +2,7 @@ import { CoreError } from "../src/errors";
 import { DEFAULT_NUMBER_TEMPLATE } from "../src/numbering";
 import {
   UNCONFIRMED_GAP_SIZE,
+  assertNotAfterCurrentYear,
   assertNotBeforeBackupYear,
   parseBillNumber,
   planNumberGap,
@@ -149,5 +150,18 @@ describe("assertNotBeforeBackupYear (FR-013b, research D21)", () => {
     expect(errorCodeOf(() => assertNotBeforeBackupYear("26-27", "26-27"))).toBeUndefined();
     expect(errorCodeOf(() => assertNotBeforeBackupYear("27-28", "26-27"))).toBeUndefined();
     expect(errorCodeOf(() => assertNotBeforeBackupYear("25-26", null))).toBeUndefined();
+  });
+});
+
+describe("assertNotAfterCurrentYear (FR-013b, research D21)", () => {
+  // Typing 27-28 while it is still 26-27 would protect the wrong year and leave 26-27's printed
+  // numbers free to be issued again.
+  it("refuses a typed number from a financial year that has not started yet", () => {
+    expect(errorCodeOf(() => assertNotAfterCurrentYear("27-28", "26-27"))).toBe("INVALID_FIELD");
+  });
+
+  it("accepts the current year and an earlier one", () => {
+    expect(errorCodeOf(() => assertNotAfterCurrentYear("26-27", "26-27"))).toBeUndefined();
+    expect(errorCodeOf(() => assertNotAfterCurrentYear("25-26", "26-27"))).toBeUndefined();
   });
 });
