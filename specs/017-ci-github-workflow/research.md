@@ -395,6 +395,21 @@ Defect found by the work: `evaluateDraft` documented "never throws" but threw `C
 
 Refactor for testability (behaviour unchanged, proven by the 3 end-to-end tests on the built app): `main/index.ts` (174 lines of top-level code) became a 22-line entry plus seven small modules in `main/app/`; `electronRenderer.ts` builds from a window factory; the preload bridge is a function (`preload/bridge.ts`). Security options are copied unchanged and pinned by tests (isolated, sandboxed, no Node; offscreen window also no JavaScript; Content-Security-Policy; window-open denied; navigation guard).
 
+### F11. Run time against the 10-minute target (SC-003), measured 2026-11-22: MET
+
+Measured from GitHub, not estimated: `gh run list --workflow CI --status success --limit 40` (wall time from `startedAt` to `updatedAt`; the runs are on warm caches).
+
+| Runs | Count | Fastest | Slowest | Average |
+|---|---|---|---|---|
+| Pull request | 27 | 149 s | 195 s | 169 s |
+| Push to `main` | 13 | 129 s | 207 s | 159 s |
+
+Per job on the slowest `main` run (45040627244, 207 s): Quick checks 43 s, Build 25 s, Tests and coverage 87 s, End-to-end 69 s; Dependency audit 17 s and Secret scan 12 s run alongside. The critical path is Quick checks, then Tests and coverage, then End-to-end. Inside Tests and coverage, the tests take 60 s and workspace setup 18 s. Inside End-to-end, setup takes 22 s, installing the virtual display 10 s and the scenarios 24 s.
+
+Result: the longest run in the sample is about 3.5 minutes, so the required checks finish in about a third of the 10-minute target. Caching and job layout (`setup-workspace` restores the pnpm store and the Electron and SQLite downloads; Build and Tests run in parallel) already do the job, so **no tuning was made**: changing them would add risk for no gain. Re-measure when the suite roughly doubles, or when the 90% gate is switched on (T036) because coverage adds time. A cold cache (first run after the lock file changes) was not in the sample and is not measured.
+
+Side evidence for T010 and O1 (not a ticked result): the End-to-end job, which runs under `xvfb-run` with `SHOPOS_E2E_NO_SANDBOX=1`, passes on the runs above.
+
 ## Open items (unverified; each resolved by the task named)
 
 | # | Item | Resolved by |
