@@ -108,6 +108,20 @@ export const uiText = {
     preview: "Next bill number will look like",
     footer: "Bill footer text",
     width: "Receipt paper width",
+    paper: {
+      "58mm": "58 mm receipt",
+      "80mm": "80 mm receipt",
+      a4: "A4 sheet",
+      a5: "A5 sheet",
+    },
+    docTitle: "Title printed on the bill",
+    docTitleHelp:
+      "Estimate until the shop's tax format is set up. The paper bill book stays the legal bill.",
+    roundTotal: "Round the bill total to the nearest rupee",
+    roundTotalHelp: "Example: ₹849.60 becomes ₹850.00 and the round-off is printed on the bill.",
+    timeZone: "Shop time zone",
+    timeZoneHelp: "Example: Asia/Kolkata. It decides the bill date and the financial year.",
+    timeZoneUnknown: "This time zone is not known. Use a name like Asia/Kolkata.",
     save: "Save settings",
     saved: "Settings saved",
     backup: "Backup",
@@ -130,6 +144,15 @@ export const uiText = {
     negativeStock: "Negative stock",
     cancelled: "Cancelled",
     draft: "Draft",
+  },
+  /** Warnings about the computer's clock; billing is never blocked by them (FR-019a). */
+  clock: {
+    timeZoneLabel: "Time zone differs",
+    timeZoneDiffers:
+      "This computer is set to a different time zone than the shop. Bill dates follow the shop's zone; check both in Settings.",
+    behindLabel: "Check the clock",
+    behindLastBill:
+      "This computer's clock is earlier than your last bill. Fix the date and time so bill dates stay right.",
   },
   theme: {
     title: "Appearance",

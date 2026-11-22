@@ -17,6 +17,7 @@ The UI (renderer) never touches the database. It calls these typed commands thro
 | `bills.print` | `{ id, target: "receipt" or "a4" or "a5" }` | `{ printed }` | `PRINT_FAILED` (bill is unaffected) |
 | `bills.exportPdf` | `{ id, target, filePath }` | `{ filePath }` | `WRITE_FAILED` |
 | `settings.get` / `settings.update` | shop profile fields | shop profile | `INVALID_FIELD` |
+| `settings.clockCheck` | `{ deviceTimeZone }` (the zone the computer reports) | `{ warnings }`, each `TIME_ZONE_DIFFERS` (the device's clock zone is not the shop's, compared by UTC offset now so `Asia/Calcutta` equals `Asia/Kolkata`) or `CLOCK_BEFORE_LAST_BILL` (now is earlier than the newest saved bill) | `INVALID_FIELD` only for a malformed input. Warnings are data, never an error: billing is not blocked (T080, FR-019a) |
 | `backup.run` | `{}` | `{ path, finishedAt }` | `BACKUP_FAILED` |
 | `backup.status` | `{}` | `{ lastOkAt, lastError? }` | |
 | `backup.restore` | `{ filePath, lastIssuedBillNo? }` | `{ restored, nextBillNo, gapRecorded? }` (app restarts) | `INVALID_BACKUP`, `INVALID_FIELD` (bill number not in this series) |

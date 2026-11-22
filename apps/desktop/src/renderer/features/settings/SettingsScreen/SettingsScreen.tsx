@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { Box, Button, Flex, Heading, Separator, Text, TextField } from "@radix-ui/themes";
 import {
-  Box,
-  Button,
-  Flex,
-  Heading,
-  RadioGroup,
-  Separator,
-  Text,
-  TextField,
-} from "@radix-ui/themes";
-import { validateNumberTemplate, type BackupStatus, type ShopProfile } from "@shopos/core";
+  DEFAULT_TIME_ZONE,
+  isValidTimeZone,
+  validateNumberTemplate,
+  type BackupStatus,
+  type ShopProfile,
+} from "@shopos/core";
 import { useToast } from "../../../shared/components/Toast";
 import { LAYOUT } from "../../../shared/constants/layout";
 import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
@@ -17,6 +14,8 @@ import { ThemePicker } from "../../../shared/theme/ThemePicker";
 import { useThemePreference } from "../../../shared/theme/useThemePreference";
 import { uiText } from "../../../shared/text/strings";
 import { call, messageOf } from "../../../shared/api/api";
+import { BillSettingsFields } from "../BillSettingsFields/BillSettingsFields";
+import { isBillSettingsValid } from "../BillSettingsFields/billSettingsValidity";
 
 const field = (label: string, node: React.ReactNode, help?: string) => (
   <label>
@@ -48,11 +47,15 @@ export function SettingsScreen() {
   }, [refresh, toast]);
   if (!shopProfile) return <Text>{uiText.common.loading}…</Text>;
 
+  // The preview's financial year follows the shop's zone; an unfinished zone name must not break it.
+  const previewZone = isValidTimeZone(shopProfile.timeZone)
+    ? shopProfile.timeZone
+    : DEFAULT_TIME_ZONE;
   const tpl = validateNumberTemplate(
     shopProfile.numberTemplate,
     shopProfile.seriesCode,
     new Date(),
-    shopProfile.timeZone,
+    previewZone,
   );
   const set = (patch: Partial<ShopProfile>) => setP({ ...shopProfile, ...patch });
 
@@ -174,23 +177,13 @@ export function SettingsScreen() {
           onChange={(changeEvent) => set({ footer: changeEvent.target.value })}
         />,
       )}
-      <div>
-        <Text as="div" size="2" weight="bold" mb="1" id="width-label">
-          {uiText.settings.width}
-        </Text>
-        <RadioGroup.Root
-          aria-labelledby="width-label"
-          value={shopProfile.receiptWidth}
-          onValueChange={(selectedReceiptWidth) =>
-            set({ receiptWidth: selectedReceiptWidth as "58mm" | "80mm" })
-          }
-        >
-          <RadioGroup.Item value="80mm">80 mm</RadioGroup.Item>
-          <RadioGroup.Item value="58mm">58 mm</RadioGroup.Item>
-        </RadioGroup.Root>
-      </div>
+      <BillSettingsFields settings={shopProfile} onChange={set} />
       <Flex>
-        <Button size="3" onClick={() => void save()} disabled={!tpl.ok || !shopProfile.name.trim()}>
+        <Button
+          size="3"
+          onClick={() => void save()}
+          disabled={!tpl.ok || !shopProfile.name.trim() || !isBillSettingsValid(shopProfile)}
+        >
           {uiText.settings.save}
         </Button>
       </Flex>

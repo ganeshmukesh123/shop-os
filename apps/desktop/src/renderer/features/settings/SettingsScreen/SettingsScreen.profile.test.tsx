@@ -71,7 +71,7 @@ describe("SettingsScreen: the shop details", () => {
       "Thank you",
     ]);
     expect(
-      (screen.getByRole("radio", { name: "80 mm" }) as HTMLButtonElement).getAttribute(
+      (screen.getByRole("radio", { name: "80 mm receipt" }) as HTMLButtonElement).getAttribute(
         "aria-checked",
       ),
     ).toBe("true");
@@ -128,7 +128,7 @@ describe("SettingsScreen: saving the shop details", () => {
   it("sends the edited details and says Settings saved", async () => {
     const fake = renderSettings();
     await replaceText("Shop name", "Prabhat Paints");
-    await userEvent.click(await screen.findByRole("radio", { name: "58 mm" }));
+    await userEvent.click(await screen.findByRole("radio", { name: "58 mm receipt" }));
 
     await userEvent.click(saveButton());
 

@@ -7,11 +7,14 @@ import { NewBillScreen } from "../../features/billing/NewBillScreen";
 import { SettingsScreen } from "../../features/settings/SettingsScreen";
 import { uiText } from "../../shared/text/strings";
 import { call } from "../../shared/api/api";
+import { ClockWarnings } from "../ClockWarnings/ClockWarnings";
+import { useClockWarnings } from "../ClockWarnings/useClockWarnings";
 import type { Route } from "./types";
 
 export function App() {
   const [route, setRoute] = useState<Route>("bill");
   const [negatives, setNegatives] = useState(0);
+  const clockWarnings = useClockWarnings(route);
 
   // Keyboard: Ctrl/Cmd+1..3 to switch screens.
   useEffect(() => {
@@ -70,6 +73,7 @@ export function App() {
       </Flex>
       <Box flexGrow="1" p="4" overflow="auto" asChild>
         <main>
+          <ClockWarnings warnings={clockWarnings} />
           {route === "items" && <ItemsScreen />}
           {route === "bill" && <NewBillScreen />}
           {route === "settings" && <SettingsScreen />}
