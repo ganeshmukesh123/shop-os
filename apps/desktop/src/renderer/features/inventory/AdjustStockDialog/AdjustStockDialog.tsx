@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button, Dialog, Flex, RadioGroup, Text, TextArea, TextField } from "@radix-ui/themes";
 import { formatQuantity, parseQuantity, type Item } from "@shopos/core";
-import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
-import { uiText } from "../shared/text/strings";
-import { call, messageOf } from "../shared/api/api";
-import { useToast } from "../shared/components/Toast";
+import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
+import { uiText } from "../../../shared/text/strings";
+import { call, messageOf } from "../../../shared/api/api";
+import { useToast } from "../../../shared/components/Toast";
 
 export function AdjustStockDialog({
   item,

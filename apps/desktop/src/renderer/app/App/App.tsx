@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Box, Button, Flex, Text } from "@radix-ui/themes";
 import { LAYOUT } from "../../shared/constants/layout";
 import { StatusBadge } from "../../shared/components/StatusBadge/StatusBadge";
-import { ItemsScreen } from "../../screens/ItemsScreen";
+import { ItemsScreen } from "../../features/inventory/ItemsScreen";
 import { NewBillScreen } from "../../screens/NewBillScreen";
 import { SettingsScreen } from "../../screens/SettingsScreen";
 import { uiText } from "../../shared/text/strings";

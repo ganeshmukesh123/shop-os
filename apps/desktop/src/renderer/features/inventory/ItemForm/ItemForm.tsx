@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Button, Checkbox, Dialog, Flex, Select, Text, TextField } from "@radix-ui/themes";
-import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
+import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
 import {
   defaultAllowsDecimal,
   formatQuantity,
@@ -10,9 +10,9 @@ import {
   UNITS,
   type Item,
 } from "@shopos/core";
-import { uiText } from "../shared/text/strings";
-import { ApiError, call, messageOf } from "../shared/api/api";
-import { useToast } from "../shared/components/Toast";
+import { uiText } from "../../../shared/text/strings";
+import { ApiError, call, messageOf } from "../../../shared/api/api";
+import { useToast } from "../../../shared/components/Toast";
 
 const CUSTOM = "__custom__";
 
