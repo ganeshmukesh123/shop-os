@@ -19,7 +19,7 @@ import { electronRenderer } from "../services/electronRenderer";
 import { InventoryService } from "../services/InventoryService";
 import { PrintService } from "../services/PrintService";
 import { SettingsService } from "../services/SettingsService";
-import { BACKUP_EVERY_MILLISECONDS, type IAppConfig } from "./appConfig";
+import { BACKUP_EVERY_MILLISECONDS, listTrustedPageUrls, type IAppConfig } from "./appConfig";
 import { createAppState, type IAppState } from "./appState";
 import { registerQuitHooks, startBackupTimer } from "./backupLifecycle";
 import { createMainWindow, type CreateBrowserWindow } from "./mainWindow";
@@ -115,6 +115,7 @@ export function startApp(
           databasePath: config.databasePath,
           migrationsFolder: config.migrationsFolder,
         }),
+        listTrustedPageUrls(config),
       );
       createMainWindow(dependencies.createBrowserWindow, config);
       startBackupTimer(state, BACKUP_EVERY_MILLISECONDS);

@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import type { BrowserWindow, BrowserWindowConstructorOptions } from "electron";
 import type { IAppConfig } from "./appConfig";
 import { isNavigationAllowed } from "./navigationPolicy/navigationPolicy";
@@ -48,5 +49,5 @@ export function createMainWindow(
   mainWindow.webContents.on("will-redirect", blockForeignAddress);
   void (config.isDev
     ? mainWindow.loadURL(config.rendererUrl!)
-    : mainWindow.loadFile(config.rendererHtmlPath));
+    : mainWindow.loadURL(pathToFileURL(config.rendererHtmlPath).href));
 }

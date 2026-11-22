@@ -1,5 +1,9 @@
 import path from "node:path";
-import { applyUserDataOverride, readAppConfig } from "../../src/main/app/appConfig";
+import {
+  applyUserDataOverride,
+  listTrustedPageUrls,
+  readAppConfig,
+} from "../../src/main/app/appConfig";
 
 const LOCATIONS = {
   resourcesPath: "/Applications/Shop OS.app/Resources",
@@ -70,5 +74,21 @@ describe("readAppConfig", () => {
     expect(config.rendererHtmlPath).toBe(
       path.join(LOCATIONS.baseDirectory, "../renderer/index.html"),
     );
+  });
+});
+
+describe("listTrustedPageUrls", () => {
+  const rendererHtmlPath = "/Applications/Shop OS.app/Contents/Resources/app/renderer/index.html";
+
+  it("trusts only the app's own page in a packaged build", () => {
+    expect(
+      listTrustedPageUrls({ isDev: false, rendererUrl: "http://localhost:5173", rendererHtmlPath }),
+    ).toEqual(["file:///Applications/Shop%20OS.app/Contents/Resources/app/renderer/index.html"]);
+  });
+
+  it("trusts only the dev server while developing", () => {
+    expect(
+      listTrustedPageUrls({ isDev: true, rendererUrl: "http://localhost:5173/", rendererHtmlPath }),
+    ).toEqual(["http://localhost:5173/"]);
   });
 });

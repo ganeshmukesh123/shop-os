@@ -55,7 +55,10 @@ vi.mock("electron", () => {
   };
 });
 
+const priorRendererUrl = process.env["ELECTRON_RENDERER_URL"];
+
 beforeAll(async () => {
+  delete process.env["ELECTRON_RENDERER_URL"];
   vi.useFakeTimers();
   electronMocks.userDataFolder.value = fs.mkdtempSync(path.join(os.tmpdir(), "shopos-entry-"));
   process.env["SHOPOS_USER_DATA"] = electronMocks.userDataFolder.value;
@@ -67,7 +70,23 @@ afterAll(() => {
   vi.clearAllTimers();
   vi.useRealTimers();
   delete process.env["SHOPOS_USER_DATA"];
+  if (priorRendererUrl === undefined) {
+    delete process.env["ELECTRON_RENDERER_URL"];
+  } else {
+    process.env["ELECTRON_RENDERER_URL"] = priorRendererUrl;
+  }
 });
+
+/** An IPC event from the page the app loaded into its window, as Electron would deliver it. */
+function eventFromAppPage(): unknown {
+  const appWindow = electronMocks.constructedWindows[0] as {
+    loadURL: { mock: { calls: string[][] } };
+  };
+  const loadedUrl = appWindow.loadURL.mock.calls[0]?.[0];
+  expect(loadedUrl).toEqual(expect.stringMatching(/^file:\/\//));
+  const mainFrame = { url: loadedUrl };
+  return { senderFrame: mainFrame, sender: { mainFrame } };
+}
 
 describe("main entry file", () => {
   it("points the app at the test data folder", () => {
@@ -114,7 +133,7 @@ describe("main entry file", () => {
       name: string,
       input: unknown,
     ) => Promise<unknown>;
-    const result = await listener({}, "system.pickFolder", {});
+    const result = await listener(eventFromAppPage(), "system.pickFolder", {});
     expect(electronMocks.showOpenDialog.mock.calls[0]?.[0]).toBe(focused);
     expect(result).toEqual({ ok: true, data: { path: null } });
   });
@@ -127,7 +146,8 @@ describe("main entry file", () => {
       name: string,
       input: unknown,
     ) => Promise<unknown>;
-    await listener({}, "system.pickFolder", {});
+    await listener(eventFromAppPage(), "system.pickFolder", {});
+    expect(electronMocks.showOpenDialog).toHaveBeenCalledOnce();
     expect(electronMocks.showOpenDialog.mock.calls[0]?.[0]).toBeUndefined();
   });
 });

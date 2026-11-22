@@ -1,4 +1,4 @@
-import type { IAppConfig } from "../../src/main/app/appConfig";
+import { listTrustedPageUrls, type IAppConfig } from "../../src/main/app/appConfig";
 import {
   buildMainWindowOptions,
   createMainWindow,
@@ -7,13 +7,21 @@ import {
 
 const DEV_SERVER_URL = "http://localhost:5173";
 
+const IS_WINDOWS = process.platform === "win32";
+const RENDERER_HTML_PATH = IS_WINDOWS
+  ? "C:\\app\\renderer\\index.html"
+  : "/app/renderer/index.html";
+const RENDERER_FILE_URL = IS_WINDOWS
+  ? "file:///C:/app/renderer/index.html"
+  : "file:///app/renderer/index.html";
+
 const buildConfig = (overrides: Partial<IAppConfig> = {}): IAppConfig => ({
   isDev: false,
   rendererUrl: undefined,
   databasePath: "/tmp/shopos.sqlite",
   migrationsFolder: "/tmp/drizzle",
   preloadPath: "/app/preload/index.js",
-  rendererHtmlPath: "/app/renderer/index.html",
+  rendererHtmlPath: RENDERER_HTML_PATH,
   ...overrides,
 });
 
@@ -112,7 +120,24 @@ describe("createMainWindow", () => {
   it("loads the built page from disk in a packaged app", () => {
     const { fakeWindow, calls } = buildFakeWindow();
     createMainWindow(() => fakeWindow, buildConfig());
-    expect(calls.loadedFiles).toEqual(["/app/renderer/index.html"]);
-    expect(calls.loadedUrls).toEqual([]);
+    expect(calls.loadedFiles).toEqual([]);
+    expect(calls.loadedUrls).toEqual([RENDERER_FILE_URL]);
+  });
+
+  it("loads the same encoded URL it trusts when the renderer path contains a percent sign", () => {
+    const { fakeWindow, calls } = buildFakeWindow();
+    const rendererHtmlPath = IS_WINDOWS
+      ? "C:\\Shop 100%\\renderer\\index.html"
+      : "/Shop 100%/renderer/index.html";
+    const expectedFileUrl = IS_WINDOWS
+      ? "file:///C:/Shop%20100%25/renderer/index.html"
+      : "file:///Shop%20100%25/renderer/index.html";
+    const config = buildConfig({ rendererHtmlPath });
+
+    createMainWindow(() => fakeWindow, config);
+
+    expect(calls.loadedUrls).toEqual([expectedFileUrl]);
+    expect(calls.loadedUrls).toEqual(listTrustedPageUrls(config));
+    expect(calls.loadedFiles).toEqual([]);
   });
 });
