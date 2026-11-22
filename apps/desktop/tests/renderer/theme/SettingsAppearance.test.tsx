@@ -4,7 +4,7 @@ import type { ShopProfile } from "@shopos/core";
 import { ToastProvider } from "../../../src/renderer/shared/components/Toast";
 import { SettingsScreen } from "../../../src/renderer/screens/SettingsScreen";
 import { ThemeProvider } from "../../../src/renderer/shared/theme/ThemeProvider";
-import { THEME_STORAGE_KEY } from "../../../src/renderer/shared/theme/theme.constants";
+import { THEME_STORAGE_KEY } from "../../../src/renderer/shared/theme/constants";
 import { installFakeShopos } from "../../helpers/fakeShopos";
 
 const SHOP_PROFILE: ShopProfile = {

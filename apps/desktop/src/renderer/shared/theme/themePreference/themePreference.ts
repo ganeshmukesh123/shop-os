@@ -1,5 +1,5 @@
-import { DEFAULT_THEME_PREFERENCE, THEME_PREFERENCES, THEME_STORAGE_KEY } from "./theme.constants";
-import type { IThemeStorage, ThemeAppearance, ThemePreference } from "./theme.types";
+import { DEFAULT_THEME_PREFERENCE, THEME_PREFERENCES, THEME_STORAGE_KEY } from "../constants";
+import type { IThemeStorage, ThemeAppearance, ThemePreference } from "../types";
 
 function isThemePreference(savedText: string | null): savedText is ThemePreference {
   return THEME_PREFERENCES.some((preference) => preference === savedText);

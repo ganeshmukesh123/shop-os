@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
-import { THEME_STORAGE_KEY } from "../../../src/renderer/shared/theme/theme.constants";
-import { useThemeController } from "../../../src/renderer/shared/theme/useThemeController";
-import { installFakeMatchMedia } from "../../helpers/fakeMatchMedia";
+import { THEME_STORAGE_KEY } from "../constants";
+import { useThemeController } from "./useThemeController";
+import { installFakeMatchMedia } from "../../../../../tests/helpers/fakeMatchMedia";
 
 describe("useThemeController (design guidelines section 3)", () => {
   it("starts from the saved choice", () => {

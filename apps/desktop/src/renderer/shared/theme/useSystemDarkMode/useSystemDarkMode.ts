@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { DARK_COLOR_SCHEME_QUERY } from "./theme.constants";
+import { DARK_COLOR_SCHEME_QUERY } from "../constants";
 
 function subscribeToSystemTheme(onChange: () => void): () => void {
   const darkQuery = window.matchMedia(DARK_COLOR_SCHEME_QUERY);
