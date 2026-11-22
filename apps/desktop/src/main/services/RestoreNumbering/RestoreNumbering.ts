@@ -1,7 +1,5 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
-import Database from "better-sqlite3";
 import {
   CoreError,
   assertNotAfterCurrentYear,
@@ -24,40 +22,13 @@ import { NumberGapRepository } from "../../repositories/NumberGapRepository";
 import { restoreBackup, validateBackupFile } from "../BackupService";
 import { EXAMPLE_SEQ, PREPARED_COPY_SUFFIX } from "./RestoreNumbering.constants";
 import type { IRestoreNumberingPlan, IRestoreTarget } from "./RestoreNumbering.types";
+import { readDatabaseFile, withBackupCopy } from "./backupCopy";
 
 interface ISeriesChoice {
   counterCode: string;
   financialYear: string;
   /** The last number the owner says was issued, or null when they cannot say. */
   confirmedSeq: number | null;
-}
-
-/** Open a throwaway copy of the backup in the system temp folder, so the backup itself is never touched. */
-function withBackupCopy<Result>(
-  backupFile: string,
-  readCopy: (copyDatabase: Database.Database) => Result,
-): Result {
-  const copyFolder = fs.mkdtempSync(path.join(os.tmpdir(), "shopos-plan-"));
-  // The folder holds a full copy of the shop's data, so it goes even when the copy or open fails.
-  try {
-    const copyFile = path.join(copyFolder, "backup.sqlite");
-    fs.copyFileSync(backupFile, copyFile);
-    return readDatabaseFile(copyFile, readCopy);
-  } finally {
-    fs.rmSync(copyFolder, { recursive: true, force: true });
-  }
-}
-
-function readDatabaseFile<Result>(
-  databaseFile: string,
-  readDatabase: (database: Database.Database) => Result,
-): Result {
-  const database = new Database(databaseFile, { fileMustExist: true });
-  try {
-    return readDatabase(database);
-  } finally {
-    database.close();
-  }
 }
 
 /**
@@ -130,7 +101,7 @@ export function planRestoreNumbering(
   backupFile: string,
   lastIssuedBillNo: string | null,
   now: Date,
-): IRestoreNumberingPlan {
+): Promise<IRestoreNumberingPlan> {
   return withBackupCopy(backupFile, (copyDatabase) => {
     const inspection = new BackupInspectionRepository(copyDatabase);
     const settings = inspection.readNumberingSettings();

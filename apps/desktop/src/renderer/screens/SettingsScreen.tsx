@@ -94,9 +94,13 @@ export function SettingsScreen() {
   async function restore() {
     const { path } = await call("system.pickBackupFile", {});
     if (!path) return;
-    if (!window.confirm(uiText.settings.restoreConfirm)) return;
     try {
-      await call("backup.restore", { filePath: path });
+      // The owner sees the next bill number before anything is replaced (FR-013b).
+      const preview = await call("backup.planRestore", { filePath: path });
+      const question = `${uiText.settings.restoreConfirm}\n\n${uiText.settings.restoreNextBill} ${preview.nextBillNo}`;
+      const isConfirmed = window.confirm(question);
+      if (isConfirmed === false) return;
+      await call("backup.restore", { filePath: path, confirmedNextBillNo: preview.nextBillNo });
       toast("success", "Restoring… the app will restart.");
     } catch (caughtError) {
       toast("error", messageOf(caughtError));

@@ -115,6 +115,7 @@ export const uiText = {
     restore: "Restore from file",
     restoreConfirm:
       "Restoring replaces ALL current data with the backup and restarts the app. Continue?",
+    restoreNextBill: "The next bill will be",
     backupFailed: "Last backup failed",
     backupOk: "Backup complete",
   },
