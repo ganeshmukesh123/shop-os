@@ -25,15 +25,29 @@ export function toRestorePreview(plan: IRestoreNumberingPlan): IRestorePreview {
   };
 }
 
+/** Same next number, and the same lost range (or none) with the same guess flag. */
+function isSamePreview(planned: IRestorePreview, confirmed: IRestorePreview): boolean {
+  const plannedGap = planned.gapRecorded;
+  const confirmedGap = confirmed.gapRecorded;
+  const isSameGap =
+    plannedGap === undefined || confirmedGap === undefined
+      ? plannedGap === confirmedGap
+      : plannedGap.seqFrom === confirmedGap.seqFrom &&
+        plannedGap.seqTo === confirmedGap.seqTo &&
+        plannedGap.isEstimated === confirmedGap.isEstimated;
+  return planned.nextBillNo === confirmed.nextBillNo && isSameGap;
+}
+
 /**
- * The plan worked out now must give the next number the owner confirmed. If it does not, the file
- * changed after they checked it, and applying it unseen could reuse a printed number (FR-013b).
+ * The plan worked out now must be the one the owner confirmed: the same next number and the same lost
+ * range. If not, the file changed after they checked it, and applying it unseen could lose or reuse
+ * numbers they never reviewed (FR-013b).
  */
 export function assertPlanIsConfirmed(
   plan: IRestoreNumberingPlan,
-  confirmedNextBillNo: string,
+  confirmedPreview: IRestorePreview,
 ): void {
-  const isConfirmedPlan = plan.nextBillNo === confirmedNextBillNo;
+  const isConfirmedPlan = isSamePreview(toRestorePreview(plan), confirmedPreview);
   if (isConfirmedPlan) {
     return;
   }

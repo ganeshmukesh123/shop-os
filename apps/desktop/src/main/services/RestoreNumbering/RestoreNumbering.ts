@@ -61,9 +61,8 @@ function currentFinancialYear(timeZone: string, now: Date): string {
 function chooseSeries(
   settings: IBackupNumberingSettings,
   lastIssuedBillNo: string | null,
-  now: Date,
+  currentYear: string,
 ): ISeriesChoice {
-  const currentYear = currentFinancialYear(settings.timeZone, now);
   const typedNumber = lastIssuedBillNo?.trim() ?? "";
   if (typedNumber === "") {
     return { counterCode: settings.seriesCode, financialYear: currentYear, confirmedSeq: null };
@@ -105,7 +104,8 @@ export function planRestoreNumbering(
   return withBackupCopy(backupFile, (copyDatabase) => {
     const inspection = new BackupInspectionRepository(copyDatabase);
     const settings = inspection.readNumberingSettings();
-    const series = chooseSeries(settings, lastIssuedBillNo, now);
+    const currentYear = currentFinancialYear(settings.timeZone, now);
+    const series = chooseSeries(settings, lastIssuedBillNo, currentYear);
     const isTypedNumber = series.confirmedSeq !== null;
     if (isTypedNumber) {
       assertNotBeforeBackupYear(
@@ -115,7 +115,12 @@ export function planRestoreNumbering(
     }
     const restoredLastSeq = inspection.lastSeq(series.counterCode, series.financialYear);
     const gap = planNumberGap(restoredLastSeq, series.confirmedSeq);
-    const nextSeq = (gap?.newLastSeq ?? restoredLastSeq) + 1;
+    // Billing numbers the next bill in the year of its own date, which is the current year, even when
+    // the lost range belongs to last year (a last bill typed from March, restored in May).
+    const isCurrentYearSeries = series.financialYear === currentYear;
+    const currentYearLastSeq = isCurrentYearSeries
+      ? (gap?.newLastSeq ?? restoredLastSeq)
+      : inspection.lastSeq(series.counterCode, currentYear);
     return {
       counterCode: series.counterCode,
       financialYear: series.financialYear,
@@ -125,8 +130,8 @@ export function planRestoreNumbering(
       nextBillNo: formatBillNumber(
         settings.numberTemplate,
         series.counterCode,
-        series.financialYear,
-        nextSeq,
+        currentYear,
+        currentYearLastSeq + 1,
       ),
     };
   });
