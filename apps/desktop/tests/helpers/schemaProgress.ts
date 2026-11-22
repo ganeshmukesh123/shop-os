@@ -16,9 +16,9 @@ export const SCHEMA_TASK_DONE = {
   /** number_series, epoch-millisecond times, billed_at and business_date */
   T078: true,
   /** shop settings and the bill's doc_title and round_off_paise */
-  T080: false,
+  T080: true,
   /** bill_number_gap */
-  T083: false,
+  T083: true,
 };
 
 export type SchemaTask = keyof typeof SCHEMA_TASK_DONE;

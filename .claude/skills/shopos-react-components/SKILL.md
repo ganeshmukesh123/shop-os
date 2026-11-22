@@ -60,7 +60,7 @@ Example: today `components/BillLineRow.tsx` becomes `components/BillLineRow/Bill
 
 `.scss` needs the `sass` package, which is **not yet installed**; adding it needs the owner's approval (CLAUDE.md rule 6). Until then use `<name>.module.css`.
 
-This is the **required** layout and the migration is spec 001 task T093, to be done **earliest**, before other Phase 7 work. Today the renderer still has `screens/`, `components/`, `state/` and `strings.ts` (which holds `uiText`); they move one folder per PR, never all at once. New components are created in their own folder from now on.
+This is the **required** layout and the migration is spec 001 task T093, to be done **earliest**, before other Phase 7 work. The renderer now has `app/`, `features/inventory`, `features/billing`, `features/settings` and `shared/` (`api`, `text` with `uiText`, `constants`, `components`, `theme`), every component and hook in its own folder with an `index.ts` barrel (done in T088 and the renderer folder moves of T093; T093's `.module.css` styles and the main-process half are still open); `constants.ts`, `types.ts` and styles are added to a folder when the component has some, and the T089 and T090 splits create them. New components are created in their own folder from now on.
 
 ## 2. Rules
 

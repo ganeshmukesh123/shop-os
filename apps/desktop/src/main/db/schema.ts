@@ -88,7 +88,14 @@ export const bill = sqliteTable(
     clientBillId: text("client_bill_id"),
     subtotalPaise: integer("subtotal_paise").notNull(),
     billDiscountPaise: integer("bill_discount_paise").notNull(),
+    // round_off_paise: signed difference to the nearest rupee, 0 when rounding is off (FR-010a)
+    roundOffPaise: integer("round_off_paise").notNull().default(0),
     totalPaise: integer("total_paise").notNull(),
+    // doc_title: the heading printed on this bill, stored so a reprint is identical (FR-015a)
+    docTitle: text("doc_title").notNull().default("Estimate"),
+    // time_zone: the shop's zone when the bill was saved; its date and time are always shown in it,
+    // so a reprint matches even after the shop changes its zone (FR-019a)
+    timeZone: text("time_zone").notNull().default("Asia/Kolkata"),
     // status: posted or cancelled
     status: text("status").notNull(),
     cancelReason: text("cancel_reason"),
@@ -118,10 +125,13 @@ export const bill = sqliteTable(
       "bill_discount_range",
       sql`${tableColumns.billDiscountPaise} >= 0 and ${tableColumns.billDiscountPaise} <= ${tableColumns.subtotalPaise}`,
     ),
+    check("bill_round_off_range", sql`abs(${tableColumns.roundOffPaise}) <= 50`),
     check(
       "bill_total_eq",
-      sql`${tableColumns.totalPaise} = ${tableColumns.subtotalPaise} - ${tableColumns.billDiscountPaise}`,
+      sql`${tableColumns.totalPaise} = ${tableColumns.subtotalPaise} - ${tableColumns.billDiscountPaise} + ${tableColumns.roundOffPaise}`,
     ),
+    check("bill_doc_title_len", sql`length(trim(${tableColumns.docTitle})) between 1 and 30`),
+    check("bill_time_zone_len", sql`length(${tableColumns.timeZone}) between 1 and 64`),
   ],
 );
 
@@ -250,13 +260,25 @@ export const shopProfile = sqliteTable(
     receiptWidth: text("receipt_width").notNull().default("80mm"),
     backupFolder: text("backup_folder").notNull().default(""),
     deviceId: text("device_id").notNull(),
+    // The heading printed on every bill (FR-015a, research D23)
+    docTitle: text("doc_title").notNull().default("Estimate"),
+    // 1 = round the grand total to the nearest rupee (FR-010a, research D20)
+    roundBillTotal: integer("round_bill_total").notNull().default(1),
+    // The shop's named time zone for business dates (FR-019a, research D22)
+    timeZone: text("time_zone").notNull().default("Asia/Kolkata"),
   },
   (tableColumns) => [
     check("shop_profile_name_len", sql`length(${tableColumns.name}) between 1 and 80`),
     check("shop_profile_address_len", sql`length(${tableColumns.address}) <= 200`),
     check("shop_profile_phone_len", sql`length(${tableColumns.phone}) <= 20`),
     check("shop_profile_footer_len", sql`length(${tableColumns.footer}) <= 200`),
-    check("shop_profile_width", sql`${tableColumns.receiptWidth} in ('58mm','80mm')`),
+    check("shop_profile_width", sql`${tableColumns.receiptWidth} in ('58mm','80mm','a4','a5')`),
+    check(
+      "shop_profile_doc_title_len",
+      sql`length(trim(${tableColumns.docTitle})) between 1 and 30`,
+    ),
+    check("shop_profile_round_bool", sql`${tableColumns.roundBillTotal} in (0, 1)`),
+    check("shop_profile_time_zone_len", sql`length(${tableColumns.timeZone}) between 1 and 64`),
   ],
 );
 
@@ -276,6 +298,35 @@ export const numberSeries = sqliteTable(
       tableColumns.counterCode,
       tableColumns.financialYear,
     ),
+  ],
+);
+
+// Bill numbers that a restore lost: numbers seq_from to seq_to of a series were printed but are not in the
+// restored database, so they will never be issued again (FR-013b, EC-19, research D21). Append-only.
+export const billNumberGap = sqliteTable(
+  "bill_number_gap",
+  {
+    ...base,
+    numberSeriesId: text("number_series_id")
+      .notNull()
+      .references(() => numberSeries.id),
+    seqFrom: integer("seq_from").notNull(),
+    seqTo: integer("seq_to").notNull(),
+    // reason: 'lost_in_restore' in this release
+    reason: text("reason").notNull(),
+    // is_estimated: 1 when the owner could not say and the block of 100 was assumed (research D21),
+    // 0 when they confirmed the last bill number; an audit must be able to tell the two apart
+    isEstimated: integer("is_estimated").notNull(),
+    recordedAt: integer("recorded_at").notNull(),
+  },
+  (tableColumns) => [
+    index("bill_number_gap_series_idx").on(tableColumns.numberSeriesId, tableColumns.seqFrom),
+    check(
+      "bill_number_gap_range",
+      sql`${tableColumns.seqFrom} >= 1 and ${tableColumns.seqTo} >= ${tableColumns.seqFrom}`,
+    ),
+    check("bill_number_gap_reason", sql`${tableColumns.reason} in ('lost_in_restore')`),
+    check("bill_number_gap_estimated_bool", sql`${tableColumns.isEstimated} in (0, 1)`),
   ],
 );
 

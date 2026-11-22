@@ -1,15 +1,23 @@
 import { ZodError, type ZodTypeAny } from "zod";
 import {
   CoreError,
+  backupPlanRestoreInput,
   backupRestoreInput,
+  type BackupPlanRestoreInput,
+  type BackupRestoreInput,
+  type IBackupRestoreResult,
+  type IRestorePreview,
+  billsCancelInput,
   billsExportPdfInput,
   billsGetInput,
+  billsListInput,
   billsPrintInput,
   billsSaveInput,
   draftSaveInput,
   itemsCreateInput,
   itemsListInput,
   itemsUpdateInput,
+  settingsClockCheckInput,
   settingsUpdateInput,
   stockAdjustInput,
   type CommandMap,
@@ -17,11 +25,12 @@ import {
   type Result,
 } from "@shopos/core";
 import type { BackupService } from "../services/BackupService";
-import { validateBackupFile } from "../services/BackupService";
 import type { BillingService } from "../services/BillingService";
 import type { InventoryService } from "../services/InventoryService";
 import type { PrintService } from "../services/PrintService";
+import type { IRestoreNumberingPlan } from "../services/RestoreNumbering";
 import type { SettingsService } from "../services/SettingsService";
+import { assertPlanIsConfirmed, planRestoreFor, toRestorePreview } from "./restoreCommands";
 
 export interface Services {
   inventory: InventoryService;
@@ -37,7 +46,7 @@ export interface Shell {
   pickBackupFile(): Promise<string | null>;
   pickPdfPath(defaultName: string): Promise<string | null>;
   /** Close the database, put the backup in place and relaunch. */
-  scheduleRestore(filePath: string): void;
+  scheduleRestore(filePath: string, numbering?: IRestoreNumberingPlan): void;
 }
 
 export type Handlers = {
@@ -83,8 +92,14 @@ function cmd<K extends CommandName>(
   };
 }
 
-/** One handler per command in contracts/ipc-commands.md. Every handler validates input with the shared Zod schemas. */
-export function createHandlers(services: Services, shell: Shell): Handlers {
+type ItemCommandName = "items.list" | "items.create" | "items.update" | "stock.adjust";
+type SystemCommandName = Extract<
+  CommandName,
+  `settings.${string}` | `backup.${string}` | `system.${string}`
+>;
+type BillCommandName = Exclude<CommandName, ItemCommandName | SystemCommandName>;
+
+function createItemHandlers(services: Services): Pick<Handlers, ItemCommandName> {
   return {
     "items.list": cmd<"items.list">(itemsListInput, (commandInput) =>
       services.inventory.listItems(commandInput),
@@ -98,6 +113,11 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
     "stock.adjust": cmd<"stock.adjust">(stockAdjustInput, (commandInput) =>
       services.inventory.adjustStock(commandInput),
     ),
+  };
+}
+
+function createBillHandlers(services: Services): Pick<Handlers, BillCommandName> {
+  return {
     "bills.draft.save": cmd<"bills.draft.save">(
       draftSaveInput,
       (commandInput: { payload: unknown }) => {
@@ -111,8 +131,14 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
     "bills.save": cmd<"bills.save">(billsSaveInput, (commandInput) =>
       services.billing.saveBill(commandInput),
     ),
+    "bills.list": cmd<"bills.list">(billsListInput, (commandInput) =>
+      services.billing.listBills(commandInput),
+    ),
     "bills.get": cmd<"bills.get">(billsGetInput, (commandInput: { id: string }) =>
       services.billing.getBill(commandInput.id),
+    ),
+    "bills.cancel": cmd<"bills.cancel">(billsCancelInput, (commandInput) =>
+      services.billing.cancelBill(commandInput),
     ),
     "bills.print": cmd<"bills.print">(
       billsPrintInput,
@@ -124,18 +150,35 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
       (commandInput: { id: string; target: "receipt" | "a4" | "a5"; filePath: string }) =>
         services.print.exportPdf(commandInput.id, commandInput.target, commandInput.filePath),
     ),
+  };
+}
+
+function createSystemHandlers(services: Services, shell: Shell): Pick<Handlers, SystemCommandName> {
+  return {
     "settings.get": cmd<"settings.get">(none(), () => services.settings.get()),
     "settings.update": cmd<"settings.update">(settingsUpdateInput, (commandInput) =>
       services.settings.update(commandInput),
     ),
+    "settings.clockCheck": cmd<"settings.clockCheck">(
+      settingsClockCheckInput,
+      (commandInput: { deviceTimeZone: string }) =>
+        services.settings.clockCheck(commandInput.deviceTimeZone),
+    ),
     "backup.run": cmd<"backup.run">(none(), () => services.backup.run()),
     "backup.status": cmd<"backup.status">(none(), () => services.backup.status()),
+    "backup.planRestore": cmd<"backup.planRestore">(
+      backupPlanRestoreInput,
+      async (commandInput: BackupPlanRestoreInput): Promise<IRestorePreview> =>
+        toRestorePreview(await planRestoreFor(commandInput, new Date())),
+    ),
     "backup.restore": cmd<"backup.restore">(
       backupRestoreInput,
-      (commandInput: { filePath: string }) => {
-        validateBackupFile(commandInput.filePath); // INVALID_BACKUP before anything is touched
-        shell.scheduleRestore(commandInput.filePath);
-        return { restored: true };
+      async (commandInput: BackupRestoreInput): Promise<IBackupRestoreResult> => {
+        // Worked out again, never taken from the renderer; nothing is touched unless it still matches.
+        const numbering = await planRestoreFor(commandInput, new Date());
+        assertPlanIsConfirmed(numbering, commandInput.confirmedPreview);
+        shell.scheduleRestore(commandInput.filePath, numbering);
+        return { restored: true, ...toRestorePreview(numbering) };
       },
     ),
     "system.pickFolder": cmd<"system.pickFolder">(none(), async () => ({
@@ -150,5 +193,14 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
         path: await shell.pickPdfPath(commandInput.defaultName),
       }),
     ),
+  };
+}
+
+/** One handler per command in contracts/ipc-commands.md. */
+export function createHandlers(services: Services, shell: Shell): Handlers {
+  return {
+    ...createItemHandlers(services),
+    ...createBillHandlers(services),
+    ...createSystemHandlers(services, shell),
   };
 }

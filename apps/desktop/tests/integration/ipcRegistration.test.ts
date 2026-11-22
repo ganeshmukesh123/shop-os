@@ -62,8 +62,16 @@ const DISPATCH_CASES = {
     input: { clientBillId: "invalid", paymentMode: "cash", billDiscountPaise: 0, lines: [] },
     expected: invalidField("Invalid UUID"),
   },
+  "bills.list": {
+    input: { limit: 10, offset: 0 },
+    expected: { ok: true, data: { bills: [], total: 0 } },
+  },
   "bills.get": {
     input: { id: "missing-bill" },
+    expected: { ok: false, code: "NOT_FOUND", message: "Bill not found" },
+  },
+  "bills.cancel": {
+    input: { id: "missing-bill", reason: "Wrong items" },
     expected: { ok: false, code: "NOT_FOUND", message: "Bill not found" },
   },
   "bills.print": {
@@ -93,8 +101,15 @@ const DISPATCH_CASES = {
       footer: "",
       receiptWidth: "80mm",
       backupFolder: "",
+      docTitle: "Estimate",
+      roundBillTotal: true,
+      timeZone: "Asia/Kolkata",
     },
     expected: invalidField("Shop name is required"),
+  },
+  "settings.clockCheck": {
+    input: { deviceTimeZone: "Asia/Kolkata" },
+    expected: { ok: true, data: { warnings: [] } },
   },
   "backup.run": {
     input: {},
@@ -104,8 +119,12 @@ const DISPATCH_CASES = {
     input: {},
     expected: { ok: true, data: { folder: "", lastOkAt: null, lastError: null } },
   },
-  "backup.restore": {
+  "backup.planRestore": {
     input: { filePath: 0 },
+    expected: invalidField("Invalid input: expected string, received number"),
+  },
+  "backup.restore": {
+    input: { filePath: 0, confirmedPreview: { nextBillNo: "C1/26-27/000002" } },
     expected: invalidField("Invalid input: expected string, received number"),
   },
   "system.pickFolder": { input: {}, expected: { ok: true, data: { path: PICKED_FOLDER } } },

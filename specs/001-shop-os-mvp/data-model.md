@@ -23,7 +23,7 @@ number_series 1--* bill            shop_profile (one row)
 | `bill_line` | `bill_id`, `line_no`, `variant_id`, `item_name_snapshot`, `unit_snapshot`, `qty_base_milli`, `unit_price_paise`, `line_discount_paise`, `amount_paise` | Append-only |
 | `bill_tender` | `bill_id`, `mode` (`cash`, `upi`, `card`, `unpaid`), `amount_paise`, `status` (`label` in this release) | One row per bill in this release; append-only |
 | `number_series` | `counter_code`, `financial_year`, `template`, `last_seq` | Incremented in the bill transaction |
-| `bill_number_gap` | `number_series_id`, `seq_from`, `seq_to`, `reason` (`lost_in_restore`), `recorded_at` | Append-only; shown in the bill list (D21) |
+| `bill_number_gap` | `number_series_id`, `seq_from`, `seq_to`, `reason` (`lost_in_restore`), `is_estimated` (0 or 1), `recorded_at` | Append-only; shown in the bill list (D21) |
 | `shop_profile` | name, address, phone, `doc_title` (default `Estimate`), `number_template`, `round_bill_total` (default 1), `time_zone` (default `Asia/Kolkata`), `receipt_width` (`58mm`, `80mm` default, `a4`, `a5`), footer, backup folder | One row |
 | `draft_bill`, `backup_log` | as today | Not financial records |
 
@@ -85,7 +85,10 @@ The app and the screens still call these fields `number`, `seriesCode`, `linesTo
 | customer_name | text up to 80 characters, optional |
 | subtotal_paise | integer, not null; was `lines_total_paise` |
 | bill_discount_paise | integer, not null, 0 up to subtotal_paise |
-| total_paise | integer, not null = subtotal_paise minus bill_discount_paise (plus `round_off_paise` from T080); was `grand_total_paise` |
+| round_off_paise | integer, not null, default 0, `abs(round_off_paise) <= 50`: the signed difference to the nearest rupee (migration 0013, T080) |
+| total_paise | integer, not null = subtotal_paise minus bill_discount_paise plus round_off_paise (check `bill_total_eq`); was `grand_total_paise` |
+| doc_title | text, not null, 1 to 30 characters, default `Estimate`: the heading printed on this bill, copied from the shop setting when saved so a reprint is identical (migration 0013, T080). Bills saved before it get `Estimate` |
+| time_zone | text, not null, 1 to 64 characters, default `Asia/Kolkata`: the shop's zone when the bill was saved; the bill's date and time are always shown in it, so a reprint matches after the shop changes its zone (FR-019a; migration 0013). Bills saved before it get `Asia/Kolkata`, the zone they were saved in |
 | status | `posted` or `cancelled`, not null; a bill moves from `posted` to `cancelled` once and never back; was `saved` |
 | cancel_reason | text, required when status is `cancelled` |
 | cancelled_at | integer epoch milliseconds (UTC), set on cancel |
@@ -111,10 +114,13 @@ Append-only (triggers).
 One row per bill in this release, written in the bill's save transaction: `bill_id` (foreign key), `mode` (`cash`, `upi`, `card` or `unpaid`), `amount_paise` (the bill's whole total, 0 or more) and `status` (`label`: the shop records how the customer paid; the app does not collect money). Append-only (triggers). The payment mode the app shows is read from this row; the bill itself no longer has a `payment_mode` column. Migration 0009 gave every existing bill one tender from its old payment mode.
 
 ### Shop Profile (`shop_profile`)
-One row: name (required, up to 80), address (up to 200), phone (up to 20), bill series code, bill number template, bill footer text (up to 200), receipt width (`58mm` or `80mm`), backup folder path.
+One row: name (required, up to 80), address (up to 200), phone (up to 20), bill series code, bill number template, bill footer text (up to 200), receipt width (`58mm`, `80mm`, `a4` or `a5`), backup folder path, and since migration 0013 (T080): `doc_title` (1 to 30 characters, default `Estimate`), `round_bill_total` (0 or 1, default 1) and `time_zone` (a named zone the platform knows, default `Asia/Kolkata`).
 
 ### Number Series (`number_series`) (migration 0011, task T078)
 `counter_code`, `financial_year`, `template` (the bill number template last used with the series) and `last_seq`; unique per shop, counter and financial year; `last_seq` is incremented in the same transaction as the bill insert. Replaces `number_counter`; each bill points at its series with `number_series_id`.
+
+### Bill Number Gap (`bill_number_gap`) (migration 0014, task T083)
+`number_series_id` (foreign key to `number_series`, not null), `seq_from` (1 or more), `seq_to` (at least `seq_from`), `reason` (`lost_in_restore` in this release), `is_estimated` (not null, 0 or 1: 1 when the owner could not say and the block of 100 was assumed, 0 when they confirmed the last bill number) and `recorded_at` (integer epoch milliseconds). One row records numbers that were printed but are not in a restored database, so they are never issued again (research D21, FR-013b, EC-19). Example: the backup ended at 120, bills 121 to 126 were printed, the owner confirms 126: one row with `seq_from` 121 and `seq_to` 126, and the series' `last_seq` becomes 126. Append-only (triggers). `is_estimated` keeps that distinction for an audit; the restore result also reports it to the owner.
 
 ### Draft Bill (`draft_bill`)
 `payload` JSON of an unsaved bill, written on every edit and cleared on save or discard; supports crash recovery. Not a financial record.
@@ -126,11 +132,12 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - `stock_movement`: update and delete are rejected ("append-only").
 - `bill_line`: update and delete are rejected.
+- `bill_number_gap`: update and delete are rejected ("append-only", migration 0014).
 <!-- coderabbit-ai-generated:v1 -->
 
 <!-- coderabbit-ai-generated-section:v1:a653a6c71cd3957f52050d00eac469ff0dc40e4249e250bfa6b10553f61d42ef -->
 
-- `bill`: delete is rejected (also the key `client_bill_id` is protected); update is allowed only for the change `status` `posted` to `cancelled` (with its cancel fields) while every other column stays identical.
+- `bill`: delete is rejected (also the key `client_bill_id` is protected); update is allowed only for the change `status` `posted` to `cancelled` (with its cancel fields) while every other column stays identical, including `business_id`, `shop_id`, `created_at` and `time_zone` (trigger recreated in migration 0013).
 
 <!-- /coderabbit-ai-generated:v1 -->
 - Consequence: the optional `customer_name` on a saved bill cannot be edited or erased later. Customer phone was removed from the bill (migration `0002`, 2026-11-13) so this release holds no contact details. When contact details arrive (features 004 and 008) they live in a separate, erasable party record referenced by id (review B6).
@@ -139,7 +146,7 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 - Line amount = quantity (thousandths) times rate (paise) divided by 1000, rounded half up, then minus the line discount. Rounding happens once per line.
 - Percent discounts are held in basis points (12.5% = 1250), converted to paise by rounding half up, and stored as paise; only paise are saved.
-- Bill discount is applied to the lines total after line rounding; grand total = lines total minus bill discount (no further rounding).
+- Bill discount is applied to the lines total after line rounding; total before rounding = lines total minus bill discount. The stored grand total (`total_paise`) adds `round_off_paise` to that: see "Rounding of the bill total" below (since migration 0013, T080).
 - Amounts above the safe integer limit are rejected.
 
 ## Time
@@ -151,11 +158,11 @@ One row: name (required, up to 80), address (up to 200), phone (up to 20), bill 
 
 <!-- coderabbit-ai-generated-section:v1:95fed621413d6e3d4ba5100ff38990ee55d3c8f0fc166601de6afc3fadd1ec8c -->
 
-- Research D22 (decided 2026-11-15) specifies a shop `time_zone` setting with `Asia/Kolkata` as its default. Until the setting is implemented in T080, billing uses the fixed `Asia/Kolkata` default.
+- Research D22 (decided 2026-11-15) specifies a shop `time_zone` setting with `Asia/Kolkata` as its default. Since migration 0013 (T080) the setting exists and billing reads it: the business date and financial year of a new bill, and the time shown for a stored bill, use the shop's zone. A bill's stored `billed_at` and `business_date` never change when the zone setting changes later; only the displayed clock time follows the current setting.
 
 <!-- /coderabbit-ai-generated:v1 -->
 
-## Rounding of the bill total (research D20, target)
+## Rounding of the bill total (research D20)
 
 - Grand total before rounding = lines total minus bill discount.
 - When `round_bill_total` is on: round to the nearest 100 paise, 50 paise and above up; `round_off_paise` = rounded minus unrounded (between -49 and +50). Example: ₹849.60 gives round-off +₹0.40, total ₹850.00; ₹849.49 gives -₹0.49, total ₹849.00.

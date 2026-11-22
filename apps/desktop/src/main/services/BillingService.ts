@@ -1,20 +1,25 @@
 import {
   CoreError,
   assertQuantity,
+  billsCancelInput,
   billsSaveInput,
-  DEFAULT_TIME_ZONE,
   businessDateOf,
   computeBill,
   financialYearOfBusinessDate,
   formatBillNumber,
+  roundBillTotal,
   type Bill,
   type BillLine,
+  type BillsCancelInput,
+  type BillsListInput,
   type BillsSaveInput,
   type Item,
 } from "@shopos/core";
 import type { DB } from "../db/connection";
 import type { Ctx } from "../db/seed";
+import { BillCancelRepository } from "../repositories/BillCancelRepository";
 import { BillRepository } from "../repositories/BillRepository";
+import { BillSearchRepository } from "../repositories/BillSearchRepository";
 import { ItemRepository } from "../repositories/ItemRepository";
 import { SettingsRepository } from "../repositories/SettingsRepository";
 import { StockRepository } from "../repositories/StockRepository";
@@ -68,7 +73,7 @@ export class BillingService {
 
       // The bill's date and financial year come from the shop's zone, never the device's (FR-019a).
       const billedAt = now.getTime();
-      const businessDate = businessDateOf(billedAt, DEFAULT_TIME_ZONE);
+      const businessDate = businessDateOf(billedAt, profile.timeZone);
       const billFinancialYear = financialYearOfBusinessDate(businessDate);
       const { seq, numberSeriesId } = bills.nextSeq(
         profile.seriesCode,
@@ -82,6 +87,9 @@ export class BillingService {
         seq,
       );
 
+      // Lines keep exact paise; only the grand total is rounded, and the difference is kept apart (FR-010a).
+      const rounded = roundBillTotal(totals.grandTotalPaise, profile.roundBillTotal);
+
       const saved = bills.insertBill({
         number,
         seriesCode: profile.seriesCode,
@@ -92,10 +100,13 @@ export class BillingService {
         businessDate,
         customerName: input.customerName?.trim() || null,
         clientBillId: input.clientBillId,
+        docTitle: profile.docTitle,
+        timeZone: profile.timeZone,
         paymentMode: input.paymentMode,
         linesTotalPaise: totals.linesTotalPaise,
         billDiscountPaise: totals.billDiscountPaise,
-        grandTotalPaise: totals.grandTotalPaise,
+        roundOffPaise: rounded.roundOffPaise,
+        grandTotalPaise: rounded.roundedTotalPaise,
       });
       const lines = bills.insertLines(
         saved.id,
@@ -133,6 +144,47 @@ export class BillingService {
     return [...new Set(itemIds)]
       .map((itemId) => items.get(itemId)!)
       .filter((item) => item.stockMilli < 0);
+  }
+
+  /**
+   * Cancel a posted bill (FR-017) in ONE transaction: mark it Cancelled with the reason, then append
+   * one equal and opposite `sale_cancel` movement per line and give the stock back. The bill, its
+   * lines and the original `sale` movements are never changed, and its number is never reused.
+   */
+  cancelBill(raw: BillsCancelInput, now: Date = new Date()): { bill: Bill } {
+    const input = billsCancelInput.parse(raw);
+    const reason = input.reason.trim();
+    if (!reason) throw new CoreError("REASON_REQUIRED", "Say why the bill is being cancelled");
+
+    return this.db.transaction((tx) => {
+      const bills = new BillRepository(tx, this.ctx);
+      const savedBill = bills.get(input.id);
+      if (!savedBill) throw new CoreError("NOT_FOUND", "Bill not found");
+      const wasPosted = new BillCancelRepository(tx, this.ctx).markCancelled(
+        input.id,
+        reason,
+        now.getTime(),
+      );
+      if (!wasPosted) throw new CoreError("ALREADY_CANCELLED", "This bill is already cancelled");
+
+      const stock = new StockRepository(tx, this.ctx);
+      const items = new ItemRepository(tx, this.ctx);
+      for (const savedLine of savedBill.lines) {
+        stock.append({
+          itemId: savedLine.itemId,
+          quantityMilli: savedLine.quantityMilli,
+          reason: "sale_cancel",
+          billId: input.id,
+        });
+        items.addStockDelta(savedLine.itemId, savedLine.quantityMilli);
+      }
+      return { bill: bills.get(input.id)!.bill };
+    });
+  }
+
+  /** Search the saved bills for the bill list (FR-016): newest first, one page at a time. */
+  listBills(input: BillsListInput): { bills: Bill[]; total: number } {
+    return new BillSearchRepository(this.db, this.ctx).list(input);
   }
 
   getBill(id: string): { bill: Bill; lines: BillLine[] } {
