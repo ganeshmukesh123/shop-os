@@ -167,7 +167,9 @@ Inter-state check and format by registration come from 008. Site return of unuse
 
 ### Key Entities
 
-- **Bill / Bill Line / Bill Version**: Existing from 001, extended with tier, versions, batch and UPI status.
+- **Bill / Bill Line / Bill Version**: Existing from 001, extended with tier, versions, batch and UPI status. Save nullable integer `bill_line.warranty_months_at_sale` in the bill transaction: snapshot the variant’s warranty duration at sale, or store NULL for an item without warranty. The saved line is immutable and supplies 009’s original coverage on rebuild (FR-PUR-010).
+
+Before 003 implementation starts, resolve [009’s OD-1 decision in T000](../009-purchases-warranty/tasks.md#phase-0-decision-before-feature-003). Record the outcome before 003 merges and include serial capture in 003 if the owner approves it.
 - **Payment Split**: One bill's list of payment parts with mode, amount, reference, confirmation status.
 - **Quotation / Quotation Version / Conversion**: Quote with validity and its link to resulting bills.
 - **Return / Credit Note**: Return lines against a bill, refund mode, destination location.
