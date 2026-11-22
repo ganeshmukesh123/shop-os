@@ -395,6 +395,24 @@ Defect found by the work: `evaluateDraft` documented "never throws" but threw `C
 
 Refactor for testability (behaviour unchanged, proven by the 3 end-to-end tests on the built app): `main/index.ts` (174 lines of top-level code) became a 22-line entry plus seven small modules in `main/app/`; `electronRenderer.ts` builds from a window factory; the preload bridge is a function (`preload/bridge.ts`). Security options are copied unchanged and pinned by tests (isolated, sandboxed, no Node; offscreen window also no JavaScript; Content-Security-Policy; window-open denied; navigation guard).
 
+### F11. M3 result: the desktop package and `main` at 90% (2026-11-22, T035)
+
+Measured with `pnpm test:coverage` (vitest 4.1.12, V8, all files under `src/` included) on `origin/main` at `7b48cf8` plus the renderer test gaps of T028 to T034. `COVERAGE_ENFORCE` is still `false` at the time of this record; T036 switches it on. Per-area figures are sums of covered over total from `apps/desktop/coverage/coverage-summary.json`.
+
+| Area | Lines | Statements | Functions | Branches |
+|---|---|---|---|---|
+| `packages/core` | 99.68 | 99.42 | 100 | 96.91 |
+| desktop total | 99.17 | 98.83 | 97.77 | 96.92 |
+| desktop `src/main/**` (48 files) | 99.64 | 99.22 | 99.30 | 96.03 |
+| desktop `src/preload/**` (2 files) | 100 | 100 | 100 | 100 |
+| desktop `src/renderer/**` (113 files) | 98.51 | 98.30 | 96.02 | 98.00 |
+
+Every area is above 90% on all four metrics. Before the T028 to T034 tests, `main` at `7b48cf8` already measured 98.75 lines, 98.38 statements, 96.47 functions and 96.02 branches for the desktop total, so the 90% target was reached by the earlier screen and hook tests (T030 to T033, #107, #108) and the last gaps were closed by `api`, `billForm`, `useDraftAutosave`, `useItems`, `main.tsx`, `Toast` and `BillLineRow` tests.
+
+Lowest remaining spots among files that contain code: `ItemForm.tsx` 90.9% lines and 83.33% branches, `SettingsScreen.tsx` 91.1% lines, `themePreference.ts` 91.7% lines, `startupRecovery.ts` 75% branches, `startupSafety.ts` 80% branches. Every file with code is above 90% on lines; the type-only `*.types.ts` files have no code and show 0 of 0.
+
+O6 answered: branch coverage of 90% was reachable on the UI code (renderer 98.00%). No exclusion was added and no threshold changed.
+
 ## Open items (unverified; each resolved by the task named)
 
 | # | Item | Resolved by |
@@ -404,4 +422,4 @@ Refactor for testability (behaviour unchanged, proven by the 3 end-to-end tests 
 | O3 | Runner minutes: macOS and Windows runners cost more than Linux; confirm the account's allowance before the nightly smoke job | T040 |
 | O4 | **Answered (F4): not stable, stays non-required.** *Updated 2026-11-14 (F8): after the tooling upgrades the high-level audit exits 0 and the job is no longer informational.* Was: whether `pnpm audit` is stable enough to be a required check (it can fail on advisories the project cannot fix) | T014 |
 | O5 | The repository is not on GitHub yet: hosting and the default branch name (`main`) | T006 (owner action) |
-| O6 | Branch coverage at 90% on UI code may be hard; decided by data after renderer tests exist | T034 |
+| O6 | ~~Branch coverage at 90% on UI code may be hard~~ **Answered 2026-11-22 (F11): not hard; renderer branches 98.00%, desktop total 96.92%** | T034 |
