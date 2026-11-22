@@ -11,3 +11,18 @@ export const NEGATIVE_INACTIVE_ITEM: Item = {
   active: false,
   needsCorrection: true,
 };
+
+/** PVC pipe: 10 pcs in stock at ₹120, active. Override only what a test is about. */
+export function buildItem(overrides: Partial<Item> = {}): Item {
+  return {
+    id: "item-pipe",
+    name: "PVC pipe",
+    unit: "pcs",
+    allowsDecimal: false,
+    pricePaise: 12_000,
+    stockMilli: 10_000,
+    active: true,
+    needsCorrection: false,
+    ...overrides,
+  };
+}
