@@ -216,8 +216,9 @@ describe("registerIpc", () => {
       const logRefusal = vi.fn();
       const listener = registerAndGetListener(logRefusal);
       const customerInput = { customerName: "Ramesh Traders" };
+      // Made-up credentials and customer data the log must never show; not a real secret.
       const privateFrame = {
-        url: "https://user:password@evil.example/Ramesh?token=secret#private",
+        url: "https://user:password@evil.example/Ramesh?token=secret#private", // trufflehog:ignore
       };
       await listener(
         { senderFrame: privateFrame, sender: { mainFrame: privateFrame } },
