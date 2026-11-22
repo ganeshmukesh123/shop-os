@@ -41,7 +41,11 @@ function formatterFor(
 
 /** True when the platform knows this named time zone (for example Asia/Kolkata). */
 export function isValidTimeZone(timeZone: string): boolean {
-  if (timeZone.trim() === "" || /^[+-]/.test(timeZone)) return false;
+  // An offset such as "+05:30" is not a named zone: its daylight-saving rules are unknown.
+  const isBlankOrOffset = timeZone.trim() === "" || /^[+-]/.test(timeZone);
+  if (isBlankOrOffset) {
+    return false;
+  }
   try {
     formatterFor(timeZone);
     return true;

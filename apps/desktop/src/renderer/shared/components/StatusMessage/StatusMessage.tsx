@@ -1,6 +1,6 @@
 import { Button, Callout, Text } from "@radix-ui/themes";
 import { STATUS_COLOR_BY_ROLE, STATUS_LIVE_ROLE_BY_ROLE } from "../status.constants";
-import type { IStatusMessageProps } from "./StatusMessage.types";
+import type { IStatusMessageProps } from "./types";
 
 /**
  * The one message pattern (design guidelines 5.1): label first, a plain sentence, one action last.
