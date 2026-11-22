@@ -9,6 +9,7 @@ import { useDraftAutosave } from "../hooks/useDraftAutosave";
 import { useBillForm } from "./hooks/useBillForm";
 import { useBillSave } from "./hooks/useBillSave";
 import { useItemSearch } from "./hooks/useItemSearch";
+import { useQuantityFocus } from "./hooks/useQuantityFocus";
 import { BillView } from "../BillView";
 import { BillLinesTable } from "./components/BillLinesTable";
 import { BillSearchBox } from "./components/BillSearchBox";
@@ -19,11 +20,7 @@ export function NewBillScreen() {
   const [ready, setReady] = useState(false);
   const [recover, setRecover] = useState<IBillForm | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  const qtyRefs = useRef(new Map<string, HTMLInputElement>());
-  const focusLine = useRef<string | null>(null);
-  const rememberLineToFocus = useCallback((lineKey: string) => {
-    focusLine.current = lineKey;
-  }, []);
+  const { rememberLineToFocus, onQtyFieldRef } = useQuantityFocus();
   const {
     form,
     evaluation,
@@ -46,17 +43,6 @@ export function NewBillScreen() {
       .finally(() => setReady(true));
   }, []);
   useDraftAutosave(form, ready && !saved && !recover);
-
-  useEffect(() => {
-    if (focusLine.current) {
-      const quantityField = qtyRefs.current.get(focusLine.current);
-      if (quantityField) {
-        quantityField.focus();
-        quantityField.select();
-        focusLine.current = null;
-      }
-    }
-  });
 
   useEffect(() => {
     if (!saved && ready) searchRef.current?.focus();
@@ -101,11 +87,7 @@ export function NewBillScreen() {
         onLineChange={patchLine}
         onLineRemove={removeLine}
         onEnterQty={() => searchRef.current?.focus()}
-        onQtyFieldRef={(lineKey, quantityField) =>
-          quantityField
-            ? qtyRefs.current.set(lineKey, quantityField)
-            : qtyRefs.current.delete(lineKey)
-        }
+        onQtyFieldRef={onQtyFieldRef}
       />
 
       <BillSummaryPanel

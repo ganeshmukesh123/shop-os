@@ -1,5 +1,6 @@
 import { formatQuantity } from "@shopos/core";
 import { StatusMessage } from "../../../../../shared/components/StatusMessage/StatusMessage";
+import { fillText } from "../../../../../shared/text/fillText";
 import { uiText } from "../../../../../shared/text/strings";
 import type { IItemFormMessagesProps } from "./types";
 
@@ -16,9 +17,12 @@ export function ItemFormMessages({ errors, duplicateItems }: IItemFormMessagesPr
         <StatusMessage role="warning" label={uiText.status.duplicate}>
           {uiText.form.duplicateTitle}. {uiText.form.duplicateHelp}{" "}
           {duplicateItems
-            .map(
-              (duplicateItem) =>
-                `${duplicateItem.name} (${formatQuantity(duplicateItem.stockMilli)} ${duplicateItem.unit} in stock)`,
+            .map((duplicateItem) =>
+              fillText(uiText.form.duplicateItem, {
+                name: duplicateItem.name,
+                quantity: formatQuantity(duplicateItem.stockMilli),
+                unit: duplicateItem.unit,
+              }),
             )
             .join("; ")}
         </StatusMessage>

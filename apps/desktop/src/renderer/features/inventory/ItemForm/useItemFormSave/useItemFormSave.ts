@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import type { Item } from "@shopos/core";
 import { ApiError, call, messageOf } from "../../../../shared/api/api";
 import { useToast } from "../../../../shared/components/Toast";
+import { fillText } from "../../../../shared/text/fillText";
+import { uiText } from "../../../../shared/text/strings";
 import { validateItemForm } from "../validateItemForm";
 import type { IItemFormFields } from "../useItemFormFields";
 import type { IItemFormSave } from "./types";
@@ -70,7 +72,7 @@ export function useItemFormSave(
     setIsBusy(true);
     try {
       await sendItem(item, { name: name.trim(), unit, allowsDecimal, pricePaise, openingQtyMilli });
-      toast("success", `${name.trim()} saved`);
+      toast("success", fillText(uiText.form.saved, { name: name.trim() }));
       onDone();
     } catch (caughtError) {
       if (caughtError instanceof ApiError && caughtError.code === "DUPLICATE_NAME")

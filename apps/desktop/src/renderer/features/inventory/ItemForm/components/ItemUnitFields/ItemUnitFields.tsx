@@ -23,7 +23,7 @@ export function ItemUnitFields({ fields }: IItemUnitFieldsProps) {
                     {unitOption}
                   </Select.Item>
                 ))}
-                <Select.Item value={CUSTOM_UNIT_OPTION}>Custom…</Select.Item>
+                <Select.Item value={CUSTOM_UNIT_OPTION}>{uiText.form.customUnitOption}</Select.Item>
               </Select.Content>
             </Select.Root>
           </label>
