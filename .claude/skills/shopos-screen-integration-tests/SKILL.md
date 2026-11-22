@@ -27,7 +27,7 @@ Proof it matters: making the screen send `quantityMilli` as a string fails 9 of 
 
 <!-- coderabbit-ai-generated:v1 -->
 
-<!-- coderabbit-ai-generated-section:v1:ad9737df3c33b0bb3cf3373038d0d3f0937a2c3ce4050477e574f462e474c07c -->
+<!-- coderabbit-ai-generated-section:v1:dd93f7192b7097a66ed0832e1442f97f148e7466c1455b91f1aa8b6f4cdbe5c9 -->
 
 ## 2. Where and how
 
@@ -83,8 +83,8 @@ it("IT-BIL-01 saves 2 pipes at ₹120 as one bill, one line, one tender and one 
     { mode: "upi", amount_paise: 24_000 },
   ]);
   expect(
-    realShopos.countRows("stock_movement", "movement_type = 'sale' and qty_base_milli = 2000"),
-  ).toBe(1);
+    readSignedMovements(realShopos).filter((movement) => movement.movementType === "sale"),
+  ).toMatchObject([{ signedMilli: -2_000 }]);
   expect(await stockOf(realShopos, "PVC pipe")).toBe(8_000); // stock is the sum of movements
 });
 ```
