@@ -62,13 +62,16 @@ const playwrightArguments = process.argv.slice(2).filter((argument) => argument 
 const launchedExecutable = isOffline ? writeOfflineLauncher(executable) : executable;
 say(`Running the e2e specs against ${executable}${isOffline ? " (network denied)" : ""}`);
 
+// On Windows pnpm is a .cmd file, which spawnSync can only start through a shell (found by the smoke test).
 const result = spawnSync("pnpm", ["exec", "playwright", "test", ...playwrightArguments], {
   cwd: desktopFolder,
   stdio: "inherit",
+  shell: process.platform === "win32",
   env: {
     ...process.env,
     SHOPOS_E2E_EXECUTABLE: launchedExecutable,
     ...(isOffline ? { SHOPOS_E2E_NO_SANDBOX: "1" } : {}),
   },
 });
+if (result.error) fail(`Could not start Playwright: ${result.error.message}`);
 process.exit(result.status ?? 1);
