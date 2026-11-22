@@ -26,6 +26,7 @@ Project skills in `.claude/skills/` hold the coding standards. Use them.
 | Electron security and performance hardening (fuses, permissions, navigation, packaging) | `shopos-electron-hardening` |
 | Services, repositories, layering | `shopos-service-layer` |
 | Tests | `shopos-testing` |
+| Screen-to-database tests (screen + real handlers + SQLite) | `shopos-screen-integration-tests` |
 | Starting or finishing a feature or task | `shopos-feature-workflow` |
 | Reviewing a change | `shopos-code-review` |
 
