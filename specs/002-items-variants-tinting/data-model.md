@@ -1,6 +1,6 @@
 # Data Model: Items - Variants, Names and Paint Tinting
 
-Builds on `specs/001-shop-os-mvp/data-model.md` (target shape). Conventions are unchanged: `id` UUID v7 text primary key; `business_id` and `shop_id` not null on every table; `created_at` and `updated_at` INTEGER epoch milliseconds (UTC); money `*_paise` integer; quantity `*_milli` integer thousandths of the base unit; enums are text with a CHECK. New migrations start at `0013`. Decisions are in `research.md` (D1 to D15).
+Builds on `specs/001-shop-os-mvp/data-model.md` (target shape). Conventions are unchanged: `id` UUID v7 text primary key; `business_id` and `shop_id` not null on every table; `created_at` and `updated_at` INTEGER epoch milliseconds (UTC); money `*_paise` integer; quantity `*_milli` integer thousandths of the base unit; enums are text with a CHECK. New migrations start at `0015`: feature 001 ends at `0014` (`0013` round-off and shop settings, T080; `0014` `bill_number_gap`, T083). drizzle-kit assigns the final numbers when each migration is generated. Decisions are in `research.md` (D1 to D15).
 
 ## Overview
 
