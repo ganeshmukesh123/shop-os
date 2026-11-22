@@ -44,7 +44,13 @@ vi.mock("electron", () => {
       showSaveDialog: vi.fn(),
       showErrorBox: vi.fn(),
     },
-    session: { defaultSession: { webRequest: { onHeadersReceived: vi.fn() } } },
+    session: {
+      defaultSession: {
+        webRequest: { onHeadersReceived: vi.fn() },
+        setPermissionRequestHandler: vi.fn(),
+        setPermissionCheckHandler: vi.fn(),
+      },
+    },
     ipcMain: { handle: electronMocks.handle },
   };
 });

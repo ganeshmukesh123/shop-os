@@ -2,7 +2,6 @@ import { listTrustedPageUrls, type IAppConfig } from "../../src/main/app/appConf
 import {
   buildMainWindowOptions,
   createMainWindow,
-  isNavigationAllowed,
   type IMainWindow,
 } from "../../src/main/app/mainWindow";
 
@@ -28,8 +27,8 @@ const buildConfig = (overrides: Partial<IAppConfig> = {}): IAppConfig => ({
 
 /** A fake window that records what the app asked of it. */
 function buildFakeWindow() {
-  let navigationListener:
-    ((navigationEvent: { preventDefault(): void }, url: string) => void) | undefined;
+  type NavigationListener = (navigationEvent: { url: string; preventDefault(): void }) => void;
+  const navigationListeners = new Map<string, NavigationListener>();
   const calls = {
     openHandler: undefined as (() => { action: string }) | undefined,
     loadedUrls: [] as string[],
@@ -40,8 +39,8 @@ function buildFakeWindow() {
       setWindowOpenHandler: (handler: () => { action: string }) => {
         calls.openHandler = handler;
       },
-      on: (eventName: string, listener: typeof navigationListener) => {
-        if (eventName === "will-navigate") navigationListener = listener;
+      on: (eventName: string, listener: NavigationListener) => {
+        navigationListeners.set(eventName, listener);
       },
     },
     loadURL: async (url: string) => void calls.loadedUrls.push(url),
@@ -50,9 +49,9 @@ function buildFakeWindow() {
   return {
     fakeWindow,
     calls,
-    navigateTo: (url: string) => {
+    navigateTo: (url: string, eventName = "will-navigate") => {
       const preventDefault = vi.fn();
-      navigationListener?.({ preventDefault }, url);
+      navigationListeners.get(eventName)?.({ url, preventDefault });
       return { wasBlocked: preventDefault.mock.calls.length > 0 };
     },
   };
@@ -80,29 +79,6 @@ describe("main window options", () => {
   });
 });
 
-describe("isNavigationAllowed", () => {
-  it("allows local files", () => {
-    expect(isNavigationAllowed("file:///app/renderer/index.html", buildConfig())).toBe(true);
-  });
-
-  it("blocks web addresses in a packaged app", () => {
-    expect(isNavigationAllowed("https://example.com", buildConfig())).toBe(false);
-  });
-
-  it("allows the dev server only while developing", () => {
-    const devConfig = buildConfig({ isDev: true, rendererUrl: DEV_SERVER_URL });
-    expect(isNavigationAllowed(`${DEV_SERVER_URL}/index.html`, devConfig)).toBe(true);
-    expect(isNavigationAllowed("https://example.com", devConfig)).toBe(false);
-    expect(
-      isNavigationAllowed(`${DEV_SERVER_URL}/x`, buildConfig({ rendererUrl: DEV_SERVER_URL })),
-    ).toBe(false);
-  });
-
-  it("blocks everything but files when dev has no server address", () => {
-    expect(isNavigationAllowed("http://localhost:5173", buildConfig({ isDev: true }))).toBe(false);
-  });
-});
-
 describe("createMainWindow", () => {
   it("builds the window with the preload script and the security options", () => {
     const { fakeWindow } = buildFakeWindow();
@@ -124,6 +100,14 @@ describe("createMainWindow", () => {
     createMainWindow(() => fakeWindow, buildConfig());
     expect(navigateTo("https://example.com").wasBlocked).toBe(true);
     expect(navigateTo("file:///app/renderer/index.html").wasBlocked).toBe(false);
+  });
+
+  it("blocks a redirect to a foreign address, with the same check as navigation", () => {
+    const { fakeWindow, navigateTo } = buildFakeWindow();
+    createMainWindow(() => fakeWindow, buildConfig());
+    expect(navigateTo("https://evil.example/", "will-redirect").wasBlocked).toBe(true);
+    expect(navigateTo("file:///etc/hosts", "will-redirect").wasBlocked).toBe(true);
+    expect(navigateTo("file:///app/renderer/index.html", "will-redirect").wasBlocked).toBe(false);
   });
 
   it("loads the page from the dev server while developing", () => {

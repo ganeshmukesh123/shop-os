@@ -23,6 +23,10 @@ import { BACKUP_EVERY_MILLISECONDS, listTrustedPageUrls, type IAppConfig } from 
 import { createAppState, type IAppState } from "./appState";
 import { registerQuitHooks, startBackupTimer } from "./backupLifecycle";
 import { createMainWindow, type CreateBrowserWindow } from "./mainWindow";
+import {
+  installPermissionPolicy,
+  type IPermissionSession,
+} from "./permissionPolicy/permissionPolicy";
 import { installSecurityHeaders } from "./securityHeaders";
 import { createShell } from "./shell";
 import { offerRestoreForDamagedDatabase } from "./startupRecovery";
@@ -34,7 +38,7 @@ export interface IStartAppDependencies {
   app: Pick<App, "whenReady" | "on" | "quit" | "relaunch" | "exit">;
   dialog: Pick<Dialog, "showOpenDialog" | "showSaveDialog" | "showErrorBox">;
   /** Read only after the app is ready: Electron has no default session before that. */
-  getDefaultSession: () => Pick<Session, "webRequest">;
+  getDefaultSession: () => Pick<Session, "webRequest"> & IPermissionSession;
   createBrowserWindow: CreateBrowserWindow;
   getAllWindows: () => readonly unknown[];
   getFocusedWindow: () => BrowserWindow | undefined;
@@ -100,7 +104,9 @@ export function startApp(
     .then(async () => {
       await openShopDatabase(state, config, now());
       const services = buildServices(state);
-      installSecurityHeaders(dependencies.getDefaultSession(), config.isDev);
+      const defaultSession = dependencies.getDefaultSession();
+      installSecurityHeaders(defaultSession, config.isDev);
+      installPermissionPolicy(defaultSession);
       registerIpc(
         services,
         createShell({
