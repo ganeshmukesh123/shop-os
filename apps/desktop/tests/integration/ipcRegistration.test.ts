@@ -62,8 +62,16 @@ const DISPATCH_CASES = {
     input: { clientBillId: "invalid", paymentMode: "cash", billDiscountPaise: 0, lines: [] },
     expected: invalidField("Invalid UUID"),
   },
+  "bills.list": {
+    input: { limit: 10, offset: 0 },
+    expected: { ok: true, data: { bills: [], total: 0 } },
+  },
   "bills.get": {
     input: { id: "missing-bill" },
+    expected: { ok: false, code: "NOT_FOUND", message: "Bill not found" },
+  },
+  "bills.cancel": {
+    input: { id: "missing-bill", reason: "Wrong items" },
     expected: { ok: false, code: "NOT_FOUND", message: "Bill not found" },
   },
   "bills.print": {
