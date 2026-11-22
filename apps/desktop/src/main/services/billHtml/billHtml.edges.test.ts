@@ -1,5 +1,5 @@
 import type { Bill, ShopProfile } from "@shopos/core";
-import { renderBillHtml } from "../../src/main/services/billHtml";
+import { renderBillHtml } from "./billHtml";
 
 const PROFILE: ShopProfile = {
   name: "Prabhat Hardware",

@@ -2,7 +2,7 @@ import {
   OFFSCREEN_WINDOW_OPTIONS,
   createElectronRenderer,
   type IOffscreenWindow,
-} from "../../src/main/services/electronRenderer";
+} from "./electronRenderer";
 
 const BILL_HTML = "<p>Bill ₹240.00 & more</p>";
 
@@ -128,7 +128,7 @@ describe("the real renderer", () => {
         webContents = { printToPDF: async () => Buffer.from("%PDF") };
       },
     }));
-    const { electronRenderer } = await import("../../src/main/services/electronRenderer");
+    const { electronRenderer } = await import("./electronRenderer");
     await electronRenderer.toPdf(BILL_HTML, "A4", undefined);
     expect(constructedWith).toEqual([OFFSCREEN_WINDOW_OPTIONS]);
     vi.doUnmock("electron");

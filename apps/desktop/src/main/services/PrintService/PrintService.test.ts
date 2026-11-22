@@ -1,12 +1,12 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { BillRepository } from "../../src/main/repositories/BillRepository";
-import { SettingsRepository } from "../../src/main/repositories/SettingsRepository";
-import { BillingService } from "../../src/main/services/BillingService";
-import { InventoryService } from "../../src/main/services/InventoryService";
-import { PrintService, type HtmlRenderer } from "../../src/main/services/PrintService";
-import { createTestDb, type TestDb } from "../helpers/testDb";
+import { BillRepository } from "../../repositories/BillRepository";
+import { SettingsRepository } from "../../repositories/SettingsRepository";
+import { BillingService } from "../BillingService";
+import { InventoryService } from "../InventoryService";
+import { PrintService, type HtmlRenderer } from "./PrintService";
+import { createTestDb, type TestDb } from "../../../../tests/helpers/testDb";
 
 let testDb: TestDb;
 let billId: string;

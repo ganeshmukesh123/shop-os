@@ -1,5 +1,5 @@
 import type { Bill, BillLine, PrintTarget, ShopProfile } from "@shopos/core";
-import { renderBillHtml } from "../../src/main/services/billHtml";
+import { renderBillHtml } from "./billHtml";
 
 const profile: ShopProfile = {
   name: "Prabhat Hardware",
