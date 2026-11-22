@@ -1,7 +1,7 @@
 import { CoreError, checkInvariant } from "@shopos/core";
-import { InventoryService } from "../../src/main/services/InventoryService";
-import { StockRepository } from "../../src/main/repositories/StockRepository";
-import { createTestDb, type TestDb } from "../helpers/testDb";
+import { InventoryService } from "./InventoryService";
+import { StockRepository } from "../../repositories/StockRepository";
+import { createTestDb, type TestDb } from "../../../../tests/helpers/testDb";
 
 let testDb: TestDb;
 let inv: InventoryService;
