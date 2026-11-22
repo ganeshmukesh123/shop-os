@@ -31,7 +31,7 @@ Proof it matters: making the screen send `quantityMilli` as a string fails 9 of 
 
 ## 2. Where and how
 
-- Files: `apps/desktop/tests/renderer/integration/*.test.tsx` (the renderer project already runs jsdom there). Shared steps: `billingHarness.tsx` beside them.
+- Files: `apps/desktop/tests/renderer/integration/*.test.tsx` (the renderer project already runs jsdom there). Shared steps: `billingHarness.tsx` (bills) and `inventoryHarness.ts` (screens, items, stock) beside them.
 - Harness: `apps/desktop/tests/helpers/realShopos.ts` comes from [the companion PR (#108)](https://github.com/ganeshmukesh123/shop-os/pull/108), which must be merged before running this recipe:
   - `installRealShopos(options?)` wires `window.shopos` to `buildHandlersFixture()`; only the native dialogs and the printer stay fake.
   - `countRows(table, condition?)` counts rows in the real database.
@@ -122,7 +122,15 @@ Name each test with its ID so the plan and the code match.
 | IT-BIL-07 | Saved line keeps ₹120 after a price change | `billSave` |
 | IT-BIL-08 | Failure halfway leaves nothing, number not used | `billRecovery` |
 | IT-BIL-09 | Draft recovered after close; save clears it | `billRecovery` |
-| IT-INV-*, IT-SET-* | Items screen and Settings writes | to be added |
+| IT-INV-01 | Add item with opening 10: one `opening` movement | `inventoryScreens` |
+| IT-INV-02 | Duplicate name refused; existing item listed | `inventoryScreens` |
+| IT-INV-03 | Remove 3 with a note: `adjustment` of 3000, stock 7 | `inventoryScreens` |
+| IT-INV-04 | Set count to 8: `adjustment` of 2000 | `inventoryScreens` |
+| IT-INV-05 | Set to the current count: no movement | `inventoryScreens` |
+| IT-INV-06 | 2.5 metres stored as 2500 | `inventoryScreens` |
+| IT-INV-07 | Deactivate: hidden, no movement | `inventoryScreens` |
+| IT-SET-01 | New series and format used by the next bill | `settingsScreens` |
+| IT-SET-02 | Backup: log row and a copy that holds the bill | `settingsScreens` |
 
 ## 7. Checklist
 
