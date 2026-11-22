@@ -1,7 +1,14 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createItemDirectly, freezeShopClock, installRealShopos } from "../../helpers/realShopos";
-import { addToBill, PIPE, renderShopApp, saveWithKeyboard, stockOf } from "./billingHarness";
+import {
+  addToBill,
+  findErrorAlert,
+  PIPE,
+  renderShopApp,
+  saveWithKeyboard,
+  stockOf,
+} from "./billingHarness";
 
 /** A test-only trigger that makes the sale movement insert fail, halfway through the save. */
 const FAIL_SALE_MOVEMENT = `
@@ -28,7 +35,7 @@ describe("screen to database: failures and recovery (one transaction, EC power c
 
     await saveWithKeyboard();
 
-    expect((await screen.findByRole("alert")).textContent).toMatch(/^Error/);
+    expect(await findErrorAlert()).toBeTruthy();
     expect(realShopos.countRows("bill")).toBe(0);
     expect(realShopos.countRows("bill_line")).toBe(0);
     expect(realShopos.countRows("bill_tender")).toBe(0);

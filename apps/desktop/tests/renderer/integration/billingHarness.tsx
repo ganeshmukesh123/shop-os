@@ -34,6 +34,16 @@ export async function choosePayment(paymentLabel: string) {
 
 export const saveWithKeyboard = () => userEvent.keyboard("{Control>}s{/Control}");
 
+/**
+ * The Error message, picked by its word: other alerts may be on screen too, such as the real clock
+ * check's "Time zone differs" when the machine is not on the shop's zone (a UTC CI runner).
+ */
+export async function findErrorAlert(): Promise<HTMLElement> {
+  return screen.findByRole("alert", {
+    name: (_accessibleName, element) => element.textContent?.startsWith("Error") ?? false,
+  });
+}
+
 export interface IBillRow {
   bill_no: string;
   seq: number;
