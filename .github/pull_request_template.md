@@ -28,10 +28,11 @@ Guideline: docs/contributing/pull-requests.md
 
 ## How it was tested
 <!-- Exact commands and results. For UI: screenshots or a short recording in light AND dark. -->
-- [ ] `pnpm lint`: 
+- [ ] `pnpm lint` and `pnpm format:check`: 
 - [ ] `pnpm typecheck`: 
-- [ ] `pnpm test`: 
-- [ ] `pnpm test:e2e` (if UI or flow changed): 
+- [ ] `pnpm test:coverage` (or `pnpm test`): 
+- [ ] `pnpm build && pnpm test:e2e` (if UI or flow changed): 
+- [ ] CI checks green: Quick checks, Tests and coverage, Build, End-to-end (guide: `docs/contributing/ci.md`)
 - [ ] Manual check: 
 
 | Light | Dark |

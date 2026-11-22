@@ -111,7 +111,7 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 - [ ] T040 [US5] Add `.github/workflows/smoke.yml`: build and start the packaged app on macOS and Windows after merge to `main` and nightly, run the core scenario (add item, save bill); first confirm the runner-minutes allowance and cost (resolves O3)
 - [ ] T041 [P] [US4] Add a weekly flake report (tests that passed only on retry) to the run summary or a scheduled job; a test that flakes twice in a week gets an issue
 - [ ] T042 [P] [US6] Add `.github/dependabot.yml` for weekly dependency updates (optional)
-- [ ] T043 [P] [US4] Update `CLAUDE.md`, the PR template and the `shopos-testing` and `shopos-feature-workflow` skills with the real check names, the 90% gate and the local commands
+- [X] T043 [P] [US4] Update `CLAUDE.md`, the PR template and the `shopos-testing` and `shopos-feature-workflow` skills with the real check names, the 90% gate and the local commands
 - [ ] T044 [US4] Measure the run time against the 10-minute target (SC-003), tune caches and job parallelism, and record the result
 
 **Checkpoint (M5 exit)**: smoke runs on macOS and Windows; documentation complete; run time within target.
