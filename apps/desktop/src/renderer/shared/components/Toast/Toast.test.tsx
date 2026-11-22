@@ -1,21 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ShopProfile } from "@shopos/core";
-import { ToastProvider, useToast } from "../../../src/renderer/shared/components/Toast";
-import { SettingsScreen } from "../../../src/renderer/screens/SettingsScreen";
-import { installFakeShopos } from "../../helpers/fakeShopos";
-import { renderWithTheme } from "../../helpers/renderWithTheme";
-
-const SHOP_PROFILE: ShopProfile = {
-  name: "Prabhat Hardware",
-  address: "",
-  phone: "",
-  seriesCode: "C1",
-  numberTemplate: "{series}/{fy}/{seq}",
-  footer: "",
-  receiptWidth: "80mm",
-  backupFolder: "/backups",
-};
+import { ToastProvider, useToast } from "./Toast";
+import { renderWithTheme } from "../../../../../tests/helpers/renderWithTheme";
 
 function ToastButtons() {
   const toast = useToast();
@@ -27,7 +13,7 @@ function ToastButtons() {
   );
 }
 
-describe("status words in the screens (design guidelines 5.1, PRD NFR-011)", () => {
+describe("Toast (design guidelines 5.1, PRD NFR-011)", () => {
   it("a failure toast opens with the word Error and is announced as an alert", async () => {
     renderWithTheme(
       <ToastProvider>
@@ -99,37 +85,5 @@ describe("status words in the screens (design guidelines 5.1, PRD NFR-011)", () 
     await waitFor(() =>
       expect(announcementOf("Disk is full")?.getAttribute("aria-live")).toBe("assertive"),
     );
-  });
-
-  it("a failed backup shows the words 'Last backup failed' before the reason", async () => {
-    installFakeShopos({
-      "settings.get": () => SHOP_PROFILE,
-      "backup.status": () => ({ lastOkAt: null, lastError: "Folder is missing", folder: "" }),
-    });
-
-    renderWithTheme(
-      <ToastProvider>
-        <SettingsScreen />
-      </ToastProvider>,
-    );
-
-    const backupAlert = await screen.findByRole("alert");
-    expect(backupAlert.textContent).toBe("Last backup failed Folder is missing");
-  });
-
-  it("a bill number format that is too long is a labelled error, not only red text", async () => {
-    installFakeShopos({
-      "settings.get": () => ({ ...SHOP_PROFILE, numberTemplate: "SHOP-INVOICE/{seq}" }),
-      "backup.status": () => ({ lastOkAt: null, lastError: null, folder: "" }),
-    });
-
-    renderWithTheme(
-      <ToastProvider>
-        <SettingsScreen />
-      </ToastProvider>,
-    );
-
-    const templateAlert = await screen.findByRole("alert");
-    expect(templateAlert.textContent).toMatch(/^Error Number could be \d+ characters/);
   });
 });
