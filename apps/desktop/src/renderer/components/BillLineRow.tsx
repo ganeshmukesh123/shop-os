@@ -1,9 +1,9 @@
 import { forwardRef } from "react";
 import { Box, Button, Flex, SegmentedControl, Table, Text, TextField } from "@radix-ui/themes";
 import { formatRupees, type DraftLine, type DraftLineResult } from "@shopos/core";
-import { LAYOUT } from "../layout";
+import { LAYOUT } from "../shared/constants/layout";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
-import { uiText } from "../strings";
+import { uiText } from "../shared/text/strings";
 
 interface Props {
   line: DraftLine;

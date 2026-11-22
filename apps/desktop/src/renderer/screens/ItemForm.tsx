@@ -10,9 +10,9 @@ import {
   UNITS,
   type Item,
 } from "@shopos/core";
-import { uiText } from "../strings";
-import { ApiError, call, messageOf } from "../state/api";
-import { useToast } from "../components/Toast";
+import { uiText } from "../shared/text/strings";
+import { ApiError, call, messageOf } from "../shared/api/api";
+import { useToast } from "../shared/components/Toast";
 
 const CUSTOM = "__custom__";
 

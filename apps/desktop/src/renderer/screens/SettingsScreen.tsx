@@ -10,13 +10,13 @@ import {
   TextField,
 } from "@radix-ui/themes";
 import { validateNumberTemplate, type BackupStatus, type ShopProfile } from "@shopos/core";
-import { useToast } from "../components/Toast";
-import { LAYOUT } from "../layout";
+import { useToast } from "../shared/components/Toast";
+import { LAYOUT } from "../shared/constants/layout";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
 import { ThemePicker } from "../shared/theme/ThemePicker";
 import { useThemePreference } from "../shared/theme/useThemePreference";
-import { uiText } from "../strings";
-import { call, messageOf } from "../state/api";
+import { uiText } from "../shared/text/strings";
+import { call, messageOf } from "../shared/api/api";
 
 const field = (label: string, node: React.ReactNode, help?: string) => (
   <label>

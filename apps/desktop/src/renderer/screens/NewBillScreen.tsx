@@ -24,11 +24,11 @@ import {
   type PaymentMode,
 } from "@shopos/core";
 import { BillLineRow } from "../components/BillLineRow";
-import { useToast } from "../components/Toast";
-import { LAYOUT } from "../layout";
+import { useToast } from "../shared/components/Toast";
+import { LAYOUT } from "../shared/constants/layout";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
-import { uiText } from "../strings";
-import { call, messageOf } from "../state/api";
+import { uiText } from "../shared/text/strings";
+import { call, messageOf } from "../shared/api/api";
 import {
   emptyForm,
   isEmptyForm,

@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Item } from "@shopos/core";
-import { ToastProvider } from "../../../src/renderer/components/Toast";
+import { ToastProvider } from "../../../src/renderer/shared/components/Toast";
 import { NewBillScreen } from "../../../src/renderer/screens/NewBillScreen";
 import { installFakeShopos } from "../../helpers/fakeShopos";
 import { renderWithTheme } from "../../helpers/renderWithTheme";
