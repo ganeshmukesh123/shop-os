@@ -19,11 +19,11 @@ assert on the screen                 assert on the rows <───────�
 
 Proof it matters: making the screen send `quantityMilli` as a string fails 9 of 10 of these tests, but only 2 of 80 fake-based billing tests.
 
-| Use it for | Not for |
-|---|---|
-| Writes from a screen: bills, lines, tenders, stock movements, drafts, settings | Layout, wording, themes (renderer tests) |
-| One transaction, idempotent retry, numbering, snapshots | Electron transport and sender checks (`ipc.test.ts`, e2e) |
-| Money the cashier sees equals money saved | Real printing and PDF bytes (`print.test.ts`, e2e) |
+| Use it for                                                                     | Not for                                                   |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| Writes from a screen: bills, lines, tenders, stock movements, drafts, settings | Layout, wording, themes (renderer tests)                  |
+| One transaction, idempotent retry, numbering, snapshots                        | Electron transport and sender checks (`ipc.test.ts`, e2e) |
+| Money the cashier sees equals money saved                                      | Real printing and PDF bytes (`print.test.ts`, e2e)        |
 
 <!-- coderabbit-ai-generated:v1 -->
 
@@ -60,7 +60,9 @@ it("IT-BIL-01 saves 2 pipes at ₹120 as one bill, one line, one tender and one 
   // Screen: the number came from the real series.
   expect(await screen.findByRole("heading", { name: "Bill saved: C1/26-27/000001" })).toBeTruthy();
   // Rows: what was committed, in integer paise and thousandths.
-  expect(readBills(realShopos)).toMatchObject([{ seq: 1, subtotal_paise: 24_000, total_paise: 24_000 }]);
+  expect(readBills(realShopos)).toMatchObject([
+    { seq: 1, subtotal_paise: 24_000, total_paise: 24_000 },
+  ]);
   const sqlite = realShopos.fixture.testDb.sqlite;
   expect(
     sqlite
@@ -80,7 +82,9 @@ it("IT-BIL-01 saves 2 pipes at ₹120 as one bill, one line, one tender and one 
   expect(sqlite.prepare("select mode, amount_paise from bill_tender").all()).toEqual([
     { mode: "upi", amount_paise: 24_000 },
   ]);
-  expect(realShopos.countRows("stock_movement", "movement_type = 'sale' and qty_base_milli = 2000")).toBe(1);
+  expect(
+    realShopos.countRows("stock_movement", "movement_type = 'sale' and qty_base_milli = 2000"),
+  ).toBe(1);
   expect(await stockOf(realShopos, "PVC pipe")).toBe(8_000); // stock is the sum of movements
 });
 ```
@@ -91,15 +95,15 @@ Each test asserts **both** sides: what the screen shows and which rows exist. `s
 
 ## 4. Recipes for the hard cases
 
-| Case | How |
-|---|---|
+| Case                                    | How                                                                                                                                                                                                                                                                                                                  |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Fail halfway through a save (atomicity) | `sqlite.exec("create temp trigger ... before insert on stock_movement when new.movement_type = 'sale' begin select raise(abort, 'disk I/O error'); end")`. Assert zero bill, line, tender and sale rows, unchanged stock, lines still on screen. Drop the trigger, save again, and expect seq 1 (no number used up). |
-| Retry after a lost reply (idempotency) | `realShopos.loseNextReplyOf("bills.save")`, save, see the Error, save again. Assert one bill, one line, one movement. |
-| Crash recovery | Wait for `countRows("draft_bill")` to be 1, `unmount()`, render again on the same `realShopos`, then answer the "Unsaved bill found" dialog. |
-| Financial-year boundary | `freezeShopClock(LAST_MINUTE_OF_FY)` (31 Mar 23:59 IST), save, then `vi.setSystemTime(FIRST_MINUTE_OF_NEXT_FY)` and save again: `C1/26-27/000001` then `C1/27-28/000001`. |
-| Restore | Pass a `fixtureOptions` object to `installRealShopos`, make the backup, then set `fixtureOptions.pickedBackupFile`: the fixture reads it when the dialog asks. Assert `fixture.shellCalls.restoredPlans` (`gap`, `nextBillNo`) and that live rows are unchanged before the restart. |
-| A failed backup | A missing folder is created again, so it does not fail. Make the folder read-only (`chmod 0o500`) and restore it in `afterEach`. |
-| Two buttons with one name | Scope the query: `within(screen.getByRole("main"))` for the screen, `within(screen.getByRole("navigation", { name: "Main" }))` for the side menu. |
+| Retry after a lost reply (idempotency)  | `realShopos.loseNextReplyOf("bills.save")`, save, see the Error, save again. Assert one bill, one line, one movement.                                                                                                                                                                                                |
+| Crash recovery                          | Wait for `countRows("draft_bill")` to be 1, `unmount()`, render again on the same `realShopos`, then answer the "Unsaved bill found" dialog.                                                                                                                                                                         |
+| Financial-year boundary                 | `freezeShopClock(LAST_MINUTE_OF_FY)` (31 Mar 23:59 IST), save, then `vi.setSystemTime(FIRST_MINUTE_OF_NEXT_FY)` and save again: `C1/26-27/000001` then `C1/27-28/000001`.                                                                                                                                            |
+| Restore                                 | Pass a `fixtureOptions` object to `installRealShopos`, make the backup, then set `fixtureOptions.pickedBackupFile`: the fixture reads it when the dialog asks. Assert `fixture.shellCalls.restoredPlans` (`gap`, `nextBillNo`) and that live rows are unchanged before the restart.                                  |
+| A failed backup                         | A missing folder is created again, so it does not fail. Make the folder read-only (`chmod 0o500`) and restore it in `afterEach`.                                                                                                                                                                                     |
+| Two buttons with one name               | Scope the query: `within(screen.getByRole("main"))` for the screen, `within(screen.getByRole("navigation", { name: "Main" }))` for the side menu.                                                                                                                                                                    |
 
 ## 5. Pitfalls found while writing these
 
@@ -118,41 +122,41 @@ Each test asserts **both** sides: what the screen shows and which rows exist. `s
 
 Name each test with its ID so the plan and the code match.
 
-| ID | Behaviour | File |
-|---|---|---|
-| IT-BIL-01 | Bill, line, tender, sale movement, stock 10 → 8 | `billSave` |
-| IT-BIL-02 | Lost reply, retry, still one bill | `billSave` |
-| IT-BIL-03 | Sell below zero: warning, stock −2, needs correction | `billAmounts` |
-| IT-BIL-04 | ₹10 line + 10% bill discount: ₹240 → ₹207 | `billAmounts` |
-| IT-BIL-05 | 3 × ₹33.20 = ₹99.60 → ₹100.00, round-off +40 | `billAmounts` |
-| IT-BIL-06 | Next bill gets seq 2, number ≤ 16 characters | `billSave` |
-| IT-BIL-07 | Saved line keeps ₹120 after a price change | `billSave` |
-| IT-BIL-08 | Failure halfway leaves nothing, number not used | `billRecovery` |
-| IT-BIL-09 | Draft recovered after close; save clears it | `billRecovery` |
-| IT-BIL-10 | Several lines: `line_no` order, one sale per line, one tender | `billEdges` |
-| IT-BIL-11 | Financial-year boundary by shop time on a UTC machine | `billEdges` |
-| IT-BIL-12 | Ctrl+S twice quickly: one bill | `billEdges` |
-| IT-BIL-13 | 2.5 m saved as 2500; 1.5 pcs refused, no rows | `billEdges` |
-| IT-BIL-14 | Discount above the total refused; equal to it saves ₹0.00 | `billEdges` |
-| IT-BIL-15 | Unpaid: `unpaid` tender for the full amount | `billEdges` |
-| IT-INV-01 | Add item with opening 10: one `opening` movement | `inventoryScreens` |
-| IT-INV-02 | Duplicate name refused; existing item listed | `inventoryScreens` |
-| IT-INV-03 | Remove 3 with a note: `adjustment` of 3000, stock 7 | `inventoryScreens` |
-| IT-INV-04 | Set count to 8: `adjustment` of 2000 | `inventoryScreens` |
-| IT-INV-05 | Set to the current count: no movement | `inventoryScreens` |
-| IT-INV-06 | 2.5 metres stored as 2500 | `inventoryScreens` |
-| IT-INV-07 | Deactivate: hidden, no movement | `inventoryScreens` |
-| IT-INV-08 | Duplicate name in other letter case refused | `inventoryScreens` |
-| IT-INV-09 | Price edit on screen: no movement, old bill keeps ₹120 | `inventoryScreens` |
-| IT-INV-10 | Negative item set to 0: stock-in of 2000, warning cleared | `inventoryScreens` |
-| IT-INV-11 | 2.5 on pcs refused, no movement | `inventoryScreens` |
-| IT-SET-01 | New series and format used by the next bill | `settingsScreens` |
-| IT-SET-02 | Backup: log row and a copy that holds the bill | `settingsScreens` |
-| IT-SET-03 | Number format over 16 characters cannot be saved | `settingsScreens` |
-| IT-SET-04 | Failed backup: `failed` log row and "Last backup failed" | `settingsScreens` |
-| IT-SET-05 | Rounding off: ₹99.60 saved exactly | `settingsScreens` |
-| IT-RES-01 | Restore with the last printed bill: plan first, gap recorded | `restoreScreens` |
-| IT-RES-02 | Restore with no last bill: 100-number guess | `restoreScreens` |
+| ID        | Behaviour                                                         | File                      |
+| --------- | ----------------------------------------------------------------- | ------------------------- |
+| IT-BIL-01 | Bill, line, tender, sale movement, stock 10 → 8                   | `billSave`                |
+| IT-BIL-02 | Lost reply, retry, still one bill                                 | `billSave`                |
+| IT-BIL-03 | Sell below zero: warning, stock −2, needs correction              | `billAmounts`             |
+| IT-BIL-04 | ₹10 line + 10% bill discount: ₹240 → ₹207                         | `billAmounts`             |
+| IT-BIL-05 | 3 × ₹33.20 = ₹99.60 → ₹100.00, round-off +40                      | `billAmounts`             |
+| IT-BIL-06 | Next bill gets seq 2, number ≤ 16 characters                      | `billSave`                |
+| IT-BIL-07 | Saved line keeps ₹120 after a price change                        | `billSave`                |
+| IT-BIL-08 | Failure halfway leaves nothing, number not used                   | `billRecovery`            |
+| IT-BIL-09 | Draft recovered after close; save clears it                       | `billRecovery`            |
+| IT-BIL-10 | Several lines: `line_no` order, one sale per line, one tender     | `billEdges`               |
+| IT-BIL-11 | Financial-year boundary by shop time on a UTC machine             | `billEdges`               |
+| IT-BIL-12 | Ctrl+S twice quickly: one bill                                    | `billEdges`               |
+| IT-BIL-13 | 2.5 m saved as 2500; 1.5 pcs refused, no rows                     | `billEdges`               |
+| IT-BIL-14 | Discount above the total refused; equal to it saves ₹0.00         | `billEdges`               |
+| IT-BIL-15 | Unpaid: `unpaid` tender for the full amount                       | `billEdges`               |
+| IT-INV-01 | Add item with opening 10: one `opening` movement                  | `inventoryScreens`        |
+| IT-INV-02 | Duplicate name refused; existing item listed                      | `inventoryScreens`        |
+| IT-INV-03 | Remove 3 with a note: `adjustment` of 3000, stock 7               | `inventoryScreens`        |
+| IT-INV-04 | Set count to 8: `adjustment` of 2000                              | `inventoryScreens`        |
+| IT-INV-05 | Set to the current count: no movement                             | `inventoryScreens`        |
+| IT-INV-06 | 2.5 metres stored as 2500                                         | `inventoryScreens`        |
+| IT-INV-07 | Deactivate: hidden, no movement                                   | `inventoryScreens`        |
+| IT-INV-08 | Duplicate name in other letter case refused                       | `inventoryScreens`        |
+| IT-INV-09 | Price edit on screen: no movement, old bill keeps ₹120            | `inventoryScreens`        |
+| IT-INV-10 | Negative item set to 0: stock-in of 2000, warning cleared         | `inventoryScreens`        |
+| IT-INV-11 | 2.5 on pcs refused, no movement                                   | `inventoryScreens`        |
+| IT-SET-01 | New series and format used by the next bill                       | `settingsScreens`         |
+| IT-SET-02 | Backup: log row and a copy that holds the bill                    | `settingsScreens`         |
+| IT-SET-03 | Number format over 16 characters cannot be saved                  | `settingsScreens`         |
+| IT-SET-04 | Failed backup: `failed` log row and "Last backup failed"          | `settingsScreens`         |
+| IT-SET-05 | Rounding off: ₹99.60 saved exactly                                | `settingsScreens`         |
+| IT-RES-01 | Restore with the last printed bill: plan first, gap recorded      | `restoreScreens`          |
+| IT-RES-02 | Restore with no last bill: 100-number guess                       | `restoreScreens`          |
 | IT-STK-01 | Cached stock equals the signed sum of movements, after every test | `stockLedger` (all files) |
 
 ## 7. Checklist
