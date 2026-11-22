@@ -1,6 +1,9 @@
 import { CoreError } from "./errors";
 import { SEQ_WIDTH } from "./numbering";
 
+/** The reason stored on a recorded gap: bills that were printed but are not in the restored database. */
+export const GAP_REASON_LOST_IN_RESTORE = "lost_in_restore";
+
 /** How far the counter jumps when the owner cannot say which bill was the last one issued (research D21). */
 export const UNCONFIRMED_GAP_SIZE = 100;
 
@@ -101,4 +104,43 @@ export function planNumberGap(
   }
   if (newLastSeq === restoredLastSeq) return null;
   return { seqFrom: restoredLastSeq + 1, seqTo: newLastSeq, newLastSeq, isEstimated };
+}
+
+/** The calendar year a financial year starts in, as two digits: "26-27" gives 26 (valid until 2099). */
+function financialYearStart(financialYear: string): number {
+  return Number(financialYear.slice(0, 2));
+}
+
+/**
+ * A typed "last bill printed" cannot be from a financial year before the backup's own last bill.
+ * Example: backup's last bill C1/26-27/000001, typed C1/25-26/000126: refused, nothing changes.
+ */
+export function assertNotBeforeBackupYear(
+  typedYear: string,
+  backupLatestYear: string | null,
+): void {
+  const isBeforeBackup =
+    backupLatestYear !== null &&
+    financialYearStart(typedYear) < financialYearStart(backupLatestYear);
+  if (isBeforeBackup) {
+    throw new CoreError(
+      "INVALID_FIELD",
+      `That number is from ${typedYear}, before this backup's last bill in ${backupLatestYear}; enter the last bill you printed`,
+    );
+  }
+}
+
+/**
+ * A typed "last bill printed" cannot be from a financial year that has not started yet.
+ * Example: it is 26-27 and the owner types C1/27-28/000126: refused, nothing changes. Accepting it
+ * would move 27-28's counter and leave the numbers already printed in 26-27 free to be issued again.
+ */
+export function assertNotAfterCurrentYear(typedYear: string, currentYear: string): void {
+  const isFutureYear = financialYearStart(typedYear) > financialYearStart(currentYear);
+  if (isFutureYear) {
+    throw new CoreError(
+      "INVALID_FIELD",
+      `That number is from ${typedYear}, which has not started yet; enter the last bill you printed`,
+    );
+  }
 }
