@@ -76,6 +76,8 @@ export const uiText = {
     billDiscount: "Bill discount",
     total: "Total",
     grandTotal: "Grand total",
+    /** Shown when a bill cannot be saved and the rules gave no more specific reason. */
+    checkBill: "Check the bill",
     save: "Save bill",
     clear: "Clear bill",
     recoverTitle: "Unsaved bill found",

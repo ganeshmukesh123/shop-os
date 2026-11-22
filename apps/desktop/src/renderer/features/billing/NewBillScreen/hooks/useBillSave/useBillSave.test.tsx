@@ -153,6 +153,23 @@ describe("useBillSave: when it cannot save", () => {
 });
 
 describe("useBillSave: Ctrl+S and Cmd+S", () => {
+  it("sends only one save when Ctrl+S is pressed twice in the same moment", async () => {
+    // Both key presses arrive before React re-renders, so state alone would still say "not saving".
+    const slowSave = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      return SAVE_RESULT;
+    };
+    const { result, savedCalls } = renderSave(PIPE_DRAFT, { "bills.save": slowSave });
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "s", ctrlKey: true }));
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "s", ctrlKey: true }));
+    });
+    await waitFor(() => expect(result.current.saved).not.toBeNull());
+
+    expect(savedCalls()).toHaveLength(1);
+  });
+
   it.each([
     ["Ctrl+S", { ctrlKey: true }],
     ["Cmd+S", { metaKey: true }],
