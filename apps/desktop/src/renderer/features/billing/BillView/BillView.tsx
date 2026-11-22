@@ -14,6 +14,7 @@ import {
 import { useToast } from "../../../shared/components/Toast";
 import { uiText } from "../../../shared/text/strings";
 import { ApiError, call, messageOf } from "../../../shared/api/api";
+import { RoundOffLine } from "../RoundOffLine/RoundOffLine";
 
 /** The saved bill, with Print / Save PDF / New bill. Printing happens after the bill is committed. */
 export function BillView({
@@ -119,6 +120,7 @@ export function BillView({
             {uiText.bill.billDiscount}: -{formatRupees(bill.billDiscountPaise)}
           </Text>
         )}
+        <RoundOffLine roundOffPaise={bill.roundOffPaise} />
         <Text size="6" weight="bold">
           {uiText.bill.grandTotal}: {formatRupees(bill.grandTotalPaise)}
         </Text>

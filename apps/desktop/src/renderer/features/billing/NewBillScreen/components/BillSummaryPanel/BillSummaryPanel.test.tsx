@@ -1,6 +1,11 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { evaluateDraft, type DraftBill, type DraftLine } from "@shopos/core";
+import {
+  evaluateDraft,
+  type IRoundedBillTotal,
+  type DraftBill,
+  type DraftLine,
+} from "@shopos/core";
 import { renderWithTheme } from "../../../../../../../tests/helpers/renderWithTheme";
 import { emptyForm, type IBillForm } from "../../../billForm";
 import { BillSummaryPanel } from "./BillSummaryPanel";
@@ -25,7 +30,13 @@ function buildForm(draftPatch: Partial<DraftBill> = {}): IBillForm {
   };
 }
 
-function renderPanel(form: IBillForm, overrides: Partial<{ isSaving: boolean }> = {}) {
+function renderPanel(
+  form: IBillForm,
+  overrides: Partial<{ isSaving: boolean; roundedTotal: IRoundedBillTotal }> = {},
+) {
+  const evaluation = evaluateDraft(form.draft);
+  // Unless a test says otherwise, the shop does not round: the panel shows the exact total.
+  const exactTotal = { roundOffPaise: 0, roundedTotalPaise: evaluation.grandTotalPaise };
   const callbacks = {
     onFormChange: vi.fn(),
     onDraftChange: vi.fn(),
@@ -35,7 +46,8 @@ function renderPanel(form: IBillForm, overrides: Partial<{ isSaving: boolean }> 
   renderWithTheme(
     <BillSummaryPanel
       form={form}
-      evaluation={evaluateDraft(form.draft)}
+      evaluation={evaluation}
+      roundedTotal={overrides.roundedTotal ?? exactTotal}
       isSaving={overrides.isSaving ?? false}
       {...callbacks}
     />,
@@ -58,6 +70,16 @@ describe("BillSummaryPanel", () => {
 
     expect(screen.getByText("-₹40.00")).toBeTruthy();
     expect(screen.getByText("Grand total: ₹200.00")).toBeTruthy();
+  });
+
+  it("shows the round-off and the rounded grand total it is given (FR-010a)", () => {
+    // ₹240.00 less a ₹0.40 discount is ₹239.60; the shop rounds, so ₹240.00 with +₹0.40.
+    renderPanel(buildForm({ billDisc: "0.40" }), {
+      roundedTotal: { roundOffPaise: 40, roundedTotalPaise: 24000 },
+    });
+
+    expect(screen.getByText("Round off: +₹0.40")).toBeTruthy();
+    expect(screen.getByText("Grand total: ₹240.00")).toBeTruthy();
   });
 
   it("says Error and the reason when the discount is more than the total", () => {

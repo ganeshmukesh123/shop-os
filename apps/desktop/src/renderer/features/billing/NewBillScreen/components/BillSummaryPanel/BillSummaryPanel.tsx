@@ -4,12 +4,14 @@ import { StatusMessage } from "../../../../../shared/components/StatusMessage/St
 import { LAYOUT } from "../../../../../shared/constants/layout";
 import { uiText } from "../../../../../shared/text/strings";
 import { isEmptyForm } from "../../../billForm";
+import { RoundOffLine } from "../../../RoundOffLine/RoundOffLine";
 import type { IBillSummaryPanelProps } from "./types";
 
 /** Customer, payment, discount, the totals, and the Clear and Save buttons. */
 export function BillSummaryPanel({
   form,
   evaluation,
+  roundedTotal,
   isSaving,
   onFormChange,
   onDraftChange,
@@ -83,8 +85,9 @@ export function BillSummaryPanel({
         {evaluation.billDiscountPaise > 0 && (
           <Text>-{formatRupees(evaluation.billDiscountPaise)}</Text>
         )}
+        <RoundOffLine roundOffPaise={roundedTotal.roundOffPaise} />
         <Text size="7" weight="bold" aria-live="polite">
-          {uiText.bill.grandTotal}: {formatRupees(evaluation.grandTotalPaise)}
+          {uiText.bill.grandTotal}: {formatRupees(roundedTotal.roundedTotalPaise)}
         </Text>
         {evaluation.errors
           .filter(

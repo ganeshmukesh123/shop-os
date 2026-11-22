@@ -15,6 +15,7 @@ import { BillLinesTable } from "./components/BillLinesTable";
 import { BillSearchBox } from "./components/BillSearchBox";
 import { BillSummaryPanel } from "./components/BillSummaryPanel";
 import { RecoverDraftDialog } from "./components/RecoverDraftDialog";
+import { useRoundedTotal } from "../RoundOffLine/useRoundedTotal";
 
 export function NewBillScreen() {
   const [ready, setReady] = useState(false);
@@ -32,6 +33,7 @@ export function NewBillScreen() {
     removeLine,
     addItem,
   } = useBillForm(rememberLineToFocus);
+  const roundedTotal = useRoundedTotal(evaluation.grandTotalPaise);
   const { saved, isSaving, save, startNewBill } = useBillSave(form, evaluation, resetForm);
   const { query, matches, highlightedIndex, setQuery, setHighlightedIndex, clearSearch } =
     useItemSearch();
@@ -93,6 +95,7 @@ export function NewBillScreen() {
       <BillSummaryPanel
         form={form}
         evaluation={evaluation}
+        roundedTotal={roundedTotal}
         isSaving={isSaving}
         onFormChange={updateForm}
         onDraftChange={updateDraft}
