@@ -44,7 +44,9 @@ A purchase bill links to one or more receipts, with the due date from the distri
 1. **Given** a purchase bill, **When** linked to receipts, **Then** its payment due date is calculated from distributor credit terms.
 2. **Given** a cash purchase without a GST bill, **When** entered, **Then** it is saved with an unbilled compliance flag.
 3. **Given** the distributor ledger, **When** viewed, **Then** payables ageing and due-this-week amounts are displayed.
+
 4. **Given** GST charged per purchase line, **When** recorded, **Then** it is stored for input tax credit tracking upon switching to regular GST (FR-CMP-012).
+5. **Given** a distributor payment with `allocateTo` containing a purchase bill for another distributor, **When** submitted, **Then** the service rejects the entire request before writing the payment, ledger entry or allocations. Cover this in the payables allocation test (T017 in the 009 plan).
 
 ---
 
@@ -73,7 +75,8 @@ Damaged, short or wrong goods are returned with a debit note linked to the origi
 
 **Acceptance Scenarios**:
 
-1. **Given** damaged or short goods from a receipt, **When** a return is created, **Then** stock decreases, a debit note is generated, and the distributor balance decreases.
+1. **Given** damaged or short goods from a receipt, **When** a return is created, **Then** only goods physically returned reduce stock. A debit note reduces the distributor balance. Across all returns for a receipt line, physical returns and short claims are bounded by the original received and short quantities, respectively.
+
 2. **Given** an active debit note, **When** status is updated through Raised, Sent, Accepted and Settled, **Then** each transition is logged with user and timestamp.
 
 ---
@@ -120,9 +123,13 @@ Per-distributor slab or target schemes (for example 2% back above 5 lakh a quart
 ### Functional Requirements
 
 - **FR-001**: System MUST provide goods receipt with distributor, items, quantities, batch, MRP and price, marking short, excess and damaged lines (FR-PUR-001).
-- **FR-002**: System MUST spread landed-cost charges across lines by value (default) or quantity and set item cost = price + share (FR-PUR-002).
+
+- **FR-002**: System MUST allocate landed-cost charges by received value (default) or received quantity using largest remainder (floor each share, distribute leftover paise by descending fractional remainder, ties to earlier lines). Add allocated charges to the received line value before computing unit cost. Keep fully short lines for debit notes with zero allocated charges and no batch or unit cost (FR-PUR-002).
+
 - **FR-003**: System MUST provide purchase bills linked to receipts, due dates from credit days, and flagged cash purchases (FR-PUR-003).
-- **FR-004**: System MUST keep a distributor ledger of purchases, returns, debit notes, payments and scheme credits with ageing and due-this-week (FR-PUR-004).
+
+- **FR-004**: System MUST keep a distributor ledger of purchases, returns, debit notes, payments and scheme credits with ageing and due-this-week (FR-PUR-004). A purchase bill’s open amount and ageing MUST reflect available debit note credits for its linked receipts, including notes posted before the bill.
+
 - **FR-005**: System MUST keep price history per item and distributor, alert above 2% (configurable) and suggest a selling price to keep the target margin (FR-PUR-005).
 - **FR-006**: System SHOULD compare distributors on price, delivery days, short supply and roll variance (FR-PUR-006).
 - **FR-007**: System MUST support purchase returns and debit notes with statuses Raised, Sent, Accepted, Settled (FR-PUR-007).
