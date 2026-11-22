@@ -1,0 +1,66 @@
+# Packaged-app smoke test (spec 017, task T040). Not part of the pull request gate.
+#
+# Builds the real app, unpacks it with electron-builder, and runs the end-to-end scenarios (add an item,
+# save a bill, restart and read the database) against that packaged executable on macOS and Windows.
+# ci.yml tests the unpackaged build on Linux; this catches problems only an installer's output shows
+# (missing migrations, a native module in the wrong place, a path that differs per operating system).
+#
+# Runs: after every merge to main, nightly, by hand, and on a pull request that edits this file (so the
+# workflow itself is proven before it merges). The repository is public, so these runners should cost no
+# minutes (GitHub docs: standard runners are free for public repositories); recheck if it becomes private (O3).
+# Third-party actions are pinned to a full commit SHA; the comment names the release.
+name: Smoke
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 21 * * *" # 21:17 UTC daily (02:47 India time)
+  workflow_dispatch:
+  pull_request:
+    paths: [".github/workflows/smoke.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  packaged-app:
+    name: Packaged app (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false # a failure on one system must not hide the other
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-workspace
+      # The end-to-end specs read the database with the sqlite3 command line tool. macOS ships it.
+      - name: Make sure the sqlite3 command is available
+        run: command -v sqlite3 || choco install sqlite --no-progress -y
+      - name: Build the app bundle
+        run: pnpm build
+      - name: Unpack the app with electron-builder (no installer needed)
+        run: pnpm --filter @shopos/desktop exec electron-builder --dir
+      - name: Run the end-to-end scenarios against the packaged app
+        run: pnpm --filter @shopos/desktop test:e2e:packaged
+      - name: Upload Playwright report, traces and screenshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: smoke-report-${{ matrix.os }}
+          path: |
+            apps/desktop/playwright-report
+            apps/desktop/test-results
+          retention-days: 14
+          if-no-files-found: ignore
