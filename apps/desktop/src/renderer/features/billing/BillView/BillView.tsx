@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Button, Flex, Heading, Select, Table, Text } from "@radix-ui/themes";
-import { LAYOUT } from "../shared/constants/layout";
-import { StatusBadge } from "../shared/components/StatusBadge/StatusBadge";
-import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
+import { LAYOUT } from "../../../shared/constants/layout";
+import { StatusBadge } from "../../../shared/components/StatusBadge/StatusBadge";
+import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
 import {
   formatQuantity,
   formatRupees,
@@ -11,9 +11,9 @@ import {
   type Item,
   type PrintTarget,
 } from "@shopos/core";
-import { useToast } from "../shared/components/Toast";
-import { uiText } from "../shared/text/strings";
-import { ApiError, call, messageOf } from "../shared/api/api";
+import { useToast } from "../../../shared/components/Toast";
+import { uiText } from "../../../shared/text/strings";
+import { ApiError, call, messageOf } from "../../../shared/api/api";
 
 /** The saved bill, with Print / Save PDF / New bill. Printing happens after the bill is committed. */
 export function BillView({
