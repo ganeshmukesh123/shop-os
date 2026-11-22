@@ -53,7 +53,7 @@ Every requirement ID in a task has at least one test that names it or its scenar
 
 ## 7b. Coverage gate (spec 017)
 
-CI will require at least 90% coverage (lines, statements, functions, branches) on `packages/core`, the main process and the renderer, once the project has reached it (the gate is switched on at 90%, never before). Write tests with that in mind: every new function and every branch (error path, empty state, edge value) gets a test; do not add untested code and plan to "cover it later". The coverage tool is installed (`@vitest/coverage-v8`); thresholds and exclusions live only in `config/coverage.ts`, and `COVERAGE_ENFORCE` stays false until spec 017 T036.
+CI requires at least 90% coverage (lines, statements, functions, branches) on `packages/core` and the whole of `apps/desktop` (main process, preload and renderer); the gate was switched on at 90% (spec 017 T036), never lowered. Write tests with that in mind: every new function and every branch (error path, empty state, edge value) gets a test; do not add untested code and plan to "cover it later". The coverage tool is installed (`@vitest/coverage-v8`); thresholds and exclusions live only in `config/coverage.ts`, and `COVERAGE_ENFORCE` is true (spec 017 T036). Check locally with `pnpm test:coverage`.
 
 ## 8. Checklist
 
