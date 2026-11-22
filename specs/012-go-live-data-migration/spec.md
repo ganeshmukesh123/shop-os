@@ -20,7 +20,7 @@ Before go-live the owner imports at least the top 500 items and all credit parti
 
 **Why this priority**: The PRD makes the top 500 items and all credit parties a go-live condition, and dirty data is rated a high-likelihood, high-impact risk.
 
-**Independent Test**: Import 500 items and 100 parties with balances, see the readiness check pass or list gaps, and merge the duplicates found.
+**Independent Test**: Import a complete source (the 500 reference items and all 100 listed credit parties with balances) and expect no import gaps; then leave out one reference item and one party and expect exactly those two gaps, named; merge the duplicates found.
 
 **Acceptance Scenarios**:
 
@@ -108,12 +108,12 @@ A new version reaches the shop every 2 weeks, with new features switched on only
 ### Functional Requirements
 
 - **FR-001**: System MUST import items, parties and opening balances with previews, duplicate detection and confirmation totals before posting (FR-ITM-012, FR-KHA-008).
-- **FR-002**: System MUST provide a readiness check showing items loaded, credit parties with balances, missing data and unresolved duplicates.
+- **FR-002**: System MUST provide a readiness check showing items loaded, credit parties with balances, missing data and unresolved duplicates. Import completion at G - 14 requires all top 500 items and all credit parties with opening balances, with no import gaps. Overall “Ready” also requires settings sign-off and completed staff training (FR-005).
 - **FR-003**: System SHOULD provide a training mode that does not affect real stock, ledgers or bill numbers.
 - **FR-004**: System MUST let the owner record a settings sign-off checklist (tiers, roles, limits, MRP, paint classes, shelf tags).
 - **FR-005**: System MUST let the owner record each staff member's training and 5-test-bill result and name a champion.
 - **FR-006**: System MUST support entering old-book totals each evening and showing the difference against system sales and cash.
-- **FR-007**: System MUST support back-filling paper bills with a paper-bill reference and the original date.
+- **FR-007**: System MUST support back-filling paper bills with a paper-bill reference and their original date, on the same business day (shop time zone); a paper bill from an earlier business date stays in the paper book and is covered by that day's reconciliation.
 - **FR-008**: System MUST show the share of sales billed in the system against the 95% target, and bypass early-warning figures (bill count versus footfall, cash difference).
 - **FR-009**: System MUST show top-200 accuracy from rack counts against the 95% by day 60 target and let the owner record gate decisions.
 - **FR-010**: Releases MUST reach the shop every 2 weeks, with new features off until switched on, and the previous version MUST remain installable.
