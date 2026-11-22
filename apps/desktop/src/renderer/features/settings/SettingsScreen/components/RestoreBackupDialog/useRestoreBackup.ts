@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import type { IRestorePreview, ShopProfile } from "@shopos/core";
-import { call, messageOf } from "../../../shared/api/api";
+import { call, messageOf } from "../../../../../shared/api/api";
 import type { IRestoreBackupDialogProps, ToastFunction } from "./RestoreBackupDialog.types";
 import { restoreExampleNumber, restorePlanMessage, restoreStartedMessage } from "./restoreMessages";
 

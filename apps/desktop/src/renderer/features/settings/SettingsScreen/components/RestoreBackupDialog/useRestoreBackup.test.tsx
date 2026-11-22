@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import type { ShopProfile } from "@shopos/core";
-import { installFakeShopos } from "../../../../../tests/helpers/fakeShopos";
+import { installFakeShopos } from "../../../../../../../tests/helpers/fakeShopos";
 import { useRestoreBackup } from "./useRestoreBackup";
 
 const PROFILE: ShopProfile = {

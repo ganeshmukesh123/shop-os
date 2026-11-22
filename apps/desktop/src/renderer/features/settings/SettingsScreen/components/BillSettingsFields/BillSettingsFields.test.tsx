@@ -2,7 +2,7 @@ import { useState } from "react";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ShopProfile } from "@shopos/core";
-import { renderWithTheme } from "../../../../../tests/helpers/renderWithTheme";
+import { renderWithTheme } from "../../../../../../../tests/helpers/renderWithTheme";
 import { BillSettingsFields } from "./BillSettingsFields";
 import { isBillSettingsValid } from "./billSettingsValidity";
 import type { BillSettings } from "./BillSettingsFields.types";

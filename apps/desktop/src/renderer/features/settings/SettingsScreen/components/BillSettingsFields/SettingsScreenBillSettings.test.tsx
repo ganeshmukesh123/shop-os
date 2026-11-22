@@ -1,10 +1,10 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ShopProfile } from "@shopos/core";
-import { installFakeShopos } from "../../../../../tests/helpers/fakeShopos";
-import { renderWithTheme } from "../../../../../tests/helpers/renderWithTheme";
-import { SettingsScreen } from "../SettingsScreen";
-import { ToastProvider } from "../../../shared/components/Toast";
+import { installFakeShopos } from "../../../../../../../tests/helpers/fakeShopos";
+import { renderWithTheme } from "../../../../../../../tests/helpers/renderWithTheme";
+import { SettingsScreen } from "../../SettingsScreen";
+import { ToastProvider } from "../../../../../shared/components/Toast";
 
 const SHOP_PROFILE: ShopProfile = {
   name: "Prabhat Hardware",

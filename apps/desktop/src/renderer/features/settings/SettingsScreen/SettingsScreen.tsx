@@ -14,10 +14,10 @@ import { ThemePicker } from "../../../shared/theme/ThemePicker";
 import { useThemePreference } from "../../../shared/theme/useThemePreference";
 import { uiText } from "../../../shared/text/strings";
 import { call, messageOf } from "../../../shared/api/api";
-import { BillSettingsFields } from "../BillSettingsFields/BillSettingsFields";
-import { isBillSettingsValid } from "../BillSettingsFields/billSettingsValidity";
-import { RestoreBackupDialog } from "../RestoreBackupDialog/RestoreBackupDialog";
-import { useRestoreBackup } from "../RestoreBackupDialog/useRestoreBackup";
+import { BillSettingsFields } from "./components/BillSettingsFields/BillSettingsFields";
+import { isBillSettingsValid } from "./components/BillSettingsFields/billSettingsValidity";
+import { RestoreBackupDialog } from "./components/RestoreBackupDialog/RestoreBackupDialog";
+import { useRestoreBackup } from "./components/RestoreBackupDialog/useRestoreBackup";
 
 const field = (label: string, node: React.ReactNode, help?: string) => (
   <label>
