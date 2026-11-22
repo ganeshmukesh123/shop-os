@@ -1,17 +1,8 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { StatusBadge } from "../../../src/renderer/shared/components/StatusBadge/StatusBadge";
-import { StatusMessage } from "../../../src/renderer/shared/components/StatusMessage/StatusMessage";
-import type { StatusRole } from "../../../src/renderer/shared/components/status.types";
-import { renderWithTheme } from "../../helpers/renderWithTheme";
-
-const ROLES_AND_COLOURS: [StatusRole, string][] = [
-  ["danger", "red"],
-  ["warning", "orange"],
-  ["success", "green"],
-  ["neutral", "gray"],
-  ["primary", ""], // the theme's accent colour: Radix writes an empty colour attribute
-];
+import { renderWithTheme } from "../../../../../tests/helpers/renderWithTheme";
+import { ROLES_AND_COLOURS } from "../../../../../tests/helpers/statusRoles";
+import { StatusMessage } from "./StatusMessage";
 
 describe("StatusMessage (design guidelines 5.1)", () => {
   it("puts the label first and the plain sentence after it", () => {
@@ -92,18 +83,4 @@ describe("StatusMessage (design guidelines 5.1)", () => {
 
     expect(screen.queryByRole("button")).toBeNull();
   });
-});
-
-describe("StatusBadge", () => {
-  it.each(ROLES_AND_COLOURS)(
-    "shows a word, never only a colour, for the %s role",
-    (role, colourName) => {
-      renderWithTheme(<StatusBadge role={role} label="Cancelled" />);
-
-      const badge = screen.getByText("Cancelled");
-
-      expect(badge.textContent).toBe("Cancelled");
-      expect(badge.getAttribute("data-accent-color")).toBe(colourName);
-    },
-  );
 });
