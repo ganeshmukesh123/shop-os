@@ -158,6 +158,7 @@ export function insertTargetNumberGap(
     seq_from: 121,
     seq_to: 126,
     reason: "lost_in_restore",
+    is_estimated: 0,
     recorded_at: EPOCH_MS,
   });
   return "gap-1";

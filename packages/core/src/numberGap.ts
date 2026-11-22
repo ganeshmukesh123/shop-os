@@ -129,3 +129,18 @@ export function assertNotBeforeBackupYear(
     );
   }
 }
+
+/**
+ * A typed "last bill printed" cannot be from a financial year that has not started yet.
+ * Example: it is 26-27 and the owner types C1/27-28/000126: refused, nothing changes. Accepting it
+ * would move 27-28's counter and leave the numbers already printed in 26-27 free to be issued again.
+ */
+export function assertNotAfterCurrentYear(typedYear: string, currentYear: string): void {
+  const isFutureYear = financialYearStart(typedYear) > financialYearStart(currentYear);
+  if (isFutureYear) {
+    throw new CoreError(
+      "INVALID_FIELD",
+      `That number is from ${typedYear}, which has not started yet; enter the last bill you printed`,
+    );
+  }
+}
