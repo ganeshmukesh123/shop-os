@@ -1,0 +1,52 @@
+import {
+  DEFAULT_TIME_ZONE,
+  businessDateOf,
+  financialYearOfBusinessDate,
+  formatBillNumber,
+  isValidTimeZone,
+  type IBackupRestoreResult,
+  type IRestorePreview,
+} from "@shopos/core";
+import { fillText } from "../../../shared/text/fillText";
+import { uiText } from "../../../shared/text/strings";
+import { EXAMPLE_SEQUENCE } from "./RestoreBackupDialog.constants";
+import type { RestoreExampleProfile } from "./RestoreBackupDialog.types";
+
+/**
+ * A bill number in the shop's format and financial year, to show what to type. The year follows the
+ * shop's zone; an unfinished zone name falls back to the default so the example never breaks.
+ */
+export function restoreExampleNumber(profile: RestoreExampleProfile, now: Date): string {
+  const zone = isValidTimeZone(profile.timeZone) ? profile.timeZone : DEFAULT_TIME_ZONE;
+  const financialYear = financialYearOfBusinessDate(businessDateOf(now.getTime(), zone));
+  return formatBillNumber(
+    profile.numberTemplate,
+    profile.seriesCode,
+    financialYear,
+    EXAMPLE_SEQUENCE,
+  );
+}
+
+/** What the owner is told before the app restarts: the next bill number and the numbers recorded as lost. */
+export function restoreStartedMessage(result: IBackupRestoreResult): string {
+  const text = uiText.restore;
+  const { gapRecorded } = result;
+  const parts = [
+    fillText(text.started, { next: result.nextBillNo }),
+    gapRecorded && fillText(text.lostRange, { from: gapRecorded.seqFrom, to: gapRecorded.seqTo }),
+    gapRecorded?.isEstimated && text.lostGuess,
+  ];
+  return parts.filter((part): part is string => typeof part === "string").join(" ");
+}
+
+/** What the owner is shown before they confirm: the next bill number and the numbers that will be lost. */
+export function restorePlanMessage(preview: IRestorePreview): string {
+  const text = uiText.restore;
+  const { gapRecorded } = preview;
+  const parts = [
+    fillText(text.planNext, { next: preview.nextBillNo }),
+    gapRecorded && fillText(text.planLost, { from: gapRecorded.seqFrom, to: gapRecorded.seqTo }),
+    gapRecorded?.isEstimated && text.lostGuess,
+  ];
+  return parts.filter((part): part is string => typeof part === "string").join(" ");
+}

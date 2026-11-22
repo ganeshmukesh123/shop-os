@@ -150,4 +150,40 @@ describe("saving a bill uses the shop's time zone setting (FR-019a, research D22
 
     expect(saveResult.bill.billDate).toBe("2027-03-31T11:40:00");
   });
+
+  it("keeps a saved bill's date and time when the shop changes its zone later, so a reprint matches", () => {
+    const savedBill = saveBillOf(10000, {}, JUST_AFTER_MIDNIGHT_IN_INDIA).bill;
+
+    changeSettings({ timeZone: "America/Los_Angeles" });
+
+    const reloadedBill = new BillRepository(testDb.db, testDb.ctx).get(savedBill.id)!.bill;
+    const timeZoneRow = testDb.sqlite.prepare("select time_zone from bill").get();
+    expect(savedBill.billDate).toBe("2027-04-01T00:10:00");
+    expect(reloadedBill.billDate).toBe("2027-04-01T00:10:00");
+    expect(timeZoneRow).toEqual({ time_zone: "Asia/Kolkata" });
+  });
+});
+
+describe("a saved bill's zone, shop and creation time can never change (constitution I, II)", () => {
+  const attemptCancelWith = (assignment: string) => () =>
+    testDb.sqlite
+      .prepare(`update bill set status = 'cancelled', cancel_reason = 'Wrong items', ${assignment}`)
+      .run();
+
+  beforeEach(() => {
+    saveBillOf(10000);
+  });
+
+  it.each([
+    ["time_zone = 'America/Los_Angeles'"],
+    ["shop_id = 'another-shop'"],
+    ["business_id = 'another-business'"],
+    ["created_at = created_at + 1"],
+  ])("refuses a cancel that also sets %s", (assignment) => {
+    expect(attemptCancelWith(assignment)).toThrow(/can only be cancelled/);
+  });
+
+  it("still allows a plain cancel", () => {
+    expect(attemptCancelWith("cancelled_at = 1")).not.toThrow();
+  });
 });

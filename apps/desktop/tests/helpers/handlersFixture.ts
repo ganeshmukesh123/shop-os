@@ -74,9 +74,12 @@ export function buildHandlersFixture(options: IFixtureOptions = {}): IHandlersFi
 const A_UNIT_PRICE_PAISE = 12000;
 
 /** Creates an item and saves one bill for it through the handlers; returns the saved bill id. */
-export async function saveOneBill(fixture: IHandlersFixture): Promise<string> {
+export async function saveOneBill(
+  fixture: IHandlersFixture,
+  itemName = "PVC Pipe",
+): Promise<string> {
   const created = await fixture.handlers["items.create"]({
-    name: "PVC Pipe",
+    name: itemName,
     unit: "pcs",
     pricePaise: A_UNIT_PRICE_PAISE,
     openingQtyMilli: 10000,

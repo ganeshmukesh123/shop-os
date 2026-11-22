@@ -28,11 +28,13 @@ Open **Settings > Backup**. "Last good backup" should show today's date and a re
 1. Install Shop OS. Open it once, then continue.
 2. Plug in the drive that holds the backups.
 3. Open **Settings > Backup > Restore from file**.
-4. Choose the newest `shopos-….sqlite` file (the file name has the date and time).
-5. A window asks for **the last bill number you printed**. Look at your last printed bill (or your paper bill book) and type its number exactly, for example `C1/26-27/000126`. The window shows an example in your own number format.
-6. Click **Check bill numbers**. Nothing is replaced yet: the window shows the number the next bill will get and which numbers will be recorded as lost. If the number is wrong, correct it and check again.
-7. If that is right, click **Restore and restart**. The app **replaces all current data** with the backup and restarts. If the backup file changed after you checked it, the app refuses and asks you to check again.
-8. Check **Items** and look at the last bill you made. Anything entered after the backup's time is not in it.
+4. Copy the backup file you want to restore (pick it by the date and time in its name) to a folder **outside** the backup folder, for example the Desktop. The app prunes old backups in its backup folder automatically, so a file left there can be deleted by the next backup.
+5. If this computer still holds data you may need (for example, the owner PIN and recovery code are lost and you want the current data kept), click **Back up now** in **Settings > Backup** and wait for "Backup complete". If it shows an error instead, **stop here** and do not restore. Then copy that new backup file outside the backup folder too. Do not copy `shopos.sqlite` by hand.
+6. In **Restore from file**, choose the file you copied in step 4.
+7. A window asks for **the last bill number you printed**. Look at your last printed bill (or your paper bill book) and type its number exactly, for example `C1/26-27/000126`. The window shows an example in your own number format.
+8. Click **Check bill numbers**. Nothing is replaced yet: the window shows the number the next bill will get and which numbers will be recorded as lost. If the number is wrong, correct it and check again.
+9. If that is right, click **Restore and restart**. The app **replaces all current data** with the backup and restarts. If the backup file changed after you checked it, the app refuses and asks you to check again.
+10. Check **Items** and look at the last bill you made. Anything entered after the backup's time is not in it.
 
 ### Why the app asks for the last bill number
 
@@ -52,6 +54,14 @@ If you choose a file that is not a Shop OS backup, the app refuses it and change
 ## What stays on your bills (retention)
 
 A saved bill is never changed, even if a customer asks for their name to be removed. It keeps exactly what was printed on it for the period the law requires bills to be kept (72 months from the annual return due date, CGST Rule 56; longer for records involved in an appeal, revision, proceeding or investigation, which are kept until one year after it is finally disposed of, [CGST Act section 36](https://upload.indiacode.nic.in/showfile?actid=AC_CEN_2_2_00042_201712_1517807328102&filename=a2017-12.pdf&type=actfile); both are still to be confirmed with the shop's CA). The only personal detail this version holds is the optional **customer name** typed on a bill; it stays with the bill. Shop OS stores no phone numbers or addresses of customers in this version. Everything else held about a person (from a later version, their party record) can be removed on request; the bill itself stays. Restoring a backup keeps your bills as they were printed.
+
+## Owner access after restore (planned for feature 005)
+
+Before you need a restore, create a second trusted Owner with a separate PIN, verify they can sign in, and take a backup containing both owners. Keep recovery codes separately from backups.
+
+Restoring also restores the users and credentials as of the backup date. Use **Forgot PIN** with the recovery code valid for that copy if available. If both PIN and code are lost, use the current database if it is intact, or the copy made in step 5 of the restore (kept outside the backup folder). If restoring damaged data, keep the original and work on a separate copy. Have the other active Owner sign in with their own PIN, open **Users**, and create a replacement Owner. Save the new recovery code, verify the new Owner can sign in, then deactivate the inaccessible account. Its history and the restored shop records stay in place; owner creation and deactivation are audited.
+
+First-run setup refuses any database that already contains users. Without another valid owner credential, keep the database and backups until a credential is found. Reinstallation and possession of a backup do not authorize a new owner.
 
 ## First run on a Mac (the build is not notarised)
 
