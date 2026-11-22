@@ -41,6 +41,15 @@ describe("App navigation (keyboard first: Ctrl+1 to Ctrl+3)", () => {
     expect(await screen.findByRole("heading", { name: "New bill" })).toBeTruthy();
   });
 
+  it("opens the Bills screen with Ctrl+4", async () => {
+    renderApp();
+
+    fireEvent.keyDown(window, { key: "4", ctrlKey: true });
+
+    expect(await screen.findByRole("heading", { name: "Bills" })).toBeTruthy();
+    expect(currentPage()).toBe("Bills");
+  });
+
   it("ignores a number without Ctrl, and Ctrl with a key that is not a screen", async () => {
     renderApp();
     await screen.findByRole("heading", { name: "New bill" });
