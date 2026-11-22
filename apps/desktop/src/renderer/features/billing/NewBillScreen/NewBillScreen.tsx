@@ -1,19 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Flex, Heading } from "@radix-ui/themes";
-import {
-  evaluateDraft,
-  paiseToInput,
-  type Bill,
-  type BillLine,
-  type DraftLine,
-  type Item,
-} from "@shopos/core";
+import type { Bill, BillLine, Item } from "@shopos/core";
 import { useToast } from "../../../shared/components/Toast";
 import { LAYOUT } from "../../../shared/constants/layout";
 import { uiText } from "../../../shared/text/strings";
 import { call, messageOf } from "../../../shared/api/api";
-import { emptyForm, loadDraftForm, type IBillForm } from "../billForm";
+import { loadDraftForm, type IBillForm } from "../billForm";
 import { useDraftAutosave } from "../hooks/useDraftAutosave";
+import { useBillForm } from "./hooks/useBillForm";
 import { useItemSearch } from "./hooks/useItemSearch";
 import { BillView } from "../BillView";
 import { BillLinesTable } from "./components/BillLinesTable";
@@ -29,16 +23,29 @@ interface Saved {
 
 export function NewBillScreen() {
   const toast = useToast();
-  const [form, setForm] = useState<IBillForm>(emptyForm());
   const [ready, setReady] = useState(false);
   const [recover, setRecover] = useState<IBillForm | null>(null);
   const [saved, setSaved] = useState<Saved | null>(null);
   const [saving, setSaving] = useState(false);
-  const { query, matches, highlightedIndex, setQuery, setHighlightedIndex, clearSearch } =
-    useItemSearch();
   const searchRef = useRef<HTMLInputElement>(null);
   const qtyRefs = useRef(new Map<string, HTMLInputElement>());
   const focusLine = useRef<string | null>(null);
+  const rememberLineToFocus = useCallback((lineKey: string) => {
+    focusLine.current = lineKey;
+  }, []);
+  const {
+    form,
+    evaluation,
+    replaceForm,
+    resetForm,
+    updateForm,
+    updateDraft,
+    patchLine,
+    removeLine,
+    addItem,
+  } = useBillForm(rememberLineToFocus);
+  const { query, matches, highlightedIndex, setQuery, setHighlightedIndex, clearSearch } =
+    useItemSearch();
 
   useEffect(() => {
     loadDraftForm()
@@ -50,70 +57,26 @@ export function NewBillScreen() {
 
   useEffect(() => {
     if (focusLine.current) {
-      const el = qtyRefs.current.get(focusLine.current);
-      if (el) {
-        el.focus();
-        el.select();
+      const quantityField = qtyRefs.current.get(focusLine.current);
+      if (quantityField) {
+        quantityField.focus();
+        quantityField.select();
         focusLine.current = null;
       }
     }
   });
 
-  const ev = useMemo(() => evaluateDraft(form.draft), [form.draft]);
-
-  const setDraft = (patch: Partial<IBillForm["draft"]>) =>
-    setForm((previousForm) => ({ ...previousForm, draft: { ...previousForm.draft, ...patch } }));
-  const patchLine = (key: string, patch: Partial<DraftLine>) =>
-    setDraft({
-      lines: form.draft.lines.map((draftLine) =>
-        draftLine.key === key ? { ...draftLine, ...patch } : draftLine,
-      ),
-    });
-
-  const addItem = useCallback(
-    (it: Item) => {
-      setForm((previousForm) => {
-        const existing = previousForm.draft.lines.find((draftLine) => draftLine.itemId === it.id);
-        if (existing) {
-          focusLine.current = existing.key;
-          const existingQuantity = Number(existing.qty);
-          const next = Number.isFinite(existingQuantity) ? String(existingQuantity + 1) : "1";
-          return {
-            ...previousForm,
-            draft: {
-              ...previousForm.draft,
-              lines: previousForm.draft.lines.map((draftLine) =>
-                draftLine.key === existing.key ? { ...draftLine, qty: next } : draftLine,
-              ),
-            },
-          };
-        }
-        const key = crypto.randomUUID();
-        focusLine.current = key;
-        const line: DraftLine = {
-          key,
-          itemId: it.id,
-          name: it.name,
-          unit: it.unit,
-          allowsDecimal: it.allowsDecimal,
-          qty: "1",
-          rate: paiseToInput(it.pricePaise),
-          disc: "",
-          discMode: "rupees",
-        };
-        return {
-          ...previousForm,
-          draft: { ...previousForm.draft, lines: [...previousForm.draft.lines, line] },
-        };
-      });
+  const addItemAndClearSearch = useCallback(
+    (item: Item) => {
+      addItem(item);
       clearSearch();
     },
-    [clearSearch],
+    [addItem, clearSearch],
   );
 
   const save = useCallback(async () => {
-    if (!ev.valid || !ev.input || saving) {
-      if (!ev.valid) toast("error", ev.errors[0] ?? "Check the bill");
+    if (!evaluation.valid || !evaluation.input || saving) {
+      if (!evaluation.valid) toast("error", evaluation.errors[0] ?? "Check the bill");
       return;
     }
     setSaving(true);
@@ -122,8 +85,8 @@ export function NewBillScreen() {
         clientBillId: form.clientBillId,
         customerName: form.customerName.trim() || undefined,
         paymentMode: form.paymentMode,
-        billDiscountPaise: ev.billDiscountPaise,
-        lines: ev.input.map(({ itemId, quantityMilli, ratePaise, lineDiscountPaise }) => ({
+        billDiscountPaise: evaluation.billDiscountPaise,
+        lines: evaluation.input.map(({ itemId, quantityMilli, ratePaise, lineDiscountPaise }) => ({
           itemId,
           quantityMilli,
           ratePaise,
@@ -131,13 +94,13 @@ export function NewBillScreen() {
         })),
       });
       setSaved(saveResult);
-      setForm(emptyForm());
+      resetForm();
     } catch (caughtError) {
       toast("error", messageOf(caughtError));
     } finally {
       setSaving(false);
     }
-  }, [ev, form, saving, toast]);
+  }, [evaluation, form, resetForm, saving, toast]);
 
   // Ctrl/Cmd+S saves the bill.
   useEffect(() => {
@@ -180,16 +143,14 @@ export function NewBillScreen() {
         highlightedIndex={highlightedIndex}
         onQueryChange={setQuery}
         onHighlightChange={setHighlightedIndex}
-        onChoose={addItem}
+        onChoose={addItemAndClearSearch}
       />
 
       <BillLinesTable
         lines={form.draft.lines}
-        results={ev.lines}
+        results={evaluation.lines}
         onLineChange={patchLine}
-        onLineRemove={(lineKey) =>
-          setDraft({ lines: form.draft.lines.filter((draftLine) => draftLine.key !== lineKey) })
-        }
+        onLineRemove={removeLine}
         onEnterQty={() => searchRef.current?.focus()}
         onQtyFieldRef={(lineKey, quantityField) =>
           quantityField
@@ -200,11 +161,11 @@ export function NewBillScreen() {
 
       <BillSummaryPanel
         form={form}
-        evaluation={ev}
+        evaluation={evaluation}
         isSaving={saving}
-        onFormChange={(patch) => setForm((previousForm) => ({ ...previousForm, ...patch }))}
-        onDraftChange={setDraft}
-        onClear={() => setForm(emptyForm())}
+        onFormChange={updateForm}
+        onDraftChange={updateDraft}
+        onClear={resetForm}
         onSave={() => void save()}
       />
 
@@ -216,7 +177,7 @@ export function NewBillScreen() {
             void call("bills.draft.save", { payload: null });
           }}
           onContinue={() => {
-            setForm({ ...recover, clientBillId: recover.clientBillId ?? crypto.randomUUID() });
+            replaceForm({ ...recover, clientBillId: recover.clientBillId ?? crypto.randomUUID() });
             setRecover(null);
           }}
         />
