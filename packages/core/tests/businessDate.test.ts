@@ -3,6 +3,7 @@ import {
   DEFAULT_TIME_ZONE,
   businessDateOf,
   financialYearOfBusinessDate,
+  isValidTimeZone,
   localIsoOf,
 } from "../src/businessDate";
 
@@ -145,5 +146,20 @@ describe("localIsoOf: the wall-clock time in the shop's zone", () => {
   it("refuses an unknown zone or a fractional instant", () => {
     expect(errorCodeOf(() => localIsoOf(0, "Mars/Olympus"))).toBe("INVALID_FIELD");
     expect(errorCodeOf(() => localIsoOf(0.5, SHOP_ZONE))).toBe("INVALID_FIELD");
+  });
+});
+
+describe("isValidTimeZone (FR-019a)", () => {
+  it("accepts named zones the platform knows", () => {
+    expect(isValidTimeZone("Asia/Kolkata")).toBe(true);
+    expect(isValidTimeZone("UTC")).toBe(true);
+    expect(isValidTimeZone("America/Los_Angeles")).toBe(true);
+  });
+
+  it("refuses an unknown name, an empty text and a fixed offset", () => {
+    expect(isValidTimeZone("Mars/Olympus")).toBe(false);
+    expect(isValidTimeZone("")).toBe(false);
+    expect(isValidTimeZone("   ")).toBe(false);
+    expect(isValidTimeZone("+05:30")).toBe(false);
   });
 });
