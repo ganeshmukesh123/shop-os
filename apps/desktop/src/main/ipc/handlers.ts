@@ -152,7 +152,7 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
       async (commandInput: BackupRestoreInput): Promise<IBackupRestoreResult> => {
         // Worked out again, never taken from the renderer; nothing is touched unless it still matches.
         const numbering = await planRestoreFor(commandInput, new Date());
-        assertPlanIsConfirmed(numbering, commandInput.confirmedNextBillNo);
+        assertPlanIsConfirmed(numbering, commandInput.confirmedPreview);
         shell.scheduleRestore(commandInput.filePath, numbering);
         return { restored: true, ...toRestorePreview(numbering) };
       },

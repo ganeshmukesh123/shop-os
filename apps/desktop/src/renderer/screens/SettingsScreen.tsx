@@ -100,7 +100,7 @@ export function SettingsScreen() {
       const question = `${uiText.settings.restoreConfirm}\n\n${uiText.settings.restoreNextBill} ${preview.nextBillNo}`;
       const isConfirmed = window.confirm(question);
       if (isConfirmed === false) return;
-      await call("backup.restore", { filePath: path, confirmedNextBillNo: preview.nextBillNo });
+      await call("backup.restore", { filePath: path, confirmedPreview: preview });
       toast("success", "Restoring… the app will restart.");
     } catch (caughtError) {
       toast("error", messageOf(caughtError));

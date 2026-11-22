@@ -191,6 +191,24 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
     ]);
   });
 
+  it("shows the number billing really gives next when the typed last bill is from last year", async () => {
+    // May 2027 (27-28): the last bill printed was C1/26-27/000126, in March. The lost range stays in
+    // 26-27, but the next bill is numbered in 27-28, because billing takes the year from its own date.
+    const backupFile = await takeBackup(createShop(3, 120));
+
+    const { plan, connection, ctx } = await restoreAndOpen(
+      backupFile,
+      "C1/26-27/000126",
+      NEXT_YEAR,
+    );
+
+    expect(plan.gap).toEqual({ seqFrom: 121, seqTo: 126, newLastSeq: 126, isEstimated: false });
+    expect(plan.nextBillNo).toBe("C1/27-28/000001");
+    expect(saveBill({ connection, ctx, itemId: firstItemId(connection) }, NEXT_YEAR)).toBe(
+      plan.nextBillNo,
+    );
+  });
+
   it("protects the financial year the owner typed, and starts it when the backup has none yet", async () => {
     // Backup from 26-27, restored in May 2027 after four bills of 27-28 were printed.
     const backupFile = await takeBackup(createShop(3, 3));

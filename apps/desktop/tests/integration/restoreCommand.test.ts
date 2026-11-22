@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import Database from "better-sqlite3";
 import {
   buildHandlersFixture,
   saveOneBill,
@@ -117,7 +118,10 @@ describe("backup.restore applies only the plan the owner confirmed (FR-013b, EC-
     const result = await fixture.handlers["backup.restore"]({
       filePath: backupFile,
       lastIssuedBillNo: `C1/${financialYear}/000005`,
-      confirmedNextBillNo: `C1/${financialYear}/000006`,
+      confirmedPreview: {
+        nextBillNo: `C1/${financialYear}/000006`,
+        gapRecorded: { seqFrom: 2, seqTo: 5, isEstimated: false },
+      },
     });
 
     expect(result).toEqual({
@@ -145,7 +149,36 @@ describe("backup.restore applies only the plan the owner confirmed (FR-013b, EC-
     const result = await fixture.handlers["backup.restore"]({
       filePath: backupFile,
       lastIssuedBillNo: `C1/${financialYear}/000005`,
-      confirmedNextBillNo: `C1/${financialYear}/000003`,
+      confirmedPreview: { nextBillNo: `C1/${financialYear}/000003` },
+    });
+
+    expect(result).toMatchObject({ ok: false, code: "INVALID_BACKUP" });
+    expect(fixture.shellCalls.restoredFiles).toEqual([]);
+  });
+
+  it("refuses, and schedules nothing, when the backup was swapped and would lose numbers the owner never saw", async () => {
+    // The owner checks a backup ending at bill 5 and types 5: next 6, nothing lost. The file is then
+    // replaced by one ending at bill 1: still next 6, but now 2 to 5 would be recorded as lost.
+    const fixture = buildHandlersFixture();
+    const { backupFile: backupEndingAt1, financialYear } = await shopWithOneBillAndBackup(fixture);
+    const checkedFile = path.join(path.dirname(backupEndingAt1), "checked.sqlite");
+    fs.copyFileSync(backupEndingAt1, checkedFile);
+    const checkedDatabase = new Database(checkedFile);
+    checkedDatabase.prepare("update number_series set last_seq = 5").run();
+    checkedDatabase.close();
+    const lastIssuedBillNo = `C1/${financialYear}/000005`;
+    const preview = await fixture.handlers["backup.planRestore"]({
+      filePath: checkedFile,
+      lastIssuedBillNo,
+    });
+    if (!preview.ok) throw new Error(preview.message);
+    expect(preview.data).toEqual({ nextBillNo: `C1/${financialYear}/000006` });
+
+    fs.copyFileSync(backupEndingAt1, checkedFile);
+    const result = await fixture.handlers["backup.restore"]({
+      filePath: checkedFile,
+      lastIssuedBillNo,
+      confirmedPreview: preview.data,
     });
 
     expect(result).toMatchObject({ ok: false, code: "INVALID_BACKUP" });

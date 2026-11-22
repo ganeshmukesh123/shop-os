@@ -244,12 +244,20 @@ describe("other bill commands", () => {
     expect(isAccepted(backupPlanRestoreInput, { filePath: "" })).toBe(false);
   });
 
-  it("restores only with the next bill number the owner confirmed in the plan", () => {
-    const confirmed = { filePath: "/tmp/backup.sqlite", confirmedNextBillNo: "C1/26-27/000127" };
+  it("restores only with the whole plan the owner confirmed: next number and lost range", () => {
+    const confirmed = {
+      filePath: "/tmp/backup.sqlite",
+      confirmedPreview: {
+        nextBillNo: "C1/26-27/000127",
+        gapRecorded: { seqFrom: 121, seqTo: 126, isEstimated: false },
+      },
+    };
 
     expect(isAccepted(backupRestoreInput, confirmed)).toBe(true);
     expect(isAccepted(backupRestoreInput, { filePath: "/tmp/backup.sqlite" })).toBe(false);
-    expect(isAccepted(backupRestoreInput, { ...confirmed, confirmedNextBillNo: "" })).toBe(false);
+    expect(
+      isAccepted(backupRestoreInput, { ...confirmed, confirmedPreview: { nextBillNo: "" } }),
+    ).toBe(false);
   });
 });
 

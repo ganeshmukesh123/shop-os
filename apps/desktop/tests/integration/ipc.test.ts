@@ -97,7 +97,7 @@ describe("IPC handlers", () => {
     expect(
       await handlers["backup.restore"]({
         filePath: "/definitely/not/here.sqlite",
-        confirmedNextBillNo: "C1/26-27/000002",
+        confirmedPreview: { nextBillNo: "C1/26-27/000002" },
       }),
     ).toMatchObject({
       ok: false,

@@ -184,7 +184,7 @@ describe("backup commands", () => {
     if (!preview.ok) throw new Error(preview.message);
     const result = await fixture.handlers["backup.restore"]({
       filePath: backup.data.path,
-      confirmedNextBillNo: preview.data.nextBillNo,
+      confirmedPreview: preview.data,
     });
     expect(result).toMatchObject({ ok: true, data: { restored: true } });
     expect(fixture.shellCalls.restoredFiles).toEqual([backup.data.path]);
@@ -196,7 +196,7 @@ describe("backup commands", () => {
     fs.writeFileSync(notABackup, "not a database");
     const result = await fixture.handlers["backup.restore"]({
       filePath: notABackup,
-      confirmedNextBillNo: "C1/26-27/000002",
+      confirmedPreview: { nextBillNo: "C1/26-27/000002" },
     });
     expect(result).toMatchObject({ ok: false, code: "INVALID_BACKUP" });
     expect(fixture.shellCalls.restoredFiles).toEqual([]);
