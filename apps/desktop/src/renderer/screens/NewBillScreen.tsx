@@ -24,6 +24,8 @@ import {
   type PaymentMode,
 } from "@shopos/core";
 import { BillLineRow } from "../components/BillLineRow";
+import { RoundOffLine } from "../components/RoundOffLine/RoundOffLine";
+import { useRoundedTotal } from "../components/RoundOffLine/useRoundedTotal";
 import { useToast } from "../components/Toast";
 import { LAYOUT } from "../layout";
 import { StatusMessage } from "../shared/components/StatusMessage/StatusMessage";
@@ -98,6 +100,7 @@ export function NewBillScreen() {
   });
 
   const ev = useMemo(() => evaluateDraft(form.draft), [form.draft]);
+  const roundedTotal = useRoundedTotal(ev.grandTotalPaise);
 
   const setDraft = (patch: Partial<BillForm["draft"]>) =>
     setForm((previousForm) => ({ ...previousForm, draft: { ...previousForm.draft, ...patch } }));
@@ -378,8 +381,9 @@ export function NewBillScreen() {
             </SegmentedControl.Root>
           </Flex>
           {ev.billDiscountPaise > 0 && <Text>-{formatRupees(ev.billDiscountPaise)}</Text>}
+          <RoundOffLine roundOffPaise={roundedTotal.roundOffPaise} />
           <Text size="7" weight="bold" aria-live="polite">
-            {uiText.bill.grandTotal}: {formatRupees(ev.grandTotalPaise)}
+            {uiText.bill.grandTotal}: {formatRupees(roundedTotal.roundedTotalPaise)}
           </Text>
           {ev.errors
             .filter(

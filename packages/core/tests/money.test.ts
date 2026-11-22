@@ -3,6 +3,7 @@ import {
   addPaise,
   assertPaise,
   formatRupees,
+  formatSignedRupees,
   mulQtyRate,
   paiseToInput,
   parseRupees,
@@ -164,5 +165,19 @@ describe("roundBillTotal (FR-010a, research D20)", () => {
   it("rejects a negative or fractional total", () => {
     expect(errorCodeOf(() => roundBillTotal(-1, true))).toBe("INVALID_AMOUNT");
     expect(errorCodeOf(() => roundBillTotal(10.5, true))).toBe("INVALID_AMOUNT");
+  });
+});
+
+describe("formatSignedRupees (the round-off line, FR-010a)", () => {
+  it("puts a plus sign before a round-up: 40 paise is +₹0.40", () => {
+    expect(formatSignedRupees(40)).toBe("+₹0.40");
+  });
+
+  it("puts a minus sign before a round-down: -49 paise is -₹0.49", () => {
+    expect(formatSignedRupees(-49)).toBe("-₹0.49");
+  });
+
+  it("shows zero with no sign", () => {
+    expect(formatSignedRupees(0)).toBe("₹0.00");
   });
 });

@@ -92,6 +92,12 @@ export function formatRupees(paise: Paise): string {
   return `${neg ? "-" : ""}₹${groupIndian(String(rupees))}.${paiseText}`;
 }
 
+/** A signed amount for the round-off line: 40 -> "+₹0.40", -49 -> "-₹0.49", 0 -> "₹0.00". */
+export function formatSignedRupees(paise: Paise): string {
+  const sign = paise > 0 ? "+" : "";
+  return `${sign}${formatRupees(paise)}`;
+}
+
 /** Plain number string for form fields, e.g. 123450 -> "1234.50". */
 export function paiseToInput(paise: Paise): string {
   assertPaise(paise);
