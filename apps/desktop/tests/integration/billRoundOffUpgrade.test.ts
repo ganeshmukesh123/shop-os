@@ -15,17 +15,18 @@ describe("upgrading a database for round-off, document title and time zone (FR-0
     connection?.sqlite.close();
   });
 
-  it("keeps the old bill and gives it a round-off of 0 and the title 'Estimate'", () => {
+  it("keeps the old bill and gives it a round-off of 0, the title 'Estimate' and the zone it was saved in", () => {
     const sqlite = connection.sqlite;
 
     const billRow = sqlite
-      .prepare("select bill_no, round_off_paise, doc_title, total_paise from bill")
+      .prepare("select bill_no, round_off_paise, doc_title, time_zone, total_paise from bill")
       .get();
 
     expect(billRow).toEqual({
       bill_no: "C1/26-27/000001",
       round_off_paise: 0,
       doc_title: "Estimate",
+      time_zone: "Asia/Kolkata",
       total_paise: 24000,
     });
     expect(sqlite.pragma("foreign_key_check")).toEqual([]);
@@ -83,6 +84,7 @@ describe("upgrading a database for round-off, document title and time zone (FR-0
   it.each([
     ["the title", "doc_title = 'Cash Memo'"],
     ["the round-off", "round_off_paise = 10"],
+    ["the time zone", "time_zone = 'America/Los_Angeles'"],
   ])("refuses a cancellation that also changes %s", (_fieldLabel, fieldChange) => {
     const sqlite = connection.sqlite;
     const cancelAndChange = `update bill set status = 'cancelled', cancel_reason = 'wrong item',

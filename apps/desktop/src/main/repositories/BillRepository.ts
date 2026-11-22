@@ -1,33 +1,22 @@
 import { and, asc, eq, sql } from "drizzle-orm";
-import { CoreError, DEFAULT_TIME_ZONE, localIsoOf } from "@shopos/core";
+import { CoreError, localIsoOf } from "@shopos/core";
 import type { Bill, BillLine, PaymentMode } from "@shopos/core";
 import type { Handle } from "../db/connection";
 import { isoOfMs, newId, nowMs } from "../db/ids";
-import { bill, billLine, billTender, draftBill, numberSeries, shopProfile } from "../db/schema";
+import { bill, billLine, billTender, draftBill, numberSeries } from "../db/schema";
 import type { Ctx } from "../db/seed";
 import type { INewBill, INewLine } from "./newBillTypes";
 
-/** The shop's named time zone (FR-019a); the default when the profile has none yet. */
-export function readShopTimeZone(databaseHandle: Handle, shopId: string): string {
-  const profileRow = databaseHandle
-    .select({ timeZone: shopProfile.timeZone })
-    .from(shopProfile)
-    .where(eq(shopProfile.shopId, shopId))
-    .get();
-  return profileRow?.timeZone ?? DEFAULT_TIME_ZONE;
-}
-
-/** The payment mode is not on the bill row: it is the label on the bill's tender (D18). */
-export const toBill = (
-  billRow: typeof bill.$inferSelect,
-  paymentMode: PaymentMode,
-  timeZone: string,
-): Bill => ({
+/**
+ * The payment mode is not on the bill row: it is the label on the bill's tender (D18). The time is
+ * shown in the zone the bill was saved in, so a reprint matches even after the shop changes its zone.
+ */
+export const toBill = (billRow: typeof bill.$inferSelect, paymentMode: PaymentMode): Bill => ({
   id: billRow.id,
   number: billRow.billNo,
   seriesCode: billRow.counterCode,
   seq: billRow.seq,
-  billDate: localIsoOf(billRow.billedAt, timeZone),
+  billDate: localIsoOf(billRow.billedAt, billRow.timeZone),
   customerName: billRow.customerName,
   docTitle: billRow.docTitle,
   paymentMode,
@@ -117,6 +106,7 @@ export class BillRepository {
         roundOffPaise: newBill.roundOffPaise,
         totalPaise: newBill.grandTotalPaise,
         docTitle: newBill.docTitle,
+        timeZone: newBill.timeZone,
         status: "posted",
       })
       .returning()
@@ -131,12 +121,7 @@ export class BillRepository {
         status: "label",
       })
       .run();
-    return toBill(billRow, newBill.paymentMode, this.shopTimeZone());
-  }
-
-  /** The shop's named time zone, which a stored bill time is shown in (FR-019a). */
-  private shopTimeZone(): string {
-    return readShopTimeZone(this.databaseHandle, this.ctx.shopId);
+    return toBill(billRow, newBill.paymentMode);
   }
 
   insertLines(billId: string, lines: INewLine[]): BillLine[] {
@@ -191,10 +176,7 @@ export class BillRepository {
       .where(eq(billLine.billId, id))
       .orderBy(asc(billLine.lineNo))
       .all();
-    return {
-      bill: toBill(billRow, this.tenderMode(id), this.shopTimeZone()),
-      lines: lines.map(toLine),
-    };
+    return { bill: toBill(billRow, this.tenderMode(id)), lines: lines.map(toLine) };
   }
 
   // ----- draft (crash recovery; not a financial record) -----
