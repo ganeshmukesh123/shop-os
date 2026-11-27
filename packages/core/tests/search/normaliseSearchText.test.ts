@@ -9,6 +9,10 @@ describe("normaliseSearchText (task T007, research D4)", () => {
     expect(normaliseSearchText("Café Müller Ñandú")).toBe("cafe muller nandu");
   });
 
+  it("removes multiple combining accents from one Latin letter", () => {
+    expect(normaliseSearchText("e\u0301\u0300")).toBe("e");
+  });
+
   it("joins a letter and its separate accent the same way as the one-piece letter", () => {
     const onePiece = normaliseSearchText("café");
     const accentApart = normaliseSearchText("café");

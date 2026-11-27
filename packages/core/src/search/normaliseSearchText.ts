@@ -1,4 +1,4 @@
-const LATIN_LETTER = /\p{Script=Latin}/gu;
+const LATIN_LETTER_WITH_ACCENTS = /(\p{Script=Latin})[\u0300-\u036f]*/gu;
 const COMBINING_ACCENT = /[̀-ͯ]/g;
 const NOT_PART_OF_A_WORD = /[^\p{L}\p{N}\p{M}]+/gu;
 
@@ -10,7 +10,7 @@ const NOT_PART_OF_A_WORD = /[^\p{L}\p{N}\p{M}]+/gu;
 export function normaliseSearchText(text: string): string {
   return text
     .normalize("NFC")
-    .replace(LATIN_LETTER, (latinLetter) =>
+    .replace(LATIN_LETTER_WITH_ACCENTS, (_letterWithAccents, latinLetter: string) =>
       latinLetter.normalize("NFD").replace(COMBINING_ACCENT, ""),
     )
     .toLowerCase()
