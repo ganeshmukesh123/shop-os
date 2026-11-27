@@ -5,6 +5,8 @@ export * from "./billing";
 export * from "./stock";
 export * from "./numbering";
 export * from "./numberGap";
+export * from "./catalogue/axisSignature";
+export * from "./catalogue/variantCombinations";
 export * from "./businessDate";
 export * from "./clockCheck";
 export * from "./types";
