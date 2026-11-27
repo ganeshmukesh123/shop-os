@@ -1,3 +1,4 @@
+import { Settings } from "luxon";
 import { CoreError } from "../src/errors";
 import {
   DEFAULT_TIME_ZONE,
@@ -7,6 +8,7 @@ import {
   compactStampOf,
   localIsoOf,
 } from "../src/businessDate";
+import { financialYear } from "../src/numbering";
 
 const SHOP_ZONE = "Asia/Kolkata";
 
@@ -41,17 +43,32 @@ describe("businessDateOf (FR-019a, research D22)", () => {
     expect(businessDateOf(Date.UTC(2026, 0, 5, 12), SHOP_ZONE)).toBe("2026-01-05");
   });
 
-  it.each([-8_640_000_000_000_000, 8_640_000_000_000_000])(
-    "accepts the Date range boundary %s",
-    (instantMs) => {
-      expect(() => businessDateOf(instantMs, "UTC")).not.toThrow();
-    },
-  );
+  // The Date range is ±8_640_000_000_000_000 ms; the accepted range stays one day inside it so the
+  // shop's zone offset never pushes the wall-clock time out of range.
+  const LAST_ACCEPTED_MS = 8_640_000_000_000_000 - 86_400_000;
 
-  it.each([-8_640_000_000_000_001, 8_640_000_000_000_001])(
-    "rejects an instant immediately outside the Date range: %s",
+  it.each([
+    ["UTC", -LAST_ACCEPTED_MS],
+    ["UTC", LAST_ACCEPTED_MS],
+    [SHOP_ZONE, -LAST_ACCEPTED_MS],
+    [SHOP_ZONE, LAST_ACCEPTED_MS],
+    ["Pacific/Kiritimati", LAST_ACCEPTED_MS],
+    ["Pacific/Pago_Pago", -LAST_ACCEPTED_MS],
+  ])("gives a real date in %s at the accepted edge %s", (timeZone, instantMs) => {
+    expect(businessDateOf(instantMs, timeZone)).toMatch(/^[+-]?\d{6}-\d{2}-\d{2}$/);
+    expect(localIsoOf(instantMs, timeZone)).toMatch(/^[+-]?\d{6}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/);
+  });
+
+  it.each([
+    -LAST_ACCEPTED_MS - 1,
+    LAST_ACCEPTED_MS + 1,
+    -8_640_000_000_000_001,
+    8_640_000_000_000_001,
+  ])(
+    "rejects %s, outside the accepted range, instead of formatting Invalid DateTime",
     (instantMs) => {
-      expect(errorCodeOf(() => businessDateOf(instantMs, "UTC"))).toBe("INVALID_FIELD");
+      expect(errorCodeOf(() => businessDateOf(instantMs, SHOP_ZONE))).toBe("INVALID_FIELD");
+      expect(errorCodeOf(() => localIsoOf(instantMs, SHOP_ZONE))).toBe("INVALID_FIELD");
     },
   );
 
@@ -188,5 +205,25 @@ describe("compactStampOf: the date and time for a backup file name", () => {
   it("refuses an unknown zone or a fractional instant", () => {
     expect(errorCodeOf(() => compactStampOf(0, "Mars/Olympus"))).toBe("INVALID_FIELD");
     expect(errorCodeOf(() => compactStampOf(1.5, SHOP_ZONE))).toBe("INVALID_FIELD");
+  });
+});
+
+describe("machine dates ignore Luxon's global settings (no hidden inputs)", () => {
+  afterEach(() => {
+    Settings.defaultLocale = "";
+    Settings.defaultNumberingSystem = "";
+    Settings.defaultOutputCalendar = "";
+  });
+
+  it("still writes 2027-04-01, 27-28 and ASCII digits with Arabic digits and an Islamic calendar set", () => {
+    Settings.defaultLocale = "ar-EG";
+    Settings.defaultNumberingSystem = "arab";
+    Settings.defaultOutputCalendar = "islamic";
+    const instantMs = Date.UTC(2027, 2, 31, 18, 40);
+
+    expect(businessDateOf(instantMs, SHOP_ZONE)).toBe("2027-04-01");
+    expect(localIsoOf(instantMs, SHOP_ZONE)).toBe("2027-04-01T00:10:00");
+    expect(financialYearOfBusinessDate("2027-04-01")).toBe("27-28");
+    expect(financialYear(new Date(2027, 3, 1))).toBe("27-28");
   });
 });
