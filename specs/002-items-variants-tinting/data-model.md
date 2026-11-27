@@ -128,8 +128,7 @@ One row per variant: `sold_qty_90d_milli`, `bill_count_90d`, `last_sold_at`. Upd
 ### `item_merge_log` (new, append-only)
 <!-- coderabbit-ai-generated:v1 -->
 
-<!-- coderabbit-ai-generated-section:v1:ac24b0356ddaaa70bdfc83bd22e606b41436763734b820d66604ede9d4619772 -->
-
+<!-- coderabbit-ai-generated-section:v1:0a47e6d679323a6615b3963a3530be040e1698ba37b27cb711d0cda907c73771 -->
 
 | Field                                    | Rule                                                                                                                      |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
@@ -143,8 +142,7 @@ One row per variant: `sold_qty_90d_milli`, `bill_count_90d`, `last_sold_at`. Upd
 | user_label                               | text (the user name; roles arrive in 005)                                                                                 |
 | reversible_until                         | epoch ms = merged time + 30 days (for `merge` rows)                                                                       |
 
-Triggers reject UPDATE and DELETE. A BEFORE INSERT trigger also rejects a second reversal for the same merge, including via `INSERT OR REPLACE`.
-
+Triggers reject UPDATE and DELETE. A BEFORE INSERT trigger also rejects a second reversal for the same merge, including via `INSERT OR REPLACE`, and any insert that reuses an existing reversal’s row ID.
 
 <!-- /coderabbit-ai-generated:v1 -->
 ### `exception_event` (new)
