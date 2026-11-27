@@ -16,6 +16,7 @@ const CANCELLED_BILL = buildBill({
 function renderOpenedBill(bill = SAVED_BILL) {
   installFakeShopos({
     "bills.list": () => ({ bills: [bill], total: 1 }),
+    "bills.gaps": () => ({ gaps: [] }),
     "bills.get": () => ({ bill, lines: [buildBillLine()] }),
     "bills.cancel": () => ({ bill: CANCELLED_BILL }),
   });

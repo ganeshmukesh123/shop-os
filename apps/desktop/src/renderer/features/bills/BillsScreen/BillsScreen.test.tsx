@@ -23,6 +23,7 @@ const CANCELLED_BILL = buildBill({
 function renderBillsScreen(bills: Bill[], handlers: FakeCommandHandlers = {}) {
   const fakeShopos = installFakeShopos({
     "bills.list": () => ({ bills, total: bills.length }),
+    "bills.gaps": () => ({ gaps: [] }),
     ...handlers,
   });
   renderWithTheme(<BillsScreen />);

@@ -2,13 +2,14 @@ import { Button, Table, Text } from "@radix-ui/themes";
 import { formatRupees } from "@shopos/core";
 import { StatusBadge } from "../../../../../shared/components/StatusBadge/StatusBadge";
 import { uiText } from "../../../../../shared/text/strings";
+import { LostInRestoreRow } from "../LostInRestoreRow";
 import type { IBillsTableProps } from "./types";
 
 /**
  * One row per bill, newest first; the number opens the bill. A cancelled bill says "Cancelled" in
  * words, not only in colour.
  */
-export function BillsTable({ bills, onOpen }: IBillsTableProps) {
+export function BillsTable({ bills, gaps, onOpen }: IBillsTableProps) {
   return (
     <Table.Root variant="surface">
       <Table.Header>
@@ -22,6 +23,9 @@ export function BillsTable({ bills, onOpen }: IBillsTableProps) {
         </Table.Row>
       </Table.Header>
       <Table.Body>
+        {gaps.map((gap) => (
+          <LostInRestoreRow key={gap.id} gap={gap} />
+        ))}
         {bills.map((bill) => (
           <Table.Row key={bill.id}>
             <Table.RowHeaderCell>

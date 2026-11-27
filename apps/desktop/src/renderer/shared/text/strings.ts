@@ -14,6 +14,9 @@ export const uiText = {
     status: "Status",
     posted: "Posted",
     back: "Back to bills",
+    lostInRestore: "Lost in restore",
+    lostRange: "{from} to {to}",
+    lostEstimated: "A block of 100 numbers, because the last number was not entered.",
     cancel: {
       open: "Cancel bill",
       title: "Cancel bill {number}",

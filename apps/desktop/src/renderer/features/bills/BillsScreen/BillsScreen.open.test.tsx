@@ -14,6 +14,7 @@ const SAVED_BILL = buildBill();
 function renderBillsScreen(handlers: FakeCommandHandlers = {}) {
   const fakeShopos = installFakeShopos({
     "bills.list": () => ({ bills: [SAVED_BILL], total: 1 }),
+    "bills.gaps": () => ({ gaps: [] }),
     "bills.get": () => ({ bill: SAVED_BILL, lines: [buildBillLine()] }),
     ...handlers,
   });
