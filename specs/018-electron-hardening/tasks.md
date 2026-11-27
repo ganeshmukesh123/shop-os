@@ -109,7 +109,7 @@ description: "Task list for Electron hardening (security and performance)"
 
 **Independent test**: every screen renders in System, Light and Dark; a `../` request is refused.
 
-- [ ] T029 [US6] Spike (O4, O5, O7): load the built renderer under a registered `shopos-app` scheme in a scratch branch; record whether module scripts, fonts and Radix assets load, whether `grantFileProtocolExtraPrivileges` can be off, and whether `localStorage` (theme) is lost; write a go or no-go in `research.md`. Stop here if no-go.
+- [X] T029 [US6] Spike (O4, O5, O7): load the built renderer under a registered `shopos-app` scheme in a scratch branch; record whether module scripts, fonts and Radix assets load, whether `grantFileProtocolExtraPrivileges` can be off, and whether `localStorage` (theme) is lost; write a go or no-go in `research.md`. Stop here if no-go. _(2026-11-27: **go**. The screen loads under `shopos-app://`; `grantFileProtocolExtraPrivileges` cannot be off while on `file://`; `localStorage` is lost on the new origin, so T035 first. Research O4, O5, O7.)_
 - [ ] T030 [P] [US6] Write the failing test for the path guard in `apps/desktop/tests/unit/pathGuard.test.ts` (Vitest discovery, as in T005): in-bundle file served; `../`, encoded `%2e%2e`, absolute paths and non-GET refused (contract section 5)
 - [ ] T031 [US6] Implement the path guard and protocol handler in `apps/desktop/src/main/app/appProtocol/` (`pathGuard.ts`, `appProtocol.ts`, `constants.ts`, `types.ts`); register the scheme before app ready and serve with `protocol.handle`
 - [ ] T032 [US6] Load the window from the private address in `apps/desktop/src/main/app/mainWindow.ts` and update the navigation policy (T013) and the sender policy (T006) to the new scheme and location; update their tests
