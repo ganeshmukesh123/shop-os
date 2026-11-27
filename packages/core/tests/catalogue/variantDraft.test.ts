@@ -79,13 +79,19 @@ describe("validateVariantDraft: paint fields (task T009, FR-009)", () => {
     expect(errorOf(() => validateVariantDraft(draft))?.code).toBe("INVALID_FIELD");
   });
 
-  it("rejects a declared quantity that is not a whole number above zero", () => {
-    expect(errorOf(() => validateVariantDraft(paintDraft({ declaredQtyMilli: -1 })))?.code).toBe(
-      "INVALID_QUANTITY",
-    );
-    expect(errorOf(() => validateVariantDraft(paintDraft({ declaredQtyMilli: 3.5 })))?.code).toBe(
-      "INVALID_QUANTITY",
-    );
+  it.each([-1, 0, 3.5, Number.MAX_SAFE_INTEGER + 1])(
+    "rejects a declared quantity of %s with INVALID_QUANTITY",
+    (declaredQtyMilli) => {
+      const error = errorOf(() => validateVariantDraft(paintDraft({ declaredQtyMilli })));
+
+      expect(error?.code).toBe("INVALID_QUANTITY");
+    },
+  );
+
+  it.each([1, Number.MAX_SAFE_INTEGER])("accepts a declared quantity of %s", (declaredQtyMilli) => {
+    const accepted = validateVariantDraft(paintDraft({ declaredQtyMilli }));
+
+    expect(accepted.declaredQtyMilli).toBe(declaredQtyMilli);
   });
 });
 
