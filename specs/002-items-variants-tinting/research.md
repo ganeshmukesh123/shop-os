@@ -105,7 +105,7 @@ Sources read: the spec, PRD section 5 (FR-ITM-001 to 017, FR-TNT-001 to 009), PR
 
 ### D14. Migration of 001's items
 
-Every existing family gets `kind = 'general'`, no category (shown as "Uncategorised"), no brand; every variant keeps `axes = '{}'`, signature `''` and all its ids. No stock movement, bill or line is touched. Migrations start at `0015`.
+Every existing family gets `kind = 'general'`, no category (shown as "Uncategorised"), no brand; every variant keeps `axes = '{}'`, signature `''` and all its ids. No stock movement, bill or line is touched. Migrations start at `0016`.
 
 ### D15. Variant grid
 
