@@ -34,21 +34,28 @@ export function startBinary(executable, commandArguments, extraEnvironment = {})
   };
   child.stdout.on("data", appendOutput);
   child.stderr.on("data", appendOutput);
-  started.exited = new Promise((resolve) => {
-    child.once("exit", (exitCode) => {
-      started.exitCode = exitCode;
-      resolve(exitCode);
-    });
+  child.once("exit", (exitCode) => {
+    started.exitCode = exitCode;
+  });
+  child.on("error", (processError) => {
+    started.processError = processError;
+  });
+  started.closed = new Promise((resolve) => {
+    child.once("close", resolve);
   });
   return started;
 }
 
 export async function stopBinary(started) {
-  const isRunning = started.exitCode === undefined;
+  const isRunning = started.exitCode === undefined && started.processError === undefined;
   if (isRunning) {
     started.child.kill();
   }
-  await started.exited;
+  await started.closed;
+  fs.rmSync(started.dataFolder, { recursive: true, force: true });
+  if (started.processError) {
+    throw started.processError;
+  }
 }
 
 /** Applied migrations in the started app's database, or -1 while it cannot be read yet. */

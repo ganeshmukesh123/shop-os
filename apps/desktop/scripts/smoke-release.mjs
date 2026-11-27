@@ -30,36 +30,48 @@ function readAppPathArgument() {
 
 async function checkStartsAndMigrates(executable) {
   const started = startBinary(executable, []);
-  const journalCount = countJournalMigrations();
-  const isMigrated = await waitUntil(
-    () => countAppliedMigrations(started) === journalCount,
-    START_TIMEOUT_MILLISECONDS,
-  );
-  const isStillRunning = started.exitCode === undefined;
-  await stopBinary(started);
-  return {
-    name: `starts and applies ${journalCount} migrations`,
-    isPassed: isMigrated && isStillRunning,
-  };
+  try {
+    const journalCount = countJournalMigrations();
+    const isFinished = await waitUntil(
+      () => started.processError !== undefined || countAppliedMigrations(started) === journalCount,
+      START_TIMEOUT_MILLISECONDS,
+    );
+    const isStillRunning = started.exitCode === undefined && started.processError === undefined;
+    return {
+      name: `starts and applies ${journalCount} migrations`,
+      isPassed: isFinished && isStillRunning,
+    };
+  } finally {
+    await stopBinary(started);
+  }
 }
 
 async function checkRefusesDebugPort(executable) {
   const started = startBinary(executable, [`--remote-debugging-port=${DEBUG_PORT}`]);
-  const hasExited = await waitUntil(
-    () => started.exitCode !== undefined,
-    EXIT_TIMEOUT_MILLISECONDS,
-  );
-  const isPortLeftOpen = await isPortOpen(DEBUG_PORT);
-  await stopBinary(started);
-  const isPassed = hasExited && started.exitCode === 1 && !isPortLeftOpen;
-  return { name: "refuses --remote-debugging-port (O15)", isPassed };
+  try {
+    const hasExited = await waitUntil(
+      () => started.exitCode !== undefined || started.processError !== undefined,
+      EXIT_TIMEOUT_MILLISECONDS,
+    );
+    const isPortLeftOpen = await isPortOpen(DEBUG_PORT);
+    const isPassed = hasExited && started.exitCode === 1 && !isPortLeftOpen;
+    return { name: "refuses --remote-debugging-port (O15)", isPassed };
+  } finally {
+    await stopBinary(started);
+  }
 }
 
 async function checkIgnoresRunAsNode(executable) {
   const nodeScript = `process.stdout.write("${NODE_MARKER}")`;
   const started = startBinary(executable, ["-e", nodeScript], { ELECTRON_RUN_AS_NODE: "1" });
-  await waitUntil(() => started.exitCode !== undefined, EXIT_TIMEOUT_MILLISECONDS);
-  await stopBinary(started);
+  try {
+    await waitUntil(
+      () => started.exitCode !== undefined || started.processError !== undefined,
+      EXIT_TIMEOUT_MILLISECONDS,
+    );
+  } finally {
+    await stopBinary(started);
+  }
   return {
     name: "ignores ELECTRON_RUN_AS_NODE",
     isPassed: !started.outputText.includes(NODE_MARKER),
