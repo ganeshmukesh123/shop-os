@@ -15,6 +15,7 @@ import { useToast } from "../../../shared/components/Toast";
 import { uiText } from "../../../shared/text/strings";
 import { ApiError, call, messageOf } from "../../../shared/api/api";
 import { RoundOffLine } from "../RoundOffLine/RoundOffLine";
+import { CancelledBanner } from "./components/CancelledBanner";
 
 /**
  * The saved bill, with Print / Save PDF and "New bill". Printing happens after the bill is committed.
@@ -26,12 +27,15 @@ export function BillView({
   negativeStockItems,
   onNew,
   onBack,
+  onCancel,
 }: {
   bill: Bill;
   lines: BillLine[];
   negativeStockItems: Item[];
   onNew?: () => void;
   onBack?: () => void;
+  /** Offered as "Cancel bill" while the bill is posted; the Bills screen asks for the reason. */
+  onCancel?: () => void;
 }) {
   const toast = useToast();
   const [target, setTarget] = useState<PrintTarget>("receipt");
@@ -81,6 +85,9 @@ export function BillView({
         {bill.billDate.replace("T", " ").slice(0, 16)} · {uiText.payment[bill.paymentMode]}
         {bill.customerName ? ` · ${bill.customerName}` : ""}
       </Text>
+      {bill.status === "cancelled" && (
+        <CancelledBanner cancelReason={bill.cancelReason} cancelledAt={bill.cancelledAt} />
+      )}
       {negativeStockItems.length > 0 && (
         <StatusMessage role="warning" label={uiText.status.negativeStock}>
           {uiText.bill.negativeWarn}{" "}
@@ -154,6 +161,11 @@ export function BillView({
         <Button size="3" variant="outline" onClick={onBack ?? onNew}>
           {onBack ? uiText.bills.back : uiText.bill.newBill}
         </Button>
+        {onCancel && bill.status === "posted" && (
+          <Button size="3" variant="soft" color="red" onClick={onCancel}>
+            {uiText.bills.cancel.open}
+          </Button>
+        )}
       </Flex>
     </Flex>
   );

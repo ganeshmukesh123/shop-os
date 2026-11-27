@@ -19,4 +19,5 @@ export const LAYOUT = {
   amountColumnWidth: "130px",
   actionColumnWidth: "90px",
   restoreDialogWidth: "520px",
+  cancelDialogWidth: "480px",
 } as const;

@@ -57,7 +57,7 @@ const failure = (code: string, message: string) => () => {
 
 function renderBillView(
   handlers: FakeCommandHandlers = {},
-  overrides: { bill?: Bill; negativeStockItems?: Item[] } = {},
+  overrides: { bill?: Bill; negativeStockItems?: Item[]; onCancel?: () => void } = {},
 ) {
   const fake = installFakeShopos(handlers);
   const onNew = vi.fn();
@@ -68,6 +68,7 @@ function renderBillView(
         lines={[PIPE_LINE]}
         negativeStockItems={overrides.negativeStockItems ?? []}
         onNew={onNew}
+        onCancel={overrides.onCancel}
       />
     </ToastProvider>,
   );
@@ -106,10 +107,24 @@ describe("BillView: the saved bill", () => {
     expect(screen.getByText(/Pipe 20mm \(-1 pcs\)/)).toBeTruthy();
   });
 
-  it("shows the word Cancelled on a cancelled bill", () => {
+  it("shows the word Cancelled by the number and a banner with the reason on a cancelled bill", () => {
     renderBillView({}, { bill: { ...BILL, status: "cancelled", cancelReason: "wrong item" } });
 
-    expect(screen.getByText("Cancelled")).toBeTruthy();
+    expect(screen.getAllByText("Cancelled")).toHaveLength(2);
+    expect(screen.getByText(/This bill was cancelled\. Reason: wrong item\./)).toBeTruthy();
+  });
+
+  it("offers Cancel bill only while the bill is posted and the screen can cancel", () => {
+    const onCancel = vi.fn();
+    renderBillView({}, { onCancel });
+
+    expect(screen.getByRole("button", { name: "Cancel bill" })).toBeTruthy();
+  });
+
+  it("offers no Cancel bill on the screen that has just saved the bill", () => {
+    renderBillView();
+
+    expect(screen.queryByRole("button", { name: "Cancel bill" })).toBeNull();
   });
 
   it("calls onNew when New bill is pressed", async () => {
