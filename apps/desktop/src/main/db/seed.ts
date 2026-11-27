@@ -1,3 +1,4 @@
+import { insertCatalogueSeed } from "./catalogueSeed";
 import type { DB, Handle } from "./connection";
 import { newId, nowMs } from "./ids";
 import { location, shopProfile } from "./schema";
@@ -58,6 +59,7 @@ function insertFirstRunRows(tx: Handle, ctx: Ctx): void {
       kind: "shop_floor",
     })
     .run();
+  insertCatalogueSeed(tx, ctx);
 }
 
 export function loadCtx(db: DB): Ctx {

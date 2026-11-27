@@ -1,15 +1,9 @@
 import { sql } from "drizzle-orm";
 import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { base } from "./schemaBase";
 
-/** Columns every table carries (data-model.md conventions). */
-const base = {
-  id: text("id").primaryKey(), // UUID v7
-  businessId: text("business_id").notNull(),
-  shopId: text("shop_id").notNull(),
-  // UTC instants as epoch milliseconds (integer), never text
-  createdAt: integer("created_at").notNull(),
-  updatedAt: integer("updated_at").notNull(),
-};
+// Feature 002 tables live in their own files; drizzle-kit reads them through these re-exports.
+export * from "./catalogueSchema";
 
 export const itemFamily = sqliteTable(
   "item_family",
