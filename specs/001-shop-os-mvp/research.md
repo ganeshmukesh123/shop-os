@@ -154,6 +154,6 @@ The audit report is in the 2026-11-15 conversation; its finding IDs (C1, C2, H2,
 ## Unresolved items (non-blocking, tracked as milestone work)
 
 - SQLCipher availability in packaged Electron builds (M0; T009).
-- Thermal printer model and driver behaviour at 80 mm (T008, T058).
+- Thermal printer model and driver behaviour at 80 mm (T008, T058). Deferred 2026-11-27: no printer is available. The receipt layout is verified as HTML and PDF only; the first test needs one 80 mm printer, and it must happen before the first counter use.
 - CA confirmation of D19 (retention), D20 (rounding), D21 (gap handling) and D23 (title) before the printout is used as a legal bill (before feature 008).
 - Counsel: must a walk-in customer's name be kept on the bill (D19).
