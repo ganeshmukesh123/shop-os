@@ -78,32 +78,68 @@ function typoLimit(word: string): number {
 }
 
 /** How one query word matches the words of one name, or null if it does not. */
-function wordTier(queryWord: string, nameWords: string[]): number | null {
-  if (nameWords.includes(queryWord)) return WHOLE_WORD_TIER;
-  if (nameWords.some((nameWord) => nameWord.startsWith(queryWord))) return PREFIX_TIER;
+/** How one query word matches one name word: whole, prefix, within its typo limit, or not. */
+function singleWordTier(queryWord: string, nameWord: string): number | null {
+  if (nameWord === queryWord) return WHOLE_WORD_TIER;
+  if (nameWord.startsWith(queryWord)) return PREFIX_TIER;
   const limit = typoLimit(queryWord);
-  const isFuzzy =
-    limit > 0 &&
-    nameWords.some((nameWord) => editDistanceWithin(queryWord, nameWord, limit) !== null);
+  const isFuzzy = limit > 0 && editDistanceWithin(queryWord, nameWord, limit) !== null;
   return isFuzzy ? FUZZY_TIER : null;
 }
 
+/**
+ * The query's words, each with a cache of its verdict per distinct name word. A shop's names
+ * repeat the same few thousand words, so each edit distance is computed once per query, not once
+ * per name (spec 002 T025: 50,000 variants inside the 0.2 s budget).
+ */
+interface IQueryWords {
+  words: string[];
+  verdicts: Map<string, number | null>[];
+}
+
+function cachedTier(query: IQueryWords, wordIndex: number, nameWord: string): number | null {
+  const verdicts = query.verdicts[wordIndex]!;
+  const known = verdicts.get(nameWord);
+  if (known !== undefined) return known;
+  const verdict = singleWordTier(query.words[wordIndex]!, nameWord);
+  verdicts.set(nameWord, verdict);
+  return verdict;
+}
+
+/** How one query word matches the words of one name (its best name word), or null if it does not. */
+function wordTier(query: IQueryWords, wordIndex: number, nameWords: string[]): number | null {
+  let best: number | null = null;
+  for (const nameWord of nameWords) {
+    const tier = cachedTier(query, wordIndex, nameWord);
+    best = tier !== null && (best === null || tier < best) ? tier : best;
+    if (best === WHOLE_WORD_TIER) return best;
+  }
+  return best;
+}
+
 /** A name matches when every query word does; it ranks as its weakest word. */
-function nameTier(queryWords: string[], nameWords: string[]): number | null {
-  const tiers = queryWords.map((queryWord) => wordTier(queryWord, nameWords));
-  return tiers.includes(null) ? null : Math.max(...(tiers as number[]));
+function nameTier(query: IQueryWords, nameWords: string[]): number | null {
+  let weakest = WHOLE_WORD_TIER;
+  for (let wordIndex = 0; wordIndex < query.words.length; wordIndex += 1) {
+    const tier = wordTier(query, wordIndex, nameWords);
+    if (tier === null) return null;
+    weakest = Math.max(weakest, tier);
+  }
+  return weakest;
 }
 
 function entryTier(
   entry: IPreparedSearchEntry,
   queryText: string,
-  queryWords: string[],
+  query: IQueryWords,
 ): number | null {
   if (entry.codes.includes(queryText)) return CODE_TIER;
-  const tiers = entry.nameWords
-    .map((nameWords) => nameTier(queryWords, nameWords))
-    .filter((tier): tier is number => tier !== null);
-  return tiers.length === 0 ? null : Math.min(...tiers);
+  let best: number | null = null;
+  for (const nameWords of entry.nameWords) {
+    const tier = nameTier(query, nameWords);
+    best = tier !== null && (best === null || tier < best) ? tier : best;
+  }
+  return best;
 }
 
 const variantRow = (match: IMatch): IRow => ({
@@ -175,7 +211,8 @@ export function rankPreparedMatches(
 ): ISearchResult[] {
   const queryText = normaliseSearchText(query);
   if (queryText === "") return [];
-  const queryWords = queryText.split(" ");
+  const words = queryText.split(" ");
+  const queryWords: IQueryWords = { words, verdicts: words.map(() => new Map()) };
   const matches = entries.flatMap((entry, order): IMatch[] => {
     const tier = entryTier(entry, queryText, queryWords);
     const billCount = billCountByVariantId.get(entry.variantId) ?? 0;
