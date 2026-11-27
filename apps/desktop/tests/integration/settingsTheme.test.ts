@@ -53,9 +53,9 @@ describe("settings theme (spec 018 T035)", () => {
   });
 
   it("refuses a theme the database does not allow", () => {
-    expect(() =>
-      testDb.sqlite.prepare("update shop_profile set theme = 'purple'").run(),
-    ).toThrow(/CHECK constraint failed/);
+    expect(() => testDb.sqlite.prepare("update shop_profile set theme = 'purple'").run()).toThrow(
+      /CHECK constraint failed/,
+    );
   });
 });
 
