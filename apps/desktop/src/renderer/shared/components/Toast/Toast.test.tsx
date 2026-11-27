@@ -63,6 +63,20 @@ describe("Toast (design guidelines 5.1, PRD NFR-011)", () => {
     expect(announcement?.getAttribute("aria-live")).toBe("polite");
   });
 
+  it("a toast goes away when it is dismissed with the keyboard", async () => {
+    renderWithTheme(
+      <ToastProvider>
+        <ToastButtons />
+      </ToastProvider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "fail" }));
+    await screen.findByRole("alert");
+
+    await userEvent.keyboard("{F8}{Escape}");
+
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+  });
+
   it("a success toast is announced politely and a failure toast assertively", async () => {
     renderWithTheme(
       <ToastProvider>
