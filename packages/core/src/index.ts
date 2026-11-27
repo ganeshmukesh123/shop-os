@@ -1,6 +1,7 @@
 export * from "./errors";
 export * from "./money";
 export * from "./quantity";
+export * from "./units/unitConversion";
 export * from "./billing";
 export * from "./stock";
 export * from "./numbering";
