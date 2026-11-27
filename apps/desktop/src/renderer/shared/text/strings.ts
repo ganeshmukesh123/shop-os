@@ -130,6 +130,7 @@ export const uiText = {
     choose: "Choose folder",
     lastBackup: "Last good backup",
     never: "No backup yet",
+    noFolderChosen: "No folder chosen",
     runNow: "Back up now",
     restore: "Restore from file",
     backupFailed: "Last backup failed",
