@@ -12,6 +12,10 @@ export const MAX_NUMBER_LENGTH = 16;
  * (`financialYearOfBusinessDate`).
  */
 export function financialYear(date: Date): string {
+  const isInvalidDate = Number.isFinite(date.getTime()) === false;
+  if (isInvalidDate) {
+    throw new CoreError("INVALID_FIELD", "financial year requires a valid date");
+  }
   return financialYearOfBusinessDate(
     DateTime.fromJSDate(date, { zone: "system" })
       .reconfigure(MACHINE_FORMAT)

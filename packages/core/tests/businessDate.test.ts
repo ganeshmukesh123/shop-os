@@ -222,6 +222,12 @@ describe("machine dates ignore Luxon's global settings (no hidden inputs)", () =
     expect(financialYearOfBusinessDate("2027-04-01")).toBe("27-28");
   });
 
+  it("says INVALID_FIELD for an invalid Date even when Luxon is set to throw", () => {
+    Settings.throwOnInvalid = true;
+
+    expect(errorCodeOf(() => financialYear(new Date(NaN)))).toBe("INVALID_FIELD");
+  });
+
   it("still writes 2027-04-01, 27-28 and ASCII digits with Arabic digits and an Islamic calendar set", () => {
     Settings.defaultLocale = "ar-EG";
     Settings.defaultNumberingSystem = "arab";
