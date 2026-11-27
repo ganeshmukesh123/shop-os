@@ -107,7 +107,7 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 
 ## Phase 6: Other platforms and hardening (M5) - US5, US4
 
-- [ ] T039 [P] [US4] Write `docs/contributing/ci.md`: the pipeline diagram, each check and how to fix a failure, how to run everything locally (`pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build && pnpm test:e2e`), required checks and branch rules, how to read the run summary
+- [X] T039 [P] [US4] Write `docs/contributing/ci.md`: the pipeline diagram, each check and how to fix a failure, how to run everything locally (`pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build && pnpm test:e2e`), required checks and branch rules, how to read the run summary
 - [ ] T040 [US5] Add `.github/workflows/smoke.yml`: build and start the packaged app on macOS and Windows after merge to `main` and nightly, run the core scenario (add item, save bill); first confirm the runner-minutes allowance and cost (resolves O3)
 - [ ] T041 [P] [US4] Add a weekly flake report (tests that passed only on retry) to the run summary or a scheduled job; a test that flakes twice in a week gets an issue
 - [ ] T042 [P] [US6] Add `.github/dependabot.yml` for weekly dependency updates (optional)
