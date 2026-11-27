@@ -37,7 +37,7 @@ Follow `docs/contributing/pull-requests.md`. In short:
 - **Title**: `type(scope): summary` (feat, fix, refactor, perf, test, docs, build, chore, style), imperative, 72 characters or fewer.
 - **Description**: use `.github/pull_request_template.md`: Summary (why first), Links (spec, task IDs, PRD IDs), Changes by layer, Not in this PR, How it was tested (commands and results, light and dark screenshots for UI), Risk and rollback, Size, Checklist.
 - **Commits**: one logical step each, message says why, same `type(scope)` format, no "wip". Squash on merge.
-- Each PR leaves the app working: lint, typecheck and tests pass.
+- Each PR leaves the app working: lint, typecheck and tests pass. CI must be green on the four checks Quick checks, Tests and coverage, Build and End-to-end (`docs/contributing/ci.md`); the 90% coverage gate is reported now and enforced once spec 017 T036 is done.
 
 ## 3. Definition of done (a task)
 

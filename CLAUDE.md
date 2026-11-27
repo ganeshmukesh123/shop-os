@@ -29,7 +29,7 @@ Project skills in `.claude/skills/` hold the coding standards. Use them.
 | Starting or finishing a feature or task | `shopos-feature-workflow` |
 | Reviewing a change | `shopos-code-review` |
 
-Pull requests: one concern each, titled `type(scope): summary`, described with `.github/pull_request_template.md`, within 200 (small) / 400 (target) / 800 (hard) changed lines; measure with `pnpm pr:size`. Details: `docs/contributing/pull-requests.md`.
+Pull requests: one concern each, titled `type(scope): summary`, described with `.github/pull_request_template.md`, within 200 (small) / 400 (target) / 800 (hard) changed lines; measure with `pnpm pr:size`. Details: `docs/contributing/pull-requests.md`; checks: `docs/contributing/ci.md`.
 
 Limits (lint warnings): file 200 lines (tests 300), function 40, component 120, complexity 10, parameters 4, nesting 2. Control flow: ternary and `&&`, never `continue`, no nested ternaries (lint errors). Layering is lint-enforced: core imports nothing outer; the renderer never imports main-process, Node or database code.
 
@@ -68,6 +68,8 @@ specs/                    one folder per feature
 - `pnpm dev`: run the desktop app against a throwaway dev database
 - `pnpm build`: production bundle; `pnpm --filter @shopos/desktop package`: installer
 - `pnpm test:e2e`: Playwright for Electron (run `pnpm build` first)
+- `pnpm test:coverage`: tests with a coverage report; `pnpm test:scripts`: tests of the CI scripts; `pnpm check:migrations`: migrations match the schema; `pnpm format:check`: formatting without writing
+- CI (`.github/workflows/ci.yml`) runs these checks: Quick checks (format, lint, types, script tests, migrations, PR title), Tests and coverage, Build, End-to-end; PR size, Dependency audit and Secret scan are informational or alongside. The 90% coverage gate is written but not enforced until `COVERAGE_ENFORCE` is switched on (spec 017 T036). Details and how to fix each check: `docs/contributing/ci.md`
 - After changing `apps/desktop/src/main/db/schema.ts`: `pnpm --filter @shopos/desktop db:generate`
 
 Notes: the installed drizzle-orm is 0.45 (drizzle-kit 0.31), so table extras use the array form `(tableColumns) => [index(...), check(...)]`. better-sqlite3 has ONE native binary per install, and it must be the ELECTRON build (ABI 148 for Electron 43; see `specs/017-ci-github-workflow/research.md`). The app, the Vitest integration tests and the Playwright specs all use it: `pnpm test` in `apps/desktop` runs Vitest inside Electron's Node (`ELECTRON_RUN_AS_NODE=1`, see `apps/desktop/scripts/vitest-electron.mjs`). `apps/desktop/scripts/ensure-electron-sqlite.mjs` runs on `postinstall` and before `dev`, `test` and `test:e2e`, and downloads the matching prebuilt binary if the file is the wrong build. Do NOT run `pnpm rebuild better-sqlite3` (it builds for plain Node and breaks the app). Running `npx vitest` directly uses plain Node and fails with `NODE_MODULE_VERSION`; use `pnpm test` or `pnpm test:watch`. `packages/core` has no native code and still runs in plain Node. Playwright specs read the database with the `sqlite3` CLI. electron-builder rebuilds the module when packaging.

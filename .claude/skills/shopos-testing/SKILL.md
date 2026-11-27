@@ -21,7 +21,7 @@ Authority: constitution VI. Architecture: `docs/reference/architecture.md` 11.11
 
 **Where tests live.** A test for one component or one service sits **in that component's or service's folder** (`BillLineRow/BillLineRow.test.tsx`, `BillingService/BillingService.test.ts`). Only tests that span several parts stay in `apps/desktop/tests/` (IPC, end to end, shared helpers). The table above shows the level, not the folder, for single-component tests. Until task T093 moves them, existing tests stay under `tests/`.
 
-Commands: `pnpm test` (all unit and integration), `pnpm test:e2e`, `pnpm typecheck`, `pnpm lint`. Run a single desktop file inside Electron's Node with `pnpm --filter @shopos/desktop exec node scripts/vitest-electron.mjs run tests/integration/billing.test.ts` (plain `vitest` uses plain Node and fails on the SQLite binary, see section 6). Coverage: `pnpm test:coverage`.
+Commands: `pnpm test` (all unit and integration), `pnpm test:e2e`, `pnpm typecheck`, `pnpm lint`. Run a single desktop file inside Electron's Node with `pnpm --filter @shopos/desktop exec node scripts/vitest-electron.mjs run tests/integration/billing.test.ts` (plain `vitest` uses plain Node and fails on the SQLite binary, see section 6). Coverage: `pnpm test:coverage`. CI check names: Quick checks, Tests and coverage, Build, End-to-end (`docs/contributing/ci.md`); run them all locally before opening a PR.
 
 ## 3. Test-first rule
 
