@@ -11,7 +11,7 @@ export function renderTitle(
   values: Readonly<Record<string, string | undefined>>,
 ): string {
   const filledIn = template.replace(PLACEHOLDER, (_placeholder, key: string) =>
-    (values[key] ?? "").trim(),
+    Object.hasOwn(values, key) ? (values[key] ?? "").trim() : "",
   );
   return filledIn.replace(/\s+/g, " ").trim();
 }

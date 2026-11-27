@@ -23,6 +23,17 @@ describe("renderTitle (spec 002 T027)", () => {
     );
   });
 
+  it("skips an inherited constructor on a plain object", () => {
+    expect(renderTitle("PVC {constructor} {size}", { size: "1 in" })).toBe("PVC 1 in");
+  });
+
+  it("skips inherited strings and renders an explicitly supplied constructor", () => {
+    const values = { constructor: "  Custom  " };
+    Object.setPrototypeOf(values, { brand: "Supreme" });
+
+    expect(renderTitle("{brand} {constructor}", values)).toBe("Custom");
+  });
+
   it("gives an empty title when nothing is filled in, so the caller falls back to the family name", () => {
     expect(renderTitle("{brand} {size}", {})).toBe("");
   });
