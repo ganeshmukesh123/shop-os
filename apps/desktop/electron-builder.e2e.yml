@@ -1,0 +1,18 @@
+# The e2e package flavour (spec 018, decision recorded in research.md O15). Playwright drives the
+# app through Node's inspector and Chromium's DevTools port, which the release fuses and the
+# start-up switch check block. This build differs from the release ONLY in what follows; ASAR
+# integrity and load-only-from-ASAR stay on, so the e2e run still proves the archive works.
+# Never ship it: its own name, app id and output folder keep it apart from the counter's app.
+extends: ./electron-builder.yml
+appId: in.shopos.desktop.e2e
+productName: Shop OS E2E
+directories:
+  output: release-e2e
+electronFuses:
+  runAsNode: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: true
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+linux:
+  executableName: shop-os-e2e

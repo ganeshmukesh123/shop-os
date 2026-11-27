@@ -7,9 +7,11 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "package": "electron-vite build && electron-builder",
+    "package:e2e": "node scripts/package-e2e.mjs",
     "test": "node scripts/vitest-electron.mjs run",
     "test:e2e": "playwright test",
     "test:e2e:packaged": "node scripts/e2e-packaged.mjs",
+    "check:fuses": "node scripts/check-fuses.mjs",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "ensure:sqlite": "node scripts/ensure-electron-sqlite.mjs",
@@ -32,6 +34,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@electron/fuses": "1.8.0",
     "@playwright/test": "^1.48.0",
     "@shopos/core": "workspace:*",
     "@testing-library/react": "^16.3.3",

@@ -7,7 +7,7 @@ import { addItem, launch } from "./launch";
 const MIGRATIONS_FOLDER = path.resolve(__dirname, "../../drizzle");
 
 // Task T007 (spec 001): SQLite opens, migrates and keeps a row in the PACKAGED app.
-// Runs only against an installer's output: `pnpm test:e2e:packaged` sets SHOPOS_E2E_EXECUTABLE.
+// Runs only against packaged output (the `package:e2e` flavour): `pnpm test:e2e:packaged` sets SHOPOS_E2E_EXECUTABLE.
 test.skip(!process.env.SHOPOS_E2E_EXECUTABLE, "needs the packaged app (SHOPOS_E2E_EXECUTABLE)");
 
 function queryDatabase(databaseFile: string, statement: string): string {
