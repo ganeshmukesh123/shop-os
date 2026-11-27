@@ -106,6 +106,33 @@ export class FamilyRepository {
     return variantRow ? toVariant(variantRow) : null;
   }
 
+  updateFamily(familyId: string, patch: Partial<INewFamily>): IFamily | null {
+    const { spec, axisKeys, ...plainFields } = patch;
+    const familyRow = this.databaseHandle
+      .update(itemFamily)
+      .set({
+        ...plainFields,
+        ...(spec ? { spec: JSON.stringify(spec) } : {}),
+        ...(axisKeys ? { axisKeys: JSON.stringify(axisKeys) } : {}),
+        updatedAt: nowMs(),
+      })
+      .where(and(eq(itemFamily.id, familyId), eq(itemFamily.shopId, this.ctx.shopId)))
+      .returning()
+      .get();
+    return familyRow ? toFamily(familyRow) : null;
+  }
+
+  /** Change a variant's fields; its axes, code, family and stock are never in `patch`. */
+  updateVariant(variantId: string, patch: Partial<NewVariantRow>): IVariant | null {
+    const variantRow = this.databaseHandle
+      .update(itemVariant)
+      .set({ ...patch, updatedAt: nowMs() })
+      .where(and(eq(itemVariant.id, variantId), eq(itemVariant.shopId, this.ctx.shopId)))
+      .returning()
+      .get();
+    return variantRow ? toVariant(variantRow) : null;
+  }
+
   private stamp() {
     const now = nowMs();
     return {
