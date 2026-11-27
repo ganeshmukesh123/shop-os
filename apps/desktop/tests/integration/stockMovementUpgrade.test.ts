@@ -9,12 +9,15 @@ const INSERT_MOVEMENT = `insert into stock_movement
 
 /** Task T075 (migration 0007): movements keep a positive quantity and a direction from locations. */
 describe("upgrading stock movements from migration 0004 (research D18)", () => {
-  it("seeds one 'Shop floor' location for the existing shop", () => {
+  it("seeds one 'Shop floor' location for the existing shop (and 0019 adds 'Tinted returns')", () => {
     const sqlite = upgradeDatabaseWithOneBill();
 
-    const locationRows = sqlite.prepare("select name, kind from location").all();
+    const locationRows = sqlite.prepare("select name, kind from location order by name").all();
 
-    expect(locationRows).toEqual([{ name: "Shop floor", kind: "shop_floor" }]);
+    expect(locationRows).toEqual([
+      { name: "Shop floor", kind: "shop_floor" },
+      { name: "Tinted returns", kind: "tinted_returns" },
+    ]);
   });
 
   it("turns the opening +10 pcs into stock arriving on the shop floor", () => {
@@ -111,7 +114,9 @@ describe("stock_movement rules in the database", () => {
          values ('variant-1', ?, ?, 'now', 'now', 'family-1', 'ITM-0001', 'Pipe', 'pcs', 100)`,
       )
       .run(ctx.businessId, ctx.shopId);
-    const shopFloor = sqlite.prepare("select id from location").get() as { id: string };
+    const shopFloor = sqlite.prepare("select id from location where kind = 'shop_floor'").get() as {
+      id: string;
+    };
     sqlite.prepare(INSERT_MOVEMENT).run({
       id: "movement-1",
       businessId: ctx.businessId,
@@ -142,11 +147,15 @@ describe("stock_movement rules in the database", () => {
     expect(() => insertMovement({})).not.toThrow();
   });
 
+  // Since spec 002 T019 (migration 0019) the type-dependent rules come from the movement_type row
+  // through the stock_movement_rules trigger, so the messages name the rule, not a CHECK.
   it("refuses a movement with both locations, or none", () => {
     expect(() => insertMovement({ fromLocationId: SHOP_FLOOR_LOCATION })).toThrow(
-      /stock_movement_one_direction/,
+      /locations do not match the movement type/,
     );
-    expect(() => insertMovement({ toLocationId: null })).toThrow(/stock_movement_one_direction/);
+    expect(() => insertMovement({ toLocationId: null })).toThrow(
+      /locations do not match the movement type/,
+    );
   });
 
   it("refuses a quantity of zero or below", () => {
@@ -155,33 +164,56 @@ describe("stock_movement rules in the database", () => {
   });
 
   it("refuses an adjustment without a note", () => {
-    expect(() => insertMovement({ movementType: "adjustment" })).toThrow(
-      /stock_movement_adjustment_note/,
-    );
+    expect(() => insertMovement({ movementType: "adjustment" })).toThrow(/needs a reason/);
     expect(() => insertMovement({ movementType: "adjustment", note: "   " })).toThrow(
-      /stock_movement_adjustment_note/,
+      /needs a reason/,
     );
   });
 
-  it.each(["sale", "sale_cancel"])("requires a bill document for %s", (movementType) => {
-    expect(() => insertMovement({ movementType })).toThrow(/stock_movement_doc_pair/);
-    expect(() => insertMovement({ movementType, docType: "bill", docId: "bill-1" })).not.toThrow();
+  it("requires a bill document for a sale, which leaves the shop floor", () => {
+    const leavesShopFloor = { fromLocationId: SHOP_FLOOR_LOCATION, toLocationId: null };
+
+    expect(() => insertMovement({ movementType: "sale", ...leavesShopFloor })).toThrow(
+      /needs its document/,
+    );
+    expect(() =>
+      insertMovement({
+        movementType: "sale",
+        ...leavesShopFloor,
+        docType: "bill",
+        docId: "bill-1",
+      }),
+    ).not.toThrow();
+  });
+
+  it("requires a bill document for a sale_cancel, which returns to the shop floor", () => {
+    expect(() => insertMovement({ movementType: "sale_cancel" })).toThrow(/needs its document/);
+    expect(() =>
+      insertMovement({ movementType: "sale_cancel", docType: "bill", docId: "bill-1" }),
+    ).not.toThrow();
   });
 
   it.each(["opening", "adjustment"])("refuses a bill document for %s", (movementType) => {
     expect(() =>
       insertMovement({ movementType, docType: "bill", docId: "bill-1", note: "Stock count" }),
-    ).toThrow(/stock_movement_doc_pair/);
+    ).toThrow(/has no document/);
     expect(() => insertMovement({ movementType, note: "Stock count" })).not.toThrow();
   });
 
   it("refuses a document id without a type or a non-bill document", () => {
-    expect(() => insertMovement({ movementType: "sale", docId: "bill-1" })).toThrow(
-      /stock_movement_doc_pair/,
-    );
+    const leavesShopFloor = { fromLocationId: SHOP_FLOOR_LOCATION, toLocationId: null };
+
     expect(() =>
-      insertMovement({ movementType: "sale", docType: "purchase", docId: "bill-1" }),
-    ).toThrow(/stock_movement_doc_pair/);
+      insertMovement({ movementType: "sale", ...leavesShopFloor, docId: "bill-1" }),
+    ).toThrow(/needs its document/);
+    expect(() =>
+      insertMovement({
+        movementType: "sale",
+        ...leavesShopFloor,
+        docType: "purchase",
+        docId: "bill-1",
+      }),
+    ).toThrow(/needs its document/);
   });
 
   it("refuses a document type without a document id", () => {

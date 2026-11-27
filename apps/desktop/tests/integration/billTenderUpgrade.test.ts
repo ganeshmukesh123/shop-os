@@ -94,9 +94,10 @@ describe("tender rules in the database", () => {
   });
 
   it("refuses an unknown mode, a negative amount, or a status other than label", () => {
-    expect(() => insertTender({ mode: "cheque" })).toThrow(/bill_tender_mode/);
+    // Mode and status are lookups since spec 002 T019 (migration 0019): a foreign key refuses them
+    expect(() => insertTender({ mode: "cheque" })).toThrow(/FOREIGN KEY/);
     expect(() => insertTender({ amountPaise: -1 })).toThrow(/bill_tender_amount_nonneg/);
-    expect(() => insertTender({ status: "paid" })).toThrow(/bill_tender_status/);
+    expect(() => insertTender({ status: "paid" })).toThrow(/FOREIGN KEY/);
   });
 });
 
