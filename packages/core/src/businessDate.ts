@@ -1,4 +1,4 @@
-import { DateTime, IANAZone } from "luxon";
+import { DateTime, FixedOffsetZone, IANAZone } from "luxon";
 import { CoreError } from "./errors";
 
 /** The shop's time zone until it sets its own (research D22). IST has no daylight saving. */
@@ -8,6 +8,7 @@ const BUSINESS_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const APRIL_MONTH_NUMBER = 4;
 const MAX_DATE_INSTANT_MS = 8_640_000_000_000_000;
 const ONE_DAY_MS = 86_400_000;
+const ONE_DAY_MINUTES = 1_440;
 // One day inside the Date range: Luxon adds the zone offset (under a day everywhere) before it
 // builds the wall-clock fields, and past the range edge it formats "Invalid DateTime".
 const MAX_SHOP_INSTANT_MS = MAX_DATE_INSTANT_MS - ONE_DAY_MS;
@@ -69,11 +70,22 @@ export function localIsoOf(instantMs: number, timeZone: string): string {
 }
 
 /**
- * The date and time with no separators (YYYYMMDD-HHmmss) in a named zone at a UTC instant, for file
- * names such as `shopos-20261205-083405.sqlite`. Names sort in time order.
+ * The date and time with no separators (YYYYMMDD-HHmmss) at a fixed UTC offset in minutes (India is
+ * +330), for file names such as `shopos-20261205-083405.sqlite`. Names sort in time order. It takes
+ * an offset, not a zone name, because a computer's own zone may have no name (TZ=UTC+3), and that
+ * must never stop a backup.
  */
-export function compactStampOf(instantMs: number, timeZone: string): string {
-  return inShopZone(instantMs, timeZone).toFormat(COMPACT_STAMP_FORMAT);
+export function compactStampAtOffset(instantMs: number, offsetMinutes: number): string {
+  assertInstant(instantMs);
+  const isInvalidOffset =
+    !Number.isSafeInteger(offsetMinutes) || Math.abs(offsetMinutes) >= ONE_DAY_MINUTES;
+  if (isInvalidOffset) {
+    throw new CoreError("INVALID_FIELD", "offset must be whole minutes within one day of UTC");
+  }
+  const offsetZone = FixedOffsetZone.instance(offsetMinutes);
+  return DateTime.fromMillis(instantMs, { zone: offsetZone, ...MACHINE_FORMAT }).toFormat(
+    COMPACT_STAMP_FORMAT,
+  );
 }
 
 /** Indian financial year (1 April to 31 March) of a business date: 2027-04-01 -> "27-28". */

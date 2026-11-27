@@ -26,4 +26,21 @@ describe("backupStampOf", () => {
   it("matches the file-name pattern the backup list reads", () => {
     expect(backupStampOf(new Date(2026, 11, 5, 8, 34, 5))).toMatch(/^\d{8}-\d{6}$/);
   });
+
+  it.each([
+    ["an offset string, as for TZ=UTC+3", "-03:00"],
+    ["no zone at all, as Node 22 to 26 give for TZ=UTC+3", undefined],
+  ])("still stamps the backup when the device zone is %s", (_case, deviceZone) => {
+    const realOptions = Intl.DateTimeFormat().resolvedOptions();
+    const zoneSpy = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ ...realOptions, timeZone: deviceZone as string });
+    const backupTime = new Date(2026, 11, 5, 8, 34, 5);
+
+    try {
+      expect(backupStampOf(backupTime)).toBe(handWrittenStamp(backupTime));
+    } finally {
+      zoneSpy.mockRestore();
+    }
+  });
 });
