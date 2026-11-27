@@ -1,16 +1,15 @@
 /**
  * The one place for the coverage rules (spec 017, FR-010 to FR-013).
  *
- * Gate: the 90% threshold is applied only when COVERAGE_ENFORCE is true. It is switched on by its own
- * pull request (task T036) once `main` already measures 90% on every metric. Until then CI reports
- * coverage and blocks nothing.
+ * Gate: the 90% threshold is applied only when COVERAGE_ENFORCE is true. It was switched on by its own
+ * pull request (task T036) once `main` already measured 90% on every metric (research F11).
  *
  * Exclusions: keep this list short and reviewed. Adding one needs a written reason in the PR.
  */
 export const COVERAGE_THRESHOLD_PERCENT = 90;
 
-/** Report-only until the project reaches 90%. */
-export const COVERAGE_ENFORCE = false;
+/** On since T036: a run below 90% on any metric fails and names the files (measured at 90%+ in research F11). */
+export const COVERAGE_ENFORCE = true;
 
 /** Generated files, type declarations and the test folders themselves. Nothing else. */
 export const COVERAGE_EXCLUDED_PATHS = [
