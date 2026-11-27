@@ -1,9 +1,30 @@
+import { useState } from "react";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { Bill } from "@shopos/core";
 import { installFakeShopos } from "../../../../../../../tests/helpers/fakeShopos";
 import { buildBill } from "../../../../../../../tests/helpers/billFixtures";
 import { renderWithTheme } from "../../../../../../../tests/helpers/renderWithTheme";
 import { CancelBillDialog } from "./CancelBillDialog";
+
+/** Stands in for BillView: a button that opens the dialog, as the bill view's Cancel bill does. */
+function DialogOpener() {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setIsOpen(true)}>
+        Open cancel
+      </button>
+      {isOpen && (
+        <CancelBillDialog
+          bill={buildBill()}
+          onClose={() => setIsOpen(false)}
+          onCancelled={() => setIsOpen(false)}
+        />
+      )}
+    </>
+  );
+}
 
 const CANCELLED_BILL = buildBill({
   status: "cancelled",
@@ -11,7 +32,9 @@ const CANCELLED_BILL = buildBill({
   cancelledAt: "2026-11-15T10:00:00.000Z",
 });
 
-function renderDialog(cancelHandler = () => ({ bill: CANCELLED_BILL })) {
+function renderDialog(
+  cancelHandler: () => { bill: Bill } | Promise<{ bill: Bill }> = () => ({ bill: CANCELLED_BILL }),
+) {
   const fakeShopos = installFakeShopos({ "bills.cancel": cancelHandler });
   const onClose = vi.fn();
   const onCancelled = vi.fn();
@@ -79,5 +102,36 @@ describe("CancelBillDialog (spec US3, FR-017)", () => {
 
     expect(onClose).toHaveBeenCalled();
     expect(fakeShopos.calls).toHaveLength(0);
+  });
+
+  it("sends one cancel for bill C1/26-27/000001 even when Cancel bill is clicked twice", async () => {
+    const { fakeShopos } = renderDialog(() => new Promise<{ bill: Bill }>(() => undefined));
+
+    await userEvent.type(reasonField(), "Wrong item");
+    await userEvent.click(confirmButton());
+
+    expect(confirmButton().disabled).toBe(true);
+    await userEvent.click(confirmButton());
+    const cancelCalls = fakeShopos.calls.filter((call) => call.commandName === "bills.cancel");
+    expect(cancelCalls).toHaveLength(1);
+  });
+});
+
+describe("CancelBillDialog focus (keyboard-first counter)", () => {
+  const openerButton = () => screen.getByRole("button", { name: "Open cancel" });
+
+  it.each([
+    ["Escape", () => userEvent.keyboard("{Escape}")],
+    ["Keep bill", () => userEvent.click(screen.getByRole("button", { name: "Keep bill" }))],
+  ])("gives focus back to the button that opened it after %s", async (_closeWay, closeDialog) => {
+    installFakeShopos({ "bills.cancel": () => ({ bill: CANCELLED_BILL }) });
+    renderWithTheme(<DialogOpener />);
+
+    await userEvent.click(openerButton());
+    await screen.findByRole("alertdialog");
+    await closeDialog();
+
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(openerButton()));
   });
 });
