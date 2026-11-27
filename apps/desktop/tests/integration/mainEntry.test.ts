@@ -29,6 +29,7 @@ vi.mock("electron", () => {
   return {
     app: {
       isPackaged: false,
+      commandLine: { hasSwitch: () => false },
       setPath: electronMocks.setPath,
       getPath: () => electronMocks.userDataFolder.value,
       whenReady: async () => {},

@@ -12,6 +12,7 @@
     "test:e2e": "playwright test",
     "test:e2e:packaged": "node scripts/e2e-packaged.mjs",
     "check:fuses": "node scripts/check-fuses.mjs",
+    "smoke:release": "node scripts/smoke-release.mjs",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "ensure:sqlite": "node scripts/ensure-electron-sqlite.mjs",

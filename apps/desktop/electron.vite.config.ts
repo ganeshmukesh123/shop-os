@@ -14,8 +14,12 @@ const csp: Plugin = {
 };
 
 // better-sqlite3 is a native module and stays external; everything else is bundled into the output.
+/** Only the e2e package flavour may be started with a DevTools switch (spec 018 O15). */
+const ALLOWS_DEBUG_SWITCHES = process.env["SHOPOS_E2E_BUILD"] === "1";
+
 export default {
   main: {
+    define: { __SHOPOS_ALLOWS_DEBUG_SWITCHES__: JSON.stringify(ALLOWS_DEBUG_SWITCHES) },
     build: {
       outDir: "out/main",
       rollupOptions: {

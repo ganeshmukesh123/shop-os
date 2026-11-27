@@ -2,6 +2,8 @@ import { defineConfig } from "vitest/config";
 import { buildCoverageOptions } from "../../config/coverage";
 
 export default defineConfig({
+  // The main bundle's build flag (src/main/buildFlags.d.ts); tests run as a release build.
+  define: { __SHOPOS_ALLOWS_DEBUG_SWITCHES__: "false" },
   test: {
     // describe, it, expect, vi and the hooks are available in tests without importing them.
     globals: true,
