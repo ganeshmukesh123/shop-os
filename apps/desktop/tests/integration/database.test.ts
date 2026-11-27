@@ -161,7 +161,8 @@ describe("schema contract", () => {
         .sort();
     expect(referencedTables(billLine)).toEqual(["bill", "item_variant"]);
     expect(referencedTables(stockMovement)).toEqual(["item_variant", "location", "location"]);
-    expect(referencedTables(itemVariant)).toEqual(["item_family"]);
+    // merged_into_id points at another variant (spec 002 T017)
+    expect(referencedTables(itemVariant)).toEqual(["item_family", "item_variant"]);
     expect(referencedTables(billTender)).toEqual(["bill"]);
   });
 
