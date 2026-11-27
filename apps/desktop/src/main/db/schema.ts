@@ -17,6 +17,7 @@ import { tenderMode, tenderStatus } from "./lookupSchema";
 export * from "./catalogueSchema";
 export * from "./itemSchema";
 export * from "./lookupSchema";
+export * from "./mergeLogSchema";
 export * from "./stockSchema";
 export * from "./variantDetailSchema";
 

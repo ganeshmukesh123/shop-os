@@ -141,6 +141,13 @@
       "when": 1795802450343,
       "tag": "0019_lookup_tables_and_rebuild",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1795803041176,
+      "tag": "0020_merge_log_and_exceptions",
+      "breakpoints": true
     }
   ]
 }
