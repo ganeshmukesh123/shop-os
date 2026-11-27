@@ -40,7 +40,15 @@ description: "Task list for feature 002: item families, variants, search, merge,
 - [ ] T007 [P] Write tests in `core/tests/search/normaliseSearchText.test.ts` and `core/tests/search/editDistance.test.ts`: NFC, lower case, Latin diacritics removed, Devanagari kept; Damerau-Levenshtein "elbow"/"elbwo" = 1, "paipa"/"pipe" = 2; `editDistanceWithin` stops early above the limit
 - [ ] T008 [P] Write tests in `core/tests/search/rankSearchMatches.test.ts`: tier order exact barcode or code, whole word, prefix, fuzzy (distance 1 for 4 to 7 characters, 2 for 8 or more); within a tier more `bill_count_90d` first; a multi-variant family appears once as a family row
 - [ ] T009 [P] Write tests in `core/tests/catalogue/variantDraft.test.ts` for `validateVariantDraft`: for family kind `base_paint`, `colorant`, `paint` or `thinner_solvent`, `petroleum_class`, `declared_qty_milli` and `declared_uom` are required (`MISSING_PAINT_FIELDS`); `sealed_pack_only` with `allow_decimal` 1 gives `SEALED_PACK_DECIMAL`; `warranty_months` 0 to 120; `trade_label` up to 20 characters; `location_tag` up to 30
-- [ ] T010 [P] Implement `core/src/catalogue/axisSignature.ts` and `core/src/catalogue/variantCombinations.ts` to pass T004 and T005
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:4b556ec42d1b098d48d359a0c95989442e38916889d7f1864283463d126415f4 -->
+
+- [ ] T089 [US1] Add FR-002 boundary tests to `core/tests/catalogue/variantCombinations.test.ts` after T005: 10 × 10 × 5 axis values generate all 500 combinations; 10 × 10 × 6 axis values are refused with `TOO_MANY_COMBINATIONS` and the requested count (600) in the error message.
+- [ ] T010 [P] Implement `core/src/catalogue/axisSignature.ts` and `core/src/catalogue/variantCombinations.ts` to pass T004 and T005; enforce FR-002’s 500-combination limit to pass T089
+
+<!-- /coderabbit-ai-generated:v1 -->
+
 - [ ] T011 [P] Implement `core/src/units/unitConversion.ts` (`convertToBaseMilli`) to pass T006
 - [ ] T012 [P] Implement `core/src/search/normaliseSearchText.ts` and `core/src/search/editDistance.ts` to pass T007
 - [ ] T013 Implement `core/src/search/rankSearchMatches.ts` to pass T008 (depends on T012)

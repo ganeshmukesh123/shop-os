@@ -24,11 +24,19 @@ The owner creates a family such as "PVC Pipe Supreme" with attributes (size, cla
 
 **Acceptance Scenarios**:
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:8062c5180064c832b234338ce920b25c88a5b3446bdfeb02b1cee19d19dd8814 -->
+
 1. **Given** a family with sizes 0.5", 0.75", 1" and classes 4 kg and 6 kg, **When** the owner generates variants, **Then** 6 variants are created and each can be deleted if not stocked.
 2. **Given** a family is selected on a bill, **When** the user presses Enter, **Then** a grid opens (rows one attribute, columns another) with stock in each cell.
 3. **Given** a variant with base unit metre and 1 roll = 90 m, **When** billing or receiving, **Then** the user may use either unit and quantities convert exactly.
 4. **Given** a unit that does not allow decimals (pcs, sealed packs), **When** 2.5 is entered, **Then** it is rejected.
 5. **Given** a variant has several attributes of the seeded set in FR-001, **When** more than 4 are chosen, **Then** the system refuses and says why.
+6. **Given** a family with axis values that produce exactly 500 combinations, **When** the owner generates variants, **Then** all 500 combinations are generated (FR-002).
+7. **Given** a family with axis values that produce 600 combinations, **When** the owner generates variants, **Then** the system refuses the request and reports that 600 combinations were requested (FR-002).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ---
 
