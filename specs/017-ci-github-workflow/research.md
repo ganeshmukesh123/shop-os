@@ -397,7 +397,7 @@ Refactor for testability (behaviour unchanged, proven by the 3 end-to-end tests 
 
 ### F11. M3 result: the desktop package and `main` at 90% (2026-11-22, T035)
 
-Measured with `pnpm test:coverage` (vitest 4.1.12, V8, all files under `src/` included) on `origin/main` at `7b48cf8` plus the renderer test gaps of T028 to T034. `COVERAGE_ENFORCE` is still `false` at the time of this record; T036 switches it on. Per-area figures are sums of covered over total from `apps/desktop/coverage/coverage-summary.json`.
+Measured with `pnpm test:coverage` (vitest 4.1.12, V8, all files under `src/` included) on `origin/main` at `7b48cf8` plus the tests of #120 (the gaps T028 to T034 still had). `COVERAGE_ENFORCE` is still `false` at the time of this record; T036 switches it on. Per-area figures are sums of covered over total from `apps/desktop/coverage/coverage-summary.json`.
 
 | Area | Lines | Statements | Functions | Branches |
 |---|---|---|---|---|
@@ -407,7 +407,16 @@ Measured with `pnpm test:coverage` (vitest 4.1.12, V8, all files under `src/` in
 | desktop `src/preload/**` (2 files) | 100 | 100 | 100 | 100 |
 | desktop `src/renderer/**` (113 files) | 98.51 | 98.30 | 96.02 | 98.00 |
 
-Every area is above 90% on all four metrics. Before the T028 to T034 tests, `main` at `7b48cf8` already measured 98.75 lines, 98.38 statements, 96.47 functions and 96.02 branches for the desktop total, so the 90% target was reached by the earlier screen and hook tests (T030 to T033, #107, #108) and the last gaps were closed by `api`, `billForm`, `useDraftAutosave`, `useItems`, `main.tsx`, `Toast` and `BillLineRow` tests.
+Every area is above 90% on all four metrics.
+
+What was on `main` and what came after, so the baseline is not misread:
+
+| When | Tests | Desktop total (lines / statements / functions / branches) |
+|---|---|---|
+| `main` at `7b48cf8` (baseline) | the screen and hook tests of T030 to T033 (#107, #108), already merged | 98.75 / 98.38 / 96.47 / 96.02 |
+| baseline + #120 | adds `api`, `billForm`, `useDraftAutosave`, `useItems`, `main.tsx`, `Toast` and `BillLineRow` tests | 99.17 / 98.83 / 97.77 / 96.92 |
+
+So the 90% target was already met at the baseline by the T030 to T033 tests, and #120 closed the last gaps. Only the desktop total was measured at `7b48cf8`; the per-area rows above are from the branch with #120.
 
 Lowest remaining spots among files that contain code: `ItemForm.tsx` 90.9% lines and 83.33% branches, `SettingsScreen.tsx` 91.1% lines, `themePreference.ts` 91.7% lines, `startupRecovery.ts` 75% branches, `startupSafety.ts` 80% branches. Every file with code is above 90% on lines; the type-only `*.types.ts` files have no code and show 0 of 0.
 
