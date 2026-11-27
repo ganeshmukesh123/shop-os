@@ -33,7 +33,13 @@ All decisions come from the architecture doc, narrowed to the desktop-only MVP. 
 - **Decision**: Keep a single place that opens the database where an encryption key can be supplied; ship unencrypted unless the M0 spike shows SQLCipher builds cleanly.
 - **Rationale**: The MVP holds no customer personal data beyond an optional name (phone was removed 2026-11-13, review B4); avoid build risk for a solo builder.
 - **Alternatives**: SQLCipher from day one (deferred); OS full-disk encryption advised in the restore guide.
-- **Status (implementation)**: Deferred. The key hook is the commented `encryptionKey` line in `apps/desktop/src/main/db/connection.ts`. No SQLCipher build was tried (spike T009 not run, 2026-11-15): so how to get SQLCipher is unverified. Open items: (1) whether better-sqlite3 can be built against an encryption-enabled SQLite (its docs describe custom SQLite builds) or whether a different package is needed; (2) whether any such build works with Electron 43; (3) the key and recovery design. A package change needs the owner's approval first (CLAUDE.md). T009 stays deferred. The restore guide advises disk encryption.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:bcb2039e308e4b8a9131e148c71ae176d864aa8f5d773018d09bf7b77f8ae69d -->
+
+- **Status (implementation)**: MVP database encryption remains deferred. The app still uses `better-sqlite3`; the key hook in `apps/desktop/src/main/db/connection.ts` remains commented out. The 2026-11-15 T009 status (no SQLCipher build had been tried) is historical: on 2026-11-27, `better-sqlite3-multiple-ciphers` 13.2.0 loaded in Electron 43.8.10 on macOS arm64 during the partial spike below. Verification in the packaged app is still open.
+
+<!-- /coderabbit-ai-generated:v1 -->
 - **Spike result (T009, 2026-11-27, macOS arm64): deferred.** The owner approved trying one package. Tried `better-sqlite3-multiple-ciphers` 13.2.0 (MIT; SQLite3 Multiple Ciphers 2.7.1, SQLite 3.54.1; reads and writes the SQLCipher v4 format with `PRAGMA cipher='sqlcipher'`, `legacy=4`, then `key`). Nothing was added to the app, and the default dependency is unchanged.
   - **Works:** the package ships a prebuilt darwin-arm64 binary (2.3 MB, N-API, so no compile and no rebuild step) and loads in Electron 43.8.10 (Node 24.22, ABI 148). An encrypted file in WAL mode passes `integrity_check`, has no plain `SQLite format 3` header, and opens with the right key. A wrong key, or no key, fails with `file is not a database`. The package is 35 MB unpacked, mostly C source; the app size effect of packaging was not measured.
   - **Does not drop in:** `Database#backup()` (the online backup API) fails on an encrypted source with `backup is not supported with incompatible source and target databases`, because the package opens the backup target without the key. A target made beforehand with the same key fails the same way. `VACUUM INTO 'file'` does write an encrypted copy that opens with the same key, and so does `ATTACH ... KEY` with a table copy. Both are consistent snapshots, but neither is the online backup API that CLAUDE.md and the constitution require, so using one needs the owner's decision.
@@ -159,7 +165,13 @@ The audit report is in the 2026-11-15 conversation; its finding IDs (C1, C2, H2,
 
 ## Unresolved items (non-blocking, tracked as milestone work)
 
-- SQLCipher availability in packaged Electron builds (M0; T009).
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:19c0e6c32b314cb11bbf22e2dd619d2cbe53e02dba6f369da8c861e345431005 -->
+
+- Verify that Shop OS can be built and launched as a packaged app with `better-sqlite3-multiple-ciphers` (M0; T009). The Electron 43 spike on macOS arm64 did not cover packaging; Windows and Intel Mac are also unverified. The design for key storage, recovery and backups remains open (D4).
+
+<!-- /coderabbit-ai-generated:v1 -->
 - Thermal printer model and driver behaviour at 80 mm (T008, T058).
 - CA confirmation of D19 (retention), D20 (rounding), D21 (gap handling) and D23 (title) before the printout is used as a legal bill (before feature 008).
 - Counsel: must a walk-in customer's name be kept on the bill (D19).
