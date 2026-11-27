@@ -1,9 +1,10 @@
-import { AlertDialog, Button, Flex, Text, TextField } from "@radix-ui/themes";
+import { AlertDialog, Flex } from "@radix-ui/themes";
 import { LAYOUT } from "../../../../../shared/constants/layout";
 import { StatusMessage } from "../../../../../shared/components/StatusMessage/StatusMessage";
 import { fillText } from "../../../../../shared/text/fillText";
 import { uiText } from "../../../../../shared/text/strings";
-import { CANCEL_REASON_MAX_LENGTH } from "./constants";
+import { CancelDialogButtons } from "./CancelDialogButtons";
+import { CancelReasonField } from "./CancelReasonField";
 import type { ICancelBillDialogProps } from "./types";
 import { useCancelBill } from "./useCancelBill";
 import { useReturnFocus } from "./useReturnFocus";
@@ -21,20 +22,7 @@ export function CancelBillDialog({ bill, onClose, onCancelled }: ICancelBillDial
       <AlertDialog.Content maxWidth={LAYOUT.cancelDialogWidth} onCloseAutoFocus={returnFocus}>
         <AlertDialog.Title>{fillText(text.title, { number: bill.number })}</AlertDialog.Title>
         <AlertDialog.Description size="2">{text.effect}</AlertDialog.Description>
-        <Flex direction="column" gap="1" mt="3">
-          <Text as="label" htmlFor="cancel-reason" size="2" weight="bold">
-            {text.reason}
-          </Text>
-          <TextField.Root
-            id="cancel-reason"
-            size="3"
-            autoFocus
-            maxLength={CANCEL_REASON_MAX_LENGTH}
-            disabled={isBusy}
-            value={reason}
-            onChange={(changeEvent) => setReason(changeEvent.target.value)}
-          />
-        </Flex>
+        <CancelReasonField reason={reason} onChange={setReason} isDisabled={isBusy} />
         {errorMessage && (
           <Flex mt="3">
             <StatusMessage role="danger" label={uiText.status.error}>
@@ -42,22 +30,11 @@ export function CancelBillDialog({ bill, onClose, onCancelled }: ICancelBillDial
             </StatusMessage>
           </Flex>
         )}
-        <Flex gap="3" mt="4" justify="end">
-          <AlertDialog.Cancel>
-            <Button size="3" variant="soft" color="gray" disabled={isBusy}>
-              {text.keep}
-            </Button>
-          </AlertDialog.Cancel>
-          <Button
-            size="3"
-            color="red"
-            loading={isBusy}
-            disabled={isBusy || !canCancel}
-            onClick={() => void cancelBill()}
-          >
-            {text.confirm}
-          </Button>
-        </Flex>
+        <CancelDialogButtons
+          isBusy={isBusy}
+          canCancel={canCancel}
+          onConfirm={() => void cancelBill()}
+        />
       </AlertDialog.Content>
     </AlertDialog.Root>
   );
