@@ -67,20 +67,34 @@ export function localIsoOf(instantMs: number, timeZone: string): string {
   return inShopZone(instantMs, timeZone).toFormat(LOCAL_ISO_FORMAT);
 }
 
+/** The calendar date in a YYYY-MM-DD string, or null when it is not a real date (2027-02-29). */
+function calendarDateOf(businessDate: string): DateTime | null {
+  const matchedParts = BUSINESS_DATE_PATTERN.exec(businessDate);
+  const isWrongShape = matchedParts === null;
+  if (isWrongShape) {
+    return null;
+  }
+  try {
+    const calendarDate = DateTime.fromObject(
+      {
+        year: Number(matchedParts[1]),
+        month: Number(matchedParts[2]),
+        day: Number(matchedParts[3]),
+      },
+      { zone: "utc", ...MACHINE_FORMAT },
+    );
+    return calendarDate.isValid ? calendarDate : null;
+  } catch {
+    // With Luxon's global Settings.throwOnInvalid, an impossible date throws instead.
+    return null;
+  }
+}
+
 /** Indian financial year (1 April to 31 March) of a business date: 2027-04-01 -> "27-28". */
 export function financialYearOfBusinessDate(businessDate: string): string {
-  const matchedParts = BUSINESS_DATE_PATTERN.exec(businessDate);
-  const calendarDate = matchedParts
-    ? DateTime.fromObject(
-        {
-          year: Number(matchedParts[1]),
-          month: Number(matchedParts[2]),
-          day: Number(matchedParts[3]),
-        },
-        { zone: "utc", ...MACHINE_FORMAT },
-      )
-    : null;
-  if (!calendarDate?.isValid) {
+  const calendarDate = calendarDateOf(businessDate);
+  const isNotADate = calendarDate === null;
+  if (isNotADate) {
     throw new CoreError("INVALID_FIELD", "business date must look like 2027-03-31");
   }
   const startYear =

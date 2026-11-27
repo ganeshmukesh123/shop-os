@@ -13,7 +13,9 @@ export const MAX_NUMBER_LENGTH = 16;
  */
 export function financialYear(date: Date): string {
   return financialYearOfBusinessDate(
-    DateTime.fromJSDate(date).reconfigure(MACHINE_FORMAT).toFormat("yyyy-LL-dd"),
+    DateTime.fromJSDate(date, { zone: "system" })
+      .reconfigure(MACHINE_FORMAT)
+      .toFormat("yyyy-LL-dd"),
   );
 }
 
