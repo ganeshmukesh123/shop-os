@@ -12,10 +12,10 @@ import {
   type StockAdjustInput,
   type StockMovement,
 } from "@shopos/core";
-import type { DB } from "../db/connection";
-import type { Ctx } from "../db/seed";
-import { ItemRepository } from "../repositories/ItemRepository";
-import { StockRepository } from "../repositories/StockRepository";
+import type { DB } from "../../db/connection";
+import type { Ctx } from "../../db/seed";
+import { ItemRepository } from "../../repositories/ItemRepository";
+import { StockRepository } from "../../repositories/StockRepository";
 
 export class InventoryService {
   constructor(
