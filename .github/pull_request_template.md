@@ -32,7 +32,7 @@ Guideline: docs/contributing/pull-requests.md
 - [ ] `pnpm typecheck`: 
 - [ ] `pnpm test:coverage` (or `pnpm test`): 
 - [ ] `pnpm build && pnpm test:e2e` (if UI or flow changed): 
-- [ ] CI checks green: Quick checks, Tests and coverage, Build, End-to-end (guide: `docs/contributing/ci.md`)
+- [ ] CI checks green: Quick checks, Tests and coverage, Build, End-to-end (guide: `docs/contributing/ci.md`). The 90% coverage gate is off until T036 (`COVERAGE_ENFORCE` in `config/coverage.ts`), so a green Tests and coverage does not yet mean 90%: read the coverage table in the run summary
 - [ ] Manual check: 
 
 | Light | Dark |
