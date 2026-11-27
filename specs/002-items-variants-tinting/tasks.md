@@ -23,7 +23,7 @@ description: "Task list for feature 002: item families, variants, search, merge,
 ## Phase 1: Setup
 
 - [ ] T001 Confirm 001 tasks T073 to T090 are merged on `main`; if any is open, finish it first and note it in `specs/002-items-variants-tinting/plan.md` under Milestone Plan
-- [ ] T002 Ask the owner OD-1 to OD-4 in `specs/002-items-variants-tinting/research.md` and write each answer and its date under "Owner decisions needed"
+- [x] T002 Ask the owner OD-1 to OD-4 in `specs/002-items-variants-tinting/research.md` and write each answer and its date under "Owner decisions needed" _(2026-11-27: owner accepted all four recommendations)_
 - [ ] T003 [P] Create empty module folders with `index.ts` barrels: `core/src/catalogue/`, `core/src/units/`, `core/src/search/`, `core/src/tinting/`, `core/src/import/`, and export them from `core/src/index.ts`
 
 ---
