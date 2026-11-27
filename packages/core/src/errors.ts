@@ -18,6 +18,7 @@ export type ErrorCode =
   | "WRITE_FAILED"
   | "INVALID_FIELD"
   | "BACKUP_FAILED"
+  | "INEXACT_CONVERSION"
   | "INVALID_BACKUP"
   | "DATABASE_CORRUPT"
   | "INTERNAL";
