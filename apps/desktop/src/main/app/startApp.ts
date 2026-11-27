@@ -17,6 +17,8 @@ import { BackupService } from "../services/BackupService";
 import { BillingService } from "../services/BillingService";
 import { electronRenderer } from "../services/electronRenderer";
 import { InventoryService } from "../services/InventoryService";
+import { CatalogueService } from "../services/catalogue";
+import { FamilyService } from "../services/families";
 import { SearchService } from "../services/search";
 import { PrintService } from "../services/PrintService";
 import { SettingsService } from "../services/SettingsService";
@@ -49,10 +51,13 @@ function buildServices(state: IAppState): Services {
   const { db, sqlite } = state.connection!;
   const context = state.context!;
   state.backup = new BackupService(sqlite, db, context);
+  // Built here, at start, from the database (spec 002 research D4); family writes refresh it
+  const search = new SearchService(db, context);
   return {
     inventory: new InventoryService(db, context),
-    // Built here, at start, from the database (spec 002 research D4)
-    search: new SearchService(db, context),
+    search,
+    catalogue: new CatalogueService(db, context),
+    families: new FamilyService(db, context, search),
     billing: new BillingService(db, context),
     settings: new SettingsService(db, context),
     print: new PrintService(

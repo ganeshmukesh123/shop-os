@@ -25,6 +25,17 @@ Same rules as `specs/001-shop-os-mvp/contracts/ipc-commands.md`: every command r
 
 `items.create` and `items.update` from 001 stay and act on a one-variant family.
 
+Status (2026-11-28, tasks T031 to T035): the US1 commands of this table are built and registered:
+- `catalogue.categories.list` and `.save`, `catalogue.brands.list` and `.save`, and `catalogue.units.list`;
+- `families.previewVariants`, `.create`, `.get`, `.update` and `.addVariants`;
+- `variants.update`, `.setActive` and `.setConversions`.
+
+`variants.setBarcodes`, `.setSearchNames`, `.setPrices` and `.addBatch` are not built yet (US2 and US4). Notes on the built commands:
+- Every write refreshes the search index.
+- `families.previewVariants` also returns `TOO_MANY_COMBINATIONS` and `INVALID_FIELD` (PR #153).
+- `catalogue.categories.save` returns `NOT_FOUND` for an unknown parent.
+- `variants.setConversions` returns `UNKNOWN_UNIT` for a unit the shop does not have.
+
 ## Search, duplicates, merge, data issues
 
 | Command                                  | Input                                                       | Result                                                                                                           | Error codes                                                                           |

@@ -12,17 +12,21 @@ import {
   settingsSetThemeInput,
   stockAdjustInput,
   type CommandMap,
+  type IFamilyCommandMap,
   type CommandName,
   type Result,
 } from "@shopos/core";
 import type { BackupService } from "../services/BackupService";
 import type { BillingService } from "../services/BillingService";
+import type { CatalogueService } from "../services/catalogue";
+import type { FamilyService } from "../services/families";
 import type { InventoryService } from "../services/InventoryService";
 import { searchRefreshedAfter, type SearchService } from "../services/search";
 import type { PrintService } from "../services/PrintService";
 import type { IRestoreNumberingPlan } from "../services/RestoreNumbering";
 import type { SettingsService } from "../services/SettingsService";
 import { cmd, none } from "./command";
+import { createFamilyHandlers } from "./familyHandlers";
 import { createSystemHandlers, type SystemCommandName } from "./systemHandlers";
 
 // Kept here so callers that import toFailure from handlers still work.
@@ -32,6 +36,9 @@ export interface Services {
   inventory: InventoryService;
   /** The in-memory item search (spec 002 research D4), kept current by the item commands. */
   search: SearchService;
+  /** Spec 002 US1: categories, brands and units; families and their variants */
+  catalogue: CatalogueService;
+  families: FamilyService;
   billing: BillingService;
   settings: SettingsService;
   print: PrintService;
@@ -53,7 +60,10 @@ export type Handlers = {
 
 type ItemCommandName = "items.list" | "items.create" | "items.update" | "stock.adjust";
 type ThemeCommandName = "settings.getTheme" | "settings.setTheme";
-type BillCommandName = Exclude<CommandName, ItemCommandName | SystemCommandName | ThemeCommandName>;
+type BillCommandName = Exclude<
+  CommandName,
+  ItemCommandName | SystemCommandName | ThemeCommandName | keyof IFamilyCommandMap
+>;
 
 function createItemHandlers(services: Services): Pick<Handlers, ItemCommandName> {
   return {
@@ -115,6 +125,7 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
     ...createItemHandlers(services),
     ...createBillHandlers(services),
     ...createSystemHandlers(services, shell),
+    ...createFamilyHandlers(services),
     // The screen's theme choice, kept in the database (spec 018 T035).
     "settings.getTheme": cmd<"settings.getTheme">(none(), () => services.settings.getTheme()),
     "settings.setTheme": cmd<"settings.setTheme">(settingsSetThemeInput, (commandInput) =>
