@@ -45,6 +45,11 @@ test("bills: find by number, customer and date, open, cancel with a reason, stoc
       });
       if (!created.ok) throw new Error(created.message);
     });
+    // The bills take their business date when saved; capture it first so a date change mid-test
+    // still leaves all three inside the From..To range.
+    const firstDay = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(
+      new Date(),
+    );
     await saveBill(page, "Ravi", 2000);
     await saveBill(page, "Meena", 1000);
     const thirdNumber = await saveBill(page, "Ravi Traders", 1000);
@@ -63,7 +68,7 @@ test("bills: find by number, customer and date, open, cancel with a reason, stoc
     await page.getByRole("textbox", { name: "Customer name" }).fill("");
     await page.getByLabel("From date").fill("2999-01-01");
     await expect(page.getByText("No bills match.")).toBeVisible();
-    await page.getByLabel("From date").fill(today);
+    await page.getByLabel("From date").fill(firstDay);
     await page.getByLabel("To date").fill(today);
     await expect(page.getByText("3 bills")).toBeVisible();
 
@@ -103,7 +108,7 @@ test("bills: find by number, customer and date, open, cancel with a reason, stoc
       queryDatabase(
         "select movement_type, qty_base_milli from stock_movement where movement_type='sale_cancel'",
       ),
-    ).toMatch(/^sale_cancel\|.*2000$/);
+    ).toBe("sale_cancel|2000");
     expect(
       queryDatabase("select status, cancel_reason from bill where bill_no like '%000001'"),
     ).toBe("cancelled|Customer changed mind");

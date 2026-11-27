@@ -6,6 +6,7 @@ import { uiText } from "../../../../../shared/text/strings";
 import { CANCEL_REASON_MAX_LENGTH } from "./constants";
 import type { ICancelBillDialogProps } from "./types";
 import { useCancelBill } from "./useCancelBill";
+import { useReturnFocus } from "./useReturnFocus";
 
 /** Asks why a bill is cancelled (required, FR-017) and says what cancelling does before it is done. */
 export function CancelBillDialog({ bill, onClose, onCancelled }: ICancelBillDialogProps) {
@@ -14,9 +15,10 @@ export function CancelBillDialog({ bill, onClose, onCancelled }: ICancelBillDial
     bill.id,
     onCancelled,
   );
+  const returnFocus = useReturnFocus();
   return (
     <AlertDialog.Root open onOpenChange={(isNowOpen) => !isNowOpen && !isBusy && onClose()}>
-      <AlertDialog.Content maxWidth={LAYOUT.cancelDialogWidth}>
+      <AlertDialog.Content maxWidth={LAYOUT.cancelDialogWidth} onCloseAutoFocus={returnFocus}>
         <AlertDialog.Title>{fillText(text.title, { number: bill.number })}</AlertDialog.Title>
         <AlertDialog.Description size="2">{text.effect}</AlertDialog.Description>
         <Flex direction="column" gap="1" mt="3">
@@ -50,7 +52,7 @@ export function CancelBillDialog({ bill, onClose, onCancelled }: ICancelBillDial
             size="3"
             color="red"
             loading={isBusy}
-            disabled={!canCancel}
+            disabled={isBusy || !canCancel}
             onClick={() => void cancelBill()}
           >
             {text.confirm}
