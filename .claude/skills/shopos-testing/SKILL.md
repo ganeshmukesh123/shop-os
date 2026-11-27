@@ -16,6 +16,7 @@ Authority: constitution VI. Architecture: `docs/reference/architecture.md` 11.11
 | Integration | Service + repositories + real SQLite (in memory, all migrations applied) | `apps/desktop/tests/integration` | Vitest, `createTestDb` |
 | Contract | Same suite against every repository adapter (when a second adapter exists) | beside the repositories | Vitest |
 | Component and layout | Bill HTML, pure components | `apps/desktop/tests/unit` | Vitest |
+| Screen to database | A screen driven by userEvent against the real handlers, services and in-memory SQLite; asserts screen and rows | `apps/desktop/tests/renderer/integration` | Vitest + jsdom, `installRealShopos` (skill `shopos-screen-integration-tests`) |
 | End to end | Real window, the quickstart scenarios | `apps/desktop/tests/e2e` | Playwright for Electron (run `pnpm build` first) |
 | Drills | Backup and restore, offline run, packaged app | `quickstart.md` | By hand until scripted |
 

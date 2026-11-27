@@ -38,10 +38,17 @@ export const saveWithKeyboard = () => userEvent.keyboard("{Control>}s{/Control}"
  * The Error message, picked by its word: other alerts may be on screen too, such as the real clock
  * check's "Time zone differs" when the machine is not on the shop's zone (a UTC CI runner).
  */
+const isErrorAlert = (_accessibleName: string, element: Element) =>
+  element.textContent?.startsWith("Error") ?? false;
+
 export async function findErrorAlert(): Promise<HTMLElement> {
-  return screen.findByRole("alert", {
-    name: (_accessibleName, element) => element.textContent?.startsWith("Error") ?? false,
-  });
+  return screen.findByRole("alert", { name: isErrorAlert });
+}
+
+/** Every Error message on screen, for a refusal shown both on the line and as a toast. */
+export async function findErrorAlertTexts(): Promise<string[]> {
+  const errorAlerts = await screen.findAllByRole("alert", { name: isErrorAlert });
+  return errorAlerts.map((errorAlert) => errorAlert.textContent ?? "");
 }
 
 export interface IBillRow {
@@ -64,13 +71,20 @@ export function readBills(realShopos: IRealShopos): IBillRow[] {
     .all() as IBillRow[];
 }
 
-/** Stock as the app reports it: the sum of the item's movements. */
+/**
+ * Stock as the app reports it: the cached stock on the item. That it equals the sum of the item's
+ * movements is checked separately after every test (`checkLedgerAfterEachTest`, IT-STK-01).
+ */
 export async function stockOf(realShopos: IRealShopos, itemName: string): Promise<number> {
   const listed = await realShopos.fixture.handlers["items.list"]({
     query: itemName,
-    limit: 1,
+    includeInactive: true,
+    limit: 50,
     offset: 0,
   });
   if (!listed.ok) throw new Error(listed.message);
-  return listed.data.items[0]!.stockMilli;
+  // The search matches part of a name; "PVC pipe" must not pick "PVC pipe 20mm".
+  const matchingItem = listed.data.items.find((listedItem) => listedItem.name === itemName);
+  if (!matchingItem) throw new Error(`No item named ${itemName}`);
+  return matchingItem.stockMilli;
 }

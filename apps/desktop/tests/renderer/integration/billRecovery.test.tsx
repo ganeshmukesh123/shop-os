@@ -1,6 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createItemDirectly, freezeShopClock, installRealShopos } from "../../helpers/realShopos";
+import { checkLedgerAfterEachTest } from "../../helpers/stockLedger";
 import {
   addToBill,
   findErrorAlert,
@@ -23,6 +24,8 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
+
+checkLedgerAfterEachTest();
 
 describe("screen to database: failures and recovery (one transaction, EC power cut)", () => {
   it("IT-BIL-08 a save that fails halfway leaves no bill, line, tender or movement, nor a used number", async () => {
@@ -84,7 +87,13 @@ describe("screen to database: failures and recovery (one transaction, EC power c
     await screen.findByRole("dialog", { name: "Unsaved bill found" });
     await userEvent.click(screen.getByRole("button", { name: "Discard" }));
     expect(screen.getByText("Search for an item above to start the bill.")).toBeTruthy();
-    await waitFor(() => expect(realShopos.countRows("draft_bill", "payload = 'null'")).toBe(1));
+    // Wait for what the next start will read, not for how the discarded draft is stored.
+    await waitFor(async () =>
+      expect(await realShopos.fixture.handlers["bills.draft.load"]({})).toEqual({
+        ok: true,
+        data: { payload: null },
+      }),
+    );
 
     secondRun.unmount();
     renderShopApp();
