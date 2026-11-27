@@ -1,4 +1,5 @@
 import type { Item } from "@shopos/core";
+import { SearchService } from "../../src/main/services/search";
 import { buildHandlersFixture } from "../helpers/handlersFixture";
 
 /**
@@ -23,6 +24,10 @@ const foundIds = (fixture: ReturnType<typeof buildHandlersFixture>, query: strin
   fixture.services.search.search(query).map((searchResult) => searchResult.id);
 
 describe("the item commands keep search current (spec 002 T024)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("finds an item the moment items.create saves it", async () => {
     const fixture = buildHandlersFixture();
 
@@ -48,6 +53,39 @@ describe("the item commands keep search current (spec 002 T024)", () => {
     await fixture.handlers["items.update"]({ id: elbow.id, active: false });
 
     expect(foundIds(fixture, "elbow")).toEqual([]);
+  });
+
+  it("returns the created item when the index refresh fails and recovers on rebuild", async () => {
+    const fixture = buildHandlersFixture();
+    vi.spyOn(fixture.services.search, "refreshVariant").mockImplementationOnce(() => {
+      throw new Error("Search source unavailable");
+    });
+    const logWarning = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const elbow = await createThroughCommand(fixture, "Elbow 1 inch");
+
+    expect(elbow.name).toBe("Elbow 1 inch");
+    expect(logWarning).toHaveBeenCalledOnce();
+    const rebuiltSearch = new SearchService(fixture.testDb.db, fixture.testDb.ctx);
+    expect(rebuiltSearch.search("elbow").map((entry) => entry.id)).toEqual([elbow.id]);
+  });
+
+  it("returns the updated item when the index refresh fails", async () => {
+    const fixture = buildHandlersFixture();
+    const elbow = await createThroughCommand(fixture, "Elbow 1 inch");
+    vi.spyOn(fixture.services.search, "refreshVariant").mockImplementationOnce(() => {
+      throw new Error("Search source unavailable");
+    });
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const updated = await fixture.handlers["items.update"]({ id: elbow.id, name: "Bend 1 inch" });
+
+    expect(updated).toMatchObject({
+      ok: true,
+      data: { item: { id: elbow.id, name: "Bend 1 inch" } },
+    });
+    const rebuiltSearch = new SearchService(fixture.testDb.db, fixture.testDb.ctx);
+    expect(rebuiltSearch.search("bend").map((entry) => entry.id)).toEqual([elbow.id]);
   });
 
   it("leaves search unchanged when a command is refused", async () => {

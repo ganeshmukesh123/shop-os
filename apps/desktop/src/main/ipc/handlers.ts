@@ -110,10 +110,10 @@ function createItemHandlers(services: Services): Pick<Handlers, ItemCommandName>
       services.inventory.listItems(commandInput),
     ),
     "items.create": cmd<"items.create">(itemsCreateInput, (commandInput) =>
-      searchRefreshedAfter(services.search, services.inventory.createItem(commandInput)),
+      searchRefreshedAfter(services.inventory.createItem(commandInput), services.search),
     ),
     "items.update": cmd<"items.update">(itemsUpdateInput, (commandInput) =>
-      searchRefreshedAfter(services.search, services.inventory.updateItem(commandInput)),
+      searchRefreshedAfter(services.inventory.updateItem(commandInput), services.search),
     ),
     "stock.adjust": cmd<"stock.adjust">(stockAdjustInput, (commandInput) =>
       services.inventory.adjustStock(commandInput),
