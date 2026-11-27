@@ -40,7 +40,7 @@ Sources read: the spec, PRD section 5 (FR-ITM-001 to 017, FR-TNT-001 to 009), PR
 
 - **Open item OI-2**: measure the 0.2 s budget with 50,000 generated variants on the owner's Mac (task in Phase 2, with the 016 benchmark harness). If it misses, propose MiniSearch to the owner.
 - **OI-2 result (2026-11-28, task T025)**: inside the budget with the in-house index; MiniSearch is not needed.
-  - **Setup**: `tests/integration/searchBenchmark.test.ts` builds 50,000 variants (10,000 families of 5 sizes), each with 2 Hinglish search names. It runs 50 queries: whole words, multi-word, prefixes of 2 letters, sizes, codes, Hinglish aliases, 11 with typos (elbo, pipr, sokcet, vlave, coupplr, redcer, suprme, finolx, ashirvd, brss, copr), and 1 with no match.
+  - **Setup**: `tests/integration/searchBenchmark.test.ts` builds 50,000 variants (10,000 families of 5 sizes), each with 2 Hinglish search names. It runs 50 queries: whole words, multi-word, prefixes of 2 letters, sizes, codes, Hinglish aliases, 9 matching typo queries (elbo, pipr, sokcet, vlave, redcer, suprme, finolx, ashirvd, brss), and 3 queries with no match (coupplr, copr, xyzzy).
   - **Machine**: the development Mac (Apple M5, 16 GB), in a test run inside Electron's Node. This is not the packaged app, and not the 016 benchmark harness, which does not exist yet.
 
   | Run | Index build at start | Median per query | 95th percentile | Slowest |
