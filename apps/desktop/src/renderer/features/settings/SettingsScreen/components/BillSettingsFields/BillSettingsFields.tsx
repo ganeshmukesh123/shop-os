@@ -1,7 +1,7 @@
 import { Flex, RadioGroup, Switch, Text, TextField } from "@radix-ui/themes";
 import { isValidTimeZone, type ReceiptWidth } from "@shopos/core";
-import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
-import { uiText } from "../../../shared/text/strings";
+import { StatusMessage } from "../../../../../shared/components/StatusMessage/StatusMessage";
+import { uiText } from "../../../../../shared/text/strings";
 import {
   DOC_TITLE_MAX_LENGTH,
   PAPER_CHOICES,

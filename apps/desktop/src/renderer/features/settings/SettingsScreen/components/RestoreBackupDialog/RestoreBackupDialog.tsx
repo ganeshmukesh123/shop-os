@@ -1,10 +1,10 @@
 import { AlertDialog, Button, Flex, Text, TextField } from "@radix-ui/themes";
-import { LAYOUT } from "../../../shared/constants/layout";
-import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
-import { uiText } from "../../../shared/text/strings";
+import { LAYOUT } from "../../../../../shared/constants/layout";
+import { StatusMessage } from "../../../../../shared/components/StatusMessage/StatusMessage";
+import { uiText } from "../../../../../shared/text/strings";
 import { LAST_BILL_MAX_LENGTH } from "./RestoreBackupDialog.constants";
 import type { IRestoreBackupDialogProps } from "./RestoreBackupDialog.types";
-import { fillText } from "../../../shared/text/fillText";
+import { fillText } from "../../../../../shared/text/fillText";
 
 /**
  * Asks for the last bill number the owner printed, shows what the restore will do to the bill numbers,

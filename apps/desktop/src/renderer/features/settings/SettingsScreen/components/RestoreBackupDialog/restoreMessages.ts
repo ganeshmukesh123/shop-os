@@ -7,8 +7,8 @@ import {
   type IBackupRestoreResult,
   type IRestorePreview,
 } from "@shopos/core";
-import { fillText } from "../../../shared/text/fillText";
-import { uiText } from "../../../shared/text/strings";
+import { fillText } from "../../../../../shared/text/fillText";
+import { uiText } from "../../../../../shared/text/strings";
 import { EXAMPLE_SEQUENCE } from "./RestoreBackupDialog.constants";
 import type { RestoreExampleProfile } from "./RestoreBackupDialog.types";
 
