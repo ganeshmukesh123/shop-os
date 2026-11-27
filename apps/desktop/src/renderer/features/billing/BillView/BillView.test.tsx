@@ -167,14 +167,16 @@ describe("BillView: Save PDF", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Save PDF" }));
 
-    expect(await screen.findByText(/Done/)).toBeTruthy();
+    // Exact text, not a pattern: a moment after a toast opens, Radix adds a hidden announcer whose
+    // single text is "Notification Done PDF saved: ...", and a pattern would match it as well.
+    expect(await screen.findByText("Done")).toBeTruthy();
     expect(callsTo("system.pickPdfPath")[0]!.input).toEqual({ defaultName: "C1-26-27-000001.pdf" });
     expect(callsTo("bills.exportPdf")[0]!.input).toEqual({
       id: "bill-1",
       target: "receipt",
       filePath: "/home/shop/bill.pdf",
     });
-    expect(screen.getByText(/PDF saved: \/home\/shop\/bill\.pdf/)).toBeTruthy();
+    expect(screen.getByText("PDF saved: /home/shop/bill.pdf")).toBeTruthy();
   });
 
   it("does nothing more when the cashier cancels the file dialog", async () => {
