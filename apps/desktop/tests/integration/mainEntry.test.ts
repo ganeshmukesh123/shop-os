@@ -40,6 +40,7 @@ vi.mock("electron", () => {
       exit: vi.fn(),
     },
     BrowserWindow: FakeBrowserWindow,
+    Menu: { buildFromTemplate: vi.fn(), setApplicationMenu: vi.fn() },
     dialog: {
       showOpenDialog: electronMocks.showOpenDialog,
       showSaveDialog: vi.fn(),
