@@ -137,13 +137,13 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
                                                                          |
                                               T036 -> T037 -> T038 (gate ON, M4)
                                                                          |
-                                                  T039-T044 (M5)  ->  T045
+                                                  T039-T044 (M5) <-------+-------> T045 (gate-on re-measure)
 ```
 
 - T036 must not start until T035 confirms 90% on `main`.
 - T030 (splitting `NewBillScreen`) is several PRs; each keeps tests green.
 - T030 and T031 were done ahead of T028 and T029, as spec 001 T089 (behaviour tests first, then one extraction per PR). The diagram's order was for re-estimating M3 coverage, not a build dependency; T028 and T029 stay open and still feed that estimate.
-- T044 was done ahead of T036 to T038, so it measured the pipeline without the coverage gate. That figure stands for the gate-off pipeline; T045 repeats the measurement after T036, because coverage adds time.
+- T044 was done ahead of T036 to T038, so it measured the pipeline without the coverage gate. That figure stands for the gate-off pipeline; T045 repeats the measurement once the gate is on (after T038), because coverage adds time; it does not wait for T039 to T044.
 - Feature work on spec 001 continues in parallel and writes its own tests so the gap does not grow.
 
 ## Implementation strategy
