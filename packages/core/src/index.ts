@@ -5,6 +5,7 @@ export * from "./billing";
 export * from "./stock";
 export * from "./search/normaliseSearchText";
 export * from "./search/editDistance";
+export * from "./search/rankSearchMatches";
 export * from "./numbering";
 export * from "./numberGap";
 export * from "./businessDate";
