@@ -43,6 +43,14 @@ pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:scripts \
   && pnpm check:migrations && pnpm test:coverage && pnpm build && pnpm test:e2e
 ```
 
+Then the Dependency audit job's two commands, which need the network:
+
+```
+pnpm audit --prod --audit-level high && pnpm audit --audit-level high
+```
+
+Not run locally: the PR title check (it reads the PR, so run `node scripts/ci/check-pr-title.mjs "your title"` by hand), PR size (`pnpm pr:size` after pushing) and the Secret scan (TruffleHog, CI only).
+
 `pnpm test:e2e` needs `pnpm build` first. Run `pnpm test` (not `npx vitest`) because the tests run inside Electron's Node; see CLAUDE.md for the better-sqlite3 note. CI installs with `pnpm install --frozen-lockfile`: if you changed a dependency, commit `pnpm-lock.yaml`.
 
 ## 4. Which checks block a merge
