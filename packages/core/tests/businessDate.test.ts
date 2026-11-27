@@ -1,3 +1,4 @@
+import { Settings } from "luxon";
 import { CoreError } from "../src/errors";
 import {
   DEFAULT_TIME_ZONE,
@@ -6,6 +7,7 @@ import {
   isValidTimeZone,
   localIsoOf,
 } from "../src/businessDate";
+import { financialYear } from "../src/numbering";
 
 const SHOP_ZONE = "Asia/Kolkata";
 
@@ -40,17 +42,32 @@ describe("businessDateOf (FR-019a, research D22)", () => {
     expect(businessDateOf(Date.UTC(2026, 0, 5, 12), SHOP_ZONE)).toBe("2026-01-05");
   });
 
-  it.each([-8_640_000_000_000_000, 8_640_000_000_000_000])(
-    "accepts the Date range boundary %s",
-    (instantMs) => {
-      expect(() => businessDateOf(instantMs, "UTC")).not.toThrow();
-    },
-  );
+  // The Date range is ±8_640_000_000_000_000 ms; the accepted range stays one day inside it so the
+  // shop's zone offset never pushes the wall-clock time out of range.
+  const LAST_ACCEPTED_MS = 8_640_000_000_000_000 - 86_400_000;
 
-  it.each([-8_640_000_000_000_001, 8_640_000_000_000_001])(
-    "rejects an instant immediately outside the Date range: %s",
+  it.each([
+    ["UTC", -LAST_ACCEPTED_MS],
+    ["UTC", LAST_ACCEPTED_MS],
+    [SHOP_ZONE, -LAST_ACCEPTED_MS],
+    [SHOP_ZONE, LAST_ACCEPTED_MS],
+    ["Pacific/Kiritimati", LAST_ACCEPTED_MS],
+    ["Pacific/Pago_Pago", -LAST_ACCEPTED_MS],
+  ])("gives a real date in %s at the accepted edge %s", (timeZone, instantMs) => {
+    expect(businessDateOf(instantMs, timeZone)).toMatch(/^[+-]?\d{6}-\d{2}-\d{2}$/);
+    expect(localIsoOf(instantMs, timeZone)).toMatch(/^[+-]?\d{6}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/);
+  });
+
+  it.each([
+    -LAST_ACCEPTED_MS - 1,
+    LAST_ACCEPTED_MS + 1,
+    -8_640_000_000_000_001,
+    8_640_000_000_000_001,
+  ])(
+    "rejects %s, outside the accepted range, instead of formatting Invalid DateTime",
     (instantMs) => {
-      expect(errorCodeOf(() => businessDateOf(instantMs, "UTC"))).toBe("INVALID_FIELD");
+      expect(errorCodeOf(() => businessDateOf(instantMs, SHOP_ZONE))).toBe("INVALID_FIELD");
+      expect(errorCodeOf(() => localIsoOf(instantMs, SHOP_ZONE))).toBe("INVALID_FIELD");
     },
   );
 
@@ -161,5 +178,65 @@ describe("isValidTimeZone (FR-019a)", () => {
     expect(isValidTimeZone("")).toBe(false);
     expect(isValidTimeZone("   ")).toBe(false);
     expect(isValidTimeZone("+05:30")).toBe(false);
+  });
+
+  it("refuses the words Luxon would read as the device's own zone", () => {
+    expect(isValidTimeZone("local")).toBe(false);
+    expect(isValidTimeZone("system")).toBe(false);
+    expect(() => businessDateOf(0, "local")).toThrow(/unknown time zone/);
+  });
+});
+
+describe("machine dates ignore Luxon's global settings (no hidden inputs)", () => {
+  afterEach(() => {
+    Settings.defaultLocale = "";
+    Settings.defaultNumberingSystem = "";
+    Settings.defaultOutputCalendar = "";
+    Settings.defaultZone = "system";
+    Settings.throwOnInvalid = false;
+  });
+
+  /** The financial year from the Date's own device-local fields, as the old hand-written code did. */
+  const deviceLocalFinancialYear = (date: Date) => {
+    const startYear = date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
+    const twoDigit = (yearNumber: number) => String(yearNumber % 100).padStart(2, "0");
+    return `${twoDigit(startYear)}-${twoDigit(startYear + 1)}`;
+  };
+
+  it.each(["Pacific/Kiritimati", "Etc/GMT+12"])(
+    "financialYear reads the device's own zone even when Luxon's default zone is %s",
+    (luxonDefaultZone) => {
+      // 20:00 UTC on 31 March 2027 is 1 April at +14 and still 31 March at -12; at least one of
+      // the two differs from any device, so a leak of the default zone shows.
+      Settings.defaultZone = luxonDefaultZone;
+      const lateOnMarch31 = new Date(Date.UTC(2027, 2, 31, 20, 0, 0));
+
+      expect(financialYear(lateOnMarch31)).toBe(deviceLocalFinancialYear(lateOnMarch31));
+    },
+  );
+
+  it("says INVALID_FIELD for 2027-02-29 even when Luxon is set to throw on invalid dates", () => {
+    Settings.throwOnInvalid = true;
+
+    expect(errorCodeOf(() => financialYearOfBusinessDate("2027-02-29"))).toBe("INVALID_FIELD");
+    expect(financialYearOfBusinessDate("2027-04-01")).toBe("27-28");
+  });
+
+  it("says INVALID_FIELD for an invalid Date even when Luxon is set to throw", () => {
+    Settings.throwOnInvalid = true;
+
+    expect(errorCodeOf(() => financialYear(new Date(NaN)))).toBe("INVALID_FIELD");
+  });
+
+  it("still writes 2027-04-01, 27-28 and ASCII digits with Arabic digits and an Islamic calendar set", () => {
+    Settings.defaultLocale = "ar-EG";
+    Settings.defaultNumberingSystem = "arab";
+    Settings.defaultOutputCalendar = "islamic";
+    const instantMs = Date.UTC(2027, 2, 31, 18, 40);
+
+    expect(businessDateOf(instantMs, SHOP_ZONE)).toBe("2027-04-01");
+    expect(localIsoOf(instantMs, SHOP_ZONE)).toBe("2027-04-01T00:10:00");
+    expect(financialYearOfBusinessDate("2027-04-01")).toBe("27-28");
+    expect(financialYear(new Date(2027, 3, 1))).toBe("27-28");
   });
 });
