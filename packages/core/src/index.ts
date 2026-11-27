@@ -15,6 +15,7 @@ export * from "./catalogue/titleRender";
 export * from "./catalogue/categoryDefaults";
 export * from "./businessDate";
 export * from "./clockCheck";
+export * from "./catalogue/variantDraft";
 export * from "./types";
 export * from "./theme";
 export * from "./commands";
