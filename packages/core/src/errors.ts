@@ -1,5 +1,11 @@
 export type ErrorCode =
   | "DUPLICATE_NAME"
+  | "DUPLICATE_SIGNATURE"
+  | "TOO_DEEP"
+  | "MERGED"
+  | "INVALID_FACTOR"
+  | "BASE_UNIT_LISTED"
+  | "UNKNOWN_UNIT"
   | "INVALID_QUANTITY"
   | "NOTE_REQUIRED"
   | "NOT_FOUND"

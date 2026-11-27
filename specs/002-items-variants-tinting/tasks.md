@@ -83,7 +83,7 @@ description: "Task list for feature 002: item families, variants, search, merge,
 ### Implementation
 
 - [ ] T030 [P] [US1] Implement `core/src/catalogue/variantGrid.ts`, `titleRender.ts`, `categoryDefaults.ts` to pass T026 and T027
-- [ ] T031 [US1] Add Zod schemas and command types for `catalogue.*`, `families.*` and `variants.*` (first table of `contracts/ipc-commands.md`) in `core/src/commands.ts` and `core/src/types.ts`
+- [x] T031 [US1] Add Zod schemas and command types for `catalogue.*`, `families.*` and `variants.*` (first table of `contracts/ipc-commands.md`) in `core/src/commands.ts` and `core/src/types.ts` _(2026-11-28: schemas in `core/src/catalogue/familyCommands.ts`, result types in `familyTypes.ts` (types.ts is past its line limit); `familyCommands.test.ts`, 10 tests. Added to `CommandMap` with their handlers in T035. Built for the US1 commands: categories, brands, units, families preview/create/update/addVariants, variants update/setActive/setConversions; setBarcodes, setSearchNames, setPrices and addBatch belong to US2 and US4 and are not in this pass)_
 - [ ] T032 [P] [US1] Implement `desktop/src/main/repositories/CatalogueRepository.ts` (categories, brands, units) and `FamilyRepository.ts` (families, variants, conversions, prices, batches)
 - [ ] T033 [US1] Implement `desktop/src/main/services/catalogue/CatalogueService.ts` and `desktop/src/main/services/families/FamilyService.ts` to pass T028
 - [ ] T034 [US1] Extend `desktop/src/main/services/BillingService.ts` for entered units to pass T029 (conversion via `convertToBaseMilli`, both quantities stored)
