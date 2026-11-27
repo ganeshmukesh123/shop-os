@@ -14,7 +14,7 @@ Turn the flat 001 item into a family with up to 4 variant axes, generated in one
 
 **Primary Dependencies**: Unchanged from 001 (Electron ^43.8, React 18, Radix UI, drizzle-orm ^0.45, better-sqlite3 Electron build, Zod 4, Luxon). One possible addition needs owner approval: an XLSX parser (OD-2). Search and Code 128 are written in-house (research D4, D13).
 
-**Storage**: The same local SQLite file; migrations `0015` onward add about 17 tables and new nullable columns (data-model.md). `stock_movement` and `bill_tender` are rebuilt once so their enums become lookup tables (research D17); after that, later features add movement types, tender modes and other enum values by INSERT, never by a rebuild.
+**Storage**: The same local SQLite file; migrations `0016` onward add about 17 tables and new nullable columns (data-model.md). `stock_movement` and `bill_tender` are rebuilt once so their enums become lookup tables (research D17); after that, later features add movement types, tender modes and other enum values by INSERT, never by a rebuild.
 
 **Testing**: Vitest (core rules test-first; services against in-memory SQLite inside Electron's Node), Playwright for Electron for the quickstart scenarios, a search benchmark with 50,000 generated variants.
 
@@ -99,7 +99,7 @@ apps/desktop/src/renderer/features/
 ├── tinting/            # ShadeLibrary/, TintCharges/
 ├── import/             # ImportPreview/
 └── labels/             # LabelPrint/
-apps/desktop/drizzle/   # 0015 onward
+apps/desktop/drizzle/   # 0016 onward
 apps/desktop/tests/     # integration/ and e2e/ specs for the scenarios
 ```
 
@@ -111,7 +111,7 @@ Window 4 January to 21 February 2027 (proposed, research D16; re-date when the f
 
 | #     | Dates        | Milestone                             | Exit criteria                                                                                                                                                           |
 | ----- | ------------ | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| M1    | 4 to 10 Jan  | Core rules and schema                 | Core modules test-first and green; migrations 0015 onward apply to a copy of the owner's database with every 001 test still green; search benchmark run (OI-2 answered) |
+| M1    | 4 to 10 Jan  | Core rules and schema                 | Core modules test-first and green; migrations 0016 onward apply to a copy of the owner's database with every 001 test still green; search benchmark run (OI-2 answered) |
 | M2    | 11 to 24 Jan | Families, variants, units, grid (US1) | Quickstart 1 passes; SC-001 timed; T079 form controls ready for tinting                                                                                                 |
 | M3    | 25 to 31 Jan | Search names, duplicates, merge (US2) | Quickstart 2 passes; SC-002 and SC-006 measured                                                                                                                         |
 | M4    | 1 to 14 Feb  | Tinted sales (US3)                    | Quickstart 3 passes; SC-003 and SC-004 measured; OI-5 answered; owner-approved returns deferred to 003 with 005 approvals                                               |
