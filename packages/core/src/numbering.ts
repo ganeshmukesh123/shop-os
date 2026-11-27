@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import { businessDateOf, financialYearOfBusinessDate } from "./businessDate";
 import { CoreError } from "./errors";
 
@@ -5,11 +6,13 @@ export const DEFAULT_NUMBER_TEMPLATE = "{series}/{fy}/{seq}";
 export const SEQ_WIDTH = 6;
 export const MAX_NUMBER_LENGTH = 16;
 
-/** Indian financial year: 1 April to 31 March. 1 Apr 2026 .. 31 Mar 2027 -> "26-27" */
+/**
+ * Indian financial year: 1 April to 31 March. 1 Apr 2026 .. 31 Mar 2027 -> "26-27".
+ * It reads the date in the device's own zone, as before; bills use the shop's zone instead
+ * (`financialYearOfBusinessDate`).
+ */
 export function financialYear(date: Date): string {
-  const startYear = date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
-  const two = (yearNumber: number) => String(yearNumber % 100).padStart(2, "0");
-  return `${two(startYear)}-${two(startYear + 1)}`;
+  return financialYearOfBusinessDate(DateTime.fromJSDate(date).toFormat("yyyy-LL-dd"));
 }
 
 export function formatBillNumber(

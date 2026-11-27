@@ -162,4 +162,10 @@ describe("isValidTimeZone (FR-019a)", () => {
     expect(isValidTimeZone("   ")).toBe(false);
     expect(isValidTimeZone("+05:30")).toBe(false);
   });
+
+  it("refuses the words Luxon would read as the device's own zone", () => {
+    expect(isValidTimeZone("local")).toBe(false);
+    expect(isValidTimeZone("system")).toBe(false);
+    expect(() => businessDateOf(0, "local")).toThrow(/unknown time zone/);
+  });
 });
