@@ -1,7 +1,7 @@
 import { eq, max } from "drizzle-orm";
-import type { Handle } from "../db/connection";
-import { bill } from "../db/schema";
-import type { Ctx } from "../db/seed";
+import type { Handle } from "../../db/connection";
+import { bill } from "../../db/schema";
+import type { Ctx } from "../../db/seed";
 
 /** Reads the time of the newest saved bill, so the app can notice a clock that went backwards. */
 export class BillClockRepository {

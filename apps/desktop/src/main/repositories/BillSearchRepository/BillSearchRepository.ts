@@ -1,10 +1,10 @@
 import { and, desc, eq, gte, inArray, lte, sql, type SQL } from "drizzle-orm";
 import { CoreError } from "@shopos/core";
 import type { Bill, BillsListInput, PaymentMode } from "@shopos/core";
-import type { Handle } from "../db/connection";
-import { bill, billTender } from "../db/schema";
-import type { Ctx } from "../db/seed";
-import { toBill } from "./BillRepository";
+import type { Handle } from "../../db/connection";
+import { bill, billTender } from "../../db/schema";
+import type { Ctx } from "../../db/seed";
+import { toBill } from "../BillRepository";
 
 /** The most bills one page may hold, whatever the caller asks for (matches the command's limit). */
 export const MAX_BILL_PAGE_SIZE = 500;

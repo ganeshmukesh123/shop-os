@@ -1,9 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { GAP_REASON_LOST_IN_RESTORE, type INumberGapPlan } from "@shopos/core";
-import type { Handle } from "../db/connection";
-import { newId } from "../db/ids";
-import { billNumberGap, numberSeries } from "../db/schema";
-import type { Ctx } from "../db/seed";
+import type { Handle } from "../../db/connection";
+import { newId } from "../../db/ids";
+import { billNumberGap, numberSeries } from "../../db/schema";
+import type { Ctx } from "../../db/seed";
 
 /** Writes the numbers a restore lost. Gap rows are insert-only; the database triggers forbid edits. */
 export class NumberGapRepository {

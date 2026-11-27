@@ -1,10 +1,7 @@
-import {
-  BillSearchRepository,
-  MAX_BILL_PAGE_SIZE,
-} from "../../src/main/repositories/BillSearchRepository";
-import { BillingService } from "../../src/main/services/BillingService";
-import { InventoryService } from "../../src/main/services/InventoryService";
-import { createTestDb, type TestDb } from "../helpers/testDb";
+import { BillSearchRepository, MAX_BILL_PAGE_SIZE } from "./BillSearchRepository";
+import { BillingService } from "../../services/BillingService";
+import { InventoryService } from "../../services/InventoryService";
+import { createTestDb, type TestDb } from "../../../../tests/helpers/testDb";
 
 // 10:00 UTC is 15:30 in the shop's zone, so each instant is on that calendar day there.
 const DEC_7 = new Date(Date.UTC(2026, 11, 7, 10, 0));

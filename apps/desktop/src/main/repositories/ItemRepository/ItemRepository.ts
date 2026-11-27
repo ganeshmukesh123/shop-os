@@ -1,9 +1,9 @@
 import { and, asc, eq, lt, sql, type SQL } from "drizzle-orm";
 import type { Item, ItemsListInput } from "@shopos/core";
-import type { Handle } from "../db/connection";
-import { newId, nowMs } from "../db/ids";
-import { itemFamily, itemVariant } from "../db/schema";
-import type { Ctx } from "../db/seed";
+import type { Handle } from "../../db/connection";
+import { newId, nowMs } from "../../db/ids";
+import { itemFamily, itemVariant } from "../../db/schema";
+import type { Ctx } from "../../db/seed";
 
 type Row = typeof itemVariant.$inferSelect;
 

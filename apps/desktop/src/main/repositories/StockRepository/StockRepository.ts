@@ -1,10 +1,10 @@
 import { and, asc, eq, sql } from "drizzle-orm";
 import { CoreError, movementLocations, signedQuantityMilli } from "@shopos/core";
 import type { MovementReason, StockMovement } from "@shopos/core";
-import type { Handle } from "../db/connection";
-import { isoOfMs, newId, nowMs } from "../db/ids";
-import { location, stockMovement } from "../db/schema";
-import type { Ctx } from "../db/seed";
+import type { Handle } from "../../db/connection";
+import { isoOfMs, newId, nowMs } from "../../db/ids";
+import { location, stockMovement } from "../../db/schema";
+import type { Ctx } from "../../db/seed";
 
 type Row = typeof stockMovement.$inferSelect;
 

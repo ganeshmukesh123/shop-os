@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 import type { ReceiptWidth, ShopProfile } from "@shopos/core";
-import type { Handle } from "../db/connection";
-import { nowMs } from "../db/ids";
-import { shopProfile } from "../db/schema";
-import type { Ctx } from "../db/seed";
+import type { Handle } from "../../db/connection";
+import { nowMs } from "../../db/ids";
+import { shopProfile } from "../../db/schema";
+import type { Ctx } from "../../db/seed";
 
 export class SettingsRepository {
   constructor(
