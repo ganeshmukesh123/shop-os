@@ -17,6 +17,12 @@ import { ApiError, call, messageOf } from "../../../shared/api/api";
 import { RoundOffLine } from "../RoundOffLine/RoundOffLine";
 import { CancelledBanner } from "./components/CancelledBanner";
 
+/** Why a print failed; the bill is saved either way, and says so unless the printer itself failed. */
+const printFailureText = (caughtError: unknown): string =>
+  caughtError instanceof ApiError && caughtError.code === "PRINT_FAILED"
+    ? messageOf(caughtError)
+    : `${messageOf(caughtError)} ${uiText.bill.printFailedHint}`;
+
 /**
  * The saved bill, with Print / Save PDF and "New bill". Printing happens after the bill is committed.
  * Opened from the Bills screen (`onBack`), the last button goes back to the list instead.
@@ -40,16 +46,15 @@ export function BillView({
   const toast = useToast();
   const [target, setTarget] = useState<PrintTarget>("receipt");
   const [busy, setBusy] = useState<"print" | "pdf" | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   async function print() {
     setBusy("print");
+    setActionError(null);
     try {
       await call("bills.print", { id: bill.id, target });
     } catch (caughtError) {
-      toast(
-        "error",
-        `${messageOf(caughtError)} ${caughtError instanceof ApiError && caughtError.code === "PRINT_FAILED" ? "" : uiText.bill.printFailedHint}`,
-      );
+      setActionError(printFailureText(caughtError));
     } finally {
       setBusy(null);
     }
@@ -57,6 +62,7 @@ export function BillView({
 
   async function pdf() {
     setBusy("pdf");
+    setActionError(null);
     try {
       const { path } = await call("system.pickPdfPath", {
         defaultName: `${bill.number.replace(/[/\\]/g, "-")}.pdf`,
@@ -65,7 +71,7 @@ export function BillView({
       await call("bills.exportPdf", { id: bill.id, target, filePath: path });
       toast("success", `${uiText.bill.pdfSaved}: ${path}`);
     } catch (caughtError) {
-      toast("error", messageOf(caughtError));
+      setActionError(messageOf(caughtError));
     } finally {
       setBusy(null);
     }
@@ -167,6 +173,11 @@ export function BillView({
           </Button>
         )}
       </Flex>
+      {actionError && (
+        <StatusMessage role="danger" label={uiText.status.error}>
+          {actionError}
+        </StatusMessage>
+      )}
     </Flex>
   );
 }
