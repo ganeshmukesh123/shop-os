@@ -1,8 +1,8 @@
 import { desc, eq } from "drizzle-orm";
-import type { Handle } from "../db/connection";
-import { newId, nowMs } from "../db/ids";
-import { backupLog } from "../db/schema";
-import type { Ctx } from "../db/seed";
+import type { Handle } from "../../db/connection";
+import { newId, nowMs } from "../../db/ids";
+import { backupLog } from "../../db/schema";
+import type { Ctx } from "../../db/seed";
 
 export interface IBackupLogEntry {
   path: string;

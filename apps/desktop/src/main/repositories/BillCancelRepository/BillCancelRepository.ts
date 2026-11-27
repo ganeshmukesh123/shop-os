@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
-import type { Handle } from "../db/connection";
-import { bill } from "../db/schema";
-import type { Ctx } from "../db/seed";
+import type { Handle } from "../../db/connection";
+import { bill } from "../../db/schema";
+import type { Ctx } from "../../db/seed";
 
 /**
  * The one change a saved bill may ever get: posted to cancelled, with a reason and a time.

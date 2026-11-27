@@ -1,11 +1,11 @@
 import { and, asc, eq, sql } from "drizzle-orm";
 import { CoreError, localIsoOf } from "@shopos/core";
 import type { Bill, BillLine, PaymentMode } from "@shopos/core";
-import type { Handle } from "../db/connection";
-import { isoOfMs, newId, nowMs } from "../db/ids";
-import { bill, billLine, billTender, draftBill, numberSeries } from "../db/schema";
-import type { Ctx } from "../db/seed";
-import type { INewBill, INewLine } from "./newBillTypes";
+import type { Handle } from "../../db/connection";
+import { isoOfMs, newId, nowMs } from "../../db/ids";
+import { bill, billLine, billTender, draftBill, numberSeries } from "../../db/schema";
+import type { Ctx } from "../../db/seed";
+import type { INewBill, INewLine } from "./BillRepository.types";
 
 /**
  * The payment mode is not on the bill row: it is the label on the bill's tender (D18). The time is
