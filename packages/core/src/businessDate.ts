@@ -9,6 +9,7 @@ const APRIL_MONTH_NUMBER = 4;
 const MAX_DATE_INSTANT_MS = 8_640_000_000_000_000;
 const BUSINESS_DATE_FORMAT = "yyyy-LL-dd";
 const LOCAL_ISO_FORMAT = "yyyy-LL-dd'T'HH:mm:ss";
+const COMPACT_STAMP_FORMAT = "yyyyLLdd-HHmmss";
 
 function twoDigits(yearNumber: number): string {
   return String(yearNumber % 100).padStart(2, "0");
@@ -55,6 +56,14 @@ export function businessDateOf(instantMs: number, timeZone: string): string {
  */
 export function localIsoOf(instantMs: number, timeZone: string): string {
   return inShopZone(instantMs, timeZone).toFormat(LOCAL_ISO_FORMAT);
+}
+
+/**
+ * The date and time with no separators (YYYYMMDD-HHmmss) in a named zone at a UTC instant, for file
+ * names such as `shopos-20261205-083405.sqlite`. Names sort in time order.
+ */
+export function compactStampOf(instantMs: number, timeZone: string): string {
+  return inShopZone(instantMs, timeZone).toFormat(COMPACT_STAMP_FORMAT);
 }
 
 /** Indian financial year (1 April to 31 March) of a business date: 2027-04-01 -> "27-28". */

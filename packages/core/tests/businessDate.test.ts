@@ -4,6 +4,7 @@ import {
   businessDateOf,
   financialYearOfBusinessDate,
   isValidTimeZone,
+  compactStampOf,
   localIsoOf,
 } from "../src/businessDate";
 
@@ -167,5 +168,25 @@ describe("isValidTimeZone (FR-019a)", () => {
     expect(isValidTimeZone("local")).toBe(false);
     expect(isValidTimeZone("system")).toBe(false);
     expect(() => businessDateOf(0, "local")).toThrow(/unknown time zone/);
+  });
+});
+
+describe("compactStampOf: the date and time for a backup file name", () => {
+  it("writes the zone's date and time with no separators, 24-hour, padded", () => {
+    // 18:20 UTC on 31 March is 23:50 in India; 2026-12-05 03:04:05 UTC is 08:34:05 in India.
+    expect(compactStampOf(Date.UTC(2027, 2, 31, 18, 20, 0), SHOP_ZONE)).toBe("20270331-235000");
+    expect(compactStampOf(Date.UTC(2026, 11, 5, 3, 4, 5), SHOP_ZONE)).toBe("20261205-083405");
+  });
+
+  it("depends on the zone given and shows midnight as 00", () => {
+    expect(compactStampOf(Date.UTC(2027, 0, 1, 0, 0, 0), "UTC")).toBe("20270101-000000");
+    expect(compactStampOf(Date.UTC(2027, 0, 1, 0, 0, 0), "America/Los_Angeles")).toBe(
+      "20261231-160000",
+    );
+  });
+
+  it("refuses an unknown zone or a fractional instant", () => {
+    expect(errorCodeOf(() => compactStampOf(0, "Mars/Olympus"))).toBe("INVALID_FIELD");
+    expect(errorCodeOf(() => compactStampOf(1.5, SHOP_ZONE))).toBe("INVALID_FIELD");
   });
 });

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { CoreError } from "@shopos/core";
+import { backupStampOf } from "./backupStamp";
 import { applyConnectionPragmas } from "./connection";
 
 /**
@@ -19,14 +20,6 @@ const MIGRATIONS_TABLE = "__drizzle_migrations";
 
 interface IJournalEntry {
   when: number;
-}
-
-const padTwo = (numberValue: number) => String(numberValue).padStart(2, "0");
-
-function formatStamp(backupTime: Date): string {
-  const datePart = `${backupTime.getFullYear()}${padTwo(backupTime.getMonth() + 1)}${padTwo(backupTime.getDate())}`;
-  const timePart = `${padTwo(backupTime.getHours())}${padTwo(backupTime.getMinutes())}${padTwo(backupTime.getSeconds())}`;
-  return `${datePart}-${timePart}`;
 }
 
 function readIntegrityResult(sqlite: Database.Database): string {
@@ -114,7 +107,7 @@ export async function backupBeforeMigrating(
   fs.mkdirSync(backupFolder, { recursive: true });
   const backupPath = path.join(
     backupFolder,
-    `${PRE_MIGRATION_FILE_PREFIX}${formatStamp(backupTime)}.sqlite`,
+    `${PRE_MIGRATION_FILE_PREFIX}${backupStampOf(backupTime)}.sqlite`,
   );
   await sqlite.backup(backupPath);
   pruneOldCopies(backupFolder);

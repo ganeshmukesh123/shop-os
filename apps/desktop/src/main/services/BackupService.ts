@@ -3,6 +3,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { CoreError } from "@shopos/core";
 import type { DB } from "../db/connection";
+import { backupStampOf } from "../db/backupStamp";
 import { nowIso } from "../db/ids";
 import type { Ctx } from "../db/seed";
 import { BackupLogRepository } from "../repositories/BackupLogRepository";
@@ -11,9 +12,6 @@ import { SettingsRepository } from "../repositories/SettingsRepository";
 const KEEP_DAYS = 30;
 const KEEP_TODAY = 4;
 const NAME_RE = /^shopos-(\d{8})-(\d{6})\.sqlite$/;
-const pad = (numberValue: number) => String(numberValue).padStart(2, "0");
-const stamp = (backupTime: Date) =>
-  `${backupTime.getFullYear()}${pad(backupTime.getMonth() + 1)}${pad(backupTime.getDate())}-${pad(backupTime.getHours())}${pad(backupTime.getMinutes())}${pad(backupTime.getSeconds())}`;
 
 /** A file is a usable backup only if SQLite opens it, integrity_check passes and our tables exist. */
 export function validateBackupFile(file: string): void {
@@ -90,7 +88,7 @@ export class BackupService {
     let target = "";
     try {
       if (!folder) throw new Error("No backup folder is set");
-      target = path.join(folder, `shopos-${stamp(now)}.sqlite`);
+      target = path.join(folder, `shopos-${backupStampOf(now)}.sqlite`);
       fs.mkdirSync(folder, { recursive: true });
       await this.sqlite.backup(target);
       validateBackupFile(target);
@@ -128,7 +126,7 @@ export class BackupService {
           fileEntry.nameMatch !== null,
       )
       .sort((firstEntry, secondEntry) => secondEntry.fileName.localeCompare(firstEntry.fileName)); // newest first
-    const today = stamp(now).slice(0, 8);
+    const today = backupStampOf(now).slice(0, 8);
     const keep = new Set<string>();
     const seenDays: string[] = [];
     let todayKept = 0;
