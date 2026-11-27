@@ -36,6 +36,32 @@ export function signedQuantityMilli(movement: IMovementLocations): number {
   return hasTo ? movement.qtyBaseMilli : -movement.qtyBaseMilli;
 }
 
+/** One half of a merge: the stored movement plus which merge type it is. */
+export interface IMergeMovement extends IMovementLocations {
+  reason: "merge_in" | "merge_out";
+}
+
+/**
+ * The two movements that move one location's balance from a merged-away variant (the source) to the
+ * one that is kept (the target), so merging never changes total stock. A positive balance goes out of
+ * the source (`merge_out`) and into the target (`merge_in`); negative stock goes the other way round,
+ * so the source ends at zero either way. Example: the source has 4, the target 10: out 4, in 4, and
+ * the target has 14. A balance of zero needs no movement.
+ */
+export function mergeMovementPair(
+  sourceBalanceMilli: number,
+  locationId: string,
+): { source: IMergeMovement; target: IMergeMovement } {
+  const toMergeMovement = (signedMilli: number): IMergeMovement => ({
+    reason: signedMilli > 0 ? "merge_in" : "merge_out",
+    ...movementLocations(signedMilli, locationId),
+  });
+  return {
+    source: toMergeMovement(-sourceBalanceMilli),
+    target: toMergeMovement(sourceBalanceMilli),
+  };
+}
+
 export interface MovementLike {
   itemId: string;
   quantityMilli: number;

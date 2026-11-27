@@ -7,6 +7,7 @@ export * from "./numbering";
 export * from "./numberGap";
 export * from "./businessDate";
 export * from "./clockCheck";
+export * from "./catalogue/variantDraft";
 export * from "./types";
 export * from "./commands";
 export * from "./draftBill";

@@ -58,9 +58,16 @@ const isAccepted = (
 ) => schema.safeParse(input).success;
 
 describe("constants", () => {
-  it("lists the four payment modes and the four movement reasons", () => {
+  it("lists the four payment modes and the six movement reasons", () => {
     expect([...PAYMENT_MODES]).toEqual(["cash", "upi", "card", "unpaid"]);
-    expect([...MOVEMENT_REASONS]).toEqual(["opening", "adjustment", "sale", "sale_cancel"]);
+    expect([...MOVEMENT_REASONS]).toEqual([
+      "opening",
+      "adjustment",
+      "sale",
+      "sale_cancel",
+      "merge_in",
+      "merge_out",
+    ]);
   });
 
   it("accepts each payment mode and rejects anything else", () => {

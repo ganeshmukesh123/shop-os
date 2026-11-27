@@ -11,7 +11,14 @@ export const PAYMENT_MODES = ["cash", "upi", "card", "unpaid"] as const;
 export const paymentModeSchema = z.enum(PAYMENT_MODES);
 export type PaymentMode = z.infer<typeof paymentModeSchema>;
 
-export const MOVEMENT_REASONS = ["opening", "adjustment", "sale", "sale_cancel"] as const;
+export const MOVEMENT_REASONS = [
+  "opening",
+  "adjustment",
+  "sale",
+  "sale_cancel",
+  "merge_in",
+  "merge_out",
+] as const;
 export type MovementReason = (typeof MOVEMENT_REASONS)[number];
 
 /** A bill moves from posted to cancelled once, and never back (data-model.md). */
