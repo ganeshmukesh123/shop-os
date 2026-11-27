@@ -29,9 +29,11 @@ Package: fuses + ASAR integrity  (packaged output only, never the dev binary)
 - Fuses: disable `runAsNode`, `NODE_OPTIONS`, `nodeCliInspect`; enable ASAR integrity and `onlyLoadAppFromAsar`. Disable `grantFileProtocolExtraPrivileges` only once `file://` is gone.
 - **Know what is and is not protected.** Fuses stop abuse through Electron and Node flags. ASAR integrity detects changes to `app.asar` on **macOS and Windows only**; the Linux AppImage is an exception until a separate protection is chosen. Files outside the archive (`extraResources` such as the `drizzle` migrations, the unpacked `better-sqlite3`) are **not** covered. While the app is unsigned, someone who can write to the install folder can still replace it; signature verification is what closes that (spec 018 US5).
 - **Flip fuses on packaged output only.** Vitest runs inside Electron's Node (`ELECTRON_RUN_AS_NODE=1`); flipping the `node_modules` binary breaks `pnpm test`.
-- A release check reads the fuse state (`npx @electron/fuses read --app <path>`) and fails if it differs.
+- A release check reads the fuse state (`pnpm check:fuses`, built on `@electron/fuses` `getCurrentFuseWire`) and fails if it differs.
+- **Fuses do not block Chromium's DevTools port.** `--remote-debugging-port` attached to the hardened build (O15). A packaged release exits on `--remote-debugging-port` or `--remote-debugging-pipe` (`src/main/app/debugSwitchPolicy`); the allowance is fixed at build time (`__SHOPOS_ALLOWS_DEBUG_SWITCHES__`), never an environment variable.
+- **Two package flavours.** Playwright needs `--inspect` and the DevTools port, so it drives `pnpm package:e2e` (`release-e2e/`, "Shop OS E2E", ASAR checks still on). The release build (`pnpm package`) is checked with `check:fuses` and `smoke:release`. Never ship `release-e2e/`. Steps: `docs/operations/release-checklist.md`.
 - `better-sqlite3` stays unpacked outside the archive and is rebuilt for Electron after every Electron upgrade (see `shopos-database-drizzle`).
-- Adding `@electron/fuses` (or any package) needs owner approval first; check whether electron-builder has a built-in option (open item O1).
+- electron-builder flips the fuses itself (`electronFuses` in `electron-builder.yml`, O1). `@electron/fuses` is a devDependency only for reading them back.
 - Signing and notarization: only when auto-update or a stored secret arrives. Use the **async** `safeStorage` API (the sync one goes in Electron 46).
 
 ## 3. Loading the screen
@@ -64,5 +66,6 @@ Table-driven navigation test (names say what they hold):
 - [ ] Navigation by parsed URL, exact match
 - [ ] No new Electron or Node access in the renderer; no raw `ipcRenderer`
 - [ ] Fuses and ASAR integrity on packaged output only; fuse report checked
+- [ ] No way to open DevTools in a packaged release: no debug switch, no default View menu
 - [ ] No sync IPC or long main-process work; no database module in workers
 - [ ] Every recommendation in a PR carries why, trade-off, industry practice and references
