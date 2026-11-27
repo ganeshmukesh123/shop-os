@@ -115,7 +115,7 @@ These come after the items above prove themselves: ISI/BIS number capture at pur
 ### Functional Requirements
 
 - **FR-001**: System MUST store items as a family with one or more variants, each with up to 4 attributes from the eight Generic keys (size, gauge, shade, pack size, colour, length, rating, brand; FR-ITM-001) plus the two axes used by this feature: class and base type.
-- **FR-002**: System MUST generate all variant combinations in one step and allow deleting combinations not stocked (FR-ITM-002).
+- **FR-002**: System MUST generate all variant combinations in one step and allow deleting combinations not stocked (FR-ITM-002). One step makes at most 500 combinations and says how many were asked for when it refuses (a limit chosen 2026-11-27, see data-model.md).
 - **FR-003**: Each variant MUST hold automatic item code, barcode(s), HSN, GST rate, base unit, purchase price, selling price per tier, MRP per batch, reorder level, location tag and active flag (FR-ITM-003).
 - **FR-004**: System MUST support unit conversions between a base unit and alternate units, usable in billing and purchase (FR-ITM-004).
 - **FR-005**: System MUST apply a per-item decimal setting (on for metre and kg, off for pieces and sealed packs) (FR-ITM-005).
