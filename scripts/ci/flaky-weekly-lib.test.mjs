@@ -5,6 +5,7 @@ import {
   findRecurring,
   groupFlakyTests,
   issueBody,
+  isMissingArtifactError,
   issueTitle,
 } from "./flaky-weekly-lib.mjs";
 
@@ -85,5 +86,32 @@ describe("buildWeeklyMarkdown", () => {
     const markdown = buildWeeklyMarkdown({ runCount: 5, groups: [], recurring: [] });
 
     assert.match(markdown, /0 test\(s\) needed a retry/);
+    assert.doesNotMatch(markdown, /Incomplete/);
+  });
+
+  it("names the runs that could not be read, so a short count is explained", () => {
+    const markdown = buildWeeklyMarkdown({
+      runCount: 10,
+      groups: [],
+      recurring: [],
+      incompleteRunIds: [205, 209],
+    });
+
+    assert.match(markdown, /\*\*Incomplete:\*\* 2 run\(s\) could not be read \(205, 209\)/);
+  });
+});
+
+describe("isMissingArtifactError", () => {
+  it("treats a run with no report, or an expired one, as an expected skip", () => {
+    assert.equal(isMissingArtifactError("no valid artifacts found to download"), true);
+    assert.equal(
+      isMissingArtifactError("no artifact matches any of the names or patterns provided"),
+      true,
+    );
+  });
+
+  it("treats any other download failure as a run that could not be read", () => {
+    assert.equal(isMissingArtifactError("HTTP 502: Bad Gateway"), false);
+    assert.equal(isMissingArtifactError("error connecting to api.github.com"), false);
   });
 });

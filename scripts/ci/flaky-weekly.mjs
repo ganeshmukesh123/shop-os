@@ -14,6 +14,7 @@ import {
   findRecurring,
   groupFlakyTests,
   issueBody,
+  isMissingArtifactError,
   issueTitle,
 } from "./flaky-weekly-lib.mjs";
 
@@ -40,9 +41,8 @@ function listRecentRunIds() {
   return output.split("\n").filter(Boolean).map(Number);
 }
 
-/** The flaky tests of one run, or null when its report is gone (artifacts expire after 14 days). */
-function readFlakyTests(runId, workFolder) {
-  const target = path.join(workFolder, String(runId));
+/** Downloads one run's report; false when the run has none (not uploaded, or expired). */
+function downloadReport(runId, target) {
   try {
     runGitHub([
       "run",
@@ -55,12 +55,33 @@ function readFlakyTests(runId, workFolder) {
       "-D",
       target,
     ]);
-    const report = JSON.parse(
-      fs.readFileSync(path.join(target, "test-results", "results.json"), "utf8"),
-    );
-    return findFlakyTests(report);
-  } catch {
-    return null;
+    return true;
+  } catch (caughtError) {
+    const errorText = String(caughtError.stderr ?? caughtError.message);
+    if (isMissingArtifactError(errorText)) {
+      return false;
+    }
+    throw caughtError;
+  }
+}
+
+/**
+ * One run's flaky tests. A run with no report is skipped; a run whose report could not be read is
+ * "incomplete", so the summary can say the counts may be short instead of silently dropping it.
+ */
+function readRun(runId, workFolder) {
+  const target = path.join(workFolder, String(runId));
+  try {
+    const hasReport = downloadReport(runId, target);
+    if (hasReport) {
+      const report = JSON.parse(
+        fs.readFileSync(path.join(target, "test-results", "results.json"), "utf8"),
+      );
+      return { kind: "read", runId, flakyTests: findFlakyTests(report) };
+    }
+    return { kind: "missing", runId };
+  } catch (caughtError) {
+    return { kind: "incomplete", runId, reason: String(caughtError.message).split("\n")[0] };
   }
 }
 
@@ -92,14 +113,22 @@ function reportToIssue(group) {
 function main() {
   if (!repository) throw new Error("GITHUB_REPOSITORY is not set (owner/name).");
   const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), "shopos-flaky-"));
-  const runs = listRecentRunIds().flatMap((runId) => {
-    const flakyTests = readFlakyTests(runId, workFolder);
-    return flakyTests === null ? [] : [{ runId, flakyTests }];
-  });
+  const results = listRecentRunIds().map((runId) => readRun(runId, workFolder));
+  const runs = results.filter((result) => result.kind === "read");
+  const incompleteRuns = results.filter((result) => result.kind === "incomplete");
   const groups = groupFlakyTests(runs);
   const recurring = findRecurring(groups);
-  const markdown = buildWeeklyMarkdown({ runCount: runs.length, groups, recurring });
+  const incompleteRunIds = incompleteRuns.map((result) => result.runId);
+  const markdown = buildWeeklyMarkdown({
+    runCount: runs.length,
+    groups,
+    recurring,
+    incompleteRunIds,
+  });
   process.stdout.write(`${markdown}\n`);
+  incompleteRuns.forEach((result) =>
+    process.stdout.write(`::warning::Run ${result.runId} could not be read: ${result.reason}\n`),
+  );
   if (process.env.GITHUB_STEP_SUMMARY)
     fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\n`);
   for (const group of recurring) {

@@ -44,11 +44,27 @@ export function issueBody(group, repository) {
   ].join("\n");
 }
 
-export function buildWeeklyMarkdown({ runCount, groups, recurring }) {
+// What `gh run download` prints when a run simply has no report: none was uploaded, or it expired
+// (artifacts are kept 14 days). Any other failure means the run could not be read.
+const MISSING_ARTIFACT_PATTERN = /no valid artifacts found|no artifact matches/i;
+
+/** True when a download failed only because the run has no report, an expected skip. */
+export function isMissingArtifactError(errorText) {
+  return MISSING_ARTIFACT_PATTERN.test(errorText);
+}
+
+export function buildWeeklyMarkdown({ runCount, groups, recurring, incompleteRunIds = [] }) {
   const header = "## Weekly end-to-end flake report";
   const counts = `${runCount} CI run(s) checked; ${groups.length} test(s) needed a retry at least once; ${recurring.length} did so in ${RECURRING_MIN_RUNS} or more runs.`;
   const rows = recurring.map(
     (group) => `- \`${group.file}\`: ${group.title} (${group.runIds.length} runs)`,
   );
-  return [header, "", counts, "", ...rows].join("\n");
+  const hasIncompleteRuns = incompleteRunIds.length > 0;
+  const incompleteNote = hasIncompleteRuns
+    ? [
+        "",
+        `**Incomplete:** ${incompleteRunIds.length} run(s) could not be read (${incompleteRunIds.join(", ")}), so a flaky test may be missing from the counts above.`,
+      ]
+    : [];
+  return [header, "", counts, "", ...rows, ...incompleteNote].join("\n");
 }
