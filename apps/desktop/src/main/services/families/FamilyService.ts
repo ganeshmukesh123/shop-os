@@ -1,32 +1,43 @@
 import {
   CoreError,
+  familiesAddVariantsInput,
   familiesCreateInput,
   familiesPreviewInput,
+  familiesUpdateInput,
   generateVariantCombinations,
   variantsSetActiveInput,
+  variantsSetConversionsInput,
+  variantsUpdateInput,
+  type FamiliesAddVariantsInput,
   type FamiliesCreateInput,
   type FamiliesPreviewInput,
+  type FamiliesUpdateInput,
   type IFamily,
+  type IFamilyDetail,
+  type IUnitConversion,
   type IVariant,
   type IVariantCombinationPreview,
   type VariantsSetActiveInput,
+  type VariantsSetConversionsInput,
+  type VariantsUpdateInput,
 } from "@shopos/core";
-import type { DB, Handle } from "../../db/connection";
+import type { DB } from "../../db/connection";
 import type { Ctx } from "../../db/seed";
 import { CatalogueRepository } from "../../repositories/CatalogueRepository";
-import { FamilyRepository } from "../../repositories/FamilyRepository";
-import { ItemRepository } from "../../repositories/ItemRepository";
-import { StockRepository } from "../../repositories/StockRepository";
-import { CatalogueService } from "../catalogue";
+import { ConversionRepository, FamilyRepository } from "../../repositories/FamilyRepository";
 import type { SearchService } from "../search";
-import { toVariantRows, type IVariantNaming } from "./variantRows";
+import { insertVariants } from "./familyWrites";
+import { toVariantPatch } from "./variantPatch";
 
 /** The search index's refresh, so a new or renamed variant is found at once (research D4). */
 export type ISearchRefresher = Pick<SearchService, "refreshVariant">;
 
+const notFound = (what: string) => new CoreError("NOT_FOUND", `That ${what} is not here any more`);
+
 /**
- * The families.* and variants.* commands (spec 002 contracts, T033). Writes run in one
- * transaction: the family, its variants and their opening movements commit together or not at all.
+ * The families.* and variants.* commands (spec 002 contracts, T033). Each write runs in one
+ * transaction: a family, its variants and their opening movements commit together or not at all.
+ * After a write that changes what search sees, the index re-reads the family.
  */
 export class FamilyService {
   constructor(
@@ -51,33 +62,62 @@ export class FamilyService {
     const input = familiesCreateInput.parse(raw);
     const created = this.db.transaction((transaction) => {
       const families = new FamilyRepository(transaction, this.ctx);
-      if (families.hasFamilyNamed(input.family.name)) {
-        throw new CoreError(
-          "DUPLICATE_NAME",
-          `A family called ${input.family.name} already exists`,
-        );
-      }
-      this.assertUnits(
-        transaction,
-        input.variants.map((variant) => variant.baseUom),
-      );
-      const naming = this.namingFor(input.family);
-      const rows = toVariantRows(input.family, naming, input.variants);
+      this.assertFreeName(families, input.family.name);
       const family = families.insertFamily({
         ...input.family,
         categoryId: input.family.categoryId ?? null,
         brandId: input.family.brandId ?? null,
       });
-      const variants = rows.map((variantRow) => families.insertVariant(family.id, variantRow));
-      this.writeOpeningStock(
-        transaction,
-        variants,
-        input.variants.map((variant) => variant.openingQtyMilli),
-      );
+      insertVariants(transaction, this.ctx, family, input.variants);
       return { family, variants: families.listVariants(family.id) };
     });
     this.search?.refreshVariant(created.variants[0]!.id);
     return { ...created, duplicates: [] };
+  }
+
+  get(raw: { id: string }): IFamilyDetail {
+    const families = new FamilyRepository(this.db, this.ctx);
+    const family = families.getFamily(raw.id);
+    if (!family) throw notFound("family");
+    const variants = families.listVariants(family.id);
+    const conversions = new ConversionRepository(this.db, this.ctx).listFor(
+      variants.map((variant) => variant.id),
+    );
+    return { family, variants, conversions };
+  }
+
+  update(raw: FamiliesUpdateInput): { family: IFamily } {
+    const { id, ...patch } = familiesUpdateInput.parse(raw);
+    const families = new FamilyRepository(this.db, this.ctx);
+    if (patch.name) this.assertFreeName(families, patch.name, id);
+    const family = families.updateFamily(id, patch);
+    if (!family) throw notFound("family");
+    this.refreshFamily(families, family.id);
+    return { family };
+  }
+
+  addVariants(raw: FamiliesAddVariantsInput): { variants: IVariant[] } {
+    const input = familiesAddVariantsInput.parse(raw);
+    const variants = this.db.transaction((transaction) => {
+      const families = new FamilyRepository(transaction, this.ctx);
+      const family = families.getFamily(input.familyId);
+      if (!family) throw notFound("family");
+      const insertedIds = insertVariants(transaction, this.ctx, family, input.variants);
+      return insertedIds.map((variantId) => families.getVariant(variantId)!);
+    });
+    this.search?.refreshVariant(variants[0]!.id);
+    return { variants };
+  }
+
+  updateVariant(raw: VariantsUpdateInput): { variant: IVariant } {
+    const input = variantsUpdateInput.parse(raw);
+    const families = new FamilyRepository(this.db, this.ctx);
+    const current = families.getVariant(input.id);
+    if (!current) throw notFound("item");
+    const family = families.getFamily(current.familyId)!;
+    const variant = families.updateVariant(input.id, toVariantPatch(family.kind, current, input))!;
+    this.search?.refreshVariant(variant.id);
+    return { variant };
   }
 
   /** Deactivating keeps the row and every bill that names it (constitution I); no delete exists. */
@@ -85,7 +125,7 @@ export class FamilyService {
     const input = variantsSetActiveInput.parse(raw);
     const families = new FamilyRepository(this.db, this.ctx);
     const current = families.getVariant(input.id);
-    if (!current) throw new CoreError("NOT_FOUND", "That item is not here any more");
+    if (!current) throw notFound("item");
     if (current.mergedIntoId !== null && input.isActive) {
       throw new CoreError("MERGED", "This item was merged into another; reverse the merge instead");
     }
@@ -94,40 +134,35 @@ export class FamilyService {
     return { variant };
   }
 
-  /** The category's inherited title template and the brand's name, for naming variants. */
-  private namingFor(family: FamiliesCreateInput["family"]): IVariantNaming {
-    const { categories } = new CatalogueService(this.db, this.ctx).listCategories();
-    const { brands } = new CatalogueService(this.db, this.ctx).listBrands();
-    const category = categories.find((candidate) => candidate.id === family.categoryId);
-    const brand = brands.find((candidate) => candidate.id === family.brandId);
-    return {
-      familyName: family.name,
-      brandName: brand?.name ?? null,
-      titleTemplate: category?.resolved.titleTemplate ?? null,
-    };
+  /** Replace a variant's alternate units: never its base unit, only units the shop has. */
+  setConversions(raw: VariantsSetConversionsInput): { conversions: IUnitConversion[] } {
+    const input = variantsSetConversionsInput.parse(raw);
+    return this.db.transaction((transaction) => {
+      const variant = new FamilyRepository(transaction, this.ctx).getVariant(input.variantId);
+      if (!variant) throw notFound("item");
+      const catalogue = new CatalogueRepository(transaction, this.ctx);
+      input.conversions.forEach(({ uomCode }) => {
+        if (uomCode === variant.baseUom) {
+          throw new CoreError("BASE_UNIT_LISTED", `${uomCode} is already the item's own unit`);
+        }
+        if (!catalogue.hasUnit(uomCode)) {
+          throw new CoreError("UNKNOWN_UNIT", `${uomCode} is not one of the shop's units`);
+        }
+      });
+      const conversions = new ConversionRepository(transaction, this.ctx);
+      conversions.replace(variant.id, input.conversions);
+      return { conversions: conversions.listFor([variant.id]) };
+    });
   }
 
-  private assertUnits(transaction: Handle, unitCodes: string[]): void {
-    const catalogue = new CatalogueRepository(transaction, this.ctx);
-    const unknown = unitCodes.find((code) => !catalogue.hasUnit(code));
-    if (unknown !== undefined) {
-      throw new CoreError("INVALID_FIELD", `${unknown} is not one of the shop's units`);
+  private assertFreeName(families: FamilyRepository, name: string, excludeId?: string): void {
+    if (families.hasFamilyNamed(name, excludeId)) {
+      throw new CoreError("DUPLICATE_NAME", `A family called ${name} already exists`);
     }
   }
 
-  /** One opening movement per variant that starts with stock; none for zero (T028). */
-  private writeOpeningStock(
-    transaction: Handle,
-    variants: readonly IVariant[],
-    openingQuantities: readonly number[],
-  ): void {
-    const stock = new StockRepository(transaction, this.ctx);
-    const items = new ItemRepository(transaction, this.ctx);
-    variants.forEach((variant, variantIndex) => {
-      const openingQtyMilli = openingQuantities[variantIndex] ?? 0;
-      if (openingQtyMilli === 0) return;
-      stock.append({ itemId: variant.id, quantityMilli: openingQtyMilli, reason: "opening" });
-      items.addStockDelta(variant.id, openingQtyMilli);
-    });
+  private refreshFamily(families: FamilyRepository, familyId: string): void {
+    const [firstVariant] = families.listVariants(familyId);
+    if (firstVariant) this.search?.refreshVariant(firstVariant.id);
   }
 }
