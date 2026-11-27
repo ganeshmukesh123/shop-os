@@ -168,6 +168,13 @@ This table is the **single source** for dates: when a window moves, update it he
 | OD-3 | Code 128: in-house encoder or a package                              | In-house, D13                                                                                                              | 002 M5            |
 | OD-4 | Go-live scope and date                                               | Option (b) in D16                                                                                                          | Before 005 starts |
 
+**Owner answers (2026-11-27)**: the owner accepted every recommendation above.
+
+- OD-1: yes, item and shade import is built in 002 and reused by 012 (D12).
+- OD-2: SheetJS Community Edition, pinned from its own distribution, for read-only XLSX parsing; CSV is read as well. The package is added in its own PR when M5 starts, not before.
+- OD-3: in-house Code 128 encoder in `@shopos/core` (D13); no barcode package.
+- OD-4: option (b) in D16: a limited go-live on 1 June 2027 with 002, 005, 004 and the 001 no-tax billing scope; 003, 008, 007, 006 and 012 roll out after it as the calendar allows.
+
 ## References
 
 - Architecture reference, sections 6, 7.3, 7.5, 8.4, 10.3, 11.7 (`docs/reference/architecture.md`).
