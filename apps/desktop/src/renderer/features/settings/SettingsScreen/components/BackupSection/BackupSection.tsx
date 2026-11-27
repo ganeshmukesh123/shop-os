@@ -1,5 +1,6 @@
 import { Box, Button, Flex, Text, TextField } from "@radix-ui/themes";
 import { StatusMessage } from "../../../../../shared/components/StatusMessage/StatusMessage";
+import { formatDeviceDateTime } from "../../../../../shared/text/formatDeviceDateTime";
 import { uiText } from "../../../../../shared/text/strings";
 import { SettingsField } from "../SettingsField/SettingsField";
 import type { IBackupSectionProps } from "./BackupSection.types";
@@ -32,9 +33,7 @@ export function BackupSection({
       </SettingsField>
       <Text size="2">
         {uiText.settings.lastBackup}:{" "}
-        <b>
-          {status?.lastOkAt ? new Date(status.lastOkAt).toLocaleString() : uiText.settings.never}
-        </b>
+        <b>{status?.lastOkAt ? formatDeviceDateTime(status.lastOkAt) : uiText.settings.never}</b>
       </Text>
       {status?.lastError && (
         <StatusMessage role="danger" label={uiText.settings.backupFailed}>
