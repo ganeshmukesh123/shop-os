@@ -102,12 +102,10 @@ describe("schema contract", () => {
   });
 
   it("guards the bill's tender: mode, amount and status", () => {
+    // Mode and status are foreign keys to lookup tables since spec 002 T019 (research D17);
+    // the foreign keys are checked in "ties each bill line ..." below
     expect(constraintNames(billTender)).toEqual(
-      expect.arrayContaining([
-        "bill_tender_mode",
-        "bill_tender_amount_nonneg",
-        "bill_tender_status",
-      ]),
+      expect.arrayContaining(["bill_tender_amount_nonneg"]),
     );
   });
 
@@ -118,12 +116,9 @@ describe("schema contract", () => {
   });
 
   it("keeps stock and line amounts sane", () => {
+    // The direction and reason rules moved to the stock_movement_rules trigger (spec 002 T019)
     expect(constraintNames(stockMovement)).toEqual(
-      expect.arrayContaining([
-        "stock_movement_qty_pos",
-        "stock_movement_one_direction",
-        "stock_movement_adjustment_note",
-      ]),
+      expect.arrayContaining(["stock_movement_qty_pos", "stock_movement_doc_pair"]),
     );
     expect(constraintNames(billLine)).toEqual(
       expect.arrayContaining([
@@ -160,10 +155,18 @@ describe("schema contract", () => {
         .foreignKeys.map((foreignKey) => getTableConfig(foreignKey.reference().foreignTable).name)
         .sort();
     expect(referencedTables(billLine)).toEqual(["bill", "item_variant"]);
-    expect(referencedTables(stockMovement)).toEqual(["item_variant", "location", "location"]);
+    // Type, document type and batch are foreign keys since spec 002 T019 (research D17)
+    expect(referencedTables(stockMovement)).toEqual([
+      "item_batch",
+      "item_variant",
+      "location",
+      "location",
+      "movement_doc_type",
+      "movement_type",
+    ]);
     // merged_into_id points at another variant (spec 002 T017)
     expect(referencedTables(itemVariant)).toEqual(["item_family", "item_variant"]);
-    expect(referencedTables(billTender)).toEqual(["bill"]);
+    expect(referencedTables(billTender)).toEqual(["bill", "tender_mode", "tender_status"]);
   });
 
   it("names every table and column in snake_case", () => {

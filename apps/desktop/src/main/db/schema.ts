@@ -1,12 +1,22 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  check,
+  foreignKey,
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 import { base } from "./schemaBase";
 
 import { itemVariant } from "./itemSchema";
+import { tenderMode, tenderStatus } from "./lookupSchema";
 
 // Feature 002 tables live in their own files; drizzle-kit reads them through these re-exports.
 export * from "./catalogueSchema";
 export * from "./itemSchema";
+export * from "./lookupSchema";
 export * from "./stockSchema";
 export * from "./variantDetailSchema";
 
@@ -116,17 +126,23 @@ export const billTender = sqliteTable(
     billId: text("bill_id")
       .notNull()
       .references(() => bill.id),
-    // mode: one of cash, upi, card, unpaid
+    // mode: a tender_mode code (cash, upi, card, unpaid), a lookup since spec 002 T019
     mode: text("mode").notNull(),
     amountPaise: integer("amount_paise").notNull(),
-    // status: 'label' in this release (the shop records the mode, the app does not collect money)
+    // status: a tender_status code; 'label' in this release (the app does not collect money)
     status: text("status").notNull(),
   },
   (tableColumns) => [
     index("bill_tender_bill_idx").on(tableColumns.billId),
-    check("bill_tender_mode", sql`${tableColumns.mode} in ('cash','upi','card','unpaid')`),
+    foreignKey({
+      columns: [tableColumns.businessId, tableColumns.mode],
+      foreignColumns: [tenderMode.businessId, tenderMode.code],
+    }),
+    foreignKey({
+      columns: [tableColumns.businessId, tableColumns.status],
+      foreignColumns: [tenderStatus.businessId, tenderStatus.code],
+    }),
     check("bill_tender_amount_nonneg", sql`${tableColumns.amountPaise} >= 0`),
-    check("bill_tender_status", sql`${tableColumns.status} in ('label')`),
   ],
 );
 

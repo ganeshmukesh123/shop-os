@@ -64,7 +64,10 @@ describe("target shape: seed and time columns", () => {
   it.skipIf(!SCHEMA_TASK_DONE.T075)("seeds the one 'Shop floor' location", () => {
     const { sqlite } = createTestDb();
 
-    const locationRows = sqlite.prepare("select name from location").all();
+    // Spec 002 T019 adds a "Tinted returns" location; there is still one shop floor
+    const locationRows = sqlite
+      .prepare("select name from location where kind = 'shop_floor'")
+      .all();
 
     expect(locationRows).toEqual([{ name: "Shop floor" }]);
   });
