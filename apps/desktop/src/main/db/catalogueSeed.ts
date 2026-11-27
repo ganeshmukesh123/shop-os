@@ -1,6 +1,7 @@
 import type { Handle } from "./connection";
 import { attributeDef, uom } from "./catalogueSchema";
 import { newId, nowMs } from "./ids";
+import { priceTier } from "./variantDetailSchema";
 
 /**
  * The catalogue's system rows (spec 002 data-model.md "Catalogue"). A new shop gets them from the
@@ -33,7 +34,14 @@ export const SEEDED_UNITS = [
   { code: "bundle", label: "Bundle", dimension: "count", uqc: "BDL", allowDecimal: 0 },
 ] as const;
 
-/** Insert the seeded attributes and units for a new shop, inside the first-run transaction. */
+/** Price tiers (spec 002 T018, migration 0018). Retail is the variant's own selling price. */
+export const SEEDED_PRICE_TIERS = [
+  { code: "retail", label: "Retail", isDefault: 1 },
+  { code: "contractor", label: "Contractor", isDefault: 0 },
+  { code: "dealer", label: "Dealer", isDefault: 0 },
+] as const;
+
+/** Insert the seeded attributes, units and tiers for a new shop, inside the first-run transaction. */
 export function insertCatalogueSeed(
   transaction: Handle,
   shop: { businessId: string; shopId: string },
@@ -47,5 +55,9 @@ export function insertCatalogueSeed(
   transaction
     .insert(uom)
     .values(SEEDED_UNITS.map((unit) => ({ id: newId(), ...stamp, ...unit })))
+    .run();
+  transaction
+    .insert(priceTier)
+    .values(SEEDED_PRICE_TIERS.map((tier) => ({ id: newId(), ...stamp, ...tier })))
     .run();
 }

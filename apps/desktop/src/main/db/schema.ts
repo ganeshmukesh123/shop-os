@@ -7,6 +7,7 @@ import { itemVariant } from "./itemSchema";
 // Feature 002 tables live in their own files; drizzle-kit reads them through these re-exports.
 export * from "./catalogueSchema";
 export * from "./itemSchema";
+export * from "./variantDetailSchema";
 
 export const bill = sqliteTable(
   "bill",

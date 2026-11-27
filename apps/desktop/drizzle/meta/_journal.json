@@ -127,6 +127,13 @@
       "when": 1795801441766,
       "tag": "0017_family_variant_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1795802190512,
+      "tag": "0018_variant_detail_tables",
+      "breakpoints": true
     }
   ]
 }
