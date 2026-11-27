@@ -17,6 +17,7 @@ export default defineConfig({
             "tests/unit/**/*.test.ts",
             "tests/integration/**/*.test.ts",
             "src/main/**/*.test.ts",
+            "scripts/**/*.test.ts",
           ],
         },
       },

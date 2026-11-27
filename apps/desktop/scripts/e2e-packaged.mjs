@@ -1,5 +1,5 @@
-// Runs the Playwright specs against the PACKAGED app (run `pnpm package` first).
-// Finds the unpacked executable that electron-builder wrote under release/ and passes it to
+// Runs the Playwright specs against the PACKAGED e2e flavour (run `pnpm package:e2e` first; the
+// release build refuses Playwright, spec 018 O15). Finds the unpacked executable under release-e2e/ and passes it to
 // tests/e2e/launch.ts through SHOPOS_E2E_EXECUTABLE.
 //
 //   pnpm test:e2e:packaged               run the specs against the packaged app
@@ -13,29 +13,18 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { fileURLToPath } from "node:url";
+import {
+  DESKTOP_FOLDER,
+  PACKAGE_FLAVOURS,
+  findPackagedExecutable,
+} from "./packagedApp/packagedApp.mjs";
 
-const desktopFolder = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const releaseFolder = path.join(desktopFolder, "release");
+const desktopFolder = DESKTOP_FOLDER;
 const say = (text) => process.stdout.write(`${text}\n`);
 const fail = (text) => process.stderr.write(`${text}\n`);
 const OFFLINE_FLAG = "--offline";
 const DENY_NETWORK_PROFILE =
   '(version 1)(allow default)(deny network*)(allow network* (remote ip "localhost:*"))(allow network* (local ip "localhost:*"))';
-
-const CANDIDATE_EXECUTABLES = [
-  "mac-arm64/Shop OS.app/Contents/MacOS/Shop OS",
-  "mac/Shop OS.app/Contents/MacOS/Shop OS",
-  "win-unpacked/Shop OS.exe",
-  "linux-unpacked/shop-os",
-  "linux-unpacked/@shoposdesktop",
-];
-
-function findPackagedExecutable() {
-  return CANDIDATE_EXECUTABLES.map((relativePath) => path.join(releaseFolder, relativePath)).find(
-    (candidatePath) => fs.existsSync(candidatePath),
-  );
-}
 
 /** A tiny launcher that runs the app inside a sandbox profile that denies the network. */
 function writeOfflineLauncher(executable) {
@@ -46,9 +35,9 @@ function writeOfflineLauncher(executable) {
   return launcher;
 }
 
-const executable = findPackagedExecutable();
+const executable = findPackagedExecutable(PACKAGE_FLAVOURS.e2e);
 if (!executable) {
-  fail("No packaged app under apps/desktop/release. Run `pnpm package` first.");
+  fail("No e2e package under apps/desktop/release-e2e. Run `pnpm package:e2e` first.");
   process.exit(1);
 }
 

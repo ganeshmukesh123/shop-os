@@ -11,7 +11,7 @@ export interface Launched {
 
 /**
  * Start the built app (run `pnpm build` first) against a throwaway data folder.
- * Set SHOPOS_E2E_EXECUTABLE to the packaged app's binary (see `pnpm test:e2e:packaged`) to run the
+ * Set SHOPOS_E2E_EXECUTABLE to the packaged app's binary (see `pnpm test:e2e:packaged`, which uses the `package:e2e` flavour) to run the
  * same scenarios against the installer's output instead of `out/main/index.js`.
  */
 export async function launch(

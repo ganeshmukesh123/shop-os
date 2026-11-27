@@ -67,7 +67,7 @@ specs/                    one folder per feature
 - `pnpm test`: Vitest for `packages/core` and `apps/desktop` (unit and integration, in-memory SQLite)
 - `pnpm typecheck`, `pnpm lint`, `pnpm format`
 - `pnpm dev`: run the desktop app against a throwaway dev database
-- `pnpm build`: production bundle; `pnpm --filter @shopos/desktop package`: installer
+- `pnpm build`: production bundle; `pnpm --filter @shopos/desktop package`: installer (hardened with fuses; check with `check:fuses`); `package:e2e`: the packaged flavour Playwright drives (`test:e2e:packaged`), never shipped (spec 018)
 - `pnpm test:e2e`: Playwright for Electron (run `pnpm build` first)
 - After changing `apps/desktop/src/main/db/schema.ts`: `pnpm --filter @shopos/desktop db:generate`
 

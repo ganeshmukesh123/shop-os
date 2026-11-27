@@ -13,6 +13,17 @@ extraResources:
 asarUnpack:
   - "**/node_modules/better-sqlite3/**"
 npmRebuild: true
+# Fuses are flipped on the packaged binary only; node_modules/electron stays as is so `pnpm test`
+# can still run Vitest with ELECTRON_RUN_AS_NODE (spec 018 FR-004, FR-005). `pnpm check:fuses`
+# reads the result. ASAR integrity covers macOS and Windows; the Linux AppImage and the files
+# outside the archive (drizzle migrations, better-sqlite3) are accepted gaps (decisions D3, D4).
+# grantFileProtocolExtraPrivileges stays on while the screen loads from file:// (off in PR C).
+electronFuses:
+  runAsNode: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
 mac:
   category: public.app-category.business
   target: [dmg]
