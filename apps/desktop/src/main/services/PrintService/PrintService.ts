@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import { CoreError, type PrintTarget } from "@shopos/core";
-import type { BillRepository } from "../repositories/BillRepository";
-import type { SettingsRepository } from "../repositories/SettingsRepository";
-import { pageSpec, renderBillHtml } from "./billHtml";
+import type { BillRepository } from "../../repositories/BillRepository";
+import type { SettingsRepository } from "../../repositories/SettingsRepository";
+import { pageSpec, renderBillHtml } from "../billHtml";
 
 /** The only Electron-specific part, so PrintService can be tested with a fake. */
 export interface HtmlRenderer {

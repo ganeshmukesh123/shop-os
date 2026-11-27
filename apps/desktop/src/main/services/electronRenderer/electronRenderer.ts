@@ -1,5 +1,5 @@
 import { BrowserWindow, type BrowserWindowConstructorOptions } from "electron";
-import type { HtmlRenderer } from "./PrintService";
+import type { HtmlRenderer } from "../PrintService";
 
 const MILLIMETRES_PER_INCH = 25.4;
 const DEFAULT_RECEIPT_WIDTH_MILLIMETRES = 80;
