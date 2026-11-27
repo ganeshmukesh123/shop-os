@@ -120,6 +120,13 @@
       "when": 1795801051496,
       "tag": "0016_catalogue_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1795801441766,
+      "tag": "0017_family_variant_columns",
+      "breakpoints": true
     }
   ]
 }
