@@ -39,6 +39,21 @@ Sources read: the spec, PRD section 5 (FR-ITM-001 to 017, FR-TNT-001 to 009), PR
 | In-house index (chosen)                | Yes                                             | Exactly our rules | About 200 lines to write and test                                                                                                                                                     |
 
 - **Open item OI-2**: measure the 0.2 s budget with 50,000 generated variants on the owner's Mac (task in Phase 2, with the 016 benchmark harness). If it misses, propose MiniSearch to the owner.
+- **OI-2 result (2026-11-28, task T025)**: inside the budget with the in-house index; MiniSearch is not needed.
+  - **Setup**: `tests/integration/searchBenchmark.test.ts` builds 50,000 variants (10,000 families of 5 sizes), each with 2 Hinglish search names. It runs 50 queries: whole words, multi-word, prefixes of 2 letters, sizes, codes, Hinglish aliases, 9 matching typo queries (elbo, pipr, sokcet, vlave, redcer, suprme, finolx, ashirvd, brss), and 3 queries with no match (coupplr, copr, xyzzy).
+  - **Machine**: the development Mac (Apple M5, 16 GB), in a test run inside Electron's Node. This is not the packaged app, and not the 016 benchmark harness, which does not exist yet.
+
+  | Run | Index build at start | Median per query | 95th percentile | Slowest |
+  | --- | --- | --- | --- | --- |
+  | 1 | 516 ms | 16.2 ms | 20.0 ms | 77.5 ms |
+  | 2 | 502 ms | 15.9 ms | 20.7 ms | 68.8 ms |
+  | 3 | 522 ms | 16.5 ms | 20.0 ms | 75.3 ms |
+
+  - **First measurement**: the first measurement missed: median 178 ms, 95th percentile 348 ms. Ranking ran an edit distance for every word of every name on each query. Caching each query word's verdict per distinct name word fixed it (PR #173). The test asserts the 95th percentile under 200 ms.
+  - **Still open**:
+    - The 0.5 s index build at start is not in any budget.
+    - The packaged app on an older or slower counter PC is not measured, and needs the 016 harness.
+    - The slowest query, a two-letter prefix that matches thousands of families, is about 75 ms.
 - **Hinglish**: no automatic transliteration. Staff add trade and Hindi names as search names (FR-006); "paipa" works because someone entered it. Transliteration is noted for feature 014.
 
 ### D5. Duplicate warning is a pure scoring function
