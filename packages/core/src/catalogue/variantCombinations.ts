@@ -22,6 +22,24 @@ function assertValidAxisKeys(axisKeys: readonly string[]): void {
   }
 }
 
+/**
+ * The most variants one generation may make (spec 002 FR-002, data-model.md). A limit chosen on
+ * 2026-11-27, not a PRD number: 4 axes of 10 values would otherwise make 10,000 in one click.
+ */
+export const MAX_COMBINATIONS = 500;
+
+/** Refuse before building anything when the product of the value counts is over the limit. */
+function assertWithinCombinationLimit(valueCounts: readonly number[]): void {
+  const combinationCount = valueCounts.reduce((product, valueCount) => product * valueCount, 1);
+  if (combinationCount > MAX_COMBINATIONS) {
+    throw new CoreError(
+      "TOO_MANY_COMBINATIONS",
+      `These values make ${combinationCount} variants; one step makes at most ${MAX_COMBINATIONS}`,
+      { combinationCount },
+    );
+  }
+}
+
 /** The values chosen for one axis: trimmed, repeats dropped, at least one. */
 function chosenValues(key: string, rawValues: readonly string[] | undefined): string[] {
   const axisValues = [
@@ -42,9 +60,10 @@ export function generateVariantCombinations(
   axisValues: Readonly<Record<string, readonly string[]>>,
 ): IVariantCombination[] {
   assertValidAxisKeys(axisKeys);
+  const valuesByAxis = axisKeys.map((key) => ({ key, values: chosenValues(key, axisValues[key]) }));
+  assertWithinCombinationLimit(valuesByAxis.map(({ values }) => values.length));
   let combinations: Record<string, string>[] = [{}];
-  for (const key of axisKeys) {
-    const values = chosenValues(key, axisValues[key]);
+  for (const { key, values } of valuesByAxis) {
     combinations = combinations.flatMap((axes) =>
       values.map((axisValue) => ({ ...axes, [key]: axisValue })),
     );
