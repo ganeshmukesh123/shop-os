@@ -3,6 +3,7 @@ import {
   checkInvariant,
   foldMovements,
   isNegative,
+  mergeMovementPair,
   movementLocations,
   signedQuantityMilli,
 } from "../src/stock";
@@ -118,5 +119,64 @@ describe("movement direction comes from the locations (data-model: stock_movemen
 
     expect(errorCodeOf(() => signedQuantityMilli(zero))).toBe("INVALID_QUANTITY");
     expect(errorCodeOf(() => signedQuantityMilli(negative))).toBe("INVALID_QUANTITY");
+  });
+});
+
+describe("merge movements (task T015, research D6 merge)", () => {
+  it("moves a positive balance out of the merged-away variant and into the survivor", () => {
+    const { source, target } = mergeMovementPair(4000, SHOP_FLOOR);
+
+    expect(source).toEqual({
+      reason: "merge_out",
+      qtyBaseMilli: 4000,
+      fromLocationId: SHOP_FLOOR,
+      toLocationId: null,
+    });
+    expect(target).toEqual({
+      reason: "merge_in",
+      qtyBaseMilli: 4000,
+      fromLocationId: null,
+      toLocationId: SHOP_FLOOR,
+    });
+  });
+
+  it("gives the survivor the stock: B with 4 merged into A with 10 leaves A 14 and B 0", () => {
+    const { source, target } = mergeMovementPair(4000, SHOP_FLOOR);
+    const movements = [
+      mv("a", 10000),
+      mv("b", 4000),
+      mv("b", signedQuantityMilli(source)),
+      mv("a", signedQuantityMilli(target)),
+    ];
+
+    const stockByItem = foldMovements(movements);
+
+    expect(stockByItem.get("a")).toBe(14000);
+    expect(stockByItem.get("b")).toBe(0);
+  });
+
+  it("moves negative stock the other way round: the survivor takes the shortfall", () => {
+    const { source, target } = mergeMovementPair(-3000, SHOP_FLOOR);
+
+    expect(source.reason).toBe("merge_in");
+    expect(target.reason).toBe("merge_out");
+    expect(signedQuantityMilli(source)).toBe(3000);
+    expect(signedQuantityMilli(target)).toBe(-3000);
+  });
+
+  it("always adds up to nothing across the two variants", () => {
+    const balances = [4000, -3000, 1, -1, 999999];
+
+    const nets = balances.map((balance) => {
+      const { source, target } = mergeMovementPair(balance, SHOP_FLOOR);
+      return signedQuantityMilli(source) + signedQuantityMilli(target);
+    });
+
+    expect(nets).toEqual([0, 0, 0, 0, 0]);
+  });
+
+  it("makes no movement for a balance of zero or one that is not a whole number", () => {
+    expect(errorCodeOf(() => mergeMovementPair(0, SHOP_FLOOR))).toBe("INVALID_QUANTITY");
+    expect(errorCodeOf(() => mergeMovementPair(2.5, SHOP_FLOOR))).toBe("INVALID_QUANTITY");
   });
 });
