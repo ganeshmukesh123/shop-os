@@ -3144,12 +3144,13 @@
         }
       },
       "indexes": {
-        "bill_line_tint_line_idx": {
-          "name": "bill_line_tint_line_idx",
+        "bill_line_tint_colorant_uq": {
+          "name": "bill_line_tint_colorant_uq",
           "columns": [
-            "bill_line_id"
+            "bill_line_id",
+            "colorant_variant_id"
           ],
-          "isUnique": false
+          "isUnique": true
         }
       },
       "foreignKeys": {
@@ -3639,7 +3640,7 @@
         },
         "tint_shade_custom_labelled": {
           "name": "tint_shade_custom_labelled",
-          "value": "\"tint_shade\".\"source\" = 'library' or \"tint_shade\".\"customer_label\" is not null or \"tint_shade\".\"site_label\" is not null"
+          "value": "\"tint_shade\".\"source\" = 'library' or coalesce(trim(\"tint_shade\".\"customer_label\", char(9, 10, 11, 12, 13, 32)), '') <> '' or coalesce(trim(\"tint_shade\".\"site_label\", char(9, 10, 11, 12, 13, 32)), '') <> ''"
         }
       }
     },

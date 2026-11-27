@@ -15,7 +15,7 @@ CREATE TABLE `bill_line_tint` (
 	CONSTRAINT "bill_line_tint_cost_nonneg" CHECK("bill_line_tint"."cost_paise" >= 0)
 );
 --> statement-breakpoint
-CREATE INDEX `bill_line_tint_line_idx` ON `bill_line_tint` (`bill_line_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `bill_line_tint_colorant_uq` ON `bill_line_tint` (`bill_line_id`,`colorant_variant_id`);--> statement-breakpoint
 CREATE TABLE `tint_charge_rule` (
 	`id` text PRIMARY KEY NOT NULL,
 	`business_id` text NOT NULL,
@@ -80,7 +80,7 @@ CREATE TABLE `tint_shade` (
 	CONSTRAINT "tint_shade_card_len" CHECK("tint_shade"."shade_card" is null or length("tint_shade"."shade_card") <= 60),
 	CONSTRAINT "tint_shade_source_enum" CHECK("tint_shade"."source" in ('library', 'custom')),
 	CONSTRAINT "tint_shade_labels_len" CHECK(("tint_shade"."customer_label" is null or length("tint_shade"."customer_label") <= 80) and ("tint_shade"."site_label" is null or length("tint_shade"."site_label") <= 80)),
-	CONSTRAINT "tint_shade_custom_labelled" CHECK("tint_shade"."source" = 'library' or "tint_shade"."customer_label" is not null or "tint_shade"."site_label" is not null)
+	CONSTRAINT "tint_shade_custom_labelled" CHECK("tint_shade"."source" = 'library' or coalesce(trim("tint_shade"."customer_label", char(9, 10, 11, 12, 13, 32)), '') <> '' or coalesce(trim("tint_shade"."site_label", char(9, 10, 11, 12, 13, 32)), '') <> '')
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `tint_shade_library_code_uq` ON `tint_shade` (`brand_id`,`shade_code`) WHERE "tint_shade"."source" = 'library';--> statement-breakpoint
