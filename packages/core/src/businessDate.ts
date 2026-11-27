@@ -7,6 +7,16 @@ export const DEFAULT_TIME_ZONE = "Asia/Kolkata";
 const BUSINESS_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const APRIL_MONTH_NUMBER = 4;
 const MAX_DATE_INSTANT_MS = 8_640_000_000_000_000;
+const ONE_DAY_MS = 86_400_000;
+// One day inside the Date range: Luxon adds the zone offset (under a day everywhere) before it
+// builds the wall-clock fields, and past the range edge it formats "Invalid DateTime".
+const MAX_SHOP_INSTANT_MS = MAX_DATE_INSTANT_MS - ONE_DAY_MS;
+// Machine dates are ASCII Gregorian whatever Luxon's global Settings say (no hidden inputs).
+export const MACHINE_FORMAT = {
+  locale: "en-US",
+  numberingSystem: "latn",
+  outputCalendar: "gregory",
+} as const;
 const BUSINESS_DATE_FORMAT = "yyyy-LL-dd";
 const LOCAL_ISO_FORMAT = "yyyy-LL-dd'T'HH:mm:ss";
 
@@ -16,11 +26,11 @@ function twoDigits(yearNumber: number): string {
 
 function assertInstant(instantMs: number): void {
   const isInvalidInstant =
-    !Number.isSafeInteger(instantMs) || Math.abs(instantMs) > MAX_DATE_INSTANT_MS;
+    !Number.isSafeInteger(instantMs) || Math.abs(instantMs) > MAX_SHOP_INSTANT_MS;
   if (isInvalidInstant) {
     throw new CoreError(
       "INVALID_FIELD",
-      "instant must be integer milliseconds within the supported Date range",
+      "instant must be integer milliseconds within the supported Date range, less one day",
     );
   }
 }
@@ -38,7 +48,7 @@ function inShopZone(instantMs: number, timeZone: string): DateTime {
   if (!isValidTimeZone(timeZone)) {
     throw new CoreError("INVALID_FIELD", `unknown time zone "${timeZone}"`);
   }
-  return DateTime.fromMillis(instantMs, { zone: timeZone });
+  return DateTime.fromMillis(instantMs, { zone: timeZone, ...MACHINE_FORMAT });
 }
 
 /**
@@ -67,7 +77,7 @@ export function financialYearOfBusinessDate(businessDate: string): string {
           month: Number(matchedParts[2]),
           day: Number(matchedParts[3]),
         },
-        { zone: "utc" },
+        { zone: "utc", ...MACHINE_FORMAT },
       )
     : null;
   if (!calendarDate?.isValid) {

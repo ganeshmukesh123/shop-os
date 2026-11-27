@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { businessDateOf, financialYearOfBusinessDate } from "./businessDate";
+import { MACHINE_FORMAT, businessDateOf, financialYearOfBusinessDate } from "./businessDate";
 import { CoreError } from "./errors";
 
 export const DEFAULT_NUMBER_TEMPLATE = "{series}/{fy}/{seq}";
@@ -12,7 +12,9 @@ export const MAX_NUMBER_LENGTH = 16;
  * (`financialYearOfBusinessDate`).
  */
 export function financialYear(date: Date): string {
-  return financialYearOfBusinessDate(DateTime.fromJSDate(date).toFormat("yyyy-LL-dd"));
+  return financialYearOfBusinessDate(
+    DateTime.fromJSDate(date).reconfigure(MACHINE_FORMAT).toFormat("yyyy-LL-dd"),
+  );
 }
 
 export function formatBillNumber(
