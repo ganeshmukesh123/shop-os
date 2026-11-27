@@ -13,6 +13,15 @@ import type { IBillFilter } from "./types";
 
 const NO_FILTER: IBillFilter = { number: "", from: "", to: "", customer: "" };
 
+/** "1 bill", "12 bills" or "250 bills. Showing the newest 100". */
+function billCountText(total: number): string {
+  const countTemplate = total > BILLS_PAGE_LIMIT ? uiText.bills.countMore : uiText.bills.countOther;
+  return fillText(total === 1 ? uiText.bills.countOne : countTemplate, {
+    count: total,
+    shown: BILLS_PAGE_LIMIT,
+  });
+}
+
 /** Past bills, newest first, searchable by number, date range and customer (spec US3, FR-016). */
 export function BillsScreen() {
   const [filter, setFilter] = useState<IBillFilter>(NO_FILTER);
@@ -23,27 +32,24 @@ export function BillsScreen() {
     setOpenBillId(null);
     setRefreshCount((previousCount) => previousCount + 1);
   };
+  const isLoaded = !loading;
   const isFiltered = Object.values(filter).some((fieldValue) => fieldValue !== "");
-  const countTemplate = total > BILLS_PAGE_LIMIT ? uiText.bills.countMore : uiText.bills.countOther;
-  const countText = fillText(total === 1 ? uiText.bills.countOne : countTemplate, {
-    count: total,
-    shown: BILLS_PAGE_LIMIT,
-  });
+  const countText = billCountText(total);
   if (openBillId) return <OpenBill billId={openBillId} onBack={backToList} />;
   return (
     <Flex direction="column" gap="3" maxWidth={LAYOUT.pageWide}>
       <Heading size="6">{uiText.bills.title}</Heading>
       <BillsFilters filter={filter} onChange={setFilter} />
       <Text size="2" color="gray">
-        {countText}
+        {isLoaded ? countText : uiText.common.loading}
       </Text>
       {error && (
         <StatusMessage role="danger" label={uiText.status.error}>
           {error}
         </StatusMessage>
       )}
-      <BillsTable bills={bills} onOpen={setOpenBillId} />
-      {!loading && !error && bills.length === 0 && (
+      {isLoaded && <BillsTable bills={bills} onOpen={setOpenBillId} />}
+      {isLoaded && !error && bills.length === 0 && (
         <Text color="gray">{isFiltered ? uiText.bills.noMatch : uiText.bills.empty}</Text>
       )}
     </Flex>

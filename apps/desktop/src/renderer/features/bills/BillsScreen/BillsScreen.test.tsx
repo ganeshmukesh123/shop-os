@@ -109,4 +109,41 @@ describe("BillsScreen search (spec US3 scenario 5)", () => {
 
     expect(await screen.findByText("No bills match.")).toBeTruthy();
   });
+
+  it("says Loading, not 0 bills, until the list arrives", async () => {
+    let answerList: (listResult: { bills: Bill[]; total: number }) => void = () => undefined;
+    renderBillsScreen([], {
+      "bills.list": () =>
+        new Promise((resolveList) => {
+          answerList = resolveList;
+        }),
+    });
+
+    expect(await screen.findByText("Loading")).toBeTruthy();
+    expect(screen.queryByText("0 bills")).toBeNull();
+    expect(screen.queryByRole("table")).toBeNull();
+
+    answerList({ bills: [SAVED_BILL], total: 1 });
+
+    expect(await screen.findByText("1 bill")).toBeTruthy();
+  });
+
+  it("clears Ramesh's bills when the next search fails, so they never sit under the new filter", async () => {
+    renderBillsScreen([], {
+      "bills.list": (listInput) => {
+        const isSearchForZz = listInput.customer === "zz";
+        if (isSearchForZz) {
+          throw Object.assign(new Error("The database is busy"), { code: "INTERNAL" });
+        }
+        return { bills: [SAVED_BILL], total: 1 };
+      },
+    });
+    await screen.findByRole("rowheader", { name: "C1/26-27/000001" });
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Customer name" }), "zz");
+
+    expect((await screen.findByRole("alert")).textContent).toBe("Error The database is busy");
+    expect(screen.queryByRole("rowheader", { name: "C1/26-27/000001" })).toBeNull();
+    expect(screen.getByText("0 bills")).toBeTruthy();
+  });
 });

@@ -16,6 +16,12 @@ export function useBills(filter: IBillFilter, refreshCount = 0): IUseBillsResult
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let isCurrent = true;
+    // A failed search must not leave the previous search's bills on screen under the new filter.
+    const showFailure = (caughtError: unknown) => {
+      setBills([]);
+      setTotal(0);
+      setError(messageOf(caughtError));
+    };
     setLoading(true);
     call("bills.list", {
       number: filter.number || undefined,
@@ -31,7 +37,7 @@ export function useBills(filter: IBillFilter, refreshCount = 0): IUseBillsResult
         setTotal(listResult.total);
         setError(null);
       })
-      .catch((caughtError) => isCurrent && setError(messageOf(caughtError)))
+      .catch((caughtError) => isCurrent && showFailure(caughtError))
       .finally(() => isCurrent && setLoading(false));
     return () => {
       isCurrent = false;
