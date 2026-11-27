@@ -59,7 +59,7 @@ description: "Task list for feature 002: item families, variants, search, merge,
 
 ### Search index and benchmark
 
-- [ ] T023 Write tests in `desktop/src/main/services/search/SearchIndex.test.ts`: build from repositories, update on create, rename, deactivate and merge, query uses `rankSearchMatches`
+- [x] T023 Write tests in `desktop/src/main/services/search/SearchIndex.test.ts`: build from repositories, update on create, rename, deactivate and merge, query uses `rankSearchMatches` _(2026-11-28: in `services/search/SearchService.test.ts` (the service and index are tested together on a real database), 8 tests; merged variants leave the index and their retained barcodes and search names resolve to the survivor through the whole merge chain)_
 - [ ] T024 Implement `desktop/src/main/services/search/SearchIndex.ts` and `SearchService.ts` (in-memory, built at start in `desktop/src/main/app/startApp.ts`)
 - [ ] T025 Write the benchmark `desktop/tests/integration/searchBenchmark.test.ts`: 50,000 generated variants with 2 search names each, 50 queries including typos; record median and 95th percentile in `specs/002-items-variants-tinting/research.md` under OI-2
 
