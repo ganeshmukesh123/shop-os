@@ -112,7 +112,8 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 - [ ] T041 [P] [US4] Add a weekly flake report (tests that passed only on retry) to the run summary or a scheduled job; a test that flakes twice in a week gets an issue
 - [ ] T042 [P] [US6] Add `.github/dependabot.yml` for weekly dependency updates (optional)
 - [ ] T043 [P] [US4] Update `CLAUDE.md`, the PR template and the `shopos-testing` and `shopos-feature-workflow` skills with the real check names, the 90% gate and the local commands
-- [ ] T044 [US4] Measure the run time against the 10-minute target (SC-003), tune caches and job parallelism, and record the result
+- [X] T044 [US4] Measure the run time against the 10-minute target (SC-003), tune caches and job parallelism, and record the result
+- [ ] T045 [US4] Re-measure the run time once T036 has switched the 90% coverage gate on (research F11: coverage adds time), against the same 10-minute target (SC-003); record it in `research.md` next to the T044 figure and tune again if it is over
 
 **Checkpoint (M5 exit)**: smoke runs on macOS and Windows; documentation complete; run time within target.
 
@@ -136,12 +137,13 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
                                                                          |
                                               T036 -> T037 -> T038 (gate ON, M4)
                                                                          |
-                                                  T039-T044 (M5)
+                                                  T039-T044 (M5) <-------+-------> T045 (gate-on re-measure)
 ```
 
 - T036 must not start until T035 confirms 90% on `main`.
 - T030 (splitting `NewBillScreen`) is several PRs; each keeps tests green.
 - T030 and T031 were done ahead of T028 and T029, as spec 001 T089 (behaviour tests first, then one extraction per PR). The diagram's order was for re-estimating M3 coverage, not a build dependency; T028 and T029 stay open and still feed that estimate.
+- T044 was done ahead of T036 to T038, so it measured the pipeline without the coverage gate. That figure stands for the gate-off pipeline; T045 repeats the measurement once the gate is on (after T038), because coverage adds time; it does not wait for T039 to T044.
 - Feature work on spec 001 continues in parallel and writes its own tests so the gap does not grow.
 
 ## Implementation strategy
@@ -153,4 +155,4 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 
 ## Format validation
 
-Every task starts with `- [ ]` or `- [X]`, has a sequential ID (T001 to T044), carries a story label only in story phases, and names exact files or settings. Each task is sized for one PR of 400 changed lines or fewer.
+Every task starts with `- [ ]` or `- [X]`, has a sequential ID (T001 to T045), carries a story label only in story phases, and names exact files or settings. Each task is sized for one PR of 400 changed lines or fewer.
