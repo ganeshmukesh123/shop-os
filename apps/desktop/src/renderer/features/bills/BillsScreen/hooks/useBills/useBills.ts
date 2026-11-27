@@ -5,8 +5,11 @@ import { BILLS_PAGE_LIMIT } from "../../constants";
 import type { IBillFilter } from "../../types";
 import type { IUseBillsResult } from "./types";
 
-/** The newest bills that match the filter. A slow answer for an old filter never replaces a newer one. */
-export function useBills(filter: IBillFilter): IUseBillsResult {
+/**
+ * The newest bills that match the filter; read again when `refreshCount` changes. A slow answer for an
+ * old filter never replaces a newer one.
+ */
+export function useBills(filter: IBillFilter, refreshCount = 0): IUseBillsResult {
   const [bills, setBills] = useState<Bill[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -39,6 +42,6 @@ export function useBills(filter: IBillFilter): IUseBillsResult {
     return () => {
       isCurrent = false;
     };
-  }, [filter.number, filter.from, filter.to, filter.customer]);
+  }, [filter.number, filter.from, filter.to, filter.customer, refreshCount]);
   return { bills, total, loading, error };
 }

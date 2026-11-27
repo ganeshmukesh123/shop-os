@@ -6,23 +6,36 @@ import { fillText } from "../../../shared/text/fillText";
 import { uiText } from "../../../shared/text/strings";
 import { BillsFilters } from "./components/BillsFilters";
 import { BillsTable } from "./components/BillsTable";
+import { OpenBill } from "./components/OpenBill";
 import { BILLS_PAGE_LIMIT } from "./constants";
 import { useBills } from "./hooks/useBills";
 import type { IBillFilter } from "./types";
 
 const NO_FILTER: IBillFilter = { number: "", from: "", to: "", customer: "" };
 
-/** Past bills, newest first, searchable by number, date range and customer (spec US3, FR-016). */
-export function BillsScreen() {
-  const [filter, setFilter] = useState<IBillFilter>(NO_FILTER);
-  const { bills, total, loading, error } = useBills(filter);
-  const isLoaded = !loading;
-  const isFiltered = Object.values(filter).some((fieldValue) => fieldValue !== "");
+/** "1 bill", "12 bills" or "250 bills. Showing the newest 100". */
+function billCountText(total: number): string {
   const countTemplate = total > BILLS_PAGE_LIMIT ? uiText.bills.countMore : uiText.bills.countOther;
-  const countText = fillText(total === 1 ? uiText.bills.countOne : countTemplate, {
+  return fillText(total === 1 ? uiText.bills.countOne : countTemplate, {
     count: total,
     shown: BILLS_PAGE_LIMIT,
   });
+}
+
+/** Past bills, newest first, searchable by number, date range and customer (spec US3, FR-016). */
+export function BillsScreen() {
+  const [filter, setFilter] = useState<IBillFilter>(NO_FILTER);
+  const [openBillId, setOpenBillId] = useState<string | null>(null);
+  const [refreshCount, setRefreshCount] = useState(0);
+  const { bills, total, loading, error } = useBills(filter, refreshCount);
+  const backToList = () => {
+    setOpenBillId(null);
+    setRefreshCount((previousCount) => previousCount + 1);
+  };
+  const isLoaded = !loading;
+  const isFiltered = Object.values(filter).some((fieldValue) => fieldValue !== "");
+  const countText = billCountText(total);
+  if (openBillId) return <OpenBill billId={openBillId} onBack={backToList} />;
   return (
     <Flex direction="column" gap="3" maxWidth={LAYOUT.pageWide}>
       <Heading size="6">{uiText.bills.title}</Heading>
@@ -35,7 +48,7 @@ export function BillsScreen() {
           {error}
         </StatusMessage>
       )}
-      {isLoaded && <BillsTable bills={bills} />}
+      {isLoaded && <BillsTable bills={bills} onOpen={setOpenBillId} />}
       {isLoaded && !error && bills.length === 0 && (
         <Text color="gray">{isFiltered ? uiText.bills.noMatch : uiText.bills.empty}</Text>
       )}

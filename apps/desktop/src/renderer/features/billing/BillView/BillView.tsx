@@ -16,17 +16,22 @@ import { uiText } from "../../../shared/text/strings";
 import { ApiError, call, messageOf } from "../../../shared/api/api";
 import { RoundOffLine } from "../RoundOffLine/RoundOffLine";
 
-/** The saved bill, with Print / Save PDF / New bill. Printing happens after the bill is committed. */
+/**
+ * The saved bill, with Print / Save PDF and "New bill". Printing happens after the bill is committed.
+ * Opened from the Bills screen (`onBack`), the last button goes back to the list instead.
+ */
 export function BillView({
   bill,
   lines,
   negativeStockItems,
   onNew,
+  onBack,
 }: {
   bill: Bill;
   lines: BillLine[];
   negativeStockItems: Item[];
-  onNew: () => void;
+  onNew?: () => void;
+  onBack?: () => void;
 }) {
   const toast = useToast();
   const [target, setTarget] = useState<PrintTarget>("receipt");
@@ -66,7 +71,7 @@ export function BillView({
     <Flex direction="column" gap="3" maxWidth={LAYOUT.pageMedium}>
       <Flex align="center" gap="3">
         <Heading size="6">
-          {uiText.bill.saved}: {bill.number}
+          {onBack ? uiText.bill.opened : uiText.bill.saved}: {bill.number}
         </Heading>
         {bill.status === "cancelled" && (
           <StatusBadge role="danger" label={uiText.status.cancelled} size="3" />
@@ -146,8 +151,8 @@ export function BillView({
         <Button size="3" variant="soft" onClick={() => void pdf()} loading={busy === "pdf"}>
           {uiText.bill.pdf}
         </Button>
-        <Button size="3" variant="outline" onClick={onNew}>
-          {uiText.bill.newBill}
+        <Button size="3" variant="outline" onClick={onBack ?? onNew}>
+          {onBack ? uiText.bills.back : uiText.bill.newBill}
         </Button>
       </Flex>
     </Flex>
