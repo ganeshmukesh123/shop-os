@@ -1,6 +1,7 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createItemDirectly, freezeShopClock, installRealShopos } from "../../helpers/realShopos";
+import { checkLedgerAfterEachTest } from "../../helpers/stockLedger";
 import {
   addToBill,
   choosePayment,
@@ -18,6 +19,8 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
+
+checkLedgerAfterEachTest();
 
 describe("screen to database: saving a bill (US-2, one transaction, then print)", () => {
   it("IT-BIL-01 saves 2 pipes at ₹120 as one bill, one line, one tender and one sale movement", async () => {

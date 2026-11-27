@@ -1,6 +1,7 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createItemDirectly, freezeShopClock, installRealShopos } from "../../helpers/realShopos";
+import { checkLedgerAfterEachTest } from "../../helpers/stockLedger";
 import {
   addToBill,
   PIPE,
@@ -19,6 +20,8 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
+
+checkLedgerAfterEachTest();
 
 describe("screen to database: amounts and stock on a saved bill (US-2, FR-010a)", () => {
   it("IT-BIL-03 sells 3 when only 1 is in stock, warns, and flags the item for correction", async () => {

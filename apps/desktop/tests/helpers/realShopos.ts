@@ -11,13 +11,23 @@ export const SHOP_DAY = new Date(Date.UTC(2026, 10, 18, 5, 0));
 
 export interface IRealShopos {
   fixture: IHandlersFixture;
-  /** Counts rows in one table of the real database, optionally filtered by a SQL condition. */
-  countRows: (tableName: string, condition?: string) => number;
+  /** Counts rows in one table, optionally filtered by a SQL condition with `?` placeholders. */
+  countRows: (tableName: string, condition?: string, ...bindings: unknown[]) => number;
   /** Runs the command for real, then throws as if the reply was lost on the way back (a retry case). */
   loseNextReplyOf: (commandName: CommandName) => void;
 }
 
 type RawHandler = (commandInput: unknown) => Promise<unknown>;
+
+/** The database the current test installed, so an afterEach check can find it (see stockLedger.ts). */
+let installedShopos: IRealShopos | null = null;
+
+/** Returns the database installed by the test that just ran, and forgets it. */
+export function takeInstalledShopos(): IRealShopos | null {
+  const lastInstalled = installedShopos;
+  installedShopos = null;
+  return lastInstalled;
+}
 
 /**
  * Wires `window.shopos` to the real IPC handlers, services and an in-memory SQLite database, so a
@@ -37,18 +47,19 @@ export function installRealShopos(options: IFixtureOptions = {}): IRealShopos {
   };
   window.shopos = buildShopOsApi(invoke);
 
-  const countRows = (tableName: string, condition = "1 = 1") =>
+  const countRows = (tableName: string, condition = "1 = 1", ...bindings: unknown[]) =>
     (
       fixture.testDb.sqlite
         .prepare(`select count(*) as rowCount from ${tableName} where ${condition}`)
-        .get() as { rowCount: number }
+        .get(...bindings) as { rowCount: number }
     ).rowCount;
 
-  return {
+  installedShopos = {
     fixture,
     countRows,
     loseNextReplyOf: (commandName) => lostReplies.add(commandName),
   };
+  return installedShopos;
 }
 
 /** Fixes only the date, so bill numbers and dates repeat; timers stay real for the user events. */
