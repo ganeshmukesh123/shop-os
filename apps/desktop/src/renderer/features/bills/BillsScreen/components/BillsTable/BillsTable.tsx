@@ -1,7 +1,6 @@
-import { Button, Table, Text } from "@radix-ui/themes";
-import { formatRupees } from "@shopos/core";
-import { StatusBadge } from "../../../../../shared/components/StatusBadge/StatusBadge";
+import { Table } from "@radix-ui/themes";
 import { uiText } from "../../../../../shared/text/strings";
+import { BillRow } from "../BillRow";
 import { LostInRestoreRow } from "../LostInRestoreRow";
 import type { IBillsTableProps } from "./types";
 
@@ -27,24 +26,7 @@ export function BillsTable({ bills, gaps, onOpen }: IBillsTableProps) {
           <LostInRestoreRow key={gap.id} gap={gap} />
         ))}
         {bills.map((bill) => (
-          <Table.Row key={bill.id}>
-            <Table.RowHeaderCell>
-              <Button size="2" variant="ghost" onClick={() => onOpen(bill.id)}>
-                {bill.number}
-              </Button>
-            </Table.RowHeaderCell>
-            <Table.Cell>{bill.billDate.replace("T", " ").slice(0, 16)}</Table.Cell>
-            <Table.Cell>{bill.customerName ?? ""}</Table.Cell>
-            <Table.Cell>{uiText.payment[bill.paymentMode]}</Table.Cell>
-            <Table.Cell justify="end">{formatRupees(bill.grandTotalPaise)}</Table.Cell>
-            <Table.Cell>
-              {bill.status === "cancelled" ? (
-                <StatusBadge role="danger" label={uiText.status.cancelled} />
-              ) : (
-                <Text color="gray">{uiText.bills.posted}</Text>
-              )}
-            </Table.Cell>
-          </Table.Row>
+          <BillRow key={bill.id} bill={bill} onOpen={onOpen} />
         ))}
       </Table.Body>
     </Table.Root>
