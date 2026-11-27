@@ -347,9 +347,15 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
     // A private temp folder: other test files restore in parallel and make their own
     // shopos-plan- folders in the shared OS temp folder. Each file runs in its own process.
     const privateTempFolder = tempFolder("shopos-private-tmp-");
-    const originalTempFolder = process.env.TMPDIR;
-    process.env.TMPDIR = privateTempFolder;
+    const originalTempEnv = {
+      TMPDIR: process.env.TMPDIR,
+      TMP: process.env.TMP,
+      TEMP: process.env.TEMP,
+    };
     try {
+      process.env.TMPDIR = privateTempFolder;
+      process.env.TMP = privateTempFolder;
+      process.env.TEMP = privateTempFolder;
       const failure = await errorCodeOfAsync(() =>
         planRestoreNumbering("/no/such/backup.sqlite", null, NOW),
       );
@@ -358,8 +364,14 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
       expect(failure).toBeDefined();
       expect(fs.readdirSync(privateTempFolder)).toEqual([]);
     } finally {
-      if (originalTempFolder === undefined) delete process.env.TMPDIR;
-      else process.env.TMPDIR = originalTempFolder;
+      Object.entries(originalTempEnv).forEach(([name, value]) => {
+        const wasUnset = value === undefined;
+        if (wasUnset) {
+          delete process.env[name];
+        } else {
+          process.env[name] = value;
+        }
+      });
     }
   });
 
