@@ -110,7 +110,7 @@ description: "Task list for the GitHub workflow (CI and merge protection)"
 - [ ] T039 [P] [US4] Write `docs/contributing/ci.md`: the pipeline diagram, each check and how to fix a failure, how to run everything locally (`pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build && pnpm test:e2e`), required checks and branch rules, how to read the run summary
 - [ ] T040 [US5] Add `.github/workflows/smoke.yml`: build and start the packaged app on macOS and Windows after merge to `main` and nightly, run the core scenario (add item, save bill); first confirm the runner-minutes allowance and cost (resolves O3)
 - [ ] T041 [P] [US4] Add a weekly flake report (tests that passed only on retry) to the run summary or a scheduled job; a test that flakes twice in a week gets an issue
-- [ ] T042 [P] [US6] Add `.github/dependabot.yml` for weekly dependency updates (optional)
+- [ ] T042 [P] [US6] Add `.github/dependabot.yml` for weekly dependency updates (optional) _(2026-11-22: file written and formatted; the box stays open until Dependabot opens its first pull request and the PR title check accepts it. Titles use the `build(deps)` prefix because `ci` is not an allowed type.)_
 - [ ] T043 [P] [US4] Update `CLAUDE.md`, the PR template and the `shopos-testing` and `shopos-feature-workflow` skills with the real check names, the 90% gate and the local commands
 - [ ] T044 [US4] Measure the run time against the 10-minute target (SC-003), tune caches and job parallelism, and record the result
 

@@ -1,0 +1,43 @@
+# Weekly dependency updates (spec 017, task T042; optional).
+# Updates arrive as pull requests and go through the same CI as any other change. Nothing merges itself.
+# Native and framework packages (electron, better-sqlite3, drizzle) are upgraded by hand: their versions are
+# coupled (see CLAUDE.md, "Stack"), so a major bump from a bot is ignored; minor and patch bumps still arrive.
+version: 2
+updates:
+  - package-ecosystem: npm # also covers the pnpm workspace and pnpm-lock.yaml
+    directories:
+      - "/"
+      - "/apps/desktop"
+      - "/packages/core"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    # A short group name keeps grouped PR titles within the 72-character title check
+    # ("build(deps): bump the minor group across 3 directories with 12 updates" is 70).
+    groups:
+      minor:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: electron
+        update-types: [version-update:semver-major]
+      - dependency-name: better-sqlite3
+        update-types: [version-update:semver-major]
+      - dependency-name: drizzle-orm
+        update-types: [version-update:semver-major]
+      - dependency-name: drizzle-kit
+        update-types: [version-update:semver-major]
+    commit-message:
+      prefix: "build(deps)"
+  # Actions are pinned to a commit SHA with the release in a comment; Dependabot updates both together.
+  - package-ecosystem: github-actions
+    # The shared setup action pins pnpm/action-setup, actions/setup-node and actions/cache too.
+    directories:
+      - "/"
+      - "/.github/actions/setup-workspace"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "build(deps)"
