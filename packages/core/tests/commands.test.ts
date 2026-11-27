@@ -13,6 +13,7 @@ const EXPECTED_COMMAND_NAMES = [
   "bills.list",
   "bills.get",
   "bills.cancel",
+  "bills.gaps",
   "bills.print",
   "bills.exportPdf",
   "settings.get",

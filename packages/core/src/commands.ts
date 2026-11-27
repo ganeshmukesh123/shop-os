@@ -1,4 +1,5 @@
 import type { ClockWarning } from "./clockCheck";
+import type { IRecordedNumberGap } from "./numberGap";
 import type {
   Bill,
   BackupPlanRestoreInput,
@@ -34,6 +35,8 @@ export interface CommandMap {
   "bills.list": [BillsListInput, { bills: Bill[]; total: number }];
   "bills.get": [{ id: string }, { bill: Bill; lines: BillLine[] }];
   "bills.cancel": [BillsCancelInput, { bill: Bill }];
+  /** Read only: the bill numbers a restore lost, newest record first (FR-013b). */
+  "bills.gaps": [Record<string, never>, { gaps: IRecordedNumberGap[] }];
   "bills.print": [{ id: string; target: PrintTarget }, { printed: boolean }];
   "bills.exportPdf": [{ id: string; target: PrintTarget; filePath: string }, { filePath: string }];
   "settings.get": [Record<string, never>, ShopProfile];
@@ -64,6 +67,7 @@ export const COMMAND_NAMES = [
   "bills.list",
   "bills.get",
   "bills.cancel",
+  "bills.gaps",
   "bills.print",
   "bills.exportPdf",
   "settings.get",

@@ -58,6 +58,20 @@ function readMatch(match: RegExpExecArray | null): IParsedBillNumber | null {
   };
 }
 
+/** A run of bill numbers a restore lost, as the bill list shows it (FR-013b: "Lost in restore"). */
+export interface IRecordedNumberGap {
+  id: string;
+  /** The first and last lost number, written in the shop's number format. */
+  fromNumber: string;
+  toNumber: string;
+  seqFrom: number;
+  seqTo: number;
+  /** True when the owner could not say, so the block of 100 is a guess. */
+  isEstimated: boolean;
+  /** When the restore recorded it (ISO timestamp). */
+  recordedAt: string;
+}
+
 export interface INumberGapPlan {
   /** First number that was lost (or skipped), inclusive. */
   seqFrom: number;

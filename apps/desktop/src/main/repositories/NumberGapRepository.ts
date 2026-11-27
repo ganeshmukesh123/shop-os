@@ -1,7 +1,12 @@
-import { and, eq } from "drizzle-orm";
-import { GAP_REASON_LOST_IN_RESTORE, type INumberGapPlan } from "@shopos/core";
+import { and, desc, eq } from "drizzle-orm";
+import {
+  formatBillNumber,
+  GAP_REASON_LOST_IN_RESTORE,
+  type INumberGapPlan,
+  type IRecordedNumberGap,
+} from "@shopos/core";
 import type { Handle } from "../db/connection";
-import { newId } from "../db/ids";
+import { isoOfMs, newId } from "../db/ids";
 import { billNumberGap, numberSeries } from "../db/schema";
 import type { Ctx } from "../db/seed";
 
@@ -62,6 +67,31 @@ export class NumberGapRepository {
         recordedAt: nowMs,
       })
       .run();
+  }
+
+  /** The numbers restores lost for this shop, newest record first, written in each series' format. */
+  list(): IRecordedNumberGap[] {
+    return this.databaseHandle
+      .select({
+        gap: billNumberGap,
+        counterCode: numberSeries.counterCode,
+        financialYear: numberSeries.financialYear,
+        template: numberSeries.template,
+      })
+      .from(billNumberGap)
+      .innerJoin(numberSeries, eq(billNumberGap.numberSeriesId, numberSeries.id))
+      .where(eq(billNumberGap.shopId, this.ctx.shopId))
+      .orderBy(desc(billNumberGap.recordedAt), desc(billNumberGap.seqFrom))
+      .all()
+      .map(({ gap, counterCode, financialYear, template }) => ({
+        id: gap.id,
+        fromNumber: formatBillNumber(template, counterCode, financialYear, gap.seqFrom),
+        toNumber: formatBillNumber(template, counterCode, financialYear, gap.seqTo),
+        seqFrom: gap.seqFrom,
+        seqTo: gap.seqTo,
+        isEstimated: gap.isEstimated === 1,
+        recordedAt: isoOfMs(gap.recordedAt),
+      }));
   }
 
   /** Move the counter forward, so the next bill is `lastSeq + 1`. */
