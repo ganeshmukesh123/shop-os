@@ -1,6 +1,5 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { IRealShopos } from "../../helpers/realShopos";
 
 export const navigation = () => screen.getByRole("navigation", { name: "Main" });
 
@@ -48,18 +47,4 @@ export async function adjustStockOnScreen(itemName: string, mode: "Add" | "Set",
   await userEvent.type(screen.getByRole("textbox", { name: /^Quantity/ }), quantity);
   await userEvent.type(screen.getByRole("textbox", { name: "Note (required)" }), "Counted");
   await userEvent.click(screen.getByRole("button", { name: "Save adjustment" }));
-}
-
-export interface IMovementRow {
-  movement_type: string;
-  qty_base_milli: number;
-  note: string | null;
-}
-
-export function readMovements(realShopos: IRealShopos): IMovementRow[] {
-  return realShopos.fixture.testDb.sqlite
-    .prepare(
-      "select movement_type, qty_base_milli, note from stock_movement order by occurred_at, rowid",
-    )
-    .all() as IMovementRow[];
 }
