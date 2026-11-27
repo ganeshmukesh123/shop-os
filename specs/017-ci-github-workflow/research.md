@@ -403,5 +403,5 @@ Refactor for testability (behaviour unchanged, proven by the 3 end-to-end tests 
 | O2 | ~~Exact third-party action versions to pin~~ **Resolved 2026-11-14**: looked up and verified, see F1 | T008 |
 | O3 | Runner minutes: macOS and Windows runners cost more than Linux; confirm the account's allowance before the nightly smoke job | T040 |
 | O4 | **Answered (F4): not stable, stays non-required.** *Updated 2026-11-14 (F8): after the tooling upgrades the high-level audit exits 0 and the job is no longer informational.* Was: whether `pnpm audit` is stable enough to be a required check (it can fail on advisories the project cannot fix) | T014 |
-| O5 | The repository is not on GitHub yet: hosting and the default branch name (`main`) | T006 (owner action) |
+| O5 | ~~The repository is not on GitHub yet: hosting and the default branch name (`main`)~~ **Resolved 2026-11-27**: the repository is on GitHub, the default branch is `main` (owner confirmed; `gh repo view` agrees) and it is public, so standard runners cost no minutes (GitHub's documentation; not measured here) | T006 (owner action) |
 | O6 | Branch coverage at 90% on UI code may be hard; decided by data after renderer tests exist | T034 |
