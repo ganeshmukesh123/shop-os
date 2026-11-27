@@ -1,12 +1,4 @@
-import { ZodError, type ZodTypeAny } from "zod";
 import {
-  CoreError,
-  backupPlanRestoreInput,
-  backupRestoreInput,
-  type BackupPlanRestoreInput,
-  type BackupRestoreInput,
-  type IBackupRestoreResult,
-  type IRestorePreview,
   billsCancelInput,
   billsExportPdfInput,
   billsGetInput,
@@ -17,9 +9,7 @@ import {
   itemsCreateInput,
   itemsListInput,
   itemsUpdateInput,
-  settingsClockCheckInput,
   settingsSetThemeInput,
-  settingsUpdateInput,
   stockAdjustInput,
   type CommandMap,
   type CommandName,
@@ -32,7 +22,11 @@ import { searchRefreshedAfter, type SearchService } from "../services/search";
 import type { PrintService } from "../services/PrintService";
 import type { IRestoreNumberingPlan } from "../services/RestoreNumbering";
 import type { SettingsService } from "../services/SettingsService";
-import { assertPlanIsConfirmed, planRestoreFor, toRestorePreview } from "./restoreCommands";
+import { cmd, none } from "./command";
+import { createSystemHandlers, type SystemCommandName } from "./systemHandlers";
+
+// Kept here so callers that import toFailure from handlers still work.
+export { toFailure } from "./command";
 
 export interface Services {
   inventory: InventoryService;
@@ -57,51 +51,8 @@ export type Handlers = {
   [K in CommandName]: (input: unknown) => Promise<Result<CommandMap[K][1]>>;
 };
 
-const none = (): ZodTypeAny => ({ parse: (rawInput: unknown) => rawInput }) as ZodTypeAny;
-
-export function toFailure(caughtError: unknown): Extract<Result<never>, { ok: false }> {
-  if (caughtError instanceof CoreError)
-    return {
-      ok: false,
-      code: caughtError.code,
-      message: caughtError.message,
-      details: caughtError.details,
-    };
-  if (caughtError instanceof ZodError) {
-    return {
-      ok: false,
-      code: "INVALID_FIELD",
-      message: caughtError.issues.map((validationIssue) => validationIssue.message).join("; "),
-    };
-  }
-  console.error("Unexpected error in command", caughtError);
-  return {
-    ok: false,
-    code: "INTERNAL",
-    message: "Something went wrong. Nothing was lost; please try again.",
-  };
-}
-
-function cmd<K extends CommandName>(
-  schema: ZodTypeAny,
-  run: (input: never) => Promise<CommandMap[K][1]> | CommandMap[K][1],
-) {
-  return async (raw: unknown): Promise<Result<CommandMap[K][1]>> => {
-    try {
-      const input = schema.parse(raw);
-      return { ok: true, data: await run(input as never) };
-    } catch (caughtError) {
-      return toFailure(caughtError);
-    }
-  };
-}
-
 type ItemCommandName = "items.list" | "items.create" | "items.update" | "stock.adjust";
 type ThemeCommandName = "settings.getTheme" | "settings.setTheme";
-type SystemCommandName = Exclude<
-  Extract<CommandName, `settings.${string}` | `backup.${string}` | `system.${string}`>,
-  ThemeCommandName
->;
 type BillCommandName = Exclude<CommandName, ItemCommandName | SystemCommandName | ThemeCommandName>;
 
 function createItemHandlers(services: Services): Pick<Handlers, ItemCommandName> {
@@ -154,49 +105,6 @@ function createBillHandlers(services: Services): Pick<Handlers, BillCommandName>
       billsExportPdfInput,
       (commandInput: { id: string; target: "receipt" | "a4" | "a5"; filePath: string }) =>
         services.print.exportPdf(commandInput.id, commandInput.target, commandInput.filePath),
-    ),
-  };
-}
-
-function createSystemHandlers(services: Services, shell: Shell): Pick<Handlers, SystemCommandName> {
-  return {
-    "settings.get": cmd<"settings.get">(none(), () => services.settings.get()),
-    "settings.update": cmd<"settings.update">(settingsUpdateInput, (commandInput) =>
-      services.settings.update(commandInput),
-    ),
-    "settings.clockCheck": cmd<"settings.clockCheck">(
-      settingsClockCheckInput,
-      (commandInput: { deviceTimeZone: string }) =>
-        services.settings.clockCheck(commandInput.deviceTimeZone),
-    ),
-    "backup.run": cmd<"backup.run">(none(), () => services.backup.run()),
-    "backup.status": cmd<"backup.status">(none(), () => services.backup.status()),
-    "backup.planRestore": cmd<"backup.planRestore">(
-      backupPlanRestoreInput,
-      async (commandInput: BackupPlanRestoreInput): Promise<IRestorePreview> =>
-        toRestorePreview(await planRestoreFor(commandInput, new Date())),
-    ),
-    "backup.restore": cmd<"backup.restore">(
-      backupRestoreInput,
-      async (commandInput: BackupRestoreInput): Promise<IBackupRestoreResult> => {
-        // Worked out again, never taken from the renderer; nothing is touched unless it still matches.
-        const numbering = await planRestoreFor(commandInput, new Date());
-        assertPlanIsConfirmed(numbering, commandInput.confirmedPreview);
-        shell.scheduleRestore(commandInput.filePath, numbering);
-        return { restored: true, ...toRestorePreview(numbering) };
-      },
-    ),
-    "system.pickFolder": cmd<"system.pickFolder">(none(), async () => ({
-      path: await shell.pickFolder(),
-    })),
-    "system.pickBackupFile": cmd<"system.pickBackupFile">(none(), async () => ({
-      path: await shell.pickBackupFile(),
-    })),
-    "system.pickPdfPath": cmd<"system.pickPdfPath">(
-      { parse: (rawInput: unknown) => rawInput } as ZodTypeAny,
-      async (commandInput: { defaultName: string }) => ({
-        path: await shell.pickPdfPath(commandInput.defaultName),
-      }),
     ),
   };
 }
