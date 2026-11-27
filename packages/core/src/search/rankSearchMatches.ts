@@ -25,6 +25,28 @@ export interface ISearchEntry {
   codes: string[];
 }
 
+/** A search entry with its names and codes already normalised: what the index keeps (T024). */
+export interface IPreparedSearchEntry {
+  variantId: string;
+  familyId: string;
+  familyVariantCount: number;
+  /** Each name as its normalised words */
+  nameWords: string[][];
+  /** Each code normalised, matched whole */
+  codes: string[];
+}
+
+/** Normalise an entry once, so a search does not normalise every name on every key press. */
+export function prepareSearchEntry(entry: ISearchEntry): IPreparedSearchEntry {
+  return {
+    variantId: entry.variantId,
+    familyId: entry.familyId,
+    familyVariantCount: entry.familyVariantCount,
+    nameWords: entry.names.map((name) => normaliseSearchText(name).split(" ")),
+    codes: entry.codes.map(normaliseSearchText),
+  };
+}
+
 export interface ISearchResult {
   kind: "variant" | "family";
   /** The variant id for a variant row, the family id for a family row. */
@@ -34,7 +56,7 @@ export interface ISearchResult {
 }
 
 interface IMatch {
-  entry: ISearchEntry;
+  entry: IPreparedSearchEntry;
   tier: number;
   order: number;
   billCount: number;
@@ -67,16 +89,19 @@ function wordTier(queryWord: string, nameWords: string[]): number | null {
 }
 
 /** A name matches when every query word does; it ranks as its weakest word. */
-function nameTier(queryWords: string[], name: string): number | null {
-  const nameWords = normaliseSearchText(name).split(" ");
+function nameTier(queryWords: string[], nameWords: string[]): number | null {
   const tiers = queryWords.map((queryWord) => wordTier(queryWord, nameWords));
   return tiers.includes(null) ? null : Math.max(...(tiers as number[]));
 }
 
-function entryTier(entry: ISearchEntry, queryText: string, queryWords: string[]): number | null {
-  if (entry.codes.some((code) => normaliseSearchText(code) === queryText)) return CODE_TIER;
-  const tiers = entry.names
-    .map((name) => nameTier(queryWords, name))
+function entryTier(
+  entry: IPreparedSearchEntry,
+  queryText: string,
+  queryWords: string[],
+): number | null {
+  if (entry.codes.includes(queryText)) return CODE_TIER;
+  const tiers = entry.nameWords
+    .map((nameWords) => nameTier(queryWords, nameWords))
     .filter((tier): tier is number => tier !== null);
   return tiers.length === 0 ? null : Math.min(...tiers);
 }
@@ -137,6 +162,15 @@ const byBestTierThenBusiest = (first: IRow, second: IRow): number =>
 export function rankSearchMatches(
   query: string,
   entries: readonly ISearchEntry[],
+  billCountByVariantId: ReadonlyMap<string, number>,
+): ISearchResult[] {
+  return rankPreparedMatches(query, entries.map(prepareSearchEntry), billCountByVariantId);
+}
+
+/** rankSearchMatches over entries the index has already prepared (prepareSearchEntry). */
+export function rankPreparedMatches(
+  query: string,
+  entries: readonly IPreparedSearchEntry[],
   billCountByVariantId: ReadonlyMap<string, number>,
 ): ISearchResult[] {
   const queryText = normaliseSearchText(query);
