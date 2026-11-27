@@ -92,6 +92,10 @@ description: "Task list for feature 012: go-live tools, training mode, reconcili
 - [ ] T035 Write `docs/operations/go-live-runbook.md` from the plan's runbook table
 - [ ] T036 Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build && pnpm test:e2e`
 - [ ] T037 Run the go-live runbook; record SC-001 to SC-006 in `specs/012-go-live-data-migration/plan.md` over the first 60 days
+- [ ] T038 Field check carried over from 001 (T008, T058): print a test bill on a real 80 mm printer from the packaged app, with a 5-line bill and a long item name; record printer model, paper width, whether `@page { size: 80mm auto }` is honoured, the timed 5-line bill (001 SC-002) and the result in `specs/001-shop-os-mvp/research.md` D9 and `quickstart.md`. Needs a printer; must pass before the first counter use
+- [ ] T039 Field check carried over from 001 (T062): install the packaged DMG on a clean second Mac from a downloaded copy, follow the first-run steps in `docs/restore-guide.md`, and run quickstart scenarios 1 to 4 with networking disabled; record the result
+- [ ] T040 Field check carried over from 001 (T063, T084): a person other than the builder follows `docs/restore-guide.md` to restore a backup on another computer; confirm the "Lost in restore" row appears on the Bills screen; record the result and any wording that confused them
+- [ ] T041 Field check carried over from 001 (T066, T072): on a real counter run, reprint a bill and compare it with the original, then cancel a bill and confirm stock is restored (quickstart scenario 5); record the result in `specs/001-shop-os-mvp/quickstart.md`
 
 ---
 

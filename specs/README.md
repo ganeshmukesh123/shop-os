@@ -4,7 +4,7 @@ One folder per feature. Order is a proposal; dependencies are listed in each spe
 
 | # | Feature | PRD areas | Status |
 |---|---|---|---|
-| 001 | [MVP: inventory and basic bill](001-shop-os-mvp/spec.md) | ITM and BIL basics | US1 and US2 built and tested; US3 (bill list, cancel), the schema move and the 2026-11-15 decisions (tasks Phase 7) not built; real printer and packaged app not verified |
+| 001 | [MVP: inventory and basic bill](001-shop-os-mvp/spec.md) | ITM and BIL basics | Built and tested (2026-11-27 plan: close as built, once the open PRs merge). Field checks (real printer, clean second Mac, restore drill with a second person, counter run) moved to 012 go-live tasks T038 to T041 and must pass before first counter use |
 | 002 | [Items: variants and tinting](002-items-variants-tinting/spec.md) | ITM, TNT | spec written |
 | 003 | [Advanced billing](003-advanced-billing/spec.md) | BIL | spec written |
 | 004 | [Parties and khata](004-parties-khata/spec.md) | KHA | spec written |
