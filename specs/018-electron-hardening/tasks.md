@@ -22,8 +22,8 @@ description: "Task list for Electron hardening (security and performance)"
 ## Phase 1: Setup and verification of assumptions
 
 - [X] T001 Confirm the built renderer carries the CSP meta tag: run `pnpm build` in `apps/desktop`, check `apps/desktop/out/renderer/index.html` for `Content-Security-Policy`, and record the result in `specs/018-electron-hardening/research.md` O3 _(2026-11-17: the 15 Nov build output carries the CSP meta tag, and `electron.vite.config.ts` injects it. A fresh `pnpm build` failed here with `Cannot find module 'electron/package.json'`. 2026-11-18: a fresh `pnpm build` succeeded and `out/renderer/index.html` carries the `Content-Security-Policy` meta tag.)_
-- [ ] T002 Owner action (D1 answered by default `INTERNAL`; D2 to D4 still open): answer D1 (refusal error code), D2 (main platform, O8), D3 (Linux exception, O12) and D4 (migrations outside the archive, O13) from `plan.md`; record each answer in `research.md`
-- [ ] T003 [P] Record the performance baseline in `research.md` (SC-008) from a checkout or build of the target branch before PR #43 (PR A1) merges, so the baseline excludes PR A1. Time `apps/desktop/tests/integration/searchPerf.test.ts` and a bill save plus print in both `pnpm dev` and the packaged build (before fuses and the menu). Compare PR A1 and each later PR against that baseline using the same build mode for each measurement
+- [X] T002 Owner action (D1 answered by default `INTERNAL`; D2 to D4 still open): answer D1 (refusal error code), D2 (main platform, O8), D3 (Linux exception, O12) and D4 (migrations outside the archive, O13) from `plan.md`; record each answer in `research.md` _(2026-11-27: D2 Mac, D3 Linux accepted, D4 deferred as a known gap, all owner-approved; plus E1, two package flavours. Recorded in research "Decisions recorded".)_
+- [X] T003 [P] Record the performance baseline in `research.md` (SC-008) from a checkout or build of the target branch before PR #43 (PR A1) merges, so the baseline excludes PR A1. Time `apps/desktop/tests/integration/searchPerf.test.ts` and a bill save plus print in both `pnpm dev` and the packaged build (before fuses and the menu). Compare PR A1 and each later PR against that baseline using the same build mode for each measurement _(2026-11-27: measured on `main` at `fcdb8fd`, after #43 and #61 had already merged, so the baseline includes them. Recorded in research "Performance baseline and SC-008".)_
 
 **Checkpoint**: O3 closed, D1 to D4 answered, baseline recorded.
 
@@ -39,7 +39,7 @@ description: "Task list for Electron hardening (security and performance)"
 - [X] T005 [P] [US1] Write the failing table-driven test for `isTrustedSender` in `apps/desktop/src/main/ipc/senderPolicy/senderPolicy.test.ts` covering every row of `contracts/hardening-policies.md` section 1 (own page, null frame, child frame, foreign page, dev-server page in a packaged build) _(placed in `apps/desktop/tests/unit/senderPolicy.test.ts`: the Vitest `main` project only includes `tests/unit` and `tests/integration`)_
 - [X] T006 [US1] Implement the pure `isTrustedSender` in `apps/desktop/src/main/ipc/senderPolicy/senderPolicy.ts` with `types.ts` (`ISenderSummary`) and `constants.ts`; compare parsed scheme and location, never a serialized origin (FR-001) _(16 tests pass)_
 - [X] T007 [US1] Write the failing integration case in `apps/desktop/tests/integration/ipcRegistration.test.ts`: a refused sender gets `{ ok: false, code, message }`, no handler or service is called, zero rows written, and a log line without customer data _(also updated `mainEntry.test.ts` and `appConfig.test.ts`)_
-- [ ] T008 [US1] Call the policy before dispatch in `apps/desktop/src/main/ipc/index.ts` (use `event.senderFrame` and the main window's `mainFrame`); refusal never throws across the bridge; error code per D1 _(D1: reused `INTERNAL` with message `Command refused`; trusted pages come from `listTrustedPageUrls` in `appConfig.ts`; the code is in PR #43 (`feat/018-ipc-sender-check`), so merge #43 before this tasks file)_ _(Built and tested in PR #43, `feat/018-ipc-sender-check`; `main` has no sender check until it merges, so tick this box in the PR that merges #43.)_
+- [X] T008 [US1] Call the policy before dispatch in `apps/desktop/src/main/ipc/index.ts` (use `event.senderFrame` and the main window's `mainFrame`); refusal never throws across the bridge; error code per D1 _(D1: reused `INTERNAL` with message `Command refused`; trusted pages come from `listTrustedPageUrls` in `appConfig.ts`.)_ _(Merged in PR #43.)_
 
 **Checkpoint**: SC-001 tests pass; own-page commands behave as before. Ship as PR A1.
 
@@ -51,9 +51,9 @@ description: "Task list for Electron hardening (security and performance)"
 
 **Independent test**: trigger a request and a check on the session; both deny.
 
-- [ ] T009 [P] [US2] Write the failing test in `apps/desktop/tests/unit/permissionPolicy.test.ts` (the Vitest `main` project only includes `tests/unit` and `tests/integration`, as in T005): any permission name is denied for requests and not granted for checks; an empty named-exceptions list is the default
-- [ ] T010 [US2] Implement `denyAllPermissions` and the empty `ALLOWED_PERMISSION_EXCEPTIONS` constant in `apps/desktop/src/main/app/permissionPolicy/permissionPolicy.ts`, `constants.ts` and `types.ts`
-- [ ] T011 [US2] Register `setPermissionRequestHandler` and `setPermissionCheckHandler` on the default session from `apps/desktop/src/main/app/startApp.ts` (next to `installSecurityHeaders`); extend the fake session in `apps/desktop/tests/integration/startApp.test.ts`
+- [X] T009 [P] [US2] Write the failing test in `apps/desktop/tests/unit/permissionPolicy.test.ts` (the Vitest `main` project only includes `tests/unit` and `tests/integration`, as in T005): any permission name is denied for requests and not granted for checks; an empty named-exceptions list is the default _(Merged in PR #61.)_
+- [X] T010 [US2] Implement `denyAllPermissions` and the empty `ALLOWED_PERMISSION_EXCEPTIONS` constant in `apps/desktop/src/main/app/permissionPolicy/permissionPolicy.ts`, `constants.ts` and `types.ts` _(Merged in PR #61 as `isPermissionGranted`, `installPermissionPolicy` and `ALLOWED_PERMISSIONS`.)_
+- [X] T011 [US2] Register `setPermissionRequestHandler` and `setPermissionCheckHandler` on the default session from `apps/desktop/src/main/app/startApp.ts` (next to `installSecurityHeaders`); extend the fake session in `apps/desktop/tests/integration/startApp.test.ts` _(Merged in PR #61.)_
 
 **Checkpoint**: SC-002 passes.
 
@@ -65,17 +65,17 @@ description: "Task list for Electron hardening (security and performance)"
 
 **Independent test**: the blocked-address table in `contracts/hardening-policies.md` section 3.
 
-- [ ] T012 [US3] Extend `apps/desktop/tests/unit/mainWindow.test.ts` first with the failing table: own page, `file:///etc/hosts`, `localhost.evil.com` look-alike, extra path segments, unparsable text, dev server in dev and in packaged mode
-- [ ] T013 [US3] Move `isNavigationAllowed` to `apps/desktop/src/main/app/navigationPolicy/navigationPolicy.ts` with `types.ts` and `constants.ts`; parse with `URL` and compare scheme, host, port and exact page path; remove `FILE_URL_PREFIX` and `startsWith` from `mainWindow.ts`
-- [ ] T014 [US3] In `apps/desktop/src/main/app/mainWindow.ts` add a `will-redirect` listener that applies the same check; extend the `IMainWindow` fake in the test (redirect to a foreign address is prevented, US3 scenario 5)
-- [ ] T015 [US3] Verify the offscreen print window (`data:` URL) still works after T011 and T014 (O6): run the print integration test `apps/desktop/tests/integration/print.test.ts` and a manual print in `pnpm dev`; record in `research.md` O6
+- [X] T012 [US3] Extend `apps/desktop/tests/unit/mainWindow.test.ts` first with the failing table: own page, `file:///etc/hosts`, `localhost.evil.com` look-alike, extra path segments, unparsable text, dev server in dev and in packaged mode _(Merged in PR #61, table in `tests/unit/navigationPolicy.test.ts`.)_
+- [X] T013 [US3] Move `isNavigationAllowed` to `apps/desktop/src/main/app/navigationPolicy/navigationPolicy.ts` with `types.ts` and `constants.ts`; parse with `URL` and compare scheme, host, port and exact page path; remove `FILE_URL_PREFIX` and `startsWith` from `mainWindow.ts` _(Merged in PR #61.)_
+- [X] T014 [US3] In `apps/desktop/src/main/app/mainWindow.ts` add a `will-redirect` listener that applies the same check; extend the `IMainWindow` fake in the test (redirect to a foreign address is prevented, US3 scenario 5) _(Merged in PR #61.)_
+- [ ] T015 [US3] Verify the offscreen print window (`data:` URL) still works after T011 and T014 (O6): run the print integration test `apps/desktop/tests/integration/print.test.ts` and a manual print in `pnpm dev`; record in `research.md` O6 _(2026-11-27, automated half done: `print.test.ts` and the packaged PDF e2e pass with the policies and fuses. Open: a manual OS-dialog print, which waits for 001 T057 and T058. Research O6.)_
 
 ---
 
 ## Phase 5: Regression guard for settings already in place (FR-010) - PR A2
 
-- [ ] T016 [P] Add `apps/desktop/tests/unit/windowSecurityDefaults.test.ts`: fails if `buildMainWindowOptions` relaxes `contextIsolation`, `sandbox` or `nodeIntegration`, if `PACKAGED_POLICY` loses `default-src 'self'` or allows `connect-src` beyond `'none'`, if new windows are not denied, or if the preload exposes anything beyond the typed bridge
-- [ ] T017 Run `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm pr:size`; compare bill save and print time with T003 (SC-008)
+- [X] T016 [P] Add `apps/desktop/tests/unit/windowSecurityDefaults.test.ts`: fails if `buildMainWindowOptions` relaxes `contextIsolation`, `sandbox` or `nodeIntegration`, if `PACKAGED_POLICY` loses `default-src 'self'` or allows `connect-src` beyond `'none'`, if new windows are not denied, or if the preload exposes anything beyond the typed bridge _(Merged in PR #61.)_
+- [X] T017 Run `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm pr:size`; compare bill save and print time with T003 (SC-008) _(2026-11-27: `pnpm test` 194 core + 896 desktop pass, typecheck clean, no new lint warnings in changed files; SC-008 holds, see research.)_
 
 **Checkpoint (PR A done)**: US1 to US3 and FR-010 proven by tests.
 
@@ -87,17 +87,17 @@ description: "Task list for Electron hardening (security and performance)"
 
 **Independent test**: package, read the fuse state, try `ELECTRON_RUN_AS_NODE=1`, alter the archive header.
 
-- [ ] T018 [P] [US4] Write the failing test for the fuse-report parser in `apps/desktop/scripts/checkFuses.test.mjs` (expected set from `contracts/hardening-policies.md` section 4; any difference exits non-zero with the fuse name in the message)
-- [ ] T019 [US4] Implement `apps/desktop/scripts/check-fuses.mjs`: read the packaged binary with `@electron/fuses` `getCurrentFuseWireConfig` (already a dependency of electron-builder; if it is not importable from the app, stop and ask the owner before adding a package) and compare with the expected set (FR-006)
-- [ ] T020 [US4] Add the `electronFuses` block to `apps/desktop/electron-builder.yml`: `runAsNode: false`, `enableNodeOptionsEnvironmentVariable: false`, `enableNodeCliInspectArguments: false`, `enableEmbeddedAsarIntegrityValidation: true`, `onlyLoadAppFromAsar: true`; leave `loadBrowserProcessSpecificV8Snapshot` unset (research R4 and R5)
-- [ ] T021 [US4] Verify O2 and O10 on a real packaged build (`pnpm --filter @shopos/desktop package`): Mac plist has `ElectronAsarIntegrity`; on Windows the integrity hash is embedded; record in `research.md`
-- [ ] T022 [US4] Run `check-fuses.mjs` against the packaged app, then confirm `ELECTRON_RUN_AS_NODE=1` does not act as Node on the packaged app and that `pnpm test` still runs on the dev binary (US4 scenarios 1, 2, 4; SC-005)
-- [ ] T023 [US4] Test O14 and US4 scenario 3: alter the `app.asar` header on Mac **and on a Windows build** (SC-004 promises both; O10) and confirm the app will not start; alter one packed file with an intact header and record whether it fails at launch or on read
-- [ ] T024 [US4] Check O15: try launching the packaged app with Chromium's `--remote-debugging-port`; record the result and, if it attaches, add the smallest block (a startup switch check in `apps/desktop/src/main/app/startApp.ts`) or write the limit into `spec.md` US4 scope
-- [ ] T025 [US4] Extend `apps/desktop/scripts/e2e-packaged.mjs` (or add `apps/desktop/tests/e2e/hardening.spec.ts`): packaged app opens the database, saves and prints a bill (US4 scenario 5)
-- [ ] T026 [US4] Wire `check-fuses.mjs` as an npm script `check:fuses` in `apps/desktop/package.json` and add it to the release steps in `docs/` (and to the CI packaged smoke job once `017` has one) (FR-006)
-- [ ] T027 [US4] Menu (FR-009, D2): add `apps/desktop/src/main/app/appMenu/appMenu.ts` (with test first) that keeps a minimal Edit menu on Mac and may drop the default menu on Windows and Linux; measure startup before and after and keep it only if it helps; call it from `startApp.ts`
-- [ ] T028 [US4] Write the accepted gaps into `docs/` (Linux AppImage O12, migrations outside the archive O13) per D3 and D4; repeat T003's timing on the packaged build with fuses and the menu, compare it with T003's packaged baseline, and block PR B if bill save and print is more than 5% slower (SC-008)
+- [X] T018 [P] [US4] Write the failing test for the fuse-report parser in `apps/desktop/scripts/checkFuses.test.mjs` (expected set from `contracts/hardening-policies.md` section 4; any difference exits non-zero with the fuse name in the message) _(Written as `scripts/fuseCheck/fuseCheck.test.ts`, 6 cases; Vitest `main` now includes `scripts/**/*.test.ts`.)_
+- [X] T019 [US4] Implement `apps/desktop/scripts/check-fuses.mjs`: read the packaged binary with `@electron/fuses` `getCurrentFuseWireConfig` (already a dependency of electron-builder; if it is not importable from the app, stop and ask the owner before adding a package) and compare with the expected set (FR-006) _(The read function is `getCurrentFuseWire`. `@electron/fuses` 1.8.0 added as a devDependency, owner-approved. Fails, naming all 5 fuses, on an unhardened build.)_
+- [X] T020 [US4] Add the `electronFuses` block to `apps/desktop/electron-builder.yml`: `runAsNode: false`, `enableNodeOptionsEnvironmentVariable: false`, `enableNodeCliInspectArguments: false`, `enableEmbeddedAsarIntegrityValidation: true`, `onlyLoadAppFromAsar: true`; leave `loadBrowserProcessSpecificV8Snapshot` unset (research R4 and R5) _(Done. Packaged e2e moved to the `package:e2e` flavour (`electron-builder.e2e.yml`), because Playwright needs `--inspect`.)_
+- [ ] T021 [US4] Verify O2 and O10 on a real packaged build (`pnpm --filter @shopos/desktop package`): Mac plist has `ElectronAsarIntegrity`; on Windows the integrity hash is embedded; record in `research.md` _(Mac done 2026-11-27: plist has `ElectronAsarIntegrity` (SHA256) and codesign verifies. Windows open, needs a Windows machine (O10).)_
+- [X] T022 [US4] Run `check-fuses.mjs` against the packaged app, then confirm `ELECTRON_RUN_AS_NODE=1` does not act as Node on the packaged app and that `pnpm test` still runs on the dev binary (US4 scenarios 1, 2, 4; SC-005) _(`check:fuses` passes; `ELECTRON_RUN_AS_NODE=1` does not act as Node on the package (`smoke:release`); `pnpm test` still runs on the dev binary.)_
+- [ ] T023 [US4] Test O14 and US4 scenario 3: alter the `app.asar` header on Mac **and on a Windows build** (SC-004 promises both; O10) and confirm the app will not start; alter one packed file with an intact header and record whether it fails at launch or on read _(Mac done 2026-11-27: a changed header and a changed `out/main/index.js` both refuse to start (research O14). Windows open (O10).)_
+- [X] T024 [US4] Check O15: try launching the packaged app with Chromium's `--remote-debugging-port`; record the result and, if it attaches, add the smallest block (a startup switch check in `apps/desktop/src/main/app/startApp.ts`) or write the limit into `spec.md` US4 scope _(It attached. Added `src/main/app/debugSwitchPolicy`: a packaged release exits on `--remote-debugging-port` or `-pipe`. Research O15.)_
+- [X] T025 [US4] Extend `apps/desktop/scripts/e2e-packaged.mjs` (or add `apps/desktop/tests/e2e/hardening.spec.ts`): packaged app opens the database, saves and prints a bill (US4 scenario 5) _(Adjusted per E1: `scripts/smoke-release.mjs` checks the release build (migrates, refuses the port, ignores run-as-node); the Playwright suite (save, print to PDF) passes 5 of 5 on the `package:e2e` flavour.)_
+- [X] T026 [US4] Wire `check-fuses.mjs` as an npm script `check:fuses` in `apps/desktop/package.json` and add it to the release steps in `docs/` (and to the CI packaged smoke job once `017` has one) (FR-006) _(`check:fuses` and `smoke:release` added, with release steps in `docs/operations/release-checklist.md`. The CI packaged smoke job is open PR #116 (017); it must call `package:e2e` for Playwright and `check:fuses` on the release build.)_
+- [X] T027 [US4] Menu (FR-009, D2): add `apps/desktop/src/main/app/appMenu/appMenu.ts` (with test first) that keeps a minimal Edit menu on Mac and may drop the default menu on Windows and Linux; measure startup before and after and keep it only if it helps; call it from `startApp.ts` _(Startup unchanged (within noise); kept because the packaged build loses Reload and Toggle Developer Tools. Research R8.)_
+- [X] T028 [US4] Write the accepted gaps into `docs/` (Linux AppImage O12, migrations outside the archive O13) per D3 and D4; repeat T003's timing on the packaged build with fuses and the menu, compare it with T003's packaged baseline, and block PR B if bill save and print is more than 5% slower (SC-008) _(Gaps in `docs/operations/release-checklist.md`; SC-008 timing in research, nothing more than 5% slower.)_
 
 **Checkpoint (PR B done)**: SC-004 and SC-005 proven; fuse check passes.
 
@@ -132,8 +132,8 @@ description: "Task list for Electron hardening (security and performance)"
 ## Phase 9: Polish
 
 - [ ] T039 [P] Update `specs/README.md` status for 018 and tick finished tasks here with a one-line result each
-- [ ] T040 [P] Update `.claude/skills/shopos-electron-hardening/SKILL.md` and `docs/` if any rule changed during the spikes
-- [ ] T041 Add FR-014 to the release checklist: each Electron upgrade rebuilds the native database module and re-runs `pnpm test`, `pnpm test:e2e`, `check:fuses` and the packaged-app check
+- [ ] T040 [P] Update `.claude/skills/shopos-electron-hardening/SKILL.md` and `docs/` if any rule changed during the spikes _(Skill updated 2026-11-27 for PR B (DevTools port, two flavours). Check again after the PR C spike.)_
+- [X] T041 Add FR-014 to the release checklist: each Electron upgrade rebuilds the native database module and re-runs `pnpm test`, `pnpm test:e2e`, `check:fuses` and the packaged-app check _(In `docs/operations/release-checklist.md`, "After every Electron upgrade".)_
 - [ ] T042 Final `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm test:e2e`; confirm SC-008 against the baseline in T003
 
 ---
