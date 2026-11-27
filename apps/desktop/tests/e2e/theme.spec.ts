@@ -49,10 +49,15 @@ test("the theme survives losing the page's local storage", async () => {
 
 test("an old local-storage theme is copied into a database that has none", async () => {
   const firstStart = await launch();
-  await firstStart.page.evaluate(() => {
-    window.localStorage.setItem("shopos.themePreference", "dark");
-  });
-  await firstStart.app.close();
+  try {
+    // The initial sync writes System to localStorage before saving it in SQLite.
+    await expect.poll(() => readSavedTheme(firstStart.dataDir)).toBe("system");
+    await firstStart.page.evaluate(() => {
+      window.localStorage.setItem("shopos.themePreference", "dark");
+    });
+  } finally {
+    await firstStart.app.close();
+  }
   // A counter that last ran before migration 0015: the database has no theme yet.
   const databaseFile = path.join(firstStart.dataDir, "shopos.sqlite");
   execFileSync("sqlite3", [databaseFile, "update shop_profile set theme = null"]);
