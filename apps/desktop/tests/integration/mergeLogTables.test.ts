@@ -85,8 +85,35 @@ describe("item_merge_log (spec 002 T020)", () => {
       });
     const reversalId = reverse(mergeId)();
 
-    expect(reverse(mergeId)).toThrow(/UNIQUE/);
+    expect(reverse(mergeId)).toThrow(/already reversed/);
     expect(reverse(reversalId)).toThrow(/reverses only a merge/);
+  });
+
+  it("keeps the original reversal when INSERT OR REPLACE targets the same merge", () => {
+    const { sqlite } = createTestDb();
+    sqlite.pragma("recursive_triggers = OFF");
+    const variants = twoVariants(sqlite);
+    const mergeId = insertMergeLog(sqlite, variants);
+    const reversalId = insertMergeLog(sqlite, {
+      ...variants,
+      action: "reverse",
+      merge_log_id: mergeId,
+      reversible_until: null,
+    });
+    const findReversal = sqlite.prepare("select * from item_merge_log where merge_log_id = ?");
+    const original = findReversal.get(mergeId);
+
+    expect(() =>
+      sqlite
+        .prepare(
+          `insert or replace into item_merge_log
+             (id, business_id, shop_id, created_at, updated_at, action, survivor_id, merged_id, merge_log_id, reason, user_label)
+           select ?, business_id, shop_id, created_at, updated_at, action, survivor_id, merged_id, merge_log_id, ?, user_label
+           from item_merge_log where id = ?`,
+        )
+        .run("replacement-reversal", "Changed reason", reversalId),
+    ).toThrow(/already reversed/);
+    expect(findReversal.all(mergeId)).toEqual([original]);
   });
 
   it("needs a reversal window on a merge and a merge to point at on a reversal", () => {
