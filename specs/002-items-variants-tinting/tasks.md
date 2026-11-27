@@ -60,7 +60,7 @@ description: "Task list for feature 002: item families, variants, search, merge,
 ### Search index and benchmark
 
 - [x] T023 Write tests in `desktop/src/main/services/search/SearchIndex.test.ts`: build from repositories, update on create, rename, deactivate and merge, query uses `rankSearchMatches` _(2026-11-28: in `services/search/SearchService.test.ts` (the service and index are tested together on a real database), 8 tests; merged variants leave the index and their retained barcodes and search names resolve to the survivor through the whole merge chain)_
-- [ ] T024 Implement `desktop/src/main/services/search/SearchIndex.ts` and `SearchService.ts` (in-memory, built at start in `desktop/src/main/app/startApp.ts`)
+- [x] T024 Implement `desktop/src/main/services/search/SearchIndex.ts` and `SearchService.ts` (in-memory, built at start in `desktop/src/main/app/startApp.ts`) _(2026-11-28: `services/search/` (SearchIndex, SearchService, searchRefreshedAfter) and `repositories/SearchSourceRepository/`; built in `buildServices` in `startApp.ts`; `items.create` and `items.update` refresh the item's family after they commit (`searchWiring.test.ts`, 4 tests); the merge service (later 002 task) must call `refreshAfterMerge`, and bill save (T034) `refreshSalesCounts`. No command reads it yet: `items.list` still uses SQL)_
 - [ ] T025 Write the benchmark `desktop/tests/integration/searchBenchmark.test.ts`: 50,000 generated variants with 2 search names each, 50 queries including typos; record median and 95th percentile in `specs/002-items-variants-tinting/research.md` under OI-2
 
 **Checkpoint (M1 exit)**: core green; migrations proven on real data; OI-2 answered.

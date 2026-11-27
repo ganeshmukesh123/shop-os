@@ -3,6 +3,7 @@ import { createHandlers, type Handlers } from "../../src/main/ipc/handlers";
 import { BackupService } from "../../src/main/services/BackupService";
 import { BillingService } from "../../src/main/services/BillingService";
 import { InventoryService } from "../../src/main/services/InventoryService";
+import { SearchService } from "../../src/main/services/search";
 import { PrintService } from "../../src/main/services/PrintService";
 import { SettingsService } from "../../src/main/services/SettingsService";
 import { BillRepository } from "../../src/main/repositories/BillRepository";
@@ -15,6 +16,7 @@ beforeEach(() => {
   handlers = createHandlers(
     {
       inventory: new InventoryService(testDb.db, testDb.ctx),
+      search: new SearchService(testDb.db, testDb.ctx),
       billing: new BillingService(testDb.db, testDb.ctx),
       settings: new SettingsService(testDb.db, testDb.ctx),
       print: new PrintService(

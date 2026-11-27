@@ -7,6 +7,7 @@ import {
 import { BackupService } from "../../src/main/services/BackupService";
 import { BillingService } from "../../src/main/services/BillingService";
 import { InventoryService } from "../../src/main/services/InventoryService";
+import { SearchService } from "../../src/main/services/search";
 import { PrintService, type HtmlRenderer } from "../../src/main/services/PrintService";
 import type { IRestoreNumberingPlan } from "../../src/main/services/RestoreNumbering";
 import { SettingsService } from "../../src/main/services/SettingsService";
@@ -47,6 +48,7 @@ export function buildHandlersFixture(options: IFixtureOptions = {}): IHandlersFi
   };
   const services: Services = {
     inventory: new InventoryService(testDb.db, testDb.ctx),
+    search: new SearchService(testDb.db, testDb.ctx),
     billing: new BillingService(testDb.db, testDb.ctx),
     settings: new SettingsService(testDb.db, testDb.ctx),
     print: new PrintService(
