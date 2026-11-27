@@ -8,6 +8,7 @@ import { BillsFilters } from "./components/BillsFilters";
 import { BillsTable } from "./components/BillsTable";
 import { OpenBill } from "./components/OpenBill";
 import { BILLS_PAGE_LIMIT } from "./constants";
+import { useBillGaps } from "./hooks/useBillGaps";
 import { useBills } from "./hooks/useBills";
 import type { IBillFilter } from "./types";
 
@@ -18,12 +19,15 @@ export function BillsScreen() {
   const [filter, setFilter] = useState<IBillFilter>(NO_FILTER);
   const [openBillId, setOpenBillId] = useState<string | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
-  const { bills, total, loading, error } = useBills(filter, refreshCount);
+  const { bills, total, loading, error: billsError } = useBills(filter, refreshCount);
+  const { gaps, error: gapsError } = useBillGaps(refreshCount);
+  const error = billsError ?? gapsError;
   const backToList = () => {
     setOpenBillId(null);
     setRefreshCount((previousCount) => previousCount + 1);
   };
   const isFiltered = Object.values(filter).some((fieldValue) => fieldValue !== "");
+  // Lost numbers belong to no date or customer, so a search hides them.
   const countTemplate = total > BILLS_PAGE_LIMIT ? uiText.bills.countMore : uiText.bills.countOther;
   const countText = fillText(total === 1 ? uiText.bills.countOne : countTemplate, {
     count: total,
@@ -42,7 +46,7 @@ export function BillsScreen() {
           {error}
         </StatusMessage>
       )}
-      <BillsTable bills={bills} onOpen={setOpenBillId} />
+      <BillsTable bills={bills} gaps={isFiltered ? [] : gaps} onOpen={setOpenBillId} />
       {!loading && !error && bills.length === 0 && (
         <Text color="gray">{isFiltered ? uiText.bills.noMatch : uiText.bills.empty}</Text>
       )}
