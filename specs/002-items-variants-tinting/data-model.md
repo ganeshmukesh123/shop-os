@@ -205,7 +205,7 @@ The code rule is a partial unique index on `(brand_id, shade_code)` where `sourc
 
 `formula_id` FK, `colorant_variant_id` FK to a `colorant` variant, `qty_milli` integer above 0 (thousandths of a ml; 0.25 ml = 250). `UNIQUE(formula_id, colorant_variant_id)`.
 
-"A `base_paint` variant" (`tint_formula.base_variant_id`) and "a `colorant` variant" (`colorant_variant_id`) are **not** database rules: `kind` lives on the family, so a CHECK cannot see it. `@shopos/core` (`validateVariantDraft`) and the tint service check them (accepted 2026-11-28, PR #165).
+"A `base_paint` variant" (`tint_formula.base_variant_id`) and "a `colorant` variant" (`tint_formula_line.colorant_variant_id`) are **not** database rules: `kind` lives on the family, so a CHECK cannot see it. Before saving a formula, `@shopos/core` and the tint service must validate that `tint_formula.base_variant_id` refers to a `base_paint` variant and `tint_formula_line.colorant_variant_id` refers to a `colorant` variant (accepted 2026-11-28, PR #165). These checks are not yet implemented.
 
 ### `tint_charge_rule`
 
