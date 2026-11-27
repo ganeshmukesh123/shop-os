@@ -18,6 +18,7 @@ import {
   itemsListInput,
   itemsUpdateInput,
   settingsClockCheckInput,
+  settingsSetThemeInput,
   settingsUpdateInput,
   stockAdjustInput,
   type CommandMap,
@@ -93,11 +94,12 @@ function cmd<K extends CommandName>(
 }
 
 type ItemCommandName = "items.list" | "items.create" | "items.update" | "stock.adjust";
-type SystemCommandName = Extract<
-  CommandName,
-  `settings.${string}` | `backup.${string}` | `system.${string}`
+type ThemeCommandName = "settings.getTheme" | "settings.setTheme";
+type SystemCommandName = Exclude<
+  Extract<CommandName, `settings.${string}` | `backup.${string}` | `system.${string}`>,
+  ThemeCommandName
 >;
-type BillCommandName = Exclude<CommandName, ItemCommandName | SystemCommandName>;
+type BillCommandName = Exclude<CommandName, ItemCommandName | SystemCommandName | ThemeCommandName>;
 
 function createItemHandlers(services: Services): Pick<Handlers, ItemCommandName> {
   return {
@@ -202,5 +204,10 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
     ...createItemHandlers(services),
     ...createBillHandlers(services),
     ...createSystemHandlers(services, shell),
+    // The screen's theme choice, kept in the database (spec 018 T035).
+    "settings.getTheme": cmd<"settings.getTheme">(none(), () => services.settings.getTheme()),
+    "settings.setTheme": cmd<"settings.setTheme">(settingsSetThemeInput, (commandInput) =>
+      services.settings.setTheme(commandInput),
+    ),
   };
 }

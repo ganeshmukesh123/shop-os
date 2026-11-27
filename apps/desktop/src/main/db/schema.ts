@@ -266,6 +266,8 @@ export const shopProfile = sqliteTable(
     roundBillTotal: integer("round_bill_total").notNull().default(1),
     // The shop's named time zone for business dates (FR-019a, research D22)
     timeZone: text("time_zone").notNull().default("Asia/Kolkata"),
+    // The screen's System, Light or Dark choice; null until first saved (spec 018 T035)
+    theme: text("theme"),
   },
   (tableColumns) => [
     check("shop_profile_name_len", sql`length(${tableColumns.name}) between 1 and 80`),
@@ -279,6 +281,10 @@ export const shopProfile = sqliteTable(
     ),
     check("shop_profile_round_bool", sql`${tableColumns.roundBillTotal} in (0, 1)`),
     check("shop_profile_time_zone_len", sql`length(${tableColumns.timeZone}) between 1 and 64`),
+    check(
+      "shop_profile_theme",
+      sql`${tableColumns.theme} is null or ${tableColumns.theme} in ('system','light','dark')`,
+    ),
   ],
 );
 

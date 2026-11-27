@@ -111,6 +111,8 @@ const DISPATCH_CASES = {
     input: { deviceTimeZone: "Asia/Kolkata" },
     expected: { ok: true, data: { warnings: [] } },
   },
+  "settings.getTheme": { input: {}, expected: { ok: true, data: { theme: null } } },
+  "settings.setTheme": { input: { theme: "dark" }, expected: { ok: true, data: { theme: "dark" } } },
   "backup.run": {
     input: {},
     expected: { ok: false, code: "BACKUP_FAILED", message: "No backup folder is set" },

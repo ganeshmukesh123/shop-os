@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { ReceiptWidth, ShopProfile } from "@shopos/core";
+import type { ReceiptWidth, SavedTheme, ShopProfile, ThemePreference } from "@shopos/core";
 import type { Handle } from "../db/connection";
 import { nowMs } from "../db/ids";
 import { shopProfile } from "../db/schema";
@@ -31,6 +31,25 @@ export class SettingsRepository {
       roundBillTotal: profileRow.roundBillTotal === 1,
       timeZone: profileRow.timeZone,
     };
+  }
+
+  /** The theme is outside ShopProfile, so saving the profile from Settings never overwrites it. */
+  getTheme(): SavedTheme {
+    const themeRow = this.databaseHandle
+      .select({ theme: shopProfile.theme })
+      .from(shopProfile)
+      .where(eq(shopProfile.shopId, this.ctx.shopId))
+      .get();
+    return { theme: (themeRow?.theme ?? null) as ThemePreference | null };
+  }
+
+  setTheme(theme: ThemePreference): { theme: ThemePreference } {
+    this.databaseHandle
+      .update(shopProfile)
+      .set({ theme, updatedAt: nowMs() })
+      .where(eq(shopProfile.shopId, this.ctx.shopId))
+      .run();
+    return { theme };
   }
 
   update(newProfile: ShopProfile): ShopProfile {

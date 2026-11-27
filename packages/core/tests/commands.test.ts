@@ -18,6 +18,8 @@ const EXPECTED_COMMAND_NAMES = [
   "settings.get",
   "settings.update",
   "settings.clockCheck",
+  "settings.getTheme",
+  "settings.setTheme",
   "backup.run",
   "backup.status",
   "backup.planRestore",

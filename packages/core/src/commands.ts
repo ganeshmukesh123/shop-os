@@ -21,6 +21,7 @@ import type {
   StockAdjustInput,
   StockMovement,
 } from "./types";
+import type { SavedTheme, SettingsSetThemeInput } from "./theme";
 
 /** Renderer to main-process commands (specs/001-shop-os-mvp/contracts/ipc-commands.md): name -> [input, data]. */
 export interface CommandMap {
@@ -40,6 +41,9 @@ export interface CommandMap {
   "settings.update": [ShopProfile, ShopProfile];
   /** Warnings only, never an error: the device zone differs from the shop's, or the clock went back. */
   "settings.clockCheck": [SettingsClockCheckInput, { warnings: ClockWarning[] }];
+  /** The screen's theme, kept in the database so a new page origin cannot lose it (spec 018 T035). */
+  "settings.getTheme": [Record<string, never>, SavedTheme];
+  "settings.setTheme": [SettingsSetThemeInput, { theme: SettingsSetThemeInput["theme"] }];
   "backup.run": [Record<string, never>, { path: string; finishedAt: string }];
   "backup.status": [Record<string, never>, BackupStatus];
   /** Read only: what a restore of this file would do to the bill numbers (FR-013b). */
@@ -69,6 +73,8 @@ export const COMMAND_NAMES = [
   "settings.get",
   "settings.update",
   "settings.clockCheck",
+  "settings.getTheme",
+  "settings.setTheme",
   "backup.run",
   "backup.status",
   "backup.planRestore",

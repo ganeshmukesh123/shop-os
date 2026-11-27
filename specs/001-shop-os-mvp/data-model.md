@@ -24,7 +24,7 @@ number_series 1--* bill            shop_profile (one row)
 | `bill_tender` | `bill_id`, `mode` (`cash`, `upi`, `card`, `unpaid`), `amount_paise`, `status` (`label` in this release) | One row per bill in this release; append-only |
 | `number_series` | `counter_code`, `financial_year`, `template`, `last_seq` | Incremented in the bill transaction |
 | `bill_number_gap` | `number_series_id`, `seq_from`, `seq_to`, `reason` (`lost_in_restore`), `is_estimated` (0 or 1), `recorded_at` | Append-only; shown in the bill list (D21) |
-| `shop_profile` | name, address, phone, `doc_title` (default `Estimate`), `number_template`, `round_bill_total` (default 1), `time_zone` (default `Asia/Kolkata`), `receipt_width` (`58mm`, `80mm` default, `a4`, `a5`), footer, backup folder | One row |
+| `shop_profile` | name, address, phone, `doc_title` (default `Estimate`), `number_template`, `round_bill_total` (default 1), `time_zone` (default `Asia/Kolkata`), `receipt_width` (`58mm`, `80mm` default, `a4`, `a5`), footer, backup folder, `theme` (null, `system`, `light`, `dark`; spec 018 T035) | One row |
 | `draft_bill`, `backup_log` | as today | Not financial records |
 
 ## Current schema (until T073 to T081)
@@ -114,7 +114,7 @@ Append-only (triggers).
 One row per bill in this release, written in the bill's save transaction: `bill_id` (foreign key), `mode` (`cash`, `upi`, `card` or `unpaid`), `amount_paise` (the bill's whole total, 0 or more) and `status` (`label`: the shop records how the customer paid; the app does not collect money). Append-only (triggers). The payment mode the app shows is read from this row; the bill itself no longer has a `payment_mode` column. Migration 0009 gave every existing bill one tender from its old payment mode.
 
 ### Shop Profile (`shop_profile`)
-One row: name (required, up to 80), address (up to 200), phone (up to 20), bill series code, bill number template, bill footer text (up to 200), receipt width (`58mm`, `80mm`, `a4` or `a5`), backup folder path, and since migration 0013 (T080): `doc_title` (1 to 30 characters, default `Estimate`), `round_bill_total` (0 or 1, default 1) and `time_zone` (a named zone the platform knows, default `Asia/Kolkata`).
+One row: name (required, up to 80), address (up to 200), phone (up to 20), bill series code, bill number template, bill footer text (up to 200), receipt width (`58mm`, `80mm`, `a4` or `a5`), backup folder path, and since migration 0013 (T080): `doc_title` (1 to 30 characters, default `Estimate`), `round_bill_total` (0 or 1, default 1) and `time_zone` (a named zone the platform knows, default `Asia/Kolkata`). Since migration 0015 (spec 018 T035): `theme`, the screen's System, Light or Dark choice, checked to those three or null. Null means no choice saved yet: the screen shows System, or copies the choice it had kept in the page's localStorage, once. It is read and written only by `settings.getTheme` and `settings.setTheme`, never by `settings.update`. Migration 0015 rebuilds `shop_profile` (new CHECK); its generated copy was hand-edited to insert null, because drizzle-kit selected a `theme` column the old table does not have.
 
 ### Number Series (`number_series`) (migration 0011, task T078)
 `counter_code`, `financial_year`, `template` (the bill number template last used with the series) and `last_seq`; unique per shop, counter and financial year; `last_seq` is incremented in the same transaction as the bill insert. Replaces `number_counter`; each bill points at its series with `number_series_id`.
