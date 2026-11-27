@@ -1,6 +1,9 @@
 import { CoreError } from "../../src/errors";
 import { MAX_AXES } from "../../src/catalogue/axisSignature";
-import { generateVariantCombinations } from "../../src/catalogue/variantCombinations";
+import {
+  MAX_COMBINATIONS,
+  generateVariantCombinations,
+} from "../../src/catalogue/variantCombinations";
 
 function errorOf(action: () => unknown): CoreError | undefined {
   try {
@@ -96,5 +99,44 @@ describe("generateVariantCombinations (task T005, FR-001)", () => {
     const empty = errorOf(() => generateVariantCombinations(["size"], { size: [] }));
 
     expect([missing?.code, empty?.code]).toEqual(["INVALID_FIELD", "INVALID_FIELD"]);
+  });
+});
+
+describe("the combination limit (FR-002, PR #153)", () => {
+  const sizes = (count: number) =>
+    Array.from({ length: count }, (_unused, sizeIndex) => `${sizeIndex + 1} mm`);
+
+  it("allows exactly 500 combinations: 5 sizes x 10 classes x 10 lengths", () => {
+    const combinations = generateVariantCombinations(["size", "class", "length"], {
+      size: sizes(5),
+      class: sizes(10),
+      length: sizes(10),
+    });
+
+    expect(combinations).toHaveLength(MAX_COMBINATIONS);
+  });
+
+  it("refuses 501 with TOO_MANY_COMBINATIONS and says how many were asked for", () => {
+    const error = errorOf(() =>
+      generateVariantCombinations(["size", "class"], { size: sizes(3), class: sizes(167) }),
+    );
+
+    expect(error?.code).toBe("TOO_MANY_COMBINATIONS");
+    expect(error?.message).toContain("501");
+    expect(error?.message).toContain("500");
+  });
+
+  it("refuses 4 axes of 10 values (10000 variants in one click)", () => {
+    const error = errorOf(() =>
+      generateVariantCombinations(["size", "class", "length", "colour"], {
+        size: sizes(10),
+        class: sizes(10),
+        length: sizes(10),
+        colour: sizes(10),
+      }),
+    );
+
+    expect(error?.code).toBe("TOO_MANY_COMBINATIONS");
+    expect(error?.message).toContain("10000");
   });
 });
