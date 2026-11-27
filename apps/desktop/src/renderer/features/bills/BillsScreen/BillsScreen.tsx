@@ -16,6 +16,7 @@ const NO_FILTER: IBillFilter = { number: "", from: "", to: "", customer: "" };
 export function BillsScreen() {
   const [filter, setFilter] = useState<IBillFilter>(NO_FILTER);
   const { bills, total, loading, error } = useBills(filter);
+  const isLoaded = !loading;
   const isFiltered = Object.values(filter).some((fieldValue) => fieldValue !== "");
   const countTemplate = total > BILLS_PAGE_LIMIT ? uiText.bills.countMore : uiText.bills.countOther;
   const countText = fillText(total === 1 ? uiText.bills.countOne : countTemplate, {
@@ -27,15 +28,15 @@ export function BillsScreen() {
       <Heading size="6">{uiText.bills.title}</Heading>
       <BillsFilters filter={filter} onChange={setFilter} />
       <Text size="2" color="gray">
-        {countText}
+        {isLoaded ? countText : uiText.common.loading}
       </Text>
       {error && (
         <StatusMessage role="danger" label={uiText.status.error}>
           {error}
         </StatusMessage>
       )}
-      <BillsTable bills={bills} />
-      {!loading && !error && bills.length === 0 && (
+      {isLoaded && <BillsTable bills={bills} />}
+      {isLoaded && !error && bills.length === 0 && (
         <Text color="gray">{isFiltered ? uiText.bills.noMatch : uiText.bills.empty}</Text>
       )}
     </Flex>
