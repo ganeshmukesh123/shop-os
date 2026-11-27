@@ -41,6 +41,24 @@ const lostRow = async (fromNumber: string) =>
   (await screen.findByRole("rowheader", { name: new RegExp(fromNumber) })).closest("tr")!;
 
 describe("BillsScreen: numbers lost in a restore (FR-013b, T084)", () => {
+  it("says Loading until the lost numbers are read too, even when the bills came first", async () => {
+    let answerGaps: (gapsResult: { gaps: IRecordedNumberGap[] }) => void = () => undefined;
+    renderBillsScreen([], {
+      "bills.gaps": () =>
+        new Promise((resolveGaps) => {
+          answerGaps = resolveGaps;
+        }),
+    });
+
+    expect(await screen.findByText("Loading")).toBeTruthy();
+    expect(screen.queryByRole("table")).toBeNull();
+
+    answerGaps({ gaps: [CONFIRMED_GAP] });
+
+    const row = await lostRow("000121");
+    expect(within(row).getByText("Lost in restore")).toBeTruthy();
+  });
+
   it("shows each lost run in the list with the words Lost in restore", async () => {
     renderBillsScreen([CONFIRMED_GAP]);
 

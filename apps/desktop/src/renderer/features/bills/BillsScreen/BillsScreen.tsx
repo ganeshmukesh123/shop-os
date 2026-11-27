@@ -28,19 +28,32 @@ function emptyListText(isFiltered: boolean): string {
   return isFiltered ? uiText.bills.noMatch : uiText.bills.empty;
 }
 
+/**
+ * The list is complete only when both answers are in: the bills and the numbers a restore lost.
+ * Either error is shown; the bills' error first.
+ */
+function listStateOf(
+  billsResult: { loading: boolean; error: string | null },
+  gapsResult: { loading: boolean; error: string | null },
+): { isLoaded: boolean; error: string | null } {
+  const isLoaded = !(billsResult.loading || gapsResult.loading);
+  return { isLoaded, error: billsResult.error ?? gapsResult.error };
+}
+
 /** Past bills, newest first, searchable by number, date range and customer (spec US3, FR-016). */
 export function BillsScreen() {
   const [filter, setFilter] = useState<IBillFilter>(NO_FILTER);
   const [openBillId, setOpenBillId] = useState<string | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
-  const { bills, total, loading, error: billsError } = useBills(filter, refreshCount);
-  const { gaps, error: gapsError } = useBillGaps(refreshCount);
-  const error = billsError ?? gapsError;
+  const billsResult = useBills(filter, refreshCount);
+  const gapsResult = useBillGaps(refreshCount);
+  const { bills, total } = billsResult;
+  const { gaps } = gapsResult;
+  const { isLoaded, error } = listStateOf(billsResult, gapsResult);
   const backToList = () => {
     setOpenBillId(null);
     setRefreshCount((previousCount) => previousCount + 1);
   };
-  const isLoaded = !loading;
   const isFiltered = Object.values(filter).some((fieldValue) => fieldValue !== "");
   const countText = billCountText(total);
   // Lost numbers belong to no date or customer, so a search hides them.
