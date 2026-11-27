@@ -140,6 +140,7 @@ function createBillHandlers(services: Services): Pick<Handlers, BillCommandName>
     "bills.cancel": cmd<"bills.cancel">(billsCancelInput, (commandInput) =>
       services.billing.cancelBill(commandInput),
     ),
+    "bills.gaps": cmd<"bills.gaps">(none(), () => ({ gaps: services.billing.listNumberGaps() })),
     "bills.print": cmd<"bills.print">(
       billsPrintInput,
       (commandInput: { id: string; target: "receipt" | "a4" | "a5" }) =>
