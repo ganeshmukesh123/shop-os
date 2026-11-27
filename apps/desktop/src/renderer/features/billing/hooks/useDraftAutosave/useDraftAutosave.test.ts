@@ -60,15 +60,33 @@ describe("useDraftAutosave", () => {
     expect(saves()).toHaveLength(0);
   });
 
-  it("keeps working when the save fails", () => {
-    const fake = installFakeShopos();
+  it("keeps saving after a failed save: the next change is saved again", async () => {
+    let saveAttempts = 0;
+    const fake = installFakeShopos({
+      "bills.draft.save": () => {
+        saveAttempts += 1;
+        const isFirstAttempt = saveAttempts === 1;
+        if (isFirstAttempt) {
+          throw Object.assign(new Error("The disk is full"), { code: "INTERNAL" });
+        }
+        return {};
+      },
+    });
     const hook = renderHook((props) => useDraftAutosave(props.form, true), {
       initialProps: { form: emptyForm() },
     });
+    const ravi = { ...emptyForm(), customerName: "Ravi" };
+    const raviK = { ...ravi, customerName: "Ravi K" };
 
-    hook.rerender({ form: { ...emptyForm(), customerName: "Ravi" } });
-    vi.advanceTimersByTime(AUTOSAVE_WAIT_MILLISECONDS);
+    hook.rerender({ form: ravi });
+    await vi.advanceTimersByTimeAsync(AUTOSAVE_WAIT_MILLISECONDS);
+    hook.rerender({ form: raviK });
+    await vi.advanceTimersByTimeAsync(AUTOSAVE_WAIT_MILLISECONDS);
 
-    expect(fake.calls).toHaveLength(1);
+    const saveInputs = fake.calls
+      .filter((fakeCall) => fakeCall.commandName === "bills.draft.save")
+      .map((fakeCall) => fakeCall.input);
+    expect(saveInputs).toEqual([{ payload: ravi }, { payload: raviK }]);
+    expect(saveAttempts).toBe(2);
   });
 });

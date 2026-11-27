@@ -28,11 +28,19 @@ describe("emptyForm", () => {
 });
 
 describe("loadDraftForm", () => {
-  it("returns the saved draft with the current defaults filled in", async () => {
-    const savedForm = formWith({ lines: [LINE as never] }, "Ravi");
-    installFakeShopos({ "bills.draft.load": () => ({ payload: savedForm }) });
+  it("fills in the payment mode and a bill id that an older saved draft lacks", async () => {
+    // An older draft: Ravi's 2 pcs of Pipe, saved before paymentMode and clientBillId existed.
+    const savedDraft = { lines: [LINE], billDisc: "", billDiscMode: "rupees" };
+    installFakeShopos({
+      "bills.draft.load": () => ({ payload: { customerName: "Ravi", draft: savedDraft } }),
+    });
 
-    expect(await loadDraftForm()).toEqual(savedForm);
+    const loadedForm = await loadDraftForm();
+
+    expect(loadedForm?.customerName).toBe("Ravi");
+    expect(loadedForm?.draft).toEqual(savedDraft);
+    expect(loadedForm?.paymentMode).toBe("cash");
+    expect(loadedForm?.clientBillId).toMatch(/^[0-9a-f-]{36}$/);
   });
 
   it.each([
