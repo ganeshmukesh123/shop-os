@@ -1,10 +1,14 @@
 import {
   CoreError,
   findClockWarnings,
+  settingsSetThemeInput,
   settingsUpdateInput,
   validateNumberTemplate,
   type ClockWarning,
+  type SavedTheme,
+  type SettingsSetThemeInput,
   type ShopProfile,
+  type ThemePreference,
 } from "@shopos/core";
 import type { DB } from "../db/connection";
 import type { Ctx } from "../db/seed";
@@ -33,6 +37,14 @@ export class SettingsService {
     );
     if (!templateValidation.ok) throw new CoreError("INVALID_FIELD", templateValidation.reason);
     return this.repo.update(input);
+  }
+
+  getTheme(): SavedTheme {
+    return this.repo.getTheme();
+  }
+
+  setTheme(raw: SettingsSetThemeInput): { theme: ThemePreference } {
+    return this.repo.setTheme(settingsSetThemeInput.parse(raw).theme);
   }
 
   /**

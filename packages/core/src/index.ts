@@ -8,5 +8,6 @@ export * from "./numberGap";
 export * from "./businessDate";
 export * from "./clockCheck";
 export * from "./types";
+export * from "./theme";
 export * from "./commands";
 export * from "./draftBill";
