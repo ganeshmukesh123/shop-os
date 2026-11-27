@@ -1,7 +1,24 @@
 /** All screen text lives here so Hindi can be added later. */
 export const uiText = {
   appName: "Shop OS",
-  nav: { items: "Items", newBill: "New bill", settings: "Settings" },
+  nav: { items: "Items", newBill: "New bill", bills: "Bills", settings: "Settings" },
+  bills: {
+    title: "Bills",
+    number: "Bill number",
+    from: "From date",
+    to: "To date",
+    customer: "Customer name",
+    date: "Date",
+    payment: "Payment",
+    total: "Total",
+    status: "Status",
+    posted: "Posted",
+    countOne: "{count} bill",
+    countOther: "{count} bills",
+    countMore: "{count} bills. Showing the newest {shown}; narrow the search to see older ones.",
+    empty: "No bills yet. Save a bill from New bill and it appears here.",
+    noMatch: "No bills match.",
+  },
   items: {
     title: "Items",
     search: "Search items by name",
