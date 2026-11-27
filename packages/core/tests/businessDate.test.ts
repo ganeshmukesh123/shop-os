@@ -220,6 +220,34 @@ describe("machine dates ignore Luxon's global settings (no hidden inputs)", () =
     Settings.defaultLocale = "";
     Settings.defaultNumberingSystem = "";
     Settings.defaultOutputCalendar = "";
+    Settings.defaultZone = "system";
+    Settings.throwOnInvalid = false;
+  });
+
+  /** The financial year from the Date's own device-local fields, as the old hand-written code did. */
+  const deviceLocalFinancialYear = (date: Date) => {
+    const startYear = date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
+    const twoDigit = (yearNumber: number) => String(yearNumber % 100).padStart(2, "0");
+    return `${twoDigit(startYear)}-${twoDigit(startYear + 1)}`;
+  };
+
+  it.each(["Pacific/Kiritimati", "Etc/GMT+12"])(
+    "financialYear reads the device's own zone even when Luxon's default zone is %s",
+    (luxonDefaultZone) => {
+      // 20:00 UTC on 31 March 2027 is 1 April at +14 and still 31 March at -12; at least one of
+      // the two differs from any device, so a leak of the default zone shows.
+      Settings.defaultZone = luxonDefaultZone;
+      const lateOnMarch31 = new Date(Date.UTC(2027, 2, 31, 20, 0, 0));
+
+      expect(financialYear(lateOnMarch31)).toBe(deviceLocalFinancialYear(lateOnMarch31));
+    },
+  );
+
+  it("says INVALID_FIELD for 2027-02-29 even when Luxon is set to throw on invalid dates", () => {
+    Settings.throwOnInvalid = true;
+
+    expect(errorCodeOf(() => financialYearOfBusinessDate("2027-02-29"))).toBe("INVALID_FIELD");
+    expect(financialYearOfBusinessDate("2027-04-01")).toBe("27-28");
   });
 
   it("still writes 2027-04-01, 27-28 and ASCII digits with Arabic digits and an Islamic calendar set", () => {

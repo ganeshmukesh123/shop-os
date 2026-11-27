@@ -9,7 +9,7 @@ Authority: constitution I, II, III, V, VI. Architecture: `docs/reference/archite
 
 ## 1. Purity rules
 
-- **No imports** from Electron, React, Radix, Drizzle, better-sqlite3, Node built-ins (`fs`, `path`, `node:*`) or anything that does I/O. Only the language and Zod. (ESLint `no-restricted-imports` blocks this in `packages/core`.)
+- **No imports** from Electron, React, Radix, Drizzle, better-sqlite3, Node built-ins (`fs`, `path`, `node:*`) or anything that does I/O. Only the language, Zod and Luxon (Luxon for dates only: the owner's decision in spec 001 research D25; format machine dates with `MACHINE_FORMAT` so Luxon's global `Settings` never change them). (ESLint `no-restricted-imports` blocks this in `packages/core`.)
 - **No hidden inputs.** No `new Date()`, `Math.random()`, `crypto` or environment reads inside a rule. Time and ids come in as arguments (`now: Date`).
 - **No mutation** of arguments; return new values.
 - **Deterministic**: the same input always gives the same output, on every device.
