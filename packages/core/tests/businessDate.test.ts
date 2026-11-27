@@ -5,6 +5,7 @@ import {
   businessDateOf,
   financialYearOfBusinessDate,
   isValidTimeZone,
+  compactStampAtOffset,
   localIsoOf,
 } from "../src/businessDate";
 import { financialYear } from "../src/numbering";
@@ -184,6 +185,33 @@ describe("isValidTimeZone (FR-019a)", () => {
     expect(isValidTimeZone("local")).toBe(false);
     expect(isValidTimeZone("system")).toBe(false);
     expect(() => businessDateOf(0, "local")).toThrow(/unknown time zone/);
+  });
+});
+
+describe("compactStampAtOffset: the date and time for a backup file name", () => {
+  const INDIA_OFFSET_MINUTES = 330;
+
+  it("writes the date and time at the offset with no separators, 24-hour, padded", () => {
+    // 18:20 UTC on 31 March is 23:50 in India; 2026-12-05 03:04:05 UTC is 08:34:05 in India.
+    expect(compactStampAtOffset(Date.UTC(2027, 2, 31, 18, 20, 0), INDIA_OFFSET_MINUTES)).toBe(
+      "20270331-235000",
+    );
+    expect(compactStampAtOffset(Date.UTC(2026, 11, 5, 3, 4, 5), INDIA_OFFSET_MINUTES)).toBe(
+      "20261205-083405",
+    );
+  });
+
+  it("depends on the offset given and shows midnight as 00", () => {
+    expect(compactStampAtOffset(Date.UTC(2027, 0, 1, 0, 0, 0), 0)).toBe("20270101-000000");
+    expect(compactStampAtOffset(Date.UTC(2027, 0, 1, 0, 0, 0), -480)).toBe("20261231-160000");
+  });
+
+  it("refuses a fractional instant, a fractional offset or an offset of a day or more", () => {
+    expect(errorCodeOf(() => compactStampAtOffset(1.5, INDIA_OFFSET_MINUTES))).toBe(
+      "INVALID_FIELD",
+    );
+    expect(errorCodeOf(() => compactStampAtOffset(0, 330.5))).toBe("INVALID_FIELD");
+    expect(errorCodeOf(() => compactStampAtOffset(0, 1_440))).toBe("INVALID_FIELD");
   });
 });
 
