@@ -12,6 +12,7 @@ import { base } from "./schemaBase";
 
 import { itemVariant } from "./itemSchema";
 import { tenderMode, tenderStatus } from "./lookupSchema";
+import { tintFormula } from "./tintSchema";
 
 // Feature 002 tables live in their own files; drizzle-kit reads them through these re-exports.
 export * from "./catalogueSchema";
@@ -19,6 +20,7 @@ export * from "./itemSchema";
 export * from "./lookupSchema";
 export * from "./mergeLogSchema";
 export * from "./stockSchema";
+export * from "./tintSchema";
 export * from "./variantDetailSchema";
 
 export const bill = sqliteTable(
@@ -110,9 +112,22 @@ export const billLine = sqliteTable(
     unitPricePaise: integer("unit_price_paise").notNull(),
     lineDiscountPaise: integer("line_discount_paise").notNull(),
     amountPaise: integer("amount_paise").notNull(),
+    // Spec 002 (migration 0021): added with ALTER TABLE ADD COLUMN, so the table holding every
+    // saved line is not rebuilt; their value rules are the bill_line_new_values insert trigger.
+    // The unit the user typed (null = the base unit) and the quantity in it
+    enteredUom: text("entered_uom"),
+    qtyEnteredMilli: integer("qty_entered_milli"),
+    tintFormulaId: text("tint_formula_id").references(() => tintFormula.id),
+    tintChargePaise: integer("tint_charge_paise"),
+    // Base cost plus colorant cost (research D11)
+    costPaise: integer("cost_paise"),
+    // 0 for a tinted line
+    isReturnable: integer("is_returnable").notNull().default(1),
   },
   (tableColumns) => [
     index("bill_line_bill_idx").on(tableColumns.billId),
+    // The formula-freeze triggers look up "is this formula on any bill line"
+    index("bill_line_tint_formula_idx").on(tableColumns.tintFormulaId),
     check("bill_line_qty_pos", sql`${tableColumns.qtyBaseMilli} > 0`),
     check("bill_line_price_nonneg", sql`${tableColumns.unitPricePaise} >= 0`),
     check("bill_line_discount_nonneg", sql`${tableColumns.lineDiscountPaise} >= 0`),
