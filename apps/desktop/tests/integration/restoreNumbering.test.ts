@@ -344,16 +344,23 @@ describe("restoring a backup never reuses a bill number (task T082 and T083, FR-
   });
 
   it("leaves no copy of the backup in the temp folder when the backup cannot be copied", async () => {
-    const planFolders = () =>
-      fs.readdirSync(os.tmpdir()).filter((name) => name.startsWith("shopos-plan-"));
-    const foldersBefore = planFolders();
+    // A private temp folder: other test files restore in parallel and make their own
+    // shopos-plan- folders in the shared OS temp folder. Each file runs in its own process.
+    const privateTempFolder = tempFolder("shopos-private-tmp-");
+    const originalTempFolder = process.env.TMPDIR;
+    process.env.TMPDIR = privateTempFolder;
+    try {
+      const failure = await errorCodeOfAsync(() =>
+        planRestoreNumbering("/no/such/backup.sqlite", null, NOW),
+      );
 
-    const failure = await errorCodeOfAsync(() =>
-      planRestoreNumbering("/no/such/backup.sqlite", null, NOW),
-    );
-
-    expect(failure).toBeDefined();
-    expect(planFolders()).toEqual(foldersBefore);
+      expect(os.tmpdir()).toBe(privateTempFolder);
+      expect(failure).toBeDefined();
+      expect(fs.readdirSync(privateTempFolder)).toEqual([]);
+    } finally {
+      if (originalTempFolder === undefined) delete process.env.TMPDIR;
+      else process.env.TMPDIR = originalTempFolder;
+    }
   });
 
   it("removes its install copy when putting the restored file in place fails", async () => {
