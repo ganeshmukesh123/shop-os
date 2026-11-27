@@ -1,0 +1,38 @@
+# Weekly flake report (spec 017, task T041). Not part of the pull request gate.
+#
+# Reads the end-to-end results of the last 7 days of CI runs (the `playwright-report` artifact, kept 14
+# days) and opens one issue per test that passed only on retry in two or more runs. A retry keeps a build
+# green; this makes sure a flake is still noticed. The logic is in scripts/ci/flaky-weekly.mjs.
+# Needs no dependencies: only Node and the GitHub CLI that every runner has.
+name: Weekly flake report
+
+on:
+  schedule:
+    - cron: "43 3 * * 1" # Monday 03:43 UTC
+  workflow_dispatch:
+
+# Least privilege: read runs and artifacts, write issues. No secrets beyond the job's own token.
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  flake-report:
+    name: Flake report
+    runs-on: ubuntu-latest
+    # About 265 runs a week were checked in the first trial; each artifact is downloaded one at a time.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Report tests that needed a retry in two or more runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/ci/flaky-weekly.mjs
