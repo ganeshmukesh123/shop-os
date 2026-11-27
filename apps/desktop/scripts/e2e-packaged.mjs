@@ -10,6 +10,7 @@
 // Any other argument goes to Playwright, for example `pnpm test:e2e:packaged billing.spec.ts`.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -62,7 +63,13 @@ const playwrightArguments = process.argv.slice(2).filter((argument) => argument 
 const launchedExecutable = isOffline ? writeOfflineLauncher(executable) : executable;
 say(`Running the e2e specs against ${executable}${isOffline ? " (network denied)" : ""}`);
 
-const result = spawnSync("pnpm", ["exec", "playwright", "test", ...playwrightArguments], {
+// Playwright's own CLI is started with this Node, not through pnpm: on Windows pnpm is a .cmd file
+// that needs a shell (found by the smoke test), and a shell splits an argument such as
+// `--grep "sign in"` at the space. With no shell, every argument reaches Playwright whole.
+const playwrightCli = createRequire(path.join(desktopFolder, "package.json")).resolve(
+  "@playwright/test/cli",
+);
+const result = spawnSync(process.execPath, [playwrightCli, "test", ...playwrightArguments], {
   cwd: desktopFolder,
   stdio: "inherit",
   env: {
@@ -71,4 +78,5 @@ const result = spawnSync("pnpm", ["exec", "playwright", "test", ...playwrightArg
     ...(isOffline ? { SHOPOS_E2E_NO_SANDBOX: "1" } : {}),
   },
 });
+if (result.error) fail(`Could not start Playwright: ${result.error.message}`);
 process.exit(result.status ?? 1);
