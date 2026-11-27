@@ -58,7 +58,8 @@ export class ItemRepository {
   ) {}
 
   /** The next free code for this business: ITM-0001, ITM-0002, ... */
-  private nextItemCode(): string {
+  /** The next free item code, ITM-0001 onwards (spec 002 FamilyRepository uses it too). */
+  nextItemCode(): string {
     const highestRow = this.databaseHandle
       .select({
         highestNumber: sql<
