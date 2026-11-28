@@ -2,7 +2,14 @@ import { Box, Checkbox, Flex, Select, Text, TextField } from "@radix-ui/themes";
 import type { ICheckboxRowProps, ISelectRowProps, ITextFieldRowProps } from "./types";
 
 /** A labelled text field (the label names the field for screen readers too). */
-export function TextFieldRow({ label, value, inputMode, maxLength, onChange }: ITextFieldRowProps) {
+export function TextFieldRow({
+  label,
+  value,
+  inputMode,
+  maxLength,
+  required,
+  onChange,
+}: ITextFieldRowProps) {
   return (
     <Box flexGrow="1" asChild>
       <label>
@@ -14,6 +21,7 @@ export function TextFieldRow({ label, value, inputMode, maxLength, onChange }: I
           aria-label={label}
           inputMode={inputMode}
           maxLength={maxLength}
+          required={required}
           value={value}
           onChange={(changeEvent) => onChange(changeEvent.target.value)}
         />
@@ -23,14 +31,14 @@ export function TextFieldRow({ label, value, inputMode, maxLength, onChange }: I
 }
 
 /** A labelled Radix Select; an empty value shows the placeholder until one is chosen. */
-export function SelectRow({ label, value, options, onChange }: ISelectRowProps) {
+export function SelectRow({ label, value, options, required, onChange }: ISelectRowProps) {
   return (
     <Box flexGrow="1" asChild>
       <label>
         <Text as="div" size="2" weight="bold" mb="1">
           {label}
         </Text>
-        <Select.Root value={value || undefined} onValueChange={onChange}>
+        <Select.Root value={value || undefined} required={required} onValueChange={onChange}>
           <Select.Trigger className="shopos-full-width" aria-label={label} />
           <Select.Content>
             {options.map((option) => (

@@ -13,6 +13,7 @@ export interface ITextFieldRowProps {
   value: string;
   inputMode?: "decimal" | "numeric" | "text";
   maxLength?: number;
+  required?: boolean;
   onChange: (value: string) => void;
 }
 
@@ -20,6 +21,7 @@ export interface ISelectRowProps {
   label: string;
   value: string;
   options: readonly { value: string; label: string }[];
+  required?: boolean;
   onChange: (value: string) => void;
 }
 

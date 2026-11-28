@@ -21,18 +21,21 @@ function PaintOnlyFields({ paint, units, onChange }: Omit<IPaintFieldsProps, "ki
       <Flex gap="3">
         <SelectRow
           label={`${text.petroleumClass} *`}
+          required
           value={paint.petroleumClass}
           options={classOptions}
           onChange={(chosen) => onChange({ petroleumClass: chosen as PetroleumClass })}
         />
         <TextFieldRow
           label={`${text.declaredQty} *`}
+          required
           inputMode="decimal"
           value={paint.declaredQtyText}
           onChange={(declaredQtyText) => onChange({ declaredQtyText })}
         />
         <SelectRow
           label={`${text.declaredUom} *`}
+          required
           value={paint.declaredUom}
           options={units.map((unit) => ({ value: unit.code, label: unit.label }))}
           onChange={(declaredUom) => onChange({ declaredUom })}

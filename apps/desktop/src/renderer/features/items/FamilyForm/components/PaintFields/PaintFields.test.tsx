@@ -22,9 +22,23 @@ describe("PaintFields (spec 002 T079)", () => {
   it("shows the paint fields for a paint, marked required", () => {
     renderFields("paint");
 
-    expect(screen.getByRole("combobox", { name: `${text.petroleumClass} *` })).toBeTruthy();
-    expect(screen.getByRole("textbox", { name: `${text.declaredQty} *` })).toBeTruthy();
-    expect(screen.getByRole("textbox", { name: text.tradeLabel })).toBeTruthy();
+    expect(
+      screen
+        .getByRole("combobox", { name: `${text.petroleumClass} *` })
+        .getAttribute("aria-required"),
+    ).toBe("true");
+    expect(
+      screen.getByRole("textbox", { name: `${text.declaredQty} *` }).hasAttribute("required"),
+    ).toBe(true);
+    expect(
+      screen.getByRole("combobox", { name: `${text.declaredUom} *` }).getAttribute("aria-required"),
+    ).toBe("true");
+    expect(screen.getByRole("textbox", { name: text.tradeLabel }).hasAttribute("required")).toBe(
+      false,
+    );
+    expect(screen.getByRole("textbox", { name: text.warranty }).hasAttribute("required")).toBe(
+      false,
+    );
     expect(screen.getByRole("checkbox", { name: text.sealedPackOnly })).toBeTruthy();
   });
 
