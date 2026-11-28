@@ -1,4 +1,6 @@
+import { Button, Flex } from "@radix-ui/themes";
 import { useState } from "react";
+import { uiText } from "../../../../../shared/text/strings";
 import { CustomShadeForm } from "../CustomShadeForm";
 import { FormulaProblem } from "../FormulaProblem";
 import { MixPanel } from "../MixPanel";
@@ -22,7 +24,15 @@ export function FormulaArea({ desk, customerName, onAdd }: IFormulaAreaProps) {
     );
   }
   if (desk.resolved) return <MixPanel resolved={desk.resolved} onAdd={onAdd} />;
-  return desk.problem ? (
-    <FormulaProblem {...desk.problem} onCustomShade={() => setIsCustom(true)} />
+  if (desk.problem) {
+    return <FormulaProblem {...desk.problem} onCustomShade={() => setIsCustom(true)} />;
+  }
+  // A can chosen but no shade yet: the shop's first custom shade is made from here too
+  return desk.choice.packId && !desk.choice.shadeId ? (
+    <Flex>
+      <Button size="3" variant="soft" onClick={() => setIsCustom(true)}>
+        {uiText.bill.tintPicker.customShade}
+      </Button>
+    </Flex>
   ) : null;
 }
