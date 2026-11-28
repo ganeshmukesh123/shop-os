@@ -24,6 +24,7 @@ import { DataIssueService } from "../services/dataIssues";
 import { DuplicateService } from "../services/duplicates";
 import { MergeService } from "../services/merge";
 import { VariantCodesService } from "../services/variantCodes";
+import { rebuildItemSalesStats } from "../repositories/SalesStatRepository";
 import { SearchService } from "../services/search";
 import { PrintService } from "../services/PrintService";
 import { SettingsService } from "../services/SettingsService";
@@ -57,6 +58,8 @@ function buildServices(state: IAppState): Services {
   const context = state.context!;
   state.backup = new BackupService(sqlite, db, context);
   // Built here, at start, from the database (spec 002 research D4); family writes refresh it
+  // Sales older than 90 days drop out of the ranking at each start (spec 002 T048)
+  rebuildItemSalesStats(db, context);
   const search = new SearchService(db, context);
   return {
     inventory: new InventoryService(db, context),

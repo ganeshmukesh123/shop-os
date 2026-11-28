@@ -23,6 +23,7 @@ import { BillRepository } from "../../repositories/BillRepository";
 import { BillSearchRepository } from "../../repositories/BillSearchRepository";
 import { ItemRepository } from "../../repositories/ItemRepository";
 import { NumberGapRepository } from "../../repositories/NumberGapRepository";
+import { SalesStatRepository } from "../../repositories/SalesStatRepository";
 import { SettingsRepository } from "../../repositories/SettingsRepository";
 import { StockRepository } from "../../repositories/StockRepository";
 import { toBaseLines } from "./enteredUnits";
@@ -136,6 +137,8 @@ export class BillingService {
         });
         items.addStockDelta(lineInput.itemId, -lineInput.quantityMilli);
       }
+      // The 90-day sales that rank the bill search (spec 002 T048)
+      new SalesStatRepository(tx, this.ctx).recordSale(billedAt, baseLines);
       bills.clearDraft();
 
       const negativeStockItems = this.itemsWithNegativeStock(
@@ -184,6 +187,10 @@ export class BillingService {
         });
         items.addStockDelta(savedLine.itemId, savedLine.quantityMilli);
       }
+      new SalesStatRepository(tx, this.ctx).recompute(
+        now,
+        savedBill.lines.map((savedLine) => savedLine.itemId),
+      );
       return { bill: bills.get(input.id)!.bill };
     });
   }
