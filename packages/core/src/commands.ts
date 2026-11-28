@@ -1,5 +1,6 @@
 import { FAMILY_COMMAND_NAMES, type IFamilyCommandMap } from "./catalogue/familyCommandMap";
 import { MERGE_COMMAND_NAMES, type IMergeCommandMap } from "./catalogue/mergeCommandMap";
+import { TINT_COMMAND_NAMES, type ITintCommandMap } from "./tinting/tintCommandMap";
 import type { ClockWarning } from "./clockCheck";
 import type { IRecordedNumberGap } from "./numberGap";
 import type {
@@ -27,7 +28,7 @@ import type {
 import type { SavedTheme, SettingsSetThemeInput } from "./theme";
 
 /** Renderer to main-process commands (specs/001-shop-os-mvp/contracts/ipc-commands.md): name -> [input, data]. */
-export interface CommandMap extends IFamilyCommandMap, IMergeCommandMap {
+export interface CommandMap extends IFamilyCommandMap, IMergeCommandMap, ITintCommandMap {
   "items.list": [ItemsListInput, { items: Item[]; total: number }];
   "items.create": [ItemsCreateInput, { item: Item }];
   "items.update": [ItemsUpdateInput, { item: Item }];
@@ -90,6 +91,7 @@ export const COMMAND_NAMES = [
   "system.pickPdfPath",
   ...FAMILY_COMMAND_NAMES,
   ...MERGE_COMMAND_NAMES,
+  ...TINT_COMMAND_NAMES,
 ] as const satisfies readonly CommandName[];
 
 export type ShopOsApi = {

@@ -1,4 +1,4 @@
-import type { IFamilyCommandMap, IMergeCommandMap } from "@shopos/core";
+import type { IFamilyCommandMap, IMergeCommandMap, ITintCommandMap } from "@shopos/core";
 
 /**
  * One dispatch case per spec 002 US1 command for ipcRegistration.test.ts: an input and the part of
@@ -69,3 +69,31 @@ export const MERGE_DISPATCH_CASES = {
     expected: notFound,
   },
 } satisfies Record<keyof IMergeCommandMap, { input: unknown; expected: object }>;
+
+/** The same for the US3 tint commands. */
+export const TINT_DISPATCH_CASES = {
+  "tint.shades.search": { input: { query: "sky" }, expected: { ok: true, data: { shades: [] } } },
+  "tint.resolve": {
+    input: { productFamilyId: "no-family", shadeId: "no-shade", packVariantId: "no-pack" },
+    expected: notFound,
+  },
+  "tint.customShade.save": {
+    input: {
+      shadeName: "Mint",
+      baseVariantId: "x",
+      lines: [{ colorantVariantId: "y", qtyMilli: 1 }],
+    },
+    expected: { ok: false, code: "LABEL_REQUIRED" },
+  },
+  "tint.formula.saveVersion": {
+    input: {
+      shadeId: "no-shade",
+      baseVariantId: "x",
+      lines: [{ colorantVariantId: "y", qtyMilli: 1 }],
+    },
+    expected: notFound,
+  },
+  "tint.repeat.list": { input: {}, expected: { ok: true, data: { shades: [] } } },
+  "tint.charges.list": { input: {}, expected: { ok: true, data: { rules: [] } } },
+  "tint.charges.save": { input: { rules: [] }, expected: { ok: true, data: { rules: [] } } },
+} satisfies Record<keyof ITintCommandMap, { input: unknown; expected: object }>;
