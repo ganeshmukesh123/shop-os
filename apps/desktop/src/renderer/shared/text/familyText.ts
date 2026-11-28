@@ -23,6 +23,16 @@ export const familyText = {
   axisLimit: "A family can have at most 4 attributes. Untick one to choose another.",
   limitLabel: "Limit",
   errorLabel: "Error",
+  duplicates: {
+    label: "Possible duplicate",
+    intro: "These items look the same. Open one of them, or save this family anyway.",
+    reasons: {
+      same_attributes: "same brand, category and attributes",
+      similar_name: "similar name",
+    },
+    openExisting: "Open existing",
+    saveAnyway: "Save anyway",
+  },
   values: "Values for {attribute}, separated by commas",
   preview: "Show combinations",
   combinations: "Combinations",

@@ -6,7 +6,7 @@ import { useCatalogueLists } from "../hooks/useCatalogueLists";
 import type { INewFamilyButtonProps } from "./types";
 
 /** "New family" on the Items screen: opens the family form with the shop's lists (spec 002 US1). */
-export function NewFamilyButton({ onSaved }: INewFamilyButtonProps) {
+export function NewFamilyButton({ onSaved, onOpenExisting }: INewFamilyButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const lists = useCatalogueLists(isOpen);
   return (
@@ -20,6 +20,10 @@ export function NewFamilyButton({ onSaved }: INewFamilyButtonProps) {
           brands={lists.brands}
           units={lists.units}
           onClose={() => setIsOpen(false)}
+          onOpenExisting={(duplicate) => {
+            setIsOpen(false);
+            onOpenExisting?.(duplicate);
+          }}
           onSaved={(family) => {
             setIsOpen(false);
             onSaved(family);
