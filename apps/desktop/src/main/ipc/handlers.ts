@@ -13,6 +13,7 @@ import {
   stockAdjustInput,
   type CommandMap,
   type IFamilyCommandMap,
+  type IMergeCommandMap,
   type CommandName,
   type Result,
 } from "@shopos/core";
@@ -27,6 +28,10 @@ import type { IRestoreNumberingPlan } from "../services/RestoreNumbering";
 import type { SettingsService } from "../services/SettingsService";
 import { cmd, none } from "./command";
 import { createFamilyHandlers } from "./familyHandlers";
+import { createMergeHandlers } from "./mergeHandlers";
+import type { BarcodeService } from "../services/barcode";
+import type { DuplicateService } from "../services/duplicates";
+import type { MergeService } from "../services/merge";
 import { createSystemHandlers, type SystemCommandName } from "./systemHandlers";
 
 // Kept here so callers that import toFailure from handlers still work.
@@ -38,6 +43,10 @@ export interface Services {
   search: SearchService;
   /** Spec 002 US1: categories, brands and units; families and their variants */
   catalogue: CatalogueService;
+  /** Spec 002 US2: barcode lookup, likely duplicates, merges */
+  barcodes: BarcodeService;
+  duplicates: DuplicateService;
+  merges: MergeService;
   families: FamilyService;
   billing: BillingService;
   settings: SettingsService;
@@ -62,7 +71,11 @@ type ItemCommandName = "items.list" | "items.create" | "items.update" | "stock.a
 type ThemeCommandName = "settings.getTheme" | "settings.setTheme";
 type BillCommandName = Exclude<
   CommandName,
-  ItemCommandName | SystemCommandName | ThemeCommandName | keyof IFamilyCommandMap
+  | ItemCommandName
+  | SystemCommandName
+  | ThemeCommandName
+  | keyof IFamilyCommandMap
+  | keyof IMergeCommandMap
 >;
 
 function createItemHandlers(services: Services): Pick<Handlers, ItemCommandName> {
@@ -127,6 +140,7 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
     ...createBillHandlers(services),
     ...createSystemHandlers(services, shell),
     ...createFamilyHandlers(services),
+    ...createMergeHandlers(services),
     // The screen's theme choice, kept in the database (spec 018 T035).
     "settings.getTheme": cmd<"settings.getTheme">(none(), () => services.settings.getTheme()),
     "settings.setTheme": cmd<"settings.setTheme">(settingsSetThemeInput, (commandInput) =>

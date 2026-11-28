@@ -40,3 +40,16 @@ export interface IMergeLog {
   reversibleUntil: number | null;
   createdAt: number;
 }
+
+export const itemsLookupBarcodeInput = z.object({ code: z.string().max(64) });
+export type ItemsLookupBarcodeInput = z.infer<typeof itemsLookupBarcodeInput>;
+
+export const itemsCheckDuplicatesInput = z.object({
+  draft: z.object({
+    name: z.string().trim().min(1).max(120),
+    brandId: z.string().min(1).nullish(),
+    categoryId: z.string().min(1).nullish(),
+    axisSignature: z.string().max(400),
+  }),
+});
+export type ItemsCheckDuplicatesInput = z.infer<typeof itemsCheckDuplicatesInput>;
