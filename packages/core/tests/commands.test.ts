@@ -1,7 +1,10 @@
 import * as core from "../src/index";
 import { COMMAND_NAMES } from "../src/commands";
 
-/** The renderer-to-main commands in specs/001-shop-os-mvp/contracts/ipc-commands.md plus the native dialogs. */
+/**
+ * The renderer-to-main commands in specs/001-shop-os-mvp/contracts/ipc-commands.md plus the native
+ * dialogs, then the ones of specs/002-items-variants-tinting/contracts/ipc-commands.md built so far.
+ */
 const EXPECTED_COMMAND_NAMES = [
   "items.list",
   "items.create",
@@ -27,6 +30,19 @@ const EXPECTED_COMMAND_NAMES = [
   "system.pickFolder",
   "system.pickBackupFile",
   "system.pickPdfPath",
+  "catalogue.categories.list",
+  "catalogue.categories.save",
+  "catalogue.brands.list",
+  "catalogue.brands.save",
+  "catalogue.units.list",
+  "families.previewVariants",
+  "families.create",
+  "families.get",
+  "families.update",
+  "families.addVariants",
+  "variants.update",
+  "variants.setActive",
+  "variants.setConversions",
 ];
 
 describe("command list", () => {
