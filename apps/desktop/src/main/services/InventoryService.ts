@@ -14,6 +14,7 @@ import {
 } from "@shopos/core";
 import type { DB } from "../db/connection";
 import type { Ctx } from "../db/seed";
+import { CatalogueRepository } from "../repositories/CatalogueRepository";
 import { ItemRepository } from "../repositories/ItemRepository";
 import { StockRepository } from "../repositories/StockRepository";
 
@@ -39,6 +40,7 @@ export class InventoryService {
         allowsDecimal,
         pricePaise: input.pricePaise,
       });
+      new CatalogueRepository(tx, this.ctx).ensureCustomUnit(input.unit, allowsDecimal);
       if (input.openingQtyMilli !== 0) {
         stock.append({
           itemId: created.id,
@@ -74,6 +76,7 @@ export class InventoryService {
         patch.allowsDecimal = defaultAllowsDecimal(input.unit);
       }
       const updated = items.update(input.id, patch)!;
+      new CatalogueRepository(tx, this.ctx).ensureCustomUnit(updated.unit, updated.allowsDecimal);
       return { item: updated };
     });
   }

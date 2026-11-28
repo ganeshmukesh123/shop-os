@@ -54,6 +54,27 @@ export class CatalogueRepository {
     return this.listUnits().some((unit) => unit.code === code);
   }
 
+  /**
+   * A 001 custom unit (any text up to 20 characters) gets a uom row with dimension count and no
+   * UQC the first time an item uses it (spec 002 data-model.md "uom"; migration 0022 did the same
+   * for units used before the upgrade).
+   */
+  ensureCustomUnit(code: string, allowDecimal: boolean): void {
+    if (this.hasUnit(code)) return;
+    this.databaseHandle
+      .insert(uom)
+      .values({
+        id: newId(),
+        ...this.stamp(nowMs()),
+        code,
+        label: code,
+        dimension: "count",
+        uqc: null,
+        allowDecimal: allowDecimal ? 1 : 0,
+      })
+      .run();
+  }
+
   listCategoryRows(): CategoryRow[] {
     return this.databaseHandle
       .select()
