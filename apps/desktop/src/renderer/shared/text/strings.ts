@@ -1,3 +1,4 @@
+import { billGridText } from "./billGridText";
 import { familyText } from "./familyText";
 
 /** All screen text lives here so Hindi can be added later. */
@@ -88,6 +89,7 @@ export const uiText = {
     save: "Save adjustment",
   },
   bill: {
+    grid: billGridText,
     title: "New bill",
     search: "Type 2 or more letters of an item name, press Enter to add",
     noMatch: "No matching items",

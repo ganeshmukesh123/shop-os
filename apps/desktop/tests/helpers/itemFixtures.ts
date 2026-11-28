@@ -1,4 +1,4 @@
-import type { Item } from "@shopos/core";
+import type { IItemSearchRow, Item } from "@shopos/core";
 
 /** Elbow 1 inch: sold below zero stock and then deactivated, so it needs a word for each state. */
 export const NEGATIVE_INACTIVE_ITEM: Item = {
@@ -24,5 +24,18 @@ export function buildItem(overrides: Partial<Item> = {}): Item {
     active: true,
     needsCorrection: false,
     ...overrides,
+  };
+}
+
+/** An item as a variant row of items.search (spec 002 T038), as the bill search receives it. */
+export function searchRowOf(item: Item): IItemSearchRow {
+  return {
+    kind: "variant",
+    id: item.id,
+    displayName: item.name,
+    matchedBy: "prefix",
+    stockMilli: item.stockMilli,
+    pricePaise: item.pricePaise,
+    item,
   };
 }

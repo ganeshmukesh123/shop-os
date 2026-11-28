@@ -1,6 +1,7 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Item } from "@shopos/core";
+import { searchRowOf } from "../../../../../../../tests/helpers/itemFixtures";
 import { renderWithTheme } from "../../../../../../../tests/helpers/renderWithTheme";
 import { BillSearchBox } from "./BillSearchBox";
 import type { IBillSearchBoxProps } from "./types";
@@ -32,7 +33,7 @@ function renderSearchBox(props: Partial<IBillSearchBoxProps> = {}) {
   renderWithTheme(
     <BillSearchBox
       query="pi"
-      matches={[PIPE, ELBOW]}
+      matches={[searchRowOf(PIPE), searchRowOf(ELBOW)]}
       highlightedIndex={0}
       {...callbacks}
       {...props}
@@ -98,7 +99,7 @@ describe("BillSearchBox: keyboard and mouse", () => {
 
     await pressKey("{Enter}");
 
-    expect(callbacks.onChoose).toHaveBeenCalledWith(ELBOW);
+    expect(callbacks.onChoose).toHaveBeenCalledWith(searchRowOf(ELBOW));
   });
 
   it("chooses nothing on Enter when there are no matches", async () => {
@@ -125,6 +126,6 @@ describe("BillSearchBox: keyboard and mouse", () => {
     await userEvent.click(secondOption!);
 
     expect(callbacks.onHighlightChange).toHaveBeenCalledWith(1);
-    expect(callbacks.onChoose).toHaveBeenCalledWith(ELBOW);
+    expect(callbacks.onChoose).toHaveBeenCalledWith(searchRowOf(ELBOW));
   });
 });

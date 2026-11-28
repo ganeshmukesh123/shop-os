@@ -1,4 +1,5 @@
 import { screen } from "@testing-library/react";
+import { searchRowOf } from "../../../../../tests/helpers/itemFixtures";
 import userEvent from "@testing-library/user-event";
 import type { Item } from "@shopos/core";
 import { ToastProvider } from "../../../shared/components/Toast";
@@ -23,7 +24,7 @@ function renderBillScreen() {
   installFakeShopos({
     "bills.draft.load": () => ({ payload: null }),
     "bills.draft.save": () => ({}),
-    "items.list": () => ({ items: [PIPE, ELBOW], total: 2 }),
+    "items.search": () => ({ results: [searchRowOf(PIPE), searchRowOf(ELBOW)] }),
   });
   return renderWithTheme(
     <ToastProvider>

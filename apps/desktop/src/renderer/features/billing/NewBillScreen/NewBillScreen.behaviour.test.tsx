@@ -1,4 +1,5 @@
 import { screen } from "@testing-library/react";
+import { searchRowOf } from "../../../../../tests/helpers/itemFixtures";
 import userEvent from "@testing-library/user-event";
 import type { Bill, Item } from "@shopos/core";
 import {
@@ -69,7 +70,7 @@ function renderBillScreen(extraHandlers: FakeCommandHandlers = {}) {
   const fake = installFakeShopos({
     "bills.draft.load": () => ({ payload: null }),
     "bills.draft.save": () => ({}),
-    "items.list": () => ({ items: [PIPE], total: 1 }),
+    "items.search": () => ({ results: [searchRowOf(PIPE)] }),
     ...extraHandlers,
   });
   renderWithTheme(
