@@ -1,15 +1,9 @@
-import { and, asc, eq, inArray, like, max, or, sql } from "drizzle-orm";
-import type { ITintChargeRow, ITintFormula, ITintFormulaLine, ITintShade } from "@shopos/core";
+import { and, asc, desc, eq, inArray, like, max, or, sql } from "drizzle-orm";
+import type { ITintFormula, ITintFormulaLine, ITintShade } from "@shopos/core";
 import type { Handle } from "../../db/connection";
 import { newId, nowMs } from "../../db/ids";
 import type { Ctx } from "../../db/seed";
-import {
-  tintChargeRule,
-  tintFormula,
-  tintFormulaLine,
-  tintShade,
-  tintShadePrice,
-} from "../../db/tintSchema";
+import { tintFormula, tintFormulaLine, tintShade, tintShadePrice } from "../../db/tintSchema";
 
 const SHADE_SEARCH_LIMIT = 50;
 
@@ -79,6 +73,27 @@ export class TintRepository {
       .all() as ITintShade[];
   }
 
+  /** Custom shades whose customer or site label contains the text, newest first. */
+  customShadesFor(customerName?: string, siteLabel?: string): ITintShade[] {
+    const containing = (text: string) =>
+      `%${text.toLowerCase().replace(/[\\%_]/g, (special) => `\\${special}`)}%`;
+    const labels = [
+      ...(customerName
+        ? [like(sql`lower(${tintShade.customerLabel})`, containing(customerName))]
+        : []),
+      ...(siteLabel ? [like(sql`lower(${tintShade.siteLabel})`, containing(siteLabel))] : []),
+    ];
+    if (labels.length === 0) return [];
+    return this.databaseHandle
+      .select()
+      .from(tintShade)
+      .where(
+        and(eq(tintShade.shopId, this.ctx.shopId), eq(tintShade.source, "custom"), or(...labels)),
+      )
+      .orderBy(desc(tintShade.createdAt))
+      .all() as ITintShade[];
+  }
+
   /** Every version of the shade's formula for these base cans, with their colorant lines. */
   formulasFor(shadeId: string, baseVariantIds: readonly string[]): ITintFormula[] {
     if (baseVariantIds.length === 0) return [];
@@ -144,6 +159,17 @@ export class TintRepository {
     return priceRow?.pricePaise ?? null;
   }
 
+  /** Every formula of a shade, for any base can. */
+  formulasForShade(shadeId: string): ITintFormula[] {
+    const baseIds = this.databaseHandle
+      .selectDistinct({ baseVariantId: tintFormula.baseVariantId })
+      .from(tintFormula)
+      .where(and(eq(tintFormula.shadeId, shadeId), eq(tintFormula.shopId, this.ctx.shopId)))
+      .all()
+      .map(({ baseVariantId }) => baseVariantId);
+    return this.formulasFor(shadeId, baseIds);
+  }
+
   highestVersion(shadeId: string, baseVariantId: string): number {
     const [found] = this.databaseHandle
       .select({ highest: max(tintFormula.version) })
@@ -175,31 +201,5 @@ export class TintRepository {
       )
       .run();
     return { ...formula, id: formulaRow.id };
-  }
-
-  listCharges(): ITintChargeRow[] {
-    return this.databaseHandle
-      .select({
-        declaredQtyMilli: tintChargeRule.declaredQtyMilli,
-        declaredUom: tintChargeRule.declaredUom,
-        chargePaise: tintChargeRule.chargePaise,
-      })
-      .from(tintChargeRule)
-      .where(eq(tintChargeRule.businessId, this.ctx.businessId))
-      .orderBy(asc(tintChargeRule.declaredUom), asc(tintChargeRule.declaredQtyMilli))
-      .all();
-  }
-
-  /** The charge list is master data: saving replaces it. */
-  replaceCharges(rules: readonly ITintChargeRow[]): void {
-    this.databaseHandle
-      .delete(tintChargeRule)
-      .where(eq(tintChargeRule.businessId, this.ctx.businessId))
-      .run();
-    if (rules.length === 0) return;
-    this.databaseHandle
-      .insert(tintChargeRule)
-      .values(rules.map((rule) => ({ ...this.rowBase(), ...rule })))
-      .run();
   }
 }

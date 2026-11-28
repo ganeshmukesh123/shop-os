@@ -1,4 +1,4 @@
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, like, sql } from "drizzle-orm";
 import type { Handle } from "../../db/connection";
 import { newId, nowMs } from "../../db/ids";
 import { bill, billLine } from "../../db/schema";
@@ -55,6 +55,30 @@ export class BillTintRepository {
     return colorants.length === 0
       ? null
       : { variantId: lineRow.variantId, formulaId: lineRow.formulaId, colorants };
+  }
+
+  /** Tinted lines of posted bills whose customer name contains `customerName`, newest first. */
+  tintedLinesFor(customerName: string) {
+    const pattern = `%${customerName.toLowerCase().replace(/[\\%_]/g, (special) => `\\${special}`)}%`;
+    return this.databaseHandle
+      .select({
+        billLineId: billLine.id,
+        variantId: billLine.variantId,
+        formulaId: billLine.tintFormulaId,
+        billedAt: bill.billedAt,
+      })
+      .from(billLine)
+      .innerJoin(bill, eq(bill.id, billLine.billId))
+      .where(
+        and(
+          eq(bill.shopId, this.ctx.shopId),
+          eq(bill.status, "posted"),
+          isNotNull(billLine.tintFormulaId),
+          like(sql`lower(${bill.customerName})`, pattern),
+        ),
+      )
+      .orderBy(desc(bill.billedAt))
+      .all();
   }
 
   insertColorants(billLineId: string, colorants: readonly ISavedColorant[]): void {

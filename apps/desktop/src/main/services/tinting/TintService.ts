@@ -4,6 +4,12 @@ import {
   tintCustomShadeSaveInput,
   tintSaveVersionInput,
   tintShadesSearchInput,
+  tintRepeatListInput,
+  tintResolveInput,
+  type ITintRepeat,
+  type ITintResolved,
+  type TintRepeatListInput,
+  type TintResolveInput,
   type ITintChargeRow,
   type ITintFormula,
   type ITintShade,
@@ -15,8 +21,10 @@ import {
 import type { DB } from "../../db/connection";
 import type { Ctx } from "../../db/seed";
 import { FamilyRepository } from "../../repositories/FamilyRepository";
-import { TintRepository } from "../../repositories/TintRepository";
+import { TintChargeRepository, TintRepository } from "../../repositories/TintRepository";
 import { customShadeLabels, requireTintable } from "./tintChecks";
+import { repeatList } from "./tintRepeat";
+import { resolveTint } from "./tintResolve";
 
 /** A custom shade's code: C-0001, C-0002 and so on (shade_code is 1 to 20 characters). */
 const customShadeCode = (count: number) => `C-${String(count + 1).padStart(4, "0")}`;
@@ -92,16 +100,26 @@ export class TintService {
     });
   }
 
+  /** tint.resolve: the can, formula, colorant amounts and price for the desk. */
+  resolve(raw: TintResolveInput): ITintResolved {
+    return resolveTint(this.db, this.ctx, tintResolveInput.parse(raw));
+  }
+
+  /** tint.repeat.list: a customer's or site's shades, newest first. */
+  repeatList(raw: TintRepeatListInput): { shades: ITintRepeat[] } {
+    return { shades: repeatList(this.db, this.ctx, tintRepeatListInput.parse(raw)) };
+  }
+
   listCharges(): { rules: ITintChargeRow[] } {
-    return { rules: new TintRepository(this.db, this.ctx).listCharges() };
+    return { rules: new TintChargeRepository(this.db, this.ctx).listCharges() };
   }
 
   saveCharges(raw: TintChargesSaveInput): { rules: ITintChargeRow[] } {
     const input = tintChargesSaveInput.parse(raw);
     return this.db.transaction((transaction) => {
-      const tints = new TintRepository(transaction, this.ctx);
-      tints.replaceCharges(input.rules);
-      return { rules: tints.listCharges() };
+      const charges = new TintChargeRepository(transaction, this.ctx);
+      charges.replaceCharges(input.rules);
+      return { rules: charges.listCharges() };
     });
   }
 }

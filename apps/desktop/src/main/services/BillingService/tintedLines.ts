@@ -11,12 +11,14 @@ import type { Handle } from "../../db/connection";
 import type { Ctx } from "../../db/seed";
 import { BillTintRepository, type ISavedColorant } from "../../repositories/BillTintRepository";
 import { FamilyRepository } from "../../repositories/FamilyRepository";
-import { TintRepository } from "../../repositories/TintRepository";
+import { TintChargeRepository, TintRepository } from "../../repositories/TintRepository";
 import { finalSurvivorOf } from "../barcode";
 
 /** What a tinted line saves besides the line itself (contracts "Bills (changed)"). */
 export interface ITintedLine {
   formulaId: string;
+  /** The can's price: the shade price, or base price + charge (FR-015) */
+  unitPricePaise: number;
   chargePaise: number;
   /** Null when the base's purchase price is not known */
   costPaise: number | null;
@@ -54,9 +56,9 @@ const baseMismatch = () =>
   new CoreError("FORMULA_BASE_MISMATCH", "This formula is for a different base can");
 
 /** The shade price wins; otherwise the tint charge for the can's declared size (FR-015). */
-function chargeFor(handle: Handle, ctx: Ctx, base: IVariant, shadeId: string): number {
+function priceFor(handle: Handle, ctx: Ctx, base: IVariant, shadeId: string) {
   const tints = new TintRepository(handle, ctx);
-  const rules = tints
+  const rules = new TintChargeRepository(handle, ctx)
     .listCharges()
     .filter((rule) => rule.declaredUom === base.declaredUom)
     .map((rule) => ({ packQtyMilli: rule.declaredQtyMilli, chargePaise: rule.chargePaise }));
@@ -64,7 +66,7 @@ function chargeFor(handle: Handle, ctx: Ctx, base: IVariant, shadeId: string): n
     basePricePaise: base.sellingPricePaise,
     shadePricePaise: tints.shadePrice(shadeId, base.id),
     tintChargePaise: tintChargeFor(base.declaredQtyMilli ?? 0, rules),
-  }).tintChargePaise;
+  });
 }
 
 /** Check and price one tinted line before anything is written; null for an ordinary line. */
@@ -89,13 +91,15 @@ export function prepareTintedLine(
     pricePerMlPaise: pricePerMl(colorantVariantId),
     qtyMilli,
   }));
+  const price = priceFor(handle, ctx, base, formula.shadeId);
   const costPaise =
     base.purchasePricePaise === null
       ? null
       : tintCostPaise({ basePurchasePaise: base.purchasePricePaise, colorants: colorantCosts });
   return {
     formulaId: formula.id,
-    chargePaise: chargeFor(handle, ctx, base, formula.shadeId),
+    unitPricePaise: price.unitPricePaise,
+    chargePaise: price.tintChargePaise,
     costPaise,
     colorants,
   };
