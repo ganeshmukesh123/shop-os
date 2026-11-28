@@ -24,6 +24,11 @@ export const BillLineRow = forwardRef<HTMLInputElement, Props>(function BillLine
       <Table.Row align="center">
         <Table.RowHeaderCell>
           {line.name}
+          {line.tintLabel && (
+            <Text as="div" size="2" color="gray">
+              {line.tintLabel}
+            </Text>
+          )}
           <LineUnitCell line={line} result={result} onChange={onChange} />
         </Table.RowHeaderCell>
         <Table.Cell width={LAYOUT.quantityColumnWidth}>

@@ -20,7 +20,14 @@ export interface DraftLine {
   familyId?: string;
   conversions?: { uomCode: string; factorMilli: number }[];
   enteredUom?: string | null;
+  /** Spec 002 T064: a tinted can (its shade's formula, or a repeat of a billed line) and the
+   * words shown under it ("Sky Blue: Blue 12.5 ml, Black 0.75 ml") */
+  tint?: TintRef;
+  tintLabel?: string;
 }
+
+/** Which mix a tinted can is sold with (contracts bills.save line tint). */
+export type TintRef = { formulaId: string } | { sourceBillLineId: string };
 
 export interface DraftBill {
   lines: DraftLine[];
@@ -40,6 +47,7 @@ export type DraftInputLine = LineInput & {
   itemId: string;
   enteredUom?: string;
   qtyEnteredMilli?: number;
+  tint?: TintRef;
 };
 
 export interface DraftEvaluation {
@@ -134,6 +142,7 @@ export function evaluateDraft(draftBill: DraftBill): DraftEvaluation {
         ratePaise: rate,
         lineDiscountPaise: disc.paise,
         ...enteredFields(draftLine, enteredMilli),
+        ...(draftLine.tint ? { tint: draftLine.tint } : {}),
       });
       return { amountPaise: amount, error: null, baseQtyMilli: quantityMilli };
     } catch (caughtError) {
