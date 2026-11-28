@@ -168,14 +168,14 @@ description: "Task list for feature 002: item families, variants, search, merge,
 
 ### Tests first
 
-- [ ] T070 [P] [US4] Write tests in `core/tests/import/itemImportRows.test.ts`: maps columns to family, axes, unit, price, opening quantity, HSN (4, 6 or 8 digits), paint fields; reports missing unit, bad HSN, bad number, missing paint fields with row and column; groups duplicate rows by `findLikelyDuplicates`
+- [x] T070 [P] [US4] Write tests in `core/tests/import/itemImportRows.test.ts`: maps columns to family, axes, unit, price, opening quantity, HSN (4, 6 or 8 digits), paint fields; reports missing unit, bad HSN, bad number, missing paint fields with row and column; groups duplicate rows by `findLikelyDuplicates` _(2026-11-28: itemImportRows.test.ts (5) and importDuplicates.test.ts (2). The columns are our own template (Family, Kind, Brand, Category, one per attribute, Unit, Price, Purchase price, Opening stock, HSN, the paint fields); a Tally export maps onto it once OI-3 is checked)_
 - [ ] T071 [P] [US4] Write tests in `core/tests/import/shadeImportRows.test.ts`: shade code, name, brand, base type, pack, colorant, ml; unknown colorant and non-positive ml reported
 - [ ] T072 [P] [US4] If OD-3 is in-house: write tests in `core/tests/barcode/code128.test.ts` against known encodings (checksum and bar pattern for `ITM-0042` and three more strings from ISO/IEC 15417 examples)
 - [ ] T073 [P] [US4] Write tests in `desktop/src/main/services/import/ImportService.test.ts`: preview saves nothing; commit refuses `PREVIEW_HAS_ERRORS` unless error rows are excluded; commit is one transaction; running the same file twice finds every row as a duplicate and creates nothing new; shade preview returns the `previewId` used by shade commit
 
 ### Implementation
 
-- [ ] T074 [P] [US4] Implement `core/src/import/itemImportRows.ts` and `shadeImportRows.ts` to pass T070 and T071
+- [ ] T074 [P] [US4] Implement `core/src/import/itemImportRows.ts` and `shadeImportRows.ts` to pass T070 and T071 _(2026-11-28, in progress: itemImportRows done (with importColumns, itemImportCells, importDuplicates); shadeImportRows is next)_
 - [ ] T075 [P] [US4] Implement `core/src/barcode/code128.ts` to pass T072 (or add the approved package under OD-3 and write the same tests against it)
 - [ ] T076 [US4] Implement `desktop/src/main/services/import/ImportService.ts` (CSV reader; XLSX reader only if OD-2 approves a package; previews kept in memory for 30 minutes) to pass T073; record the Tally column map in `specs/002-items-variants-tinting/research.md` under OI-3
 - [ ] T077 [US4] Implement `desktop/src/main/services/labels/LabelService.ts` (HTML for 65-up sheets 38.1 x 21.2 mm and a single label; shelf tag with name, price, unit price per litre or kg from the declared quantity, location tag) rendered through `desktop/src/main/services/electronRenderer.ts`; record the sheet size under OI-6
