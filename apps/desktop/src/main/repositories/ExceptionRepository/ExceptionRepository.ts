@@ -1,4 +1,5 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, sql, type SQL } from "drizzle-orm";
+import type { ExceptionsListInput, IExceptionEvent } from "@shopos/core";
 import type { Handle } from "../../db/connection";
 import { newId, nowMs } from "../../db/ids";
 import { exceptionEvent } from "../../db/mergeLogSchema";
@@ -51,4 +52,58 @@ export class ExceptionRepository {
       .run();
     return true;
   }
+
+  /** Newest first, optionally only one status or kind. */
+  list(filter: ExceptionsListInput): IExceptionEvent[] {
+    const conditions: SQL[] = [
+      eq(exceptionEvent.shopId, this.ctx.shopId),
+      ...(filter.status ? [eq(exceptionEvent.status, filter.status)] : []),
+      ...(filter.kind ? [eq(exceptionEvent.kind, filter.kind)] : []),
+    ];
+    return this.databaseHandle
+      .select()
+      .from(exceptionEvent)
+      .where(and(...conditions))
+      .orderBy(desc(exceptionEvent.createdAt), desc(sql`rowid`))
+      .all()
+      .map(toExceptionEvent);
+  }
+
+  get(id: string): IExceptionEvent | null {
+    const eventRow = this.databaseHandle
+      .select()
+      .from(exceptionEvent)
+      .where(and(eq(exceptionEvent.id, id), eq(exceptionEvent.shopId, this.ctx.shopId)))
+      .get();
+    return eventRow ? toExceptionEvent(eventRow) : null;
+  }
+
+  /** Open to resolved, with the note; an issue already resolved keeps its first note. */
+  resolve(id: string, note: string): void {
+    const now = nowMs();
+    this.databaseHandle
+      .update(exceptionEvent)
+      .set({ status: "resolved", resolvedAt: now, resolutionNote: note, updatedAt: now })
+      .where(
+        and(
+          eq(exceptionEvent.id, id),
+          eq(exceptionEvent.shopId, this.ctx.shopId),
+          eq(exceptionEvent.status, "open"),
+        ),
+      )
+      .run();
+  }
+}
+
+function toExceptionEvent(eventRow: typeof exceptionEvent.$inferSelect): IExceptionEvent {
+  return {
+    id: eventRow.id,
+    kind: eventRow.kind,
+    subjectIds: JSON.parse(eventRow.subjectIds) as string[],
+    detail: eventRow.detail,
+    status: eventRow.status as IExceptionEvent["status"],
+    resolvedAt: eventRow.resolvedAt,
+    resolutionNote: eventRow.resolutionNote,
+    createdAt: eventRow.createdAt,
+  };
 }

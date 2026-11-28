@@ -24,6 +24,7 @@ export * from "./catalogue/familyCommandMap";
 export * from "./catalogue/searchCommands";
 export * from "./catalogue/mergeCommands";
 export * from "./catalogue/mergeCommandMap";
+export * from "./catalogue/issueCommands";
 export * from "./types";
 export * from "./theme";
 export * from "./commands";

@@ -50,6 +50,12 @@ export const MERGE_DISPATCH_CASES = {
     expected: { ok: true, data: { candidates: [] } },
   },
   "items.merge": { input: { survivorId: "a", mergedId: "b", reason: "x" }, expected: notFound },
+  "items.merge.list": {
+    input: { limit: 10, offset: 0 },
+    expected: { ok: true, data: { merges: [], total: 0 } },
+  },
+  "exceptions.list": { input: {}, expected: { ok: true, data: { events: [] } } },
+  "exceptions.resolve": { input: { id: "no-such-issue", note: "x" }, expected: notFound },
   "items.merge.reverse": {
     input: { mergeLogId: "no-such-merge", reason: "x" },
     expected: notFound,

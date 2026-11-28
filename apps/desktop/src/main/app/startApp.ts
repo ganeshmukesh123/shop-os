@@ -20,6 +20,7 @@ import { InventoryService } from "../services/InventoryService";
 import { CatalogueService } from "../services/catalogue";
 import { FamilyService } from "../services/families";
 import { BarcodeService } from "../services/barcode";
+import { DataIssueService } from "../services/dataIssues";
 import { DuplicateService } from "../services/duplicates";
 import { MergeService } from "../services/merge";
 import { SearchService } from "../services/search";
@@ -62,6 +63,7 @@ function buildServices(state: IAppState): Services {
     catalogue: new CatalogueService(db, context),
     families: new FamilyService(db, context, search),
     barcodes: new BarcodeService(db, context),
+    dataIssues: new DataIssueService(db, context),
     duplicates: new DuplicateService(db, context),
     merges: new MergeService(db, context, search),
     billing: new BillingService(db, context),

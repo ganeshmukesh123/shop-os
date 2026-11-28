@@ -8,6 +8,7 @@ import { BackupService } from "../../src/main/services/BackupService";
 import { BillingService } from "../../src/main/services/BillingService";
 import { InventoryService } from "../../src/main/services/InventoryService";
 import { BarcodeService } from "../../src/main/services/barcode";
+import { DataIssueService } from "../../src/main/services/dataIssues";
 import { DuplicateService } from "../../src/main/services/duplicates";
 import { MergeService } from "../../src/main/services/merge";
 import { SearchService } from "../../src/main/services/search";
@@ -58,6 +59,7 @@ export function buildHandlersFixture(options: IFixtureOptions = {}): IHandlersFi
     catalogue: new CatalogueService(testDb.db, testDb.ctx),
     families: new FamilyService(testDb.db, testDb.ctx, search),
     barcodes: new BarcodeService(testDb.db, testDb.ctx),
+    dataIssues: new DataIssueService(testDb.db, testDb.ctx),
     duplicates: new DuplicateService(testDb.db, testDb.ctx),
     merges: new MergeService(testDb.db, testDb.ctx, search),
     billing: new BillingService(testDb.db, testDb.ctx),

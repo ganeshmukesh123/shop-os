@@ -50,6 +50,9 @@ const EXPECTED_COMMAND_NAMES = [
   "items.checkDuplicates",
   "items.merge",
   "items.merge.reverse",
+  "items.merge.list",
+  "exceptions.list",
+  "exceptions.resolve",
 ];
 
 describe("command list", () => {
