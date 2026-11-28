@@ -154,7 +154,8 @@ describe("schema contract", () => {
       getTableConfig(table)
         .foreignKeys.map((foreignKey) => getTableConfig(foreignKey.reference().foreignTable).name)
         .sort();
-    expect(referencedTables(billLine)).toEqual(["bill", "item_variant"]);
+    // A tinted line points at the formula it used (spec 002 T020)
+    expect(referencedTables(billLine)).toEqual(["bill", "item_variant", "tint_formula"]);
     // Type, document type and batch are foreign keys since spec 002 T019 (research D17)
     expect(referencedTables(stockMovement)).toEqual([
       "item_batch",

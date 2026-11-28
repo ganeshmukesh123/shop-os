@@ -181,7 +181,7 @@ Triggers reject UPDATE and DELETE. A BEFORE INSERT trigger also rejects a second
 | brand_id                   | FK to `brand`, nullable for custom shades                       |
 | shade_card                 | text up to 60, nullable                                         |
 | source                     | `library` or `custom`                                           |
-| customer_label, site_label | text up to 80, nullable; at least one set for `custom` (FR-016) |
+| customer_label, site_label | text up to 80, nullable; at least one nonblank after trimming for `custom` (FR-016) |
 | party_id                   | nullable text, no FK until feature 004 adds `party`             |
 
 ### `tint_formula`
@@ -215,7 +215,7 @@ Triggers reject UPDATE and DELETE. A BEFORE INSERT trigger also rejects a second
 
 ### `bill_line_tint` (new, append-only)
 
-`bill_line_id` FK, `colorant_variant_id`, `colorant_name_snapshot`, `qty_milli`, `cost_paise`. One row per colorant of the formula used, written in the bill transaction. `qty_milli` is the colorant for **one base can** (as in the formula); the line's colorant stock movement is `qty_milli` × the line's can count (`qty_base_milli / 1000`). Example: Blue 12.5 ml per can, 2 cans, deducts 25 ml.
+`bill_line_id` FK, `colorant_variant_id`, `colorant_name_snapshot`, `qty_milli`, `cost_paise`. One row per colorant of the formula used, written in the bill transaction. `UNIQUE(bill_line_id, colorant_variant_id)`. `qty_milli` is the colorant for **one base can** (as in the formula); the line's colorant stock movement is `qty_milli` × the line's can count (`qty_base_milli / 1000`). Example: Blue 12.5 ml per can, 2 cans, deducts 25 ml.
 
 ## Derived values (in `@shopos/core`)
 
