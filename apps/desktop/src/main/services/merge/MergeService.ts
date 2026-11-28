@@ -5,6 +5,7 @@ import {
   type IVariant,
   type Item,
   type ItemsMergeInput,
+  type ItemsMergeReverseInput,
 } from "@shopos/core";
 import type { DB, Handle } from "../../db/connection";
 import { nowMs } from "../../db/ids";
@@ -14,11 +15,12 @@ import { ItemRepository } from "../../repositories/ItemRepository";
 import { MergeRepository } from "../../repositories/MergeRepository";
 import { VariantCodesRepository } from "../../repositories/VariantCodesRepository";
 import type { SearchService } from "../search";
+import { moveLoggedStock } from "./moveLoggedStock";
+import { reverseMerge } from "./reverseMerge";
 
-/** A merge may be reversed for this long (FR-ITM-009, research D6). */
-export const REVERSAL_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
-/** Who merged: one user until roles arrive in feature 005. */
-export const MERGE_USER_LABEL = "Owner";
+import { MERGE_USER_LABEL, REVERSAL_WINDOW_MS } from "./constants";
+
+export { MERGE_USER_LABEL, REVERSAL_WINDOW_MS };
 
 export type IMergeSearchRefresher = Pick<SearchService, "refreshAfterMerge">;
 
@@ -48,6 +50,15 @@ export class MergeService {
     });
     this.search?.refreshAfterMerge(input.survivorId, input.mergedId);
     return result;
+  }
+
+  /** items.merge.reverse: undo a merge within 30 days, once, newest first (research D6). */
+  reverse(raw: ItemsMergeReverseInput, now = new Date()): { reverseLog: IMergeLog } {
+    const reverseLog = this.db.transaction((transaction) =>
+      reverseMerge(transaction, this.ctx, raw, now),
+    );
+    this.search?.refreshAfterMerge(reverseLog.survivorId, reverseLog.mergedId);
+    return { reverseLog };
   }
 
   private readPair(handle: Handle, survivorId: string, mergedId: string) {
@@ -99,26 +110,12 @@ export class MergeService {
       },
       movedRows,
     );
-    this.moveStock(handle, mergeLog, merged.id, survivor.id);
+    moveLoggedStock(handle, this.ctx, { moves: mergeLog.moved, docId: mergeLog.id }, [
+      merged.id,
+      survivor.id,
+    ]);
     merges.reassignBatches(batchIds, survivor.id);
     merges.setMergedInto(merged.id, survivor.id);
     return mergeLog;
-  }
-
-  /**
-   * Move the logged balances from `fromId` to `toId` and keep both cached stocks equal to their
-   * movements. A positive balance goes from-to; a negative one is moved the other way (D6 step 3).
-   */
-  private moveStock(handle: Handle, mergeLog: IMergeLog, fromId: string, toId: string): void {
-    const merges = new MergeRepository(handle, this.ctx);
-    mergeLog.moved.forEach((balance) =>
-      balance.qtyMilli > 0
-        ? merges.moveStock(fromId, toId, balance, mergeLog.id)
-        : merges.moveStock(toId, fromId, { ...balance, qtyMilli: -balance.qtyMilli }, mergeLog.id),
-    );
-    const movedMilli = mergeLog.moved.reduce((total, balance) => total + balance.qtyMilli, 0);
-    const items = new ItemRepository(handle, this.ctx);
-    items.addStockDelta(toId, movedMilli);
-    items.addStockDelta(fromId, -movedMilli);
   }
 }
