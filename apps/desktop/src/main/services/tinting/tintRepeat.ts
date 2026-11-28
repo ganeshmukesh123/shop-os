@@ -26,9 +26,10 @@ function billedRepeats(handle: Handle, ctx: Ctx, customerName: string): ITintRep
     const source = billTints.sourceLine(line.billLineId);
     const baseVariant = families.getVariant(finalSurvivorOf(families, line.variantId));
     if (!formula || !shade || !source || !baseVariant) return [];
-    const lines = source.colorants.map(({ colorantVariantId, qtyMilli }) => ({
-      colorantVariantId,
-      qtyMilli,
+    const lines = source.colorants.map((colorant) => ({
+      colorantVariantId: colorant.colorantVariantId,
+      qtyMilli: colorant.qtyMilli,
+      name: colorant.colorantNameSnapshot,
     }));
     return [
       {
@@ -67,9 +68,11 @@ export function repeatList(handle: Handle, ctx: Ctx, input: TintRepeatListInput)
     .flatMap((shade) =>
       currentByBase(tints.formulasForShade(shade.id)).flatMap((formula): ITintRepeat[] => {
         const baseVariant = families.getVariant(finalSurvivorOf(families, formula.baseVariantId));
-        return baseVariant
-          ? [{ shade, formula, lastBilledAt: null, baseVariant, lines: formula.lines }]
-          : [];
+        const lines = formula.lines.map((line) => ({
+          ...line,
+          name: families.getVariant(line.colorantVariantId)?.displayName ?? "",
+        }));
+        return baseVariant ? [{ shade, formula, lastBilledAt: null, baseVariant, lines }] : [];
       }),
     );
   return [...billed, ...unbilled];

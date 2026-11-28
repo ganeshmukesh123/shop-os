@@ -8,6 +8,7 @@ import { loadDraftForm, type IBillForm } from "../billForm";
 import { useDraftAutosave } from "../hooks/useDraftAutosave";
 import { useBillForm } from "./hooks/useBillForm";
 import { useBillSave } from "./hooks/useBillSave";
+import { RepeatShades } from "../RepeatShades";
 import { FamilyPicker } from "./components/FamilyPicker";
 import { useBarcodeEntry } from "./hooks/useBarcodeEntry";
 import { useItemSearch } from "./hooks/useItemSearch";
@@ -97,6 +98,7 @@ export function NewBillScreen() {
           void barcode.enterCode(code, () => highlightedRow && chooseRow(highlightedRow))
         }
       />
+      <RepeatShades customerName={form.customerName} onAdd={addTintedItem} />
 
       <BillLinesTable
         lines={form.draft.lines}
