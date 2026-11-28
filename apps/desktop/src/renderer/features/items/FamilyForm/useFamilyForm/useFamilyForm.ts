@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { call, messageOf } from "../../../../shared/api/api";
 import { buildCreateInput } from "./familyDraft";
-import type { IFamilyForm, IUseFamilyFormOptions } from "./types";
+import { EMPTY_PAINT_FIELDS } from "./paintDraft";
+import type { IFamilyForm, IPaintFields, IUseFamilyFormOptions } from "./types";
 import { useAxisPicker } from "./useAxisPicker";
 import { useFamilyFields } from "./useFamilyFields";
 import { usePreviewRows } from "./usePreviewRows";
@@ -17,6 +18,9 @@ export function useFamilyForm({ onSaved }: IUseFamilyFormOptions): IFamilyForm {
   const table = usePreviewRows();
   const [errors, setErrors] = useState<string[]>([]);
   const [isBusy, setIsBusy] = useState(false);
+  const [paint, setPaintFields] = useState<IPaintFields>(EMPTY_PAINT_FIELDS);
+  const setPaint = (change: Partial<IPaintFields>) =>
+    setPaintFields((current) => ({ ...current, ...change }));
 
   const preview = async () => {
     try {
@@ -30,7 +34,7 @@ export function useFamilyForm({ onSaved }: IUseFamilyFormOptions): IFamilyForm {
   };
 
   const save = async () => {
-    const draft = buildCreateInput({ ...fields, axisKeys: axes.axisKeys, rows: table.rows });
+    const draft = buildCreateInput({ ...fields, axisKeys: axes.axisKeys, rows: table.rows, paint });
     setErrors(draft.errors);
     if (!draft.input) return;
     setIsBusy(true);
@@ -43,5 +47,5 @@ export function useFamilyForm({ onSaved }: IUseFamilyFormOptions): IFamilyForm {
     }
   };
 
-  return { ...fields, ...axes, ...table, errors, isBusy, preview, save };
+  return { ...fields, ...axes, ...table, paint, setPaint, errors, isBusy, preview, save };
 }
