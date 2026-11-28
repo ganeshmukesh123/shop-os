@@ -1,0 +1,1 @@
+export { MergeLogTable } from "./MergeLogTable";
