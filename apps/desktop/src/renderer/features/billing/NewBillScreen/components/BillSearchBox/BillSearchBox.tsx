@@ -4,12 +4,13 @@ import { formatQuantity, formatRupees } from "@shopos/core";
 import { fillText } from "../../../../../shared/text/fillText";
 import { uiText } from "../../../../../shared/text/strings";
 import { MIN_QUERY_LENGTH } from "../../constants";
+import { looksLikeScannedCode } from "./scannedCode";
 import type { IBillSearchBoxProps } from "./types";
 
 /** The item search: type, move with the arrow keys, press Enter or click to add. */
 export const BillSearchBox = forwardRef<HTMLInputElement, IBillSearchBoxProps>(
   function BillSearchBox(
-    { query, matches, highlightedIndex, onQueryChange, onHighlightChange, onChoose },
+    { query, matches, highlightedIndex, onQueryChange, onHighlightChange, onChoose, onEnterCode },
     searchRef,
   ) {
     const handleKeyDown = (keyboardEvent: KeyboardEvent<HTMLInputElement>) => {
@@ -19,6 +20,9 @@ export const BillSearchBox = forwardRef<HTMLInputElement, IBillSearchBoxProps>(
       } else if (keyboardEvent.key === "ArrowUp") {
         keyboardEvent.preventDefault();
         onHighlightChange(Math.max(highlightedIndex - 1, 0));
+      } else if (keyboardEvent.key === "Enter" && onEnterCode && looksLikeScannedCode(query)) {
+        keyboardEvent.preventDefault();
+        onEnterCode(query);
       } else if (keyboardEvent.key === "Enter" && matches[highlightedIndex]) {
         keyboardEvent.preventDefault();
         onChoose(matches[highlightedIndex]!);

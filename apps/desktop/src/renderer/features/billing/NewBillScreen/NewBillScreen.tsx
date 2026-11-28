@@ -8,6 +8,7 @@ import { loadDraftForm, type IBillForm } from "../billForm";
 import { useDraftAutosave } from "../hooks/useDraftAutosave";
 import { useBillForm } from "./hooks/useBillForm";
 import { useBillSave } from "./hooks/useBillSave";
+import { useBarcodeEntry } from "./hooks/useBarcodeEntry";
 import { useItemSearch } from "./hooks/useItemSearch";
 import { useLineConversions } from "./hooks/useLineConversions";
 import { useQuantityFocus } from "./hooks/useQuantityFocus";
@@ -17,6 +18,7 @@ import { BillSearchBox } from "./components/BillSearchBox";
 import { BillSummaryPanel } from "./components/BillSummaryPanel";
 import { RecoverDraftDialog } from "./components/RecoverDraftDialog";
 import { useRoundedTotal } from "../RoundOffLine/useRoundedTotal";
+import { BarcodeChooser } from "../BarcodeChooser";
 import { VariantGrid } from "../VariantGrid";
 
 export function NewBillScreen() {
@@ -64,6 +66,8 @@ export function NewBillScreen() {
   // A variant row is added; a family row opens its grid to choose the variant (spec 002 T038)
   const chooseRow = (row: IItemSearchRow) =>
     row.item ? addItemAndClearSearch(row.item) : setGridFamily(row);
+  const barcode = useBarcodeEntry(addItemAndClearSearch);
+  const highlightedRow = matches[highlightedIndex];
 
   if (saved) {
     return (
@@ -88,6 +92,9 @@ export function NewBillScreen() {
         onQueryChange={setQuery}
         onHighlightChange={setHighlightedIndex}
         onChoose={chooseRow}
+        onEnterCode={(code) =>
+          void barcode.enterCode(code, () => highlightedRow && chooseRow(highlightedRow))
+        }
       />
 
       <BillLinesTable
@@ -110,6 +117,17 @@ export function NewBillScreen() {
         onSave={() => void save()}
       />
 
+      {barcode.choice && (
+        <BarcodeChooser
+          code={barcode.choice.code}
+          items={barcode.choice.items}
+          onClose={barcode.closeChoice}
+          onChoose={(item) => {
+            barcode.closeChoice();
+            addItemAndClearSearch(item);
+          }}
+        />
+      )}
       {gridFamily && (
         <VariantGrid
           familyId={gridFamily.id}
