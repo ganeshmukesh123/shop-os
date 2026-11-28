@@ -50,30 +50,30 @@ export const BillSearchBox = forwardRef<HTMLInputElement, IBillSearchBoxProps>(
                 <Text color="gray">{uiText.bill.noMatch}</Text>
               </li>
             )}
-            {matches.map((matchingItem, listIndex) => (
+            {matches.map((matchingRow, listIndex) => (
               <li
-                key={matchingItem.id}
+                key={matchingRow.id}
                 role="option"
                 aria-selected={listIndex === highlightedIndex}
                 onMouseDown={(mouseEvent) => {
                   mouseEvent.preventDefault();
-                  onChoose(matchingItem);
+                  onChoose(matchingRow);
                 }}
                 onMouseEnter={() => onHighlightChange(listIndex)}
                 className="shopos-search-result"
               >
                 <span>
-                  {matchingItem.name}{" "}
+                  {matchingRow.displayName}{" "}
                   <Text color="gray" size="2">
-                    ({matchingItem.unit})
+                    ({matchingRow.item ? matchingRow.item.unit : uiText.bill.grid.familyRow})
                   </Text>
                 </span>
                 <span>
                   {fillText(uiText.bill.searchResultStock, {
-                    price: formatRupees(matchingItem.pricePaise),
-                    quantity: formatQuantity(matchingItem.stockMilli),
+                    price: formatRupees(matchingRow.pricePaise),
+                    quantity: formatQuantity(matchingRow.stockMilli),
                   })}
-                  {matchingItem.needsCorrection && ` ${uiText.bill.searchResultNegative}`}
+                  {matchingRow.stockMilli < 0 && ` ${uiText.bill.searchResultNegative}`}
                 </span>
               </li>
             ))}

@@ -1,4 +1,5 @@
 import { screen } from "@testing-library/react";
+import { searchRowOf } from "../../../../../tests/helpers/itemFixtures";
 import userEvent from "@testing-library/user-event";
 import type { Item, ShopProfile } from "@shopos/core";
 import { ToastProvider } from "../../../shared/components/Toast";
@@ -36,7 +37,7 @@ async function addOnePipe(profile: ShopProfile) {
   installFakeShopos({
     "bills.draft.load": () => ({ payload: null }),
     "bills.draft.save": () => ({}),
-    "items.list": () => ({ items: [PIPE], total: 1 }),
+    "items.search": () => ({ results: [searchRowOf(PIPE)] }),
     "settings.get": () => profile,
   });
   renderWithTheme(

@@ -1,11 +1,11 @@
-import type { Item } from "@shopos/core";
+import type { IItemSearchRow } from "@shopos/core";
 
 export interface IBillSearchBoxProps {
   query: string;
-  matches: Item[];
+  matches: IItemSearchRow[];
   highlightedIndex: number;
   onQueryChange: (nextQuery: string) => void;
   onHighlightChange: (nextIndex: number) => void;
-  /** Called with the item to add: from Enter on the highlighted match, or a click. */
-  onChoose: (chosenItem: Item) => void;
+  /** Called with the chosen row (a variant to add, or a family to open): Enter or a click. */
+  onChoose: (chosenRow: IItemSearchRow) => void;
 }
