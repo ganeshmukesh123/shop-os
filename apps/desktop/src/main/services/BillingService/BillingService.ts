@@ -160,7 +160,8 @@ export class BillingService {
         ...baseLines.map((lineInput) => lineInput.itemId),
         ...colorantIds,
       ]);
-      return { bill: saved, lines, negativeStockItems };
+      // Read back, so a tinted line comes with its colorants as bills.get gives them (T067)
+      return { bill: saved, lines: bills.get(saved.id)!.lines, negativeStockItems };
     });
   }
 
