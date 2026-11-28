@@ -23,6 +23,7 @@ import { BillSearchRepository } from "../../repositories/BillSearchRepository";
 import { ItemRepository } from "../../repositories/ItemRepository";
 import { SettingsRepository } from "../../repositories/SettingsRepository";
 import { StockRepository } from "../../repositories/StockRepository";
+import { toBaseLines } from "./enteredUnits";
 
 export class BillingService {
   constructor(
@@ -41,8 +42,6 @@ export class BillingService {
     const input = billsSaveInput.parse(raw);
     if (input.lines.length === 0)
       throw new CoreError("EMPTY_BILL", "A bill needs at least one line");
-    const totals = computeBill({ lines: input.lines, billDiscountPaise: input.billDiscountPaise });
-
     return this.db.transaction((tx) => {
       const items = new ItemRepository(tx, this.ctx);
       const stock = new StockRepository(tx, this.ctx);
@@ -62,7 +61,10 @@ export class BillingService {
         };
       }
 
-      const resolved = input.lines.map((lineInput) => {
+      // A line typed in rolls is billed and stocked in metres (spec 002 T034)
+      const baseLines = toBaseLines(tx, this.ctx, input.lines, (itemId) => items.get(itemId)?.unit);
+      const totals = computeBill({ lines: baseLines, billDiscountPaise: input.billDiscountPaise });
+      const resolved = baseLines.map((lineInput) => {
         const catalogItem = items.get(lineInput.itemId);
         if (!catalogItem) throw new CoreError("NOT_FOUND", "Item not found on the bill");
         if (!catalogItem.active)
@@ -110,7 +112,7 @@ export class BillingService {
       });
       const lines = bills.insertLines(
         saved.id,
-        input.lines.map((lineInput, lineIndex) => ({
+        baseLines.map((lineInput, lineIndex) => ({
           lineNo: lineIndex + 1,
           itemId: lineInput.itemId,
           itemNameSnapshot: resolved[lineIndex]!.name,
@@ -119,9 +121,11 @@ export class BillingService {
           ratePaise: lineInput.ratePaise,
           lineDiscountPaise: lineInput.lineDiscountPaise,
           amountPaise: totals.lineAmounts[lineIndex]!,
+          enteredUom: lineInput.enteredUom,
+          qtyEnteredMilli: lineInput.qtyEnteredMilli,
         })),
       );
-      for (const lineInput of input.lines) {
+      for (const lineInput of baseLines) {
         stock.append({
           itemId: lineInput.itemId,
           quantityMilli: -lineInput.quantityMilli,
@@ -134,7 +138,7 @@ export class BillingService {
 
       const negativeStockItems = this.itemsWithNegativeStock(
         items,
-        input.lines.map((lineInput) => lineInput.itemId),
+        baseLines.map((lineInput) => lineInput.itemId),
       );
       return { bill: saved, lines, negativeStockItems };
     });

@@ -140,6 +140,8 @@ export class BillRepository {
             unitPricePaise: newLine.ratePaise,
             lineDiscountPaise: newLine.lineDiscountPaise,
             amountPaise: newLine.amountPaise,
+            enteredUom: newLine.enteredUom ?? null,
+            qtyEnteredMilli: newLine.qtyEnteredMilli ?? null,
           })
           .returning()
           .get(),

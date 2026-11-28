@@ -35,4 +35,7 @@ export interface INewLine {
   ratePaise: number;
   lineDiscountPaise: number;
   amountPaise: number;
+  /** Spec 002 T034: the alternate unit typed and the quantity in it; null for the base unit */
+  enteredUom?: string | null;
+  qtyEnteredMilli?: number | null;
 }
