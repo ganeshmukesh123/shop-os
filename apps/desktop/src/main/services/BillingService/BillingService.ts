@@ -13,6 +13,7 @@ import {
   type BillsCancelInput,
   type BillsListInput,
   type BillsSaveInput,
+  type IRecordedNumberGap,
   type Item,
 } from "@shopos/core";
 import type { DB } from "../../db/connection";
@@ -21,6 +22,7 @@ import { BillCancelRepository } from "../../repositories/BillCancelRepository";
 import { BillRepository } from "../../repositories/BillRepository";
 import { BillSearchRepository } from "../../repositories/BillSearchRepository";
 import { ItemRepository } from "../../repositories/ItemRepository";
+import { NumberGapRepository } from "../../repositories/NumberGapRepository";
 import { SettingsRepository } from "../../repositories/SettingsRepository";
 import { StockRepository } from "../../repositories/StockRepository";
 import { toBaseLines } from "./enteredUnits";
@@ -189,6 +191,11 @@ export class BillingService {
   /** Search the saved bills for the bill list (FR-016): newest first, one page at a time. */
   listBills(input: BillsListInput): { bills: Bill[]; total: number } {
     return new BillSearchRepository(this.db, this.ctx).list(input);
+  }
+
+  /** The bill numbers a restore lost, for the bill list (FR-013b). */
+  listNumberGaps(): IRecordedNumberGap[] {
+    return new NumberGapRepository(this.db, this.ctx).list();
   }
 
   getBill(id: string): { bill: Bill; lines: BillLine[] } {

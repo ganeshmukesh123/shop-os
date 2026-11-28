@@ -9,6 +9,7 @@ export const LAYOUT = {
   pageWide: "1000px",
   formColumnMinWidth: "320px",
   searchFieldWidth: "360px",
+  billFilterFieldWidth: "200px",
   seriesFieldWidth: "140px",
   discountFieldWidth: "100px",
   lineDiscountFieldWidth: "90px",
@@ -18,4 +19,5 @@ export const LAYOUT = {
   amountColumnWidth: "130px",
   actionColumnWidth: "90px",
   restoreDialogWidth: "520px",
+  cancelDialogWidth: "480px",
 } as const;

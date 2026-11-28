@@ -4,6 +4,7 @@ import { LAYOUT } from "../../shared/constants/layout";
 import { StatusBadge } from "../../shared/components/StatusBadge/StatusBadge";
 import { ItemsScreen } from "../../features/inventory/ItemsScreen";
 import { NewBillScreen } from "../../features/billing/NewBillScreen";
+import { BillsScreen } from "../../features/bills/BillsScreen";
 import { SettingsScreen } from "../../features/settings/SettingsScreen";
 import { uiText } from "../../shared/text/strings";
 import { call } from "../../shared/api/api";
@@ -20,7 +21,12 @@ export function App() {
   useEffect(() => {
     const handleKeyDown = (keyboardEvent: KeyboardEvent) => {
       if (!(keyboardEvent.ctrlKey || keyboardEvent.metaKey)) return;
-      const map: Record<string, Route> = { "1": "items", "2": "bill", "3": "settings" };
+      const map: Record<string, Route> = {
+        "1": "items",
+        "2": "bill",
+        "3": "settings",
+        "4": "bills",
+      };
       const shortcutRoute = map[keyboardEvent.key];
       if (shortcutRoute) {
         keyboardEvent.preventDefault();
@@ -40,6 +46,7 @@ export function App() {
   const nav: [Route, string][] = [
     ["items", uiText.nav.items],
     ["bill", uiText.nav.newBill],
+    ["bills", uiText.nav.bills],
     ["settings", uiText.nav.settings],
   ];
   return (
@@ -76,6 +83,7 @@ export function App() {
           <ClockWarnings warnings={clockWarnings} />
           {route === "items" && <ItemsScreen />}
           {route === "bill" && <NewBillScreen />}
+          {route === "bills" && <BillsScreen />}
           {route === "settings" && <SettingsScreen />}
         </main>
       </Box>

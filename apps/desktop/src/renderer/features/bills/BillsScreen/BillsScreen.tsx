@@ -1,0 +1,80 @@
+import { useState } from "react";
+import { Flex, Heading, Text } from "@radix-ui/themes";
+import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
+import { LAYOUT } from "../../../shared/constants/layout";
+import { fillText } from "../../../shared/text/fillText";
+import { uiText } from "../../../shared/text/strings";
+import { BillsFilters } from "./components/BillsFilters";
+import { BillsTable } from "./components/BillsTable";
+import { OpenBill } from "./components/OpenBill";
+import { BILLS_PAGE_LIMIT } from "./constants";
+import { useBillGaps } from "./hooks/useBillGaps";
+import { useBills } from "./hooks/useBills";
+import type { IBillFilter } from "./types";
+
+const NO_FILTER: IBillFilter = { number: "", from: "", to: "", customer: "" };
+
+/** "1 bill", "12 bills" or "250 bills. Showing the newest 100". */
+function billCountText(total: number): string {
+  const countTemplate = total > BILLS_PAGE_LIMIT ? uiText.bills.countMore : uiText.bills.countOther;
+  return fillText(total === 1 ? uiText.bills.countOne : countTemplate, {
+    count: total,
+    shown: BILLS_PAGE_LIMIT,
+  });
+}
+
+/** "No bills match." under a search, or the first-bill invitation when the shop has none. */
+function emptyListText(isFiltered: boolean): string {
+  return isFiltered ? uiText.bills.noMatch : uiText.bills.empty;
+}
+
+/**
+ * The list is complete only when both answers are in: the bills and the numbers a restore lost.
+ * Either error is shown; the bills' error first.
+ */
+function listStateOf(
+  billsResult: { loading: boolean; error: string | null },
+  gapsResult: { loading: boolean; error: string | null },
+): { isLoaded: boolean; error: string | null } {
+  const isLoaded = !(billsResult.loading || gapsResult.loading);
+  return { isLoaded, error: billsResult.error ?? gapsResult.error };
+}
+
+/** Past bills, newest first, searchable by number, date range and customer (spec US3, FR-016). */
+export function BillsScreen() {
+  const [filter, setFilter] = useState<IBillFilter>(NO_FILTER);
+  const [openBillId, setOpenBillId] = useState<string | null>(null);
+  const [refreshCount, setRefreshCount] = useState(0);
+  const billsResult = useBills(filter, refreshCount);
+  const gapsResult = useBillGaps(refreshCount);
+  const { bills, total } = billsResult;
+  const { gaps } = gapsResult;
+  const { isLoaded, error } = listStateOf(billsResult, gapsResult);
+  const backToList = () => {
+    setOpenBillId(null);
+    setRefreshCount((previousCount) => previousCount + 1);
+  };
+  const isFiltered = Object.values(filter).some((fieldValue) => fieldValue !== "");
+  const countText = billCountText(total);
+  // Lost numbers belong to no date or customer, so a search hides them.
+  const shownGaps = isFiltered ? [] : gaps;
+  if (openBillId) return <OpenBill billId={openBillId} onBack={backToList} />;
+  return (
+    <Flex direction="column" gap="3" maxWidth={LAYOUT.pageWide}>
+      <Heading size="6">{uiText.bills.title}</Heading>
+      <BillsFilters filter={filter} onChange={setFilter} />
+      <Text size="2" color="gray">
+        {isLoaded ? countText : uiText.common.loading}
+      </Text>
+      {error && (
+        <StatusMessage role="danger" label={uiText.status.error}>
+          {error}
+        </StatusMessage>
+      )}
+      {isLoaded && <BillsTable bills={bills} gaps={shownGaps} onOpen={setOpenBillId} />}
+      {isLoaded && !error && bills.length === 0 && (
+        <Text color="gray">{emptyListText(isFiltered)}</Text>
+      )}
+    </Flex>
+  );
+}
