@@ -1,5 +1,6 @@
 import { billGridText } from "./billGridText";
 import { familyText } from "./familyText";
+import { dataIssuesText } from "./dataIssuesText";
 import { mergeLogText } from "./mergeLogText";
 import { mergeText } from "./mergeText";
 
@@ -9,6 +10,7 @@ export const uiText = {
   family: familyText,
   merge: mergeText,
   mergeLog: mergeLogText,
+  dataIssues: dataIssuesText,
   nav: { items: "Items", newBill: "New bill", bills: "Bills", settings: "Settings" },
   bills: {
     title: "Bills",

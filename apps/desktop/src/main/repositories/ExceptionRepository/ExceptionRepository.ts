@@ -54,7 +54,7 @@ export class ExceptionRepository {
   }
 
   /** Newest first, optionally only one status or kind. */
-  list(filter: ExceptionsListInput): IExceptionEvent[] {
+  list(filter: ExceptionsListInput): Omit<IExceptionEvent, "subjectNames">[] {
     const conditions: SQL[] = [
       eq(exceptionEvent.shopId, this.ctx.shopId),
       ...(filter.status ? [eq(exceptionEvent.status, filter.status)] : []),
@@ -69,7 +69,7 @@ export class ExceptionRepository {
       .map(toExceptionEvent);
   }
 
-  get(id: string): IExceptionEvent | null {
+  get(id: string): Omit<IExceptionEvent, "subjectNames"> | null {
     const eventRow = this.databaseHandle
       .select()
       .from(exceptionEvent)
@@ -95,7 +95,9 @@ export class ExceptionRepository {
   }
 }
 
-function toExceptionEvent(eventRow: typeof exceptionEvent.$inferSelect): IExceptionEvent {
+function toExceptionEvent(
+  eventRow: typeof exceptionEvent.$inferSelect,
+): Omit<IExceptionEvent, "subjectNames"> {
   return {
     id: eventRow.id,
     kind: eventRow.kind,

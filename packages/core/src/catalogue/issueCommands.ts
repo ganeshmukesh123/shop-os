@@ -35,6 +35,8 @@ export interface IExceptionEvent {
   id: string;
   kind: string;
   subjectIds: string[];
+  /** The items' names, in the order of subjectIds, for the screen */
+  subjectNames: string[];
   detail: string | null;
   status: ExceptionStatus;
   resolvedAt: number | null;
