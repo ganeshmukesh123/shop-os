@@ -51,6 +51,23 @@ export function mulQtyRate(quantityMilli: number, ratePaise: Paise): Paise {
   return Number(roundedPaise);
 }
 
+/**
+ * The sum of several quantity x rate amounts, rounded half up once at the end (a tinted can's
+ * colorants: 0.25 ml x ₹0.02 twice is 1 paisa, not 2). Each part is checked as in mulQtyRate.
+ */
+export function sumQtyRatesRounded(
+  parts: readonly { quantityMilli: number; ratePaise: Paise }[],
+): Paise {
+  const exactMilliPaise = parts.reduce((total, { quantityMilli, ratePaise }) => {
+    mulQtyRate(quantityMilli, ratePaise);
+    return total + BigInt(quantityMilli) * BigInt(ratePaise);
+  }, 0n);
+  const roundedPaise = divRoundHalfUp(exactMilliPaise, 1000n);
+  if (roundedPaise > BigInt(Number.MAX_SAFE_INTEGER))
+    throw new CoreError("INVALID_AMOUNT", "amount too large");
+  return Number(roundedPaise);
+}
+
 const PAISE_PER_RUPEE = 100;
 const HALF_RUPEE_PAISE = 50;
 
