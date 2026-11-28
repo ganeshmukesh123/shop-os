@@ -196,3 +196,36 @@ describe("FamilyService.setActive (spec 002 T028)", () => {
     });
   });
 });
+
+describe("FamilyService.create with paint fields (spec 002 T079)", () => {
+  it("stores a paint's class, declared pack, label, sealed flag, warranty and serial flag", () => {
+    const { families } = shop();
+
+    const { variants } = families.create({
+      family: { name: "Apex Ultima White", kind: "paint", spec: {}, axisKeys: [] },
+      variants: [
+        {
+          ...pipeVariant("", ""),
+          axes: {},
+          petroleumClass: "B",
+          declaredQtyMilli: 4_000,
+          declaredUom: "litre",
+          tradeLabel: "Apex",
+          sealedPackOnly: true,
+          warrantyMonths: 12,
+          isSerialTracked: true,
+        },
+      ],
+    });
+
+    expect(variants[0]).toMatchObject({
+      petroleumClass: "B",
+      declaredQtyMilli: 4_000,
+      declaredUom: "litre",
+      tradeLabel: "Apex",
+      sealedPackOnly: true,
+      warrantyMonths: 12,
+      isSerialTracked: true,
+    });
+  });
+});

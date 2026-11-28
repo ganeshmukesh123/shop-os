@@ -67,6 +67,13 @@ describe("FamilyForm (spec 002 T036)", () => {
         allowDecimal: false,
         sellingPricePaise: 12_000,
         openingQtyMilli: 0,
+        petroleumClass: null,
+        declaredQtyMilli: null,
+        declaredUom: null,
+        tradeLabel: null,
+        sealedPackOnly: false,
+        warrantyMonths: null,
+        isSerialTracked: false,
       },
     ]);
     expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ id: "family-1" }));

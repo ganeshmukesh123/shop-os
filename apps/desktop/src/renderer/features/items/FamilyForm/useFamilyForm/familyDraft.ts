@@ -6,6 +6,7 @@ import {
   type FamilyKind,
 } from "@shopos/core";
 import { uiText } from "../../../../shared/text/strings";
+import { paintErrors, paintVariantFields } from "./paintDraft";
 import type { IFamilyFormState, IPreviewRow } from "./types";
 
 const WHOLE_UNIT_MILLI = 1000;
@@ -58,22 +59,25 @@ export function buildCreateInput(state: IFamilyFormState): {
   const readRows = state.rows
     .filter((row) => row.isChosen)
     .map((row) => readRow(row, allowDecimal));
-  const errors = draftErrors(state, readRows);
+  const kind = state.kind as FamilyKind;
+  const errors = [...draftErrors(state, readRows), ...paintErrors(kind, state.paint, allowDecimal)];
   if (errors.length > 0) return { errors, input: null };
   const family = {
     name: state.name.trim(),
-    kind: state.kind as FamilyKind,
+    kind,
     ...(state.categoryId ? { categoryId: state.categoryId } : {}),
     ...(state.brandId ? { brandId: state.brandId } : {}),
     spec: {},
     axisKeys: state.axisKeys,
   };
+  const extraFields = paintVariantFields(kind, state.paint);
   const variants = readRows.map(({ row, pricePaise, openingQtyMilli }) => ({
     axes: row.axes,
     baseUom: state.unit,
     allowDecimal,
     sellingPricePaise: pricePaise!,
     openingQtyMilli: openingQtyMilli!,
+    ...extraFields,
   }));
   return { errors: [], input: { family, variants } as FamiliesCreateInput };
 }

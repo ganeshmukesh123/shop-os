@@ -4,6 +4,7 @@ import { uiText } from "../../../shared/text/strings";
 import { VariantPreview } from "../VariantPreview";
 import { AxisPicker } from "./components/AxisPicker";
 import { FamilyHeaderFields } from "./components/FamilyHeaderFields";
+import { PaintFields } from "./components/PaintFields";
 import type { IFamilyFormProps } from "./types";
 import { useFamilyForm } from "./useFamilyForm";
 
@@ -23,6 +24,7 @@ export function FamilyForm({ categories, brands, units, onClose, onSaved }: IFam
         </Dialog.Description>
         <Flex direction="column" gap="4">
           <FamilyHeaderFields {...form} categories={categories} brands={brands} units={units} />
+          <PaintFields kind={form.kind} paint={form.paint} units={units} onChange={form.setPaint} />
           <AxisPicker
             axisKeys={form.axisKeys}
             axisValuesText={form.axisValuesText}

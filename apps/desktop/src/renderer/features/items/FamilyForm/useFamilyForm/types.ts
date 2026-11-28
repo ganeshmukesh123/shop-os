@@ -1,4 +1,4 @@
-import type { FamilyKind, IFamily } from "@shopos/core";
+import type { FamilyKind, IFamily, PetroleumClass } from "@shopos/core";
 
 /** One combination in the preview table, with what the owner typed for it. */
 export interface IPreviewRow {
@@ -10,6 +10,17 @@ export interface IPreviewRow {
   openingText: string;
 }
 
+/** Paint, warranty and serial fields, as typed; every kept variant gets them (T079). */
+export interface IPaintFields {
+  petroleumClass: PetroleumClass | "";
+  declaredQtyText: string;
+  declaredUom: string;
+  tradeLabel: string;
+  sealedPackOnly: boolean;
+  warrantyText: string;
+  isSerialTracked: boolean;
+}
+
 export interface IFamilyFormState {
   name: string;
   kind: FamilyKind;
@@ -18,6 +29,7 @@ export interface IFamilyFormState {
   unit: string;
   axisKeys: string[];
   rows: IPreviewRow[];
+  paint: IPaintFields;
 }
 
 export interface IUseFamilyFormOptions {
@@ -41,4 +53,5 @@ export interface IFamilyForm extends IFamilyFormState {
   setRowPrice: (axisSignature: string, priceText: string) => void;
   setRowOpening: (axisSignature: string, openingText: string) => void;
   save: () => Promise<void>;
+  setPaint: (change: Partial<IPaintFields>) => void;
 }
