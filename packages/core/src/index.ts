@@ -7,6 +7,7 @@ export * from "./stock";
 export * from "./search/normaliseSearchText";
 export * from "./search/editDistance";
 export * from "./search/rankSearchMatches";
+export * from "./search/likelyDuplicates";
 export * from "./numbering";
 export * from "./numberGap";
 export * from "./catalogue/axisSignature";
