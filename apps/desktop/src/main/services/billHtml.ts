@@ -1,6 +1,7 @@
 import {
   formatQuantity,
   formatRupees,
+  tintMixText,
   formatSignedRupees,
   type Bill,
   type BillLine,
@@ -52,6 +53,14 @@ export function pageSpec(
  * Render a bill per contracts/bill-layout.md. Uses only snapshot values and core formatting, so a
  * reprint is identical. No tax wording appears anywhere.
  */
+/** Under a tinted can: what was mixed per can, and that it cannot be returned (spec 002 T067). */
+function tintRow(billLine: BillLine): string {
+  if (!billLine.tint) return "";
+  const mix = esc(tintMixText(billLine.tint.colorants));
+  return `
+<tr class="tint"><td></td><td colspan="5">${mix} per can. Non-returnable (tinted)</td></tr>`;
+}
+
 export function renderBillHtml(
   bill: Bill,
   lines: BillLine[],
@@ -69,7 +78,7 @@ export function renderBillHtml(
   <td class="r">${formatRupees(billLine.ratePaise)}</td>
   <td class="r">${billLine.lineDiscountPaise > 0 ? `-${formatRupees(billLine.lineDiscountPaise)}` : ""}</td>
   <td class="r">${formatRupees(billLine.amountPaise)}</td>
-</tr>`,
+</tr>${tintRow(billLine)}`,
     )
     .join("\n");
 

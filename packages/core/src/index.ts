@@ -14,6 +14,7 @@ export * from "./tinting/tintCost";
 export * from "./tinting/tintCommands";
 export * from "./tinting/tintResults";
 export * from "./tinting/tintCommandMap";
+export * from "./tinting/tintMixText";
 export * from "./numbering";
 export * from "./numberGap";
 export * from "./catalogue/axisSignature";

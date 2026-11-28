@@ -1,9 +1,10 @@
 import { Table } from "@radix-ui/themes";
 import { formatQuantity, formatRupees } from "@shopos/core";
 import { uiText } from "../../../../../shared/text/strings";
+import { TintedNote } from "./components/TintedNote";
 import type { IBillLinesTableProps } from "./types";
 
-/** One row per saved line: item, quantity with unit, rate, line discount and amount. */
+/** One row per saved line: item (a tinted can with its mix), quantity, rate, discount, amount. */
 export function BillLinesTable({ lines }: IBillLinesTableProps) {
   return (
     <Table.Root variant="surface">
@@ -19,7 +20,10 @@ export function BillLinesTable({ lines }: IBillLinesTableProps) {
       <Table.Body>
         {lines.map((billLine) => (
           <Table.Row key={billLine.id}>
-            <Table.RowHeaderCell>{billLine.itemNameSnapshot}</Table.RowHeaderCell>
+            <Table.RowHeaderCell>
+              {billLine.itemNameSnapshot}
+              {billLine.tint && <TintedNote colorants={billLine.tint.colorants} />}
+            </Table.RowHeaderCell>
             <Table.Cell justify="end">
               {formatQuantity(billLine.quantityMilli)} {billLine.unitSnapshot}
             </Table.Cell>

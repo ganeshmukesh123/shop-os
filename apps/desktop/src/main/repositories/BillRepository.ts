@@ -5,6 +5,7 @@ import type { Handle } from "../db/connection";
 import { isoOfMs, newId, nowMs } from "../db/ids";
 import { bill, billLine, billTender, draftBill, numberSeries } from "../db/schema";
 import type { Ctx } from "../db/seed";
+import { colorantsOfLines, withTint } from "./billLineTints";
 import type { INewBill, INewLine } from "./newBillTypes";
 
 /**
@@ -182,7 +183,14 @@ export class BillRepository {
       .where(eq(billLine.billId, id))
       .orderBy(asc(billLine.lineNo))
       .all();
-    return { bill: toBill(billRow, this.tenderMode(id)), lines: lines.map(toLine) };
+    const colorantsOf = colorantsOfLines(
+      this.databaseHandle,
+      lines.map((lineRow) => lineRow.id),
+    );
+    return {
+      bill: toBill(billRow, this.tenderMode(id)),
+      lines: lines.map((lineRow) => withTint(toLine(lineRow), lineRow, colorantsOf)),
+    };
   }
 
   // ----- draft (crash recovery; not a financial record) -----
