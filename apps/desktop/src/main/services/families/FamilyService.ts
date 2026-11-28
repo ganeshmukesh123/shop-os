@@ -26,7 +26,9 @@ import {
 import type { DB } from "../../db/connection";
 import type { Ctx } from "../../db/seed";
 import { CatalogueRepository } from "../../repositories/CatalogueRepository";
+import { BarcodeRepository } from "../../repositories/BarcodeRepository";
 import { ConversionRepository, FamilyRepository } from "../../repositories/FamilyRepository";
+import { SearchNameRepository } from "../../repositories/SearchNameRepository";
 import { ItemRepository } from "../../repositories/ItemRepository";
 import type { SearchService } from "../search";
 import { insertVariants } from "./familyWrites";
@@ -86,7 +88,11 @@ export class FamilyService {
     const conversions = new ConversionRepository(this.db, this.ctx).listFor(
       variants.map((variant) => variant.id),
     );
-    return { family, variants, conversions };
+    const variantIds = variants.map((variant) => variant.id);
+    const codes = new BarcodeRepository(this.db, this.ctx);
+    const barcodes = variantIds.flatMap((variantId) => codes.listFor(variantId));
+    const searchNames = new SearchNameRepository(this.db, this.ctx).listFor(variantIds);
+    return { family, variants, conversions, barcodes, searchNames };
   }
 
   /** families.grid (T038): the family's live variants laid out by its axes, each billable. */

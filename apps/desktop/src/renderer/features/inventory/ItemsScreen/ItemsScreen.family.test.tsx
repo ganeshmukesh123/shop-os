@@ -28,6 +28,8 @@ function renderScreen() {
       },
       variants: [],
       conversions: [],
+      barcodes: [],
+      searchNames: [],
     }),
   });
   renderWithTheme(

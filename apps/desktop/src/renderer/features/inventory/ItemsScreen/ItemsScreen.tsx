@@ -111,6 +111,7 @@ export function ItemsScreen() {
                   onAdjust={() => setAdjusting(it)}
                   onUnits={() => setRowDialog({ kind: "units", item: it })}
                   onMerge={() => setRowDialog({ kind: "merge", item: it })}
+                  onNames={() => setRowDialog({ kind: "names", item: it })}
                   onToggleActive={() => void toggleActive(it)}
                 />
               </Table.Cell>

@@ -1,3 +1,4 @@
+import type { IBarcode, ISearchName } from "./codeCommands";
 import type { ICategoryDefaults } from "./categoryDefaults";
 import type { FamilyKind, PetroleumClass } from "./variantDraft";
 
@@ -78,4 +79,7 @@ export interface IFamilyDetail {
   family: IFamily;
   variants: IVariant[];
   conversions: IUnitConversion[];
+  /** Every variant's barcodes and search names (US2, T049) */
+  barcodes: IBarcode[];
+  searchNames: ISearchName[];
 }

@@ -34,6 +34,8 @@ function renderWireBill() {
       },
       variants: [],
       conversions: [{ variantId: "wire", uomCode: "roll", factorMilli: 90_000 }],
+      barcodes: [],
+      searchNames: [],
     }),
   });
   renderWithTheme(
