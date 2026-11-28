@@ -4,6 +4,7 @@
  */
 export const familyText = {
   addTitle: "New item family",
+  requiredNote: "Fields marked * are required.",
   name: "Family name",
   kind: "Kind",
   kinds: {
@@ -19,10 +20,16 @@ export const familyText = {
   unit: "Unit",
   attributes: "Attributes (up to 4)",
   axisLimit: "A family can have at most 4 attributes. Untick one to choose another.",
+  limitLabel: "Limit",
+  errorLabel: "Error",
   values: "Values for {attribute}, separated by commas",
   preview: "Show combinations",
   combinations: "Combinations",
   keep: "Keep",
+  keepVariant: "Keep {variant}",
+  priceFor: "Price (₹) for {variant}",
+  openingColumn: "Opening stock ({unit})",
+  openingFor: "Opening stock ({unit}) for {variant}",
   variant: "Variant",
   price: "Price (₹)",
   opening: "Opening stock",
