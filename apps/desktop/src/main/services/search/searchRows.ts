@@ -28,6 +28,7 @@ export function toSearchRows(
     return [
       {
         kind: "family",
+        familyKind: family.kind,
         id: family.id,
         displayName: family.name,
         matchedBy: result.tier,

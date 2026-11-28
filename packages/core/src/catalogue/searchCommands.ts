@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { SearchTier } from "../search/rankSearchMatches";
 import type { Item } from "../types";
 import type { IGridTab } from "./variantGrid";
+import type { FamilyKind } from "./variantDraft";
 
 /** items.search and families.grid (spec 002 contracts, T038). */
 export const itemsSearchInput = z.object({
@@ -16,6 +17,8 @@ export type FamiliesGridInput = z.infer<typeof familiesGridInput>;
 /** One search result: a variant (billable as it is) or a family of several (opens the grid). */
 export interface IItemSearchRow {
   kind: "variant" | "family";
+  /** For a family row: its kind, so a base paint opens the tinting desk (spec 002 T064) */
+  familyKind?: FamilyKind;
   id: string;
   displayName: string;
   matchedBy: SearchTier;

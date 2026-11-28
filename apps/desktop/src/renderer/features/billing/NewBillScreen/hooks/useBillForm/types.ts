@@ -1,4 +1,4 @@
-import type { DraftEvaluation, DraftLine, Item } from "@shopos/core";
+import type { DraftEvaluation, DraftLine, Item, TintRef } from "@shopos/core";
 import type { IBillForm } from "../../../billForm";
 
 export interface IBillFormState {
@@ -15,4 +15,13 @@ export interface IBillFormState {
   removeLine: (lineKey: string) => void;
   /** Adds a line for the item, or one more of it when it is already on the bill. */
   addItem: (item: Item) => void;
+  /** Spec 002 T064: a tinted can, as a line of its own */
+  addTintedItem: (item: Item, tinted: ITintedPick) => void;
+}
+
+/** What the tinting desk hands the bill: the mix, the can's price and the words for the line. */
+export interface ITintedPick {
+  tint: TintRef;
+  ratePaise: number;
+  label: string;
 }

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { evaluateDraft, paiseToInput, type DraftLine, type Item } from "@shopos/core";
 import { emptyForm, type IBillForm } from "../../../billForm";
-import type { IBillFormState } from "./types";
+import type { IBillFormState, ITintedPick } from "./types";
 
 const withLines = (form: IBillForm, lines: DraftLine[]): IBillForm => ({
   ...form,
@@ -22,6 +22,15 @@ function buildLine(item: Item, lineKey: string): DraftLine {
     // Its other units are read after the line is added (useLineConversions, spec 002 T039)
     familyId: item.familyId,
     enteredUom: null,
+  };
+}
+
+function buildTintedLine(item: Item, tinted: ITintedPick): DraftLine {
+  return {
+    ...buildLine(item, crypto.randomUUID()),
+    rate: paiseToInput(tinted.ratePaise),
+    tint: tinted.tint,
+    tintLabel: tinted.label,
   };
 }
 
@@ -96,6 +105,14 @@ export function useBillForm(onLineToFocus: (lineKey: string) => void): IBillForm
     (item: Item) => setForm((previousForm) => addItemToForm(previousForm, item, onLineToFocus)),
     [onLineToFocus],
   );
+  // A tinted can is always a line of its own: two shades of the same can are two lines (T064)
+  const addTintedItem = useCallback(
+    (item: Item, tinted: ITintedPick) =>
+      setForm((previousForm) =>
+        withLines(previousForm, [...previousForm.draft.lines, buildTintedLine(item, tinted)]),
+      ),
+    [],
+  );
   const resetForm = useCallback(() => setForm(emptyForm()), []);
 
   return {
@@ -108,5 +125,6 @@ export function useBillForm(onLineToFocus: (lineKey: string) => void): IBillForm
     patchLine,
     removeLine,
     addItem,
+    addTintedItem,
   };
 }

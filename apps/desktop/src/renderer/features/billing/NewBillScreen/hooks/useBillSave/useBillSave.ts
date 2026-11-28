@@ -14,11 +14,22 @@ function buildSaveInput(form: IBillForm, evaluation: DraftEvaluation) {
     paymentMode: form.paymentMode,
     billDiscountPaise: evaluation.billDiscountPaise,
     // A line in another unit is sent as typed (2 roll); the main process converts it again
+    // A tinted can carries its tint (spec 002 T064)
     lines: (evaluation.input ?? []).map(
-      ({ itemId, quantityMilli, ratePaise, lineDiscountPaise, enteredUom, qtyEnteredMilli }) =>
-        enteredUom
+      ({
+        itemId,
+        quantityMilli,
+        ratePaise,
+        lineDiscountPaise,
+        enteredUom,
+        qtyEnteredMilli,
+        tint,
+      }) => ({
+        ...(enteredUom
           ? { itemId, quantityMilli: qtyEnteredMilli!, ratePaise, lineDiscountPaise, enteredUom }
-          : { itemId, quantityMilli, ratePaise, lineDiscountPaise },
+          : { itemId, quantityMilli, ratePaise, lineDiscountPaise }),
+        ...(tint ? { tint } : {}),
+      }),
     ),
   };
 }
