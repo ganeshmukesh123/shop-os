@@ -1,3 +1,4 @@
+import { FAMILY_COMMAND_NAMES, type IFamilyCommandMap } from "./catalogue/familyCommandMap";
 import type { ClockWarning } from "./clockCheck";
 import type {
   Bill,
@@ -24,7 +25,7 @@ import type {
 import type { SavedTheme, SettingsSetThemeInput } from "./theme";
 
 /** Renderer to main-process commands (specs/001-shop-os-mvp/contracts/ipc-commands.md): name -> [input, data]. */
-export interface CommandMap {
+export interface CommandMap extends IFamilyCommandMap {
   "items.list": [ItemsListInput, { items: Item[]; total: number }];
   "items.create": [ItemsCreateInput, { item: Item }];
   "items.update": [ItemsUpdateInput, { item: Item }];
@@ -82,6 +83,7 @@ export const COMMAND_NAMES = [
   "system.pickFolder",
   "system.pickBackupFile",
   "system.pickPdfPath",
+  ...FAMILY_COMMAND_NAMES,
 ] as const satisfies readonly CommandName[];
 
 export type ShopOsApi = {
