@@ -172,7 +172,7 @@ export class BillingService {
 
   /**
    * Cancel a posted bill (FR-017) in ONE transaction: mark it Cancelled with the reason, then append
-   * one equal and opposite `sale_cancel` movement per line and give the stock back. The bill, its
+   * one equal and opposite `sale_cancel` movement per `sale` movement and give the stock back. The bill, its
    * lines and the original `sale` movements are never changed, and its number is never reused.
    */
   cancelBill(raw: BillsCancelInput, now: Date = new Date()): { bill: Bill } {
@@ -193,14 +193,16 @@ export class BillingService {
 
       const stock = new StockRepository(tx, this.ctx);
       const items = new ItemRepository(tx, this.ctx);
-      for (const savedLine of savedBill.lines) {
+      // Every sale movement of the bill, the colorants of a tinted can included (spec 002 T062)
+      const sales = stock.forBill(input.id).filter((movement) => movement.reason === "sale");
+      for (const sale of sales) {
         stock.append({
-          itemId: savedLine.itemId,
-          quantityMilli: savedLine.quantityMilli,
+          itemId: sale.itemId,
+          quantityMilli: -sale.quantityMilli,
           reason: "sale_cancel",
           billId: input.id,
         });
-        items.addStockDelta(savedLine.itemId, savedLine.quantityMilli);
+        items.addStockDelta(sale.itemId, -sale.quantityMilli);
       }
       new SalesStatRepository(tx, this.ctx).recompute(
         now,
