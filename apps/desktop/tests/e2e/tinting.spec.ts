@@ -14,7 +14,7 @@ const PAINT = {
   tradeLabel: null,
   warrantyMonths: null,
   isSerialTracked: false,
-};
+} as const;
 
 async function setUpPaintShop(page: Page) {
   await page.evaluate(async (paint) => {
