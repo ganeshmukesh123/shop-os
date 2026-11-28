@@ -5,5 +5,6 @@ export interface IItemRowActionsProps {
   onEdit: () => void;
   onAdjust: () => void;
   onUnits: () => void;
+  onMerge: () => void;
   onToggleActive: () => void;
 }

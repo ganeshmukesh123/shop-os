@@ -10,8 +10,8 @@ import { call, messageOf } from "../../../shared/api/api";
 import { useItems } from "../hooks/useItems";
 import { ItemForm } from "../ItemForm";
 import { NewFamilyButton } from "../../items/NewFamilyButton";
-import { UnitsDialog } from "../../items/UnitsDialog";
 import { ItemRowActions } from "./components/ItemRowActions";
+import { ItemRowDialog, type IItemRowDialog } from "./components/ItemRowDialog";
 
 export function ItemsScreen() {
   const toast = useToast();
@@ -21,7 +21,7 @@ export function ItemsScreen() {
   const { items, total, loading, reload } = useItems({ query, includeInactive, needsCorrection });
   const [form, setForm] = useState<{ item?: Item } | null>(null);
   const [adjusting, setAdjusting] = useState<Item | null>(null);
-  const [unitsOf, setUnitsOf] = useState<Item | null>(null);
+  const [rowDialog, setRowDialog] = useState<IItemRowDialog | null>(null);
 
   async function toggleActive(it: Item) {
     try {
@@ -105,7 +105,8 @@ export function ItemsScreen() {
                   item={it}
                   onEdit={() => setForm({ item: it })}
                   onAdjust={() => setAdjusting(it)}
-                  onUnits={() => setUnitsOf(it)}
+                  onUnits={() => setRowDialog({ kind: "units", item: it })}
+                  onMerge={() => setRowDialog({ kind: "merge", item: it })}
                   onToggleActive={() => void toggleActive(it)}
                 />
               </Table.Cell>
@@ -128,7 +129,17 @@ export function ItemsScreen() {
           }}
         />
       )}
-      {unitsOf && <UnitsDialog item={unitsOf} onClose={() => setUnitsOf(null)} />}
+      {rowDialog && (
+        <ItemRowDialog
+          dialog={rowDialog}
+          onClose={() => setRowDialog(null)}
+          onMerged={(survivor) => {
+            setRowDialog(null);
+            toast("success", uiText.merge.merged.replace("{survivor}", survivor.name));
+            reload();
+          }}
+        />
+      )}
       {adjusting && (
         <AdjustStockDialog
           item={adjusting}
