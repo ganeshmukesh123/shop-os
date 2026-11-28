@@ -4,6 +4,7 @@ import {
   parseRupees,
   type FamiliesCreateInput,
   type FamilyKind,
+  type ItemsCheckDuplicatesInput,
 } from "@shopos/core";
 import { uiText } from "../../../../shared/text/strings";
 import { paintErrors, paintVariantFields } from "./paintDraft";
@@ -45,6 +46,21 @@ function draftErrors(state: IFamilyFormState, readRows: readonly IReadRow[]): st
     readRows.some(({ pricePaise }) => pricePaise === null) ? text.priceInvalid : null,
     readRows.some(({ openingQtyMilli }) => openingQtyMilli === null) ? text.openingInvalid : null,
   ].filter((message): message is NonNullable<typeof message> => message !== null);
+}
+
+/** One duplicate check per kept variant: its full name ("Pipe PVC 1 in") and attribute values. */
+export function duplicateDrafts(
+  input: FamiliesCreateInput,
+  rows: readonly IPreviewRow[],
+): ItemsCheckDuplicatesInput["draft"][] {
+  return rows
+    .filter((row) => row.isChosen)
+    .map((row) => ({
+      name: `${input.family.name} ${row.displayName}`.trim(),
+      brandId: input.family.brandId ?? null,
+      categoryId: input.family.categoryId ?? null,
+      axisSignature: row.axisSignature,
+    }));
 }
 
 /**

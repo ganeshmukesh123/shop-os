@@ -37,7 +37,10 @@ export function ItemsScreen() {
       <Flex justify="between" align="center">
         <Heading size="6">{uiText.items.title}</Heading>
         <Flex gap="3">
-          <NewFamilyButton onSaved={() => reload()} />
+          <NewFamilyButton
+            onSaved={() => reload()}
+            onOpenExisting={(duplicate) => setQuery(duplicate.displayName)}
+          />
           <Button size="3" onClick={() => setForm({})}>
             {uiText.items.add}
           </Button>

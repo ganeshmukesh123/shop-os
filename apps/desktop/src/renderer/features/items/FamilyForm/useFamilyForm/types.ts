@@ -1,4 +1,4 @@
-import type { FamilyKind, IFamily, PetroleumClass } from "@shopos/core";
+import type { FamilyKind, IFamily, ILikelyDuplicate, PetroleumClass } from "@shopos/core";
 
 /** One combination in the preview table, with what the owner typed for it. */
 export interface IPreviewRow {
@@ -52,6 +52,9 @@ export interface IFamilyForm extends IFamilyFormState {
   toggleRow: (axisSignature: string) => void;
   setRowPrice: (axisSignature: string, priceText: string) => void;
   setRowOpening: (axisSignature: string, openingText: string) => void;
-  save: () => Promise<void>;
+  /** Save, first showing likely duplicates unless the owner chose Save anyway */
+  save: (isDuplicateAccepted?: boolean) => Promise<void>;
+  duplicates: ILikelyDuplicate[];
+  saveAnyway: () => void;
   setPaint: (change: Partial<IPaintFields>) => void;
 }

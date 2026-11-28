@@ -3,6 +3,7 @@ import { StatusMessage } from "../../../shared/components/StatusMessage";
 import { uiText } from "../../../shared/text/strings";
 import { VariantPreview } from "../VariantPreview";
 import { AxisPicker } from "./components/AxisPicker";
+import { DuplicateWarning } from "./components/DuplicateWarning";
 import { FamilyHeaderFields } from "./components/FamilyHeaderFields";
 import { PaintFields } from "./components/PaintFields";
 import type { IFamilyFormProps } from "./types";
@@ -12,7 +13,8 @@ import { useFamilyForm } from "./useFamilyForm";
  * A new item family (spec 002 T036, quickstart scenario 1): its own fields, up to 4 attributes,
  * the combinations to keep with a price and opening stock each, then Save.
  */
-export function FamilyForm({ categories, brands, units, onClose, onSaved }: IFamilyFormProps) {
+export function FamilyForm(props: IFamilyFormProps) {
+  const { categories, brands, units, onClose, onSaved, onOpenExisting } = props;
   const form = useFamilyForm({ onSaved });
   const text = uiText.family;
   return (
@@ -48,6 +50,13 @@ export function FamilyForm({ categories, brands, units, onClose, onSaved }: IFam
             <StatusMessage role="danger" label={text.errorLabel}>
               {form.errors.join(" ")}
             </StatusMessage>
+          )}
+          {form.duplicates.length > 0 && (
+            <DuplicateWarning
+              duplicates={form.duplicates}
+              onSaveAnyway={form.saveAnyway}
+              onOpenExisting={onOpenExisting}
+            />
           )}
           <Flex gap="3" justify="end">
             <Button size="3" variant="soft" color="gray" onClick={onClose}>
