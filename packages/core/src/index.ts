@@ -11,6 +11,7 @@ export * from "./search/likelyDuplicates";
 export * from "./tinting/resolveTintFormula";
 export * from "./tinting/tintPricing";
 export * from "./tinting/tintCost";
+export * from "./tinting/tintCommands";
 export * from "./numbering";
 export * from "./numberGap";
 export * from "./catalogue/axisSignature";
