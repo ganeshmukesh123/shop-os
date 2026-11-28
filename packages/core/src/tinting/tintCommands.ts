@@ -59,3 +59,17 @@ export interface ITintShade {
   customerLabel: string | null;
   siteLabel: string | null;
 }
+
+export const tintResolveInput = z.object({
+  productFamilyId: z.string().min(1),
+  shadeId: z.string().min(1),
+  /** The base can chosen: its base type and pack size pick the formula */
+  packVariantId: z.string().min(1),
+});
+export type TintResolveInput = z.infer<typeof tintResolveInput>;
+
+export const tintRepeatListInput = z.object({
+  customerName: z.string().max(80).optional(),
+  siteLabel: z.string().max(80).optional(),
+});
+export type TintRepeatListInput = z.infer<typeof tintRepeatListInput>;
