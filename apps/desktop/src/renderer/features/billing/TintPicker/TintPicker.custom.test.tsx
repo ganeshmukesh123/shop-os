@@ -134,6 +134,17 @@ describe("TintPicker custom shade (spec 002 T064)", () => {
     expect(screen.getByRole("button", { name: text.add })).toBeTruthy();
   });
 
+  it("offers a custom shade when no shade is chosen yet, so the first shade can be made here", async () => {
+    renderPicker();
+
+    await userEvent.click(await screen.findByRole("radio", { name: "Royale White 1 L" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: uiText.bill.tintPicker.customShade }),
+    );
+
+    expect(screen.getByRole("textbox", { name: uiText.bill.tintPicker.custom.name })).toBeTruthy();
+  });
+
   it("does not save a shade without a name or a colorant amount", async () => {
     const fake = renderPicker();
     const text = uiText.bill.tintPicker;
