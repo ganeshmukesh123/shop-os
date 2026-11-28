@@ -19,6 +19,9 @@ function buildLine(item: Item, lineKey: string): DraftLine {
     rate: paiseToInput(item.pricePaise),
     disc: "",
     discMode: "rupees",
+    // Its other units are read after the line is added (useLineConversions, spec 002 T039)
+    familyId: item.familyId,
+    enteredUom: null,
   };
 }
 

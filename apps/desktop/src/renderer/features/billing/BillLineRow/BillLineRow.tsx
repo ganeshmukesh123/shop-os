@@ -4,6 +4,7 @@ import { formatRupees, type DraftLine, type DraftLineResult } from "@shopos/core
 import { LAYOUT } from "../../../shared/constants/layout";
 import { StatusMessage } from "../../../shared/components/StatusMessage/StatusMessage";
 import { uiText } from "../../../shared/text/strings";
+import { LineUnitCell } from "./components/LineUnitCell";
 
 interface Props {
   line: DraftLine;
@@ -23,9 +24,7 @@ export const BillLineRow = forwardRef<HTMLInputElement, Props>(function BillLine
       <Table.Row align="center">
         <Table.RowHeaderCell>
           {line.name}
-          <Text as="div" size="1" color="gray">
-            {line.unit}
-          </Text>
+          <LineUnitCell line={line} result={result} onChange={onChange} />
         </Table.RowHeaderCell>
         <Table.Cell width={LAYOUT.quantityColumnWidth}>
           <TextField.Root
