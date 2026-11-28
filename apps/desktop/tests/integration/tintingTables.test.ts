@@ -4,7 +4,7 @@ import { insertTargetSeriesAndBill } from "../helpers/schemaRows";
 import { createTestDb } from "../helpers/testDb";
 
 /**
- * Spec 002 T020, second half (migration 0021): the tinting tables, the new bill_line columns,
+ * Spec 002 T020, second half (migration 0022): the tinting tables, the new bill_line columns,
  * bill_line_tint, and the triggers that freeze a formula once a bill uses it
  * (data-model.md "Tinting", "Sales (changed)").
  */

@@ -6,8 +6,8 @@ import { billLine } from "./schema";
 import { base } from "./schemaBase";
 
 /**
- * Paint tinting (spec 002 T020, migration 0021; data-model.md "Tinting"). A formula used on a
- * bill is frozen by triggers in 0021; a change saves a new version, and the current formula is
+ * Paint tinting (spec 002 T020, migration 0022; data-model.md "Tinting"). A formula used on a
+ * bill is frozen by triggers in 0022; a change saves a new version, and the current formula is
  * the highest version (never a stored flag).
  */
 export const tintShade = sqliteTable(

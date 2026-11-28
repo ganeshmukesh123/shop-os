@@ -1,8 +1,8 @@
 {
+  "id": "013701bd-66be-4c4e-85dc-f60d9efb94fe",
+  "prevId": "cccd16de-dd24-4833-bc2d-b68a7c8a96e1",
   "version": "6",
   "dialect": "sqlite",
-  "id": "4fd3cdbc-d6d0-4e14-8a7f-06571ab86184",
-  "prevId": "cccd16de-dd24-4833-bc2d-b68a7c8a96e1",
   "tables": {
     "backup_log": {
       "name": "backup_log",
@@ -309,15 +309,15 @@
         "bill_number_series_id_number_series_id_fk": {
           "name": "bill_number_series_id_number_series_id_fk",
           "tableFrom": "bill",
-          "tableTo": "number_series",
           "columnsFrom": [
             "number_series_id"
           ],
+          "tableTo": "number_series",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -461,49 +461,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
-        },
-        "entered_uom": {
-          "name": "entered_uom",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "qty_entered_milli": {
-          "name": "qty_entered_milli",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "tint_formula_id": {
-          "name": "tint_formula_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "tint_charge_paise": {
-          "name": "tint_charge_paise",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "cost_paise": {
-          "name": "cost_paise",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "is_returnable": {
-          "name": "is_returnable",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 1
         }
       },
       "indexes": {
@@ -513,54 +470,34 @@
             "bill_id"
           ],
           "isUnique": false
-        },
-        "bill_line_tint_formula_idx": {
-          "name": "bill_line_tint_formula_idx",
-          "columns": [
-            "tint_formula_id"
-          ],
-          "isUnique": false
         }
       },
       "foreignKeys": {
         "bill_line_bill_id_bill_id_fk": {
           "name": "bill_line_bill_id_bill_id_fk",
           "tableFrom": "bill_line",
-          "tableTo": "bill",
           "columnsFrom": [
             "bill_id"
           ],
+          "tableTo": "bill",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "bill_line_variant_id_item_variant_id_fk": {
           "name": "bill_line_variant_id_item_variant_id_fk",
           "tableFrom": "bill_line",
-          "tableTo": "item_variant",
           "columnsFrom": [
             "variant_id"
           ],
+          "tableTo": "item_variant",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "bill_line_tint_formula_id_tint_formula_id_fk": {
-          "name": "bill_line_tint_formula_id_tint_formula_id_fk",
-          "tableFrom": "bill_line",
-          "tableTo": "tint_formula",
-          "columnsFrom": [
-            "tint_formula_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -675,15 +612,15 @@
         "bill_number_gap_number_series_id_number_series_id_fk": {
           "name": "bill_number_gap_number_series_id_number_series_id_fk",
           "tableFrom": "bill_number_gap",
-          "tableTo": "number_series",
           "columnsFrom": [
             "number_series_id"
           ],
+          "tableTo": "number_series",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -783,45 +720,45 @@
         "bill_tender_bill_id_bill_id_fk": {
           "name": "bill_tender_bill_id_bill_id_fk",
           "tableFrom": "bill_tender",
-          "tableTo": "bill",
           "columnsFrom": [
             "bill_id"
           ],
+          "tableTo": "bill",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "bill_tender_business_id_mode_tender_mode_business_id_code_fk": {
           "name": "bill_tender_business_id_mode_tender_mode_business_id_code_fk",
           "tableFrom": "bill_tender",
-          "tableTo": "tender_mode",
           "columnsFrom": [
             "business_id",
             "mode"
           ],
+          "tableTo": "tender_mode",
           "columnsTo": [
             "business_id",
             "code"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "bill_tender_business_id_status_tender_status_business_id_code_fk": {
           "name": "bill_tender_business_id_status_tender_status_business_id_code_fk",
           "tableFrom": "bill_tender",
-          "tableTo": "tender_status",
           "columnsFrom": [
             "business_id",
             "status"
           ],
+          "tableTo": "tender_status",
           "columnsTo": [
             "business_id",
             "code"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1393,30 +1330,30 @@
         "category_parent_id_category_id_fk": {
           "name": "category_parent_id_category_id_fk",
           "tableFrom": "category",
-          "tableTo": "category",
           "columnsFrom": [
             "parent_id"
           ],
+          "tableTo": "category",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "category_business_id_default_base_uom_uom_business_id_code_fk": {
           "name": "category_business_id_default_base_uom_uom_business_id_code_fk",
           "tableFrom": "category",
-          "tableTo": "uom",
           "columnsFrom": [
             "business_id",
             "default_base_uom"
           ],
+          "tableTo": "uom",
           "columnsTo": [
             "business_id",
             "code"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1624,28 +1561,28 @@
         "item_family_category_id_category_id_fk": {
           "name": "item_family_category_id_category_id_fk",
           "tableFrom": "item_family",
-          "tableTo": "category",
           "columnsFrom": [
             "category_id"
           ],
+          "tableTo": "category",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "item_family_brand_id_brand_id_fk": {
           "name": "item_family_brand_id_brand_id_fk",
           "tableFrom": "item_family",
-          "tableTo": "brand",
           "columnsFrom": [
             "brand_id"
           ],
+          "tableTo": "brand",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1912,28 +1849,28 @@
         "item_variant_family_id_item_family_id_fk": {
           "name": "item_variant_family_id_item_family_id_fk",
           "tableFrom": "item_variant",
-          "tableTo": "item_family",
           "columnsFrom": [
             "family_id"
           ],
+          "tableTo": "item_family",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "item_variant_merged_into_id_item_variant_id_fk": {
           "name": "item_variant_merged_into_id_item_variant_id_fk",
           "tableFrom": "item_variant",
-          "tableTo": "item_variant",
           "columnsFrom": [
             "merged_into_id"
           ],
+          "tableTo": "item_variant",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2227,17 +2164,17 @@
         "movement_type_business_id_required_doc_type_movement_doc_type_business_id_code_fk": {
           "name": "movement_type_business_id_required_doc_type_movement_doc_type_business_id_code_fk",
           "tableFrom": "movement_type",
-          "tableTo": "movement_doc_type",
           "columnsFrom": [
             "business_id",
             "required_doc_type"
           ],
+          "tableTo": "movement_doc_type",
           "columnsTo": [
             "business_id",
             "code"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2495,17 +2432,17 @@
         "exception_event_business_id_kind_exception_kind_business_id_code_fk": {
           "name": "exception_event_business_id_kind_exception_kind_business_id_code_fk",
           "tableFrom": "exception_event",
-          "tableTo": "exception_kind",
           "columnsFrom": [
             "business_id",
             "kind"
           ],
+          "tableTo": "exception_kind",
           "columnsTo": [
             "business_id",
             "code"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2681,41 +2618,41 @@
         "item_merge_log_survivor_id_item_variant_id_fk": {
           "name": "item_merge_log_survivor_id_item_variant_id_fk",
           "tableFrom": "item_merge_log",
-          "tableTo": "item_variant",
           "columnsFrom": [
             "survivor_id"
           ],
+          "tableTo": "item_variant",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "item_merge_log_merged_id_item_variant_id_fk": {
           "name": "item_merge_log_merged_id_item_variant_id_fk",
           "tableFrom": "item_merge_log",
-          "tableTo": "item_variant",
           "columnsFrom": [
             "merged_id"
           ],
+          "tableTo": "item_variant",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "item_merge_log_merge_log_id_item_merge_log_id_fk": {
           "name": "item_merge_log_merge_log_id_item_merge_log_id_fk",
           "tableFrom": "item_merge_log",
-          "tableTo": "item_merge_log",
           "columnsFrom": [
             "merge_log_id"
           ],
+          "tableTo": "item_merge_log",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2972,84 +2909,84 @@
         "stock_movement_variant_id_item_variant_id_fk": {
           "name": "stock_movement_variant_id_item_variant_id_fk",
           "tableFrom": "stock_movement",
-          "tableTo": "item_variant",
           "columnsFrom": [
             "variant_id"
           ],
+          "tableTo": "item_variant",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "stock_movement_from_location_id_location_id_fk": {
           "name": "stock_movement_from_location_id_location_id_fk",
           "tableFrom": "stock_movement",
-          "tableTo": "location",
           "columnsFrom": [
             "from_location_id"
           ],
+          "tableTo": "location",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "stock_movement_to_location_id_location_id_fk": {
           "name": "stock_movement_to_location_id_location_id_fk",
           "tableFrom": "stock_movement",
-          "tableTo": "location",
           "columnsFrom": [
             "to_location_id"
           ],
+          "tableTo": "location",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "stock_movement_batch_id_item_batch_id_fk": {
           "name": "stock_movement_batch_id_item_batch_id_fk",
           "tableFrom": "stock_movement",
-          "tableTo": "item_batch",
           "columnsFrom": [
             "batch_id"
           ],
+          "tableTo": "item_batch",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "stock_movement_business_id_movement_type_movement_type_business_id_code_fk": {
           "name": "stock_movement_business_id_movement_type_movement_type_business_id_code_fk",
           "tableFrom": "stock_movement",
-          "tableTo": "movement_type",
           "columnsFrom": [
             "business_id",
             "movement_type"
           ],
+          "tableTo": "movement_type",
           "columnsTo": [
             "business_id",
             "code"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "stock_movement_business_id_doc_type_movement_doc_type_business_id_code_fk": {
           "name": "stock_movement_business_id_doc_type_movement_doc_type_business_id_code_fk",
           "tableFrom": "stock_movement",
-          "tableTo": "movement_doc_type",
           "columnsFrom": [
             "business_id",
             "doc_type"
           ],
+          "tableTo": "movement_doc_type",
           "columnsTo": [
             "business_id",
             "code"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3066,688 +3003,6 @@
         "stock_movement_note_len": {
           "name": "stock_movement_note_len",
           "value": "\"stock_movement\".\"note\" is null or length(\"stock_movement\".\"note\") <= 200"
-        }
-      }
-    },
-    "bill_line_tint": {
-      "name": "bill_line_tint",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "business_id": {
-          "name": "business_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "shop_id": {
-          "name": "shop_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "bill_line_id": {
-          "name": "bill_line_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "colorant_variant_id": {
-          "name": "colorant_variant_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "colorant_name_snapshot": {
-          "name": "colorant_name_snapshot",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "qty_milli": {
-          "name": "qty_milli",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "cost_paise": {
-          "name": "cost_paise",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "bill_line_tint_colorant_uq": {
-          "name": "bill_line_tint_colorant_uq",
-          "columns": [
-            "bill_line_id",
-            "colorant_variant_id"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "bill_line_tint_bill_line_id_bill_line_id_fk": {
-          "name": "bill_line_tint_bill_line_id_bill_line_id_fk",
-          "tableFrom": "bill_line_tint",
-          "tableTo": "bill_line",
-          "columnsFrom": [
-            "bill_line_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "bill_line_tint_colorant_variant_id_item_variant_id_fk": {
-          "name": "bill_line_tint_colorant_variant_id_item_variant_id_fk",
-          "tableFrom": "bill_line_tint",
-          "tableTo": "item_variant",
-          "columnsFrom": [
-            "colorant_variant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "bill_line_tint_qty_pos": {
-          "name": "bill_line_tint_qty_pos",
-          "value": "\"bill_line_tint\".\"qty_milli\" > 0"
-        },
-        "bill_line_tint_cost_nonneg": {
-          "name": "bill_line_tint_cost_nonneg",
-          "value": "\"bill_line_tint\".\"cost_paise\" >= 0"
-        }
-      }
-    },
-    "tint_charge_rule": {
-      "name": "tint_charge_rule",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "business_id": {
-          "name": "business_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "shop_id": {
-          "name": "shop_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "declared_qty_milli": {
-          "name": "declared_qty_milli",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "declared_uom": {
-          "name": "declared_uom",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "charge_paise": {
-          "name": "charge_paise",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "tint_charge_rule_pack_uq": {
-          "name": "tint_charge_rule_pack_uq",
-          "columns": [
-            "business_id",
-            "declared_uom",
-            "declared_qty_milli"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "tint_charge_rule_qty_pos": {
-          "name": "tint_charge_rule_qty_pos",
-          "value": "\"tint_charge_rule\".\"declared_qty_milli\" > 0"
-        },
-        "tint_charge_rule_charge_nonneg": {
-          "name": "tint_charge_rule_charge_nonneg",
-          "value": "\"tint_charge_rule\".\"charge_paise\" >= 0"
-        }
-      }
-    },
-    "tint_formula": {
-      "name": "tint_formula",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "business_id": {
-          "name": "business_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "shop_id": {
-          "name": "shop_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "shade_id": {
-          "name": "shade_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "base_variant_id": {
-          "name": "base_variant_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "version": {
-          "name": "version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "tint_formula_version_uq": {
-          "name": "tint_formula_version_uq",
-          "columns": [
-            "shade_id",
-            "base_variant_id",
-            "version"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "tint_formula_shade_id_tint_shade_id_fk": {
-          "name": "tint_formula_shade_id_tint_shade_id_fk",
-          "tableFrom": "tint_formula",
-          "tableTo": "tint_shade",
-          "columnsFrom": [
-            "shade_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "tint_formula_base_variant_id_item_variant_id_fk": {
-          "name": "tint_formula_base_variant_id_item_variant_id_fk",
-          "tableFrom": "tint_formula",
-          "tableTo": "item_variant",
-          "columnsFrom": [
-            "base_variant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "tint_formula_version_pos": {
-          "name": "tint_formula_version_pos",
-          "value": "\"tint_formula\".\"version\" >= 1"
-        }
-      }
-    },
-    "tint_formula_line": {
-      "name": "tint_formula_line",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "business_id": {
-          "name": "business_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "shop_id": {
-          "name": "shop_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "formula_id": {
-          "name": "formula_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "colorant_variant_id": {
-          "name": "colorant_variant_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "qty_milli": {
-          "name": "qty_milli",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "tint_formula_line_colorant_uq": {
-          "name": "tint_formula_line_colorant_uq",
-          "columns": [
-            "formula_id",
-            "colorant_variant_id"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "tint_formula_line_formula_id_tint_formula_id_fk": {
-          "name": "tint_formula_line_formula_id_tint_formula_id_fk",
-          "tableFrom": "tint_formula_line",
-          "tableTo": "tint_formula",
-          "columnsFrom": [
-            "formula_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "tint_formula_line_colorant_variant_id_item_variant_id_fk": {
-          "name": "tint_formula_line_colorant_variant_id_item_variant_id_fk",
-          "tableFrom": "tint_formula_line",
-          "tableTo": "item_variant",
-          "columnsFrom": [
-            "colorant_variant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "tint_formula_line_qty_pos": {
-          "name": "tint_formula_line_qty_pos",
-          "value": "\"tint_formula_line\".\"qty_milli\" > 0"
-        }
-      }
-    },
-    "tint_shade": {
-      "name": "tint_shade",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "business_id": {
-          "name": "business_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "shop_id": {
-          "name": "shop_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "shade_code": {
-          "name": "shade_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "shade_name": {
-          "name": "shade_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "brand_id": {
-          "name": "brand_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "shade_card": {
-          "name": "shade_card",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "source": {
-          "name": "source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "customer_label": {
-          "name": "customer_label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "site_label": {
-          "name": "site_label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "party_id": {
-          "name": "party_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "tint_shade_library_code_uq": {
-          "name": "tint_shade_library_code_uq",
-          "columns": [
-            "brand_id",
-            "shade_code"
-          ],
-          "isUnique": true,
-          "where": "\"tint_shade\".\"source\" = 'library'"
-        }
-      },
-      "foreignKeys": {
-        "tint_shade_brand_id_brand_id_fk": {
-          "name": "tint_shade_brand_id_brand_id_fk",
-          "tableFrom": "tint_shade",
-          "tableTo": "brand",
-          "columnsFrom": [
-            "brand_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "tint_shade_code_len": {
-          "name": "tint_shade_code_len",
-          "value": "length(\"tint_shade\".\"shade_code\") between 1 and 20"
-        },
-        "tint_shade_name_len": {
-          "name": "tint_shade_name_len",
-          "value": "length(\"tint_shade\".\"shade_name\") between 1 and 60"
-        },
-        "tint_shade_card_len": {
-          "name": "tint_shade_card_len",
-          "value": "\"tint_shade\".\"shade_card\" is null or length(\"tint_shade\".\"shade_card\") <= 60"
-        },
-        "tint_shade_source_enum": {
-          "name": "tint_shade_source_enum",
-          "value": "\"tint_shade\".\"source\" in ('library', 'custom')"
-        },
-        "tint_shade_labels_len": {
-          "name": "tint_shade_labels_len",
-          "value": "(\"tint_shade\".\"customer_label\" is null or length(\"tint_shade\".\"customer_label\") <= 80) and (\"tint_shade\".\"site_label\" is null or length(\"tint_shade\".\"site_label\") <= 80)"
-        },
-        "tint_shade_custom_labelled": {
-          "name": "tint_shade_custom_labelled",
-          "value": "\"tint_shade\".\"source\" = 'library' or coalesce(trim(\"tint_shade\".\"customer_label\", char(9, 10, 11, 12, 13, 32)), '') <> '' or coalesce(trim(\"tint_shade\".\"site_label\", char(9, 10, 11, 12, 13, 32)), '') <> ''"
-        }
-      }
-    },
-    "tint_shade_price": {
-      "name": "tint_shade_price",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "business_id": {
-          "name": "business_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "shop_id": {
-          "name": "shop_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "shade_id": {
-          "name": "shade_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "base_variant_id": {
-          "name": "base_variant_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "price_paise": {
-          "name": "price_paise",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "tint_shade_price_uq": {
-          "name": "tint_shade_price_uq",
-          "columns": [
-            "shade_id",
-            "base_variant_id"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "tint_shade_price_shade_id_tint_shade_id_fk": {
-          "name": "tint_shade_price_shade_id_tint_shade_id_fk",
-          "tableFrom": "tint_shade_price",
-          "tableTo": "tint_shade",
-          "columnsFrom": [
-            "shade_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "tint_shade_price_base_variant_id_item_variant_id_fk": {
-          "name": "tint_shade_price_base_variant_id_item_variant_id_fk",
-          "tableFrom": "tint_shade_price",
-          "tableTo": "item_variant",
-          "columnsFrom": [
-            "base_variant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "tint_shade_price_pos": {
-          "name": "tint_shade_price_pos",
-          "value": "\"tint_shade_price\".\"price_paise\" > 0"
         }
       }
     },
@@ -3832,15 +3087,15 @@
         "item_barcode_variant_id_item_variant_id_fk": {
           "name": "item_barcode_variant_id_item_variant_id_fk",
           "tableFrom": "item_barcode",
-          "tableTo": "item_variant",
           "columnsFrom": [
             "variant_id"
           ],
+          "tableTo": "item_variant",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3944,15 +3199,15 @@
         "item_batch_variant_id_item_variant_id_fk": {
           "name": "item_batch_variant_id_item_variant_id_fk",
           "tableFrom": "item_batch",
-          "tableTo": "item_variant",
           "columnsFrom": [
             "variant_id"
           ],
+          "tableTo": "item_variant",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4046,28 +3301,28 @@
         "item_price_variant_id_item_variant_id_fk": {
           "name": "item_price_variant_id_item_variant_id_fk",
           "tableFrom": "item_price",
-          "tableTo": "item_variant",
           "columnsFrom": [
             "variant_id"
           ],
+          "tableTo": "item_variant",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "item_price_tier_id_price_tier_id_fk": {
           "name": "item_price_tier_id_price_tier_id_fk",
           "tableFrom": "item_price",
-          "tableTo": "price_tier",
           "columnsFrom": [
             "tier_id"
           ],
+          "tableTo": "price_tier",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4161,15 +3416,15 @@
         "item_sales_stat_variant_id_item_variant_id_fk": {
           "name": "item_sales_stat_variant_id_item_variant_id_fk",
           "tableFrom": "item_sales_stat",
-          "tableTo": "item_variant",
           "columnsFrom": [
             "variant_id"
           ],
+          "tableTo": "item_variant",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4262,15 +3517,15 @@
         "item_search_name_variant_id_item_variant_id_fk": {
           "name": "item_search_name_variant_id_item_variant_id_fk",
           "tableFrom": "item_search_name",
-          "tableTo": "item_variant",
           "columnsFrom": [
             "variant_id"
           ],
+          "tableTo": "item_variant",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4445,30 +3700,30 @@
         "unit_conversion_variant_id_item_variant_id_fk": {
           "name": "unit_conversion_variant_id_item_variant_id_fk",
           "tableFrom": "unit_conversion",
-          "tableTo": "item_variant",
           "columnsFrom": [
             "variant_id"
           ],
+          "tableTo": "item_variant",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "unit_conversion_business_id_uom_code_uom_business_id_code_fk": {
           "name": "unit_conversion_business_id_uom_code_uom_business_id_code_fk",
           "tableFrom": "unit_conversion",
-          "tableTo": "uom",
           "columnsFrom": [
             "business_id",
             "uom_code"
           ],
+          "tableTo": "uom",
           "columnsTo": [
             "business_id",
             "code"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4484,9 +3739,9 @@
   "views": {},
   "enums": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {},
-    "columns": {}
+    "tables": {}
   },
   "internal": {
     "indexes": {

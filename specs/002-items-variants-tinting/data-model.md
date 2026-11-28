@@ -126,6 +126,9 @@ Rules checked in `@shopos/core` (`validateVariantDraft`):
 One row per variant: `sold_qty_90d_milli`, `bill_count_90d`, `last_sold_at`. Updated in the bill-save and cancel transactions and rebuildable from bill lines (`rebuildItemSalesStats`). Holds nothing that cannot be recomputed.
 
 ### `item_merge_log` (new, append-only)
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:0a47e6d679323a6615b3963a3530be040e1698ba37b27cb711d0cda907c73771 -->
 
 | Field                                    | Rule                                                                                                                      |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
@@ -139,8 +142,9 @@ One row per variant: `sold_qty_90d_milli`, `bill_count_90d`, `last_sold_at`. Upd
 | user_label                               | text (the user name; roles arrive in 005)                                                                                 |
 | reversible_until                         | epoch ms = merged time + 30 days (for `merge` rows)                                                                       |
 
-Triggers reject UPDATE and DELETE.
+Triggers reject UPDATE and DELETE. A BEFORE INSERT trigger also rejects a second reversal for the same merge, including via `INSERT OR REPLACE`, and any insert that reuses an existing reversal’s row ID.
 
+<!-- /coderabbit-ai-generated:v1 -->
 ### `exception_event` (new)
 
 `kind` (`duplicate_barcode`, `duplicate_suspect`), `subject_type` (`item_variant`), `subject_ids` JSON array, `detail` text up to 200, `status` (`open`, `resolved`), `resolved_at`, `resolution_note`. Status may change from `open` to `resolved` only (trigger). Features 005 and 011 add kinds.
