@@ -19,6 +19,9 @@ import { electronRenderer } from "../services/electronRenderer";
 import { InventoryService } from "../services/InventoryService";
 import { CatalogueService } from "../services/catalogue";
 import { FamilyService } from "../services/families";
+import { BarcodeService } from "../services/barcode";
+import { DuplicateService } from "../services/duplicates";
+import { MergeService } from "../services/merge";
 import { SearchService } from "../services/search";
 import { PrintService } from "../services/PrintService";
 import { SettingsService } from "../services/SettingsService";
@@ -58,6 +61,9 @@ function buildServices(state: IAppState): Services {
     search,
     catalogue: new CatalogueService(db, context),
     families: new FamilyService(db, context, search),
+    barcodes: new BarcodeService(db, context),
+    duplicates: new DuplicateService(db, context),
+    merges: new MergeService(db, context, search),
     billing: new BillingService(db, context),
     settings: new SettingsService(db, context),
     print: new PrintService(

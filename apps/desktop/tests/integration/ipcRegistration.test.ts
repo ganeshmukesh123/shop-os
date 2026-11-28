@@ -1,6 +1,6 @@
 import { COMMAND_NAMES, type CommandName } from "@shopos/core";
 import { buildHandlersFixture } from "../helpers/handlersFixture";
-import { FAMILY_DISPATCH_CASES } from "../helpers/familyDispatchCases";
+import { FAMILY_DISPATCH_CASES, MERGE_DISPATCH_CASES } from "../helpers/familyDispatchCases";
 
 const electronMocks = vi.hoisted(() => ({ handle: vi.fn() }));
 vi.mock("electron", () => ({ ipcMain: { handle: electronMocks.handle } }));
@@ -144,6 +144,7 @@ const DISPATCH_CASES = {
     expected: { ok: true, data: { path: PICKED_PDF_PATH } },
   },
   ...FAMILY_DISPATCH_CASES,
+  ...MERGE_DISPATCH_CASES,
 } satisfies Record<CommandName, { input: unknown; expected: object }>;
 
 beforeEach(() => {

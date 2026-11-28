@@ -46,6 +46,10 @@ const EXPECTED_COMMAND_NAMES = [
   "variants.setConversions",
   "items.search",
   "families.grid",
+  "items.lookupBarcode",
+  "items.checkDuplicates",
+  "items.merge",
+  "items.merge.reverse",
 ];
 
 describe("command list", () => {

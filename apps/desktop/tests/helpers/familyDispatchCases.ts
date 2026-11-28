@@ -1,4 +1,4 @@
-import type { IFamilyCommandMap } from "@shopos/core";
+import type { IFamilyCommandMap, IMergeCommandMap } from "@shopos/core";
 
 /**
  * One dispatch case per spec 002 US1 command for ipcRegistration.test.ts: an input and the part of
@@ -38,3 +38,20 @@ export const FAMILY_DISPATCH_CASES = {
     expected: notFound,
   },
 } satisfies Record<keyof IFamilyCommandMap, { input: unknown; expected: object }>;
+
+/** The same for the US2 lookup, duplicate and merge commands. */
+export const MERGE_DISPATCH_CASES = {
+  "items.lookupBarcode": {
+    input: { code: "0000" },
+    expected: { ok: true, data: { variants: [] } },
+  },
+  "items.checkDuplicates": {
+    input: { draft: { name: "Gate valve", axisSignature: "" } },
+    expected: { ok: true, data: { candidates: [] } },
+  },
+  "items.merge": { input: { survivorId: "a", mergedId: "b", reason: "x" }, expected: notFound },
+  "items.merge.reverse": {
+    input: { mergeLogId: "no-such-merge", reason: "x" },
+    expected: notFound,
+  },
+} satisfies Record<keyof IMergeCommandMap, { input: unknown; expected: object }>;
