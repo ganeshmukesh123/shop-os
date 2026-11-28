@@ -82,6 +82,12 @@ type BillCommandName = Exclude<
   | keyof IMergeCommandMap
 >;
 
+/** After a bill is saved or cancelled, the bill search re-reads the 90-day sales (spec 002 T048). */
+function salesCountsRefreshedAfter<TResult>(search: SearchService, result: TResult): TResult {
+  search.refreshSalesCounts();
+  return result;
+}
+
 function createItemHandlers(services: Services): Pick<Handlers, ItemCommandName> {
   return {
     "items.list": cmd<"items.list">(itemsListInput, (commandInput) =>
@@ -112,7 +118,7 @@ function createBillHandlers(services: Services): Pick<Handlers, BillCommandName>
       payload: services.billing.loadDraft(),
     })),
     "bills.save": cmd<"bills.save">(billsSaveInput, (commandInput) =>
-      services.billing.saveBill(commandInput),
+      salesCountsRefreshedAfter(services.search, services.billing.saveBill(commandInput)),
     ),
     "bills.list": cmd<"bills.list">(billsListInput, (commandInput) =>
       services.billing.listBills(commandInput),
@@ -121,7 +127,7 @@ function createBillHandlers(services: Services): Pick<Handlers, BillCommandName>
       services.billing.getBill(commandInput.id),
     ),
     "bills.cancel": cmd<"bills.cancel">(billsCancelInput, (commandInput) =>
-      services.billing.cancelBill(commandInput),
+      salesCountsRefreshedAfter(services.search, services.billing.cancelBill(commandInput)),
     ),
     "bills.gaps": cmd<"bills.gaps">(none(), () => ({ gaps: services.billing.listNumberGaps() })),
     "bills.print": cmd<"bills.print">(
