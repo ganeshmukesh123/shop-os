@@ -7,4 +7,6 @@ export const billGridText = {
   inactive: "Inactive",
   notStocked: "Not stocked",
   tab: "{values}",
+  unitFor: "Unit for {item}",
+  baseQuantity: "({quantity} {unit})",
 } as const;

@@ -9,6 +9,7 @@ import { useDraftAutosave } from "../hooks/useDraftAutosave";
 import { useBillForm } from "./hooks/useBillForm";
 import { useBillSave } from "./hooks/useBillSave";
 import { useItemSearch } from "./hooks/useItemSearch";
+import { useLineConversions } from "./hooks/useLineConversions";
 import { useQuantityFocus } from "./hooks/useQuantityFocus";
 import { BillView } from "../BillView";
 import { BillLinesTable } from "./components/BillLinesTable";
@@ -35,6 +36,7 @@ export function NewBillScreen() {
     removeLine,
     addItem,
   } = useBillForm(rememberLineToFocus);
+  useLineConversions(form.draft.lines, patchLine);
   const roundedTotal = useRoundedTotal(evaluation.grandTotalPaise);
   const { saved, isSaving, save, startNewBill } = useBillSave(form, evaluation, resetForm);
   const { query, matches, highlightedIndex, setQuery, setHighlightedIndex, clearSearch } =

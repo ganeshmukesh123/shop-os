@@ -13,13 +13,12 @@ function buildSaveInput(form: IBillForm, evaluation: DraftEvaluation) {
     customerName: form.customerName.trim() || undefined,
     paymentMode: form.paymentMode,
     billDiscountPaise: evaluation.billDiscountPaise,
+    // A line in another unit is sent as typed (2 roll); the main process converts it again
     lines: (evaluation.input ?? []).map(
-      ({ itemId, quantityMilli, ratePaise, lineDiscountPaise }) => ({
-        itemId,
-        quantityMilli,
-        ratePaise,
-        lineDiscountPaise,
-      }),
+      ({ itemId, quantityMilli, ratePaise, lineDiscountPaise, enteredUom, qtyEnteredMilli }) =>
+        enteredUom
+          ? { itemId, quantityMilli: qtyEnteredMilli!, ratePaise, lineDiscountPaise, enteredUom }
+          : { itemId, quantityMilli, ratePaise, lineDiscountPaise },
     ),
   };
 }
