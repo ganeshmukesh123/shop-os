@@ -5,6 +5,7 @@ export type ErrorCode =
   | "INVALID_BARCODE"
   | "NO_FORMULA"
   | "NOT_A_BASE"
+  | "NOT_A_COLORANT"
   | "LABEL_REQUIRED"
   | "ALREADY_MERGED"
   | "UNIT_MISMATCH"
