@@ -30,6 +30,7 @@ import { cmd, none } from "./command";
 import { createFamilyHandlers } from "./familyHandlers";
 import { createMergeHandlers } from "./mergeHandlers";
 import type { BarcodeService } from "../services/barcode";
+import type { DataIssueService } from "../services/dataIssues";
 import type { DuplicateService } from "../services/duplicates";
 import type { MergeService } from "../services/merge";
 import { createSystemHandlers, type SystemCommandName } from "./systemHandlers";
@@ -45,6 +46,7 @@ export interface Services {
   catalogue: CatalogueService;
   /** Spec 002 US2: barcode lookup, likely duplicates, merges */
   barcodes: BarcodeService;
+  dataIssues: DataIssueService;
   duplicates: DuplicateService;
   merges: MergeService;
   families: FamilyService;

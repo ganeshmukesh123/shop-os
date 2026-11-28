@@ -1,6 +1,9 @@
 import {
   CoreError,
   itemsMergeInput,
+  itemsMergeListInput,
+  type IMergeListRow,
+  type ItemsMergeListInput,
   type IMergeLog,
   type IVariant,
   type Item,
@@ -12,7 +15,7 @@ import { nowMs } from "../../db/ids";
 import type { Ctx } from "../../db/seed";
 import { FamilyRepository } from "../../repositories/FamilyRepository";
 import { ItemRepository } from "../../repositories/ItemRepository";
-import { MergeRepository } from "../../repositories/MergeRepository";
+import { listMerges, MergeRepository } from "../../repositories/MergeRepository";
 import { VariantCodesRepository } from "../../repositories/VariantCodesRepository";
 import type { SearchService } from "../search";
 import { moveLoggedStock } from "./moveLoggedStock";
@@ -59,6 +62,11 @@ export class MergeService {
     );
     this.search?.refreshAfterMerge(reverseLog.survivorId, reverseLog.mergedId);
     return { reverseLog };
+  }
+
+  /** items.merge.list: merges newest first, for the log with "Reverse" and the days left. */
+  list(raw: ItemsMergeListInput): { merges: IMergeListRow[]; total: number } {
+    return listMerges(this.db, this.ctx, itemsMergeListInput.parse(raw));
   }
 
   private readPair(handle: Handle, survivorId: string, mergedId: string) {

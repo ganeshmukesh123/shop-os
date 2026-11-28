@@ -1,5 +1,8 @@
 import {
+  exceptionsListInput,
+  exceptionsResolveInput,
   itemsCheckDuplicatesInput,
+  itemsMergeListInput,
   itemsLookupBarcodeInput,
   itemsMergeInput,
   itemsMergeReverseInput,
@@ -9,9 +12,10 @@ import {
 import { cmd } from "./command";
 import type { Handlers, Services } from "./handlers";
 
-/** items.lookupBarcode, items.checkDuplicates, items.merge and items.merge.reverse (spec 002 T047). */
+/** Spec 002 T047: barcode lookup, the duplicate check, merges and their log, and data issues. */
 export function createMergeHandlers({
   barcodes,
+  dataIssues,
   duplicates,
   merges,
 }: Services): Pick<Handlers, keyof IMergeCommandMap> {
@@ -26,6 +30,13 @@ export function createMergeHandlers({
     "items.merge": cmd<"items.merge">(itemsMergeInput, (input) => merges.merge(input)),
     "items.merge.reverse": cmd<"items.merge.reverse">(itemsMergeReverseInput, (input) =>
       merges.reverse(input),
+    ),
+    "items.merge.list": cmd<"items.merge.list">(itemsMergeListInput, (input) => merges.list(input)),
+    "exceptions.list": cmd<"exceptions.list">(exceptionsListInput, (input) =>
+      dataIssues.list(input),
+    ),
+    "exceptions.resolve": cmd<"exceptions.resolve">(exceptionsResolveInput, (input) =>
+      dataIssues.resolve(input),
     ),
   };
 }
