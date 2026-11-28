@@ -4,7 +4,7 @@ import { insertTargetSeriesAndBill } from "../helpers/schemaRows";
 import { createTestDb } from "../helpers/testDb";
 
 /**
- * Spec 002 T020, second half (migration 0021): the tinting tables, the new bill_line columns,
+ * Spec 002 T020, second half (migration 0022): the tinting tables, the new bill_line columns,
  * bill_line_tint, and the triggers that freeze a formula once a bill uses it
  * (data-model.md "Tinting", "Sales (changed)").
  */
@@ -100,7 +100,7 @@ describe("tint_shade (spec 002 T020)", () => {
     expect(shadeRow({ source: "custom", customer_label: "Mr Sharma" })).not.toThrow();
   });
 
-  it("needs a customer or site label on a custom shade", () => {
+  it("needs a nonblank customer or site label on a custom shade", () => {
     const { sqlite } = paintShop();
     const customShade = (columns: Record<string, unknown>) => () =>
       insertCatalogueRow(sqlite, "tint_shade", {
@@ -111,7 +111,9 @@ describe("tint_shade (spec 002 T020)", () => {
       });
 
     expect(customShade({})).toThrow(/CHECK/);
-    expect(customShade({ site_label: "Plot 12" })).not.toThrow();
+    expect(customShade({ customer_label: "" })).toThrow(/tint_shade_custom_labelled/);
+    expect(customShade({ site_label: " \t\n " })).toThrow(/tint_shade_custom_labelled/);
+    expect(customShade({ customer_label: " ", site_label: " Plot 12 " })).not.toThrow();
   });
 });
 
@@ -236,6 +238,26 @@ describe("tinted bill lines (spec 002 T020)", () => {
         .prepare("select tint_charge_paise, cost_paise, is_returnable from bill_line where id = ?")
         .get(lineId),
     ).toEqual({ tint_charge_paise: 5_000, cost_paise: 80_000, is_returnable: 0 });
+  });
+
+  it("allows each colorant only once per bill line", () => {
+    const shop = paintShop();
+    const formulaId = shop.formulaVersion(1);
+    const firstLineId = billUsingFormula(shop, formulaId);
+    const secondLineId = insertTintedLine(shop, formulaId, { line_no: 2 });
+    const addColorant = (lineId: string, colorantId: string) => () =>
+      insertCatalogueRow(shop.sqlite, "bill_line_tint", {
+        bill_line_id: lineId,
+        colorant_variant_id: colorantId,
+        colorant_name_snapshot: "Colorant",
+        qty_milli: 12_500,
+        cost_paise: 1_200,
+      });
+
+    expect(addColorant(firstLineId, shop.blue)).not.toThrow();
+    expect(addColorant(firstLineId, shop.blue)).toThrow(/UNIQUE constraint failed/);
+    expect(addColorant(firstLineId, shop.red)).not.toThrow();
+    expect(addColorant(secondLineId, shop.blue)).not.toThrow();
   });
 
   it("refuses an update or delete of a colorant snapshot", () => {

@@ -1,13 +1,13 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { check, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { brand } from "./catalogueSchema";
 import { itemVariant } from "./itemSchema";
 import { billLine } from "./schema";
 import { base } from "./schemaBase";
 
 /**
- * Paint tinting (spec 002 T020, migration 0021; data-model.md "Tinting"). A formula used on a
- * bill is frozen by triggers in 0021; a change saves a new version, and the current formula is
+ * Paint tinting (spec 002 T020, migration 0022; data-model.md "Tinting"). A formula used on a
+ * bill is frozen by triggers in 0022; a change saves a new version, and the current formula is
  * the highest version (never a stored flag).
  */
 export const tintShade = sqliteTable(
@@ -42,7 +42,7 @@ export const tintShade = sqliteTable(
     // FR-016: a custom shade says whose or which site it is
     check(
       "tint_shade_custom_labelled",
-      sql`${tableColumns.source} = 'library' or ${tableColumns.customerLabel} is not null or ${tableColumns.siteLabel} is not null`,
+      sql`${tableColumns.source} = 'library' or coalesce(trim(${tableColumns.customerLabel}, char(9, 10, 11, 12, 13, 32)), '') <> '' or coalesce(trim(${tableColumns.siteLabel}, char(9, 10, 11, 12, 13, 32)), '') <> ''`,
     ),
   ],
 );
@@ -147,7 +147,10 @@ export const billLineTint = sqliteTable(
     costPaise: integer("cost_paise").notNull(),
   },
   (tableColumns) => [
-    index("bill_line_tint_line_idx").on(tableColumns.billLineId),
+    uniqueIndex("bill_line_tint_colorant_uq").on(
+      tableColumns.billLineId,
+      tableColumns.colorantVariantId,
+    ),
     check("bill_line_tint_qty_pos", sql`${tableColumns.qtyMilli} > 0`),
     check("bill_line_tint_cost_nonneg", sql`${tableColumns.costPaise} >= 0`),
   ],

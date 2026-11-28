@@ -6,7 +6,7 @@ import { MIGRATIONS } from "../helpers/testDb";
 import { createDatabaseFileAtMigration0004WithOneBill } from "../helpers/upgradeFixture";
 
 /**
- * Spec 002 T021: migrations 0016 to 0021 on a database seeded like 001 (an item, a bill, its
+ * Spec 002 T021: migrations 0016 to 0022 on a database seeded like 001 (an item, a bill, its
  * movements; one case with the bill cancelled). Nothing 001 wrote may change, and the new
  * append-only and freeze rules hold on the upgraded file.
  */

@@ -112,7 +112,7 @@ export const billLine = sqliteTable(
     unitPricePaise: integer("unit_price_paise").notNull(),
     lineDiscountPaise: integer("line_discount_paise").notNull(),
     amountPaise: integer("amount_paise").notNull(),
-    // Spec 002 (migration 0021): added with ALTER TABLE ADD COLUMN, so the table holding every
+    // Spec 002 (migration 0022): added with ALTER TABLE ADD COLUMN, so the table holding every
     // saved line is not rebuilt; their value rules are the bill_line_new_values insert trigger.
     // The unit the user typed (null = the base unit) and the quantity in it
     enteredUom: text("entered_uom"),

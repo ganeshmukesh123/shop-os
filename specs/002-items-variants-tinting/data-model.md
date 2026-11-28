@@ -139,7 +139,7 @@ One row per variant: `sold_qty_90d_milli`, `bill_count_90d`, `last_sold_at`. Upd
 | user_label                               | text (the user name; roles arrive in 005)                                                                                 |
 | reversible_until                         | epoch ms = merged time + 30 days (for `merge` rows)                                                                       |
 
-Triggers reject UPDATE and DELETE.
+Triggers reject UPDATE and DELETE. A BEFORE INSERT trigger also rejects a second reversal for the same merge, including via `INSERT OR REPLACE`, and any insert that reuses an existing reversal’s row ID.
 
 ### `exception_event` (new)
 
@@ -181,7 +181,7 @@ Triggers reject UPDATE and DELETE.
 | brand_id                   | FK to `brand`, nullable for custom shades                       |
 | shade_card                 | text up to 60, nullable                                         |
 | source                     | `library` or `custom`                                           |
-| customer_label, site_label | text up to 80, nullable; at least one set for `custom` (FR-016) |
+| customer_label, site_label | text up to 80, nullable; at least one nonblank after trimming for `custom` (FR-016) |
 | party_id                   | nullable text, no FK until feature 004 adds `party`             |
 
 ### `tint_formula`
@@ -215,7 +215,7 @@ Triggers reject UPDATE and DELETE.
 
 ### `bill_line_tint` (new, append-only)
 
-`bill_line_id` FK, `colorant_variant_id`, `colorant_name_snapshot`, `qty_milli`, `cost_paise`. One row per colorant of the formula used, written in the bill transaction. `qty_milli` is the colorant for **one base can** (as in the formula); the line's colorant stock movement is `qty_milli` × the line's can count (`qty_base_milli / 1000`). Example: Blue 12.5 ml per can, 2 cans, deducts 25 ml.
+`bill_line_id` FK, `colorant_variant_id`, `colorant_name_snapshot`, `qty_milli`, `cost_paise`. One row per colorant of the formula used, written in the bill transaction. `UNIQUE(bill_line_id, colorant_variant_id)`. `qty_milli` is the colorant for **one base can** (as in the formula); the line's colorant stock movement is `qty_milli` × the line's can count (`qty_base_milli / 1000`). Example: Blue 12.5 ml per can, 2 cans, deducts 25 ml.
 
 ## Derived values (in `@shopos/core`)
 
