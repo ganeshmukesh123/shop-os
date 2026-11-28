@@ -1,10 +1,10 @@
 import { CoreError } from "@shopos/core";
-import { BillingService } from "../../src/main/services/BillingService";
-import { InventoryService } from "../../src/main/services/InventoryService";
-import { SettingsService } from "../../src/main/services/SettingsService";
-import { BillRepository } from "../../src/main/repositories/BillRepository";
-import { StockRepository } from "../../src/main/repositories/StockRepository";
-import { createTestDb, type TestDb } from "../helpers/testDb";
+import { BillingService } from "./BillingService";
+import { InventoryService } from "../InventoryService";
+import { SettingsService } from "../SettingsService";
+import { BillRepository } from "../../repositories/BillRepository";
+import { StockRepository } from "../../repositories/StockRepository";
+import { createTestDb, type TestDb } from "../../../../tests/helpers/testDb";
 
 // Explicit UTC instants: the bill's date and financial year come from the shop's zone (IST), so the
 // tests must not depend on the zone of the machine running them. 10:00 UTC is 15:30 IST.

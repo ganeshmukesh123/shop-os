@@ -2,11 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { CoreError } from "@shopos/core";
-import type { DB } from "../db/connection";
-import { nowIso } from "../db/ids";
-import type { Ctx } from "../db/seed";
-import { BackupLogRepository } from "../repositories/BackupLogRepository";
-import { SettingsRepository } from "../repositories/SettingsRepository";
+import type { DB } from "../../db/connection";
+import { nowIso } from "../../db/ids";
+import type { Ctx } from "../../db/seed";
+import { BackupLogRepository } from "../../repositories/BackupLogRepository";
+import { SettingsRepository } from "../../repositories/SettingsRepository";
 
 const KEEP_DAYS = 30;
 const KEEP_TODAY = 4;

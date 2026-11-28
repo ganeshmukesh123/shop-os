@@ -3,15 +3,11 @@ import os from "node:os";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { CoreError } from "@shopos/core";
-import {
-  BackupService,
-  restoreBackup,
-  validateBackupFile,
-} from "../../src/main/services/BackupService";
-import { BillingService } from "../../src/main/services/BillingService";
-import { InventoryService } from "../../src/main/services/InventoryService";
-import { SettingsService } from "../../src/main/services/SettingsService";
-import { createTestDb, type TestDb } from "../helpers/testDb";
+import { BackupService, restoreBackup, validateBackupFile } from "./BackupService";
+import { BillingService } from "../BillingService";
+import { InventoryService } from "../InventoryService";
+import { SettingsService } from "../SettingsService";
+import { createTestDb, type TestDb } from "../../../../tests/helpers/testDb";
 
 let testDb: TestDb;
 let dir: string;
