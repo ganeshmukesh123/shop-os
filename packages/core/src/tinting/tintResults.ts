@@ -23,5 +23,6 @@ export interface ITintRepeat {
   baseVariant: IVariant;
   /** For a billed shade: the line to repeat, with its saved amounts */
   sourceBillLineId?: string;
-  lines: ITintFormulaLine[];
+  /** Per can; the name is the billed snapshot's, or the colorant's for an unbilled shade */
+  lines: (ITintFormulaLine & { name: string })[];
 }
