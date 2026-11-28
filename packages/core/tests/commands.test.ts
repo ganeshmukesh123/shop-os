@@ -44,6 +44,8 @@ const EXPECTED_COMMAND_NAMES = [
   "variants.update",
   "variants.setActive",
   "variants.setConversions",
+  "items.search",
+  "families.grid",
 ];
 
 describe("command list", () => {

@@ -4,6 +4,7 @@ import {
   familiesCreateInput,
   familiesPreviewInput,
   familiesUpdateInput,
+  buildVariantGrid,
   generateVariantCombinations,
   variantsSetActiveInput,
   variantsSetConversionsInput,
@@ -14,6 +15,7 @@ import {
   type FamiliesUpdateInput,
   type IFamily,
   type IFamilyDetail,
+  type IFamilyGrid,
   type IUnitConversion,
   type IVariant,
   type IVariantCombinationPreview,
@@ -25,6 +27,7 @@ import type { DB } from "../../db/connection";
 import type { Ctx } from "../../db/seed";
 import { CatalogueRepository } from "../../repositories/CatalogueRepository";
 import { ConversionRepository, FamilyRepository } from "../../repositories/FamilyRepository";
+import { ItemRepository } from "../../repositories/ItemRepository";
 import type { SearchService } from "../search";
 import { insertVariants } from "./familyWrites";
 import { toVariantPatch } from "./variantPatch";
@@ -84,6 +87,32 @@ export class FamilyService {
       variants.map((variant) => variant.id),
     );
     return { family, variants, conversions };
+  }
+
+  /** families.grid (T038): the family's live variants laid out by its axes, each billable. */
+  grid(raw: { familyId: string }): IFamilyGrid {
+    const families = new FamilyRepository(this.db, this.ctx);
+    const family = families.getFamily(raw.familyId);
+    if (!family) throw notFound("family");
+    const live = families
+      .listVariants(family.id)
+      .filter((variant) => variant.mergedIntoId === null);
+    const items = new ItemRepository(this.db, this.ctx);
+    const grid = buildVariantGrid(
+      family.axisKeys,
+      live.map((variant) => ({
+        variantId: variant.id,
+        axes: variant.axes,
+        stockMilli: variant.stockMilli,
+        pricePaise: variant.sellingPricePaise,
+        isActive: variant.isActive,
+      })),
+    );
+    return {
+      axisKeys: family.axisKeys,
+      tabs: grid.tabs,
+      items: live.map((variant) => items.get(variant.id)!),
+    };
   }
 
   update(raw: FamiliesUpdateInput): { family: IFamily } {
