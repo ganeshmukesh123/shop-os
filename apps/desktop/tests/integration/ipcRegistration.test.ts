@@ -75,6 +75,7 @@ const DISPATCH_CASES = {
     input: { id: "missing-bill", reason: "Wrong items" },
     expected: { ok: false, code: "NOT_FOUND", message: "Bill not found" },
   },
+  "bills.gaps": { input: {}, expected: { ok: true, data: { gaps: [] } } },
   "bills.print": {
     input: { id: "bill-id", target: "invalid" },
     expected: invalidField(INVALID_PRINT_TARGET),

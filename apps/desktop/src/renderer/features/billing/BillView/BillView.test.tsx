@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Bill, BillLine, Item } from "@shopos/core";
 import {
@@ -57,7 +57,7 @@ const failure = (code: string, message: string) => () => {
 
 function renderBillView(
   handlers: FakeCommandHandlers = {},
-  overrides: { bill?: Bill; negativeStockItems?: Item[] } = {},
+  overrides: { bill?: Bill; negativeStockItems?: Item[]; onCancel?: () => void } = {},
 ) {
   const fake = installFakeShopos(handlers);
   const onNew = vi.fn();
@@ -68,6 +68,7 @@ function renderBillView(
         lines={[PIPE_LINE]}
         negativeStockItems={overrides.negativeStockItems ?? []}
         onNew={onNew}
+        onCancel={overrides.onCancel}
       />
     </ToastProvider>,
   );
@@ -75,6 +76,10 @@ function renderBillView(
     fake.calls.filter((fakeCall) => fakeCall.commandName === commandName);
   return { onNew, callsTo };
 }
+
+/** The inline message sits in the bill view; a toast sits in the notifications region instead. */
+const isInsideToastRegion = (element: HTMLElement) =>
+  screen.getByRole("region", { name: /Notifications/ }).contains(element);
 
 describe("BillView: the saved bill", () => {
   it("shows the number, the date and payment, the customer, the lines and the totals", () => {
@@ -106,10 +111,24 @@ describe("BillView: the saved bill", () => {
     expect(screen.getByText(/Pipe 20mm \(-1 pcs\)/)).toBeTruthy();
   });
 
-  it("shows the word Cancelled on a cancelled bill", () => {
+  it("shows the word Cancelled by the number and a banner with the reason on a cancelled bill", () => {
     renderBillView({}, { bill: { ...BILL, status: "cancelled", cancelReason: "wrong item" } });
 
-    expect(screen.getByText("Cancelled")).toBeTruthy();
+    expect(screen.getAllByText("Cancelled")).toHaveLength(2);
+    expect(screen.getByText(/This bill was cancelled\. Reason: wrong item\./)).toBeTruthy();
+  });
+
+  it("offers Cancel bill only while the bill is posted and the screen can cancel", () => {
+    const onCancel = vi.fn();
+    renderBillView({}, { onCancel });
+
+    expect(screen.getByRole("button", { name: "Cancel bill" })).toBeTruthy();
+  });
+
+  it("offers no Cancel bill on the screen that has just saved the bill", () => {
+    renderBillView();
+
+    expect(screen.queryByRole("button", { name: "Cancel bill" })).toBeNull();
   });
 
   it("calls onNew when New bill is pressed", async () => {
@@ -138,13 +157,33 @@ describe("BillView: Print", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Print" }));
 
-    expect((await screen.findByRole("alert")).textContent).toMatch(/^Error The printer is offline/);
+    const message = await screen.findByRole("alert");
+    expect(message.textContent).toMatch(/^Error The printer is offline/);
+    expect(isInsideToastRegion(message)).toBe(false);
     expect(screen.getByText("Bill saved: C1/26-27/000001")).toBeTruthy();
     expect((screen.getByRole("button", { name: "Print" }) as HTMLButtonElement).disabled).toBe(
       false,
     );
     await userEvent.click(screen.getByRole("button", { name: "Print" }));
     expect(callsTo("bills.print")).toHaveLength(2);
+  });
+
+  it("clears the message when the cashier tries again and it works", async () => {
+    let attempts = 0;
+    renderBillView({
+      "bills.print": () => {
+        attempts += 1;
+        if (attempts === 1)
+          throw Object.assign(new Error("The printer is offline"), { code: "PRINT_FAILED" });
+        return { printed: true };
+      },
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Print" }));
+    await screen.findByRole("alert");
+
+    await userEvent.click(screen.getByRole("button", { name: "Print" }));
+
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
   });
 
   it("adds that the bill is saved when the failure was not the printer itself", async () => {
@@ -195,7 +234,9 @@ describe("BillView: Save PDF", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Save PDF" }));
 
-    expect((await screen.findByRole("alert")).textContent).toBe("Error The folder is read-only");
+    const message = await screen.findByRole("alert");
+    expect(message.textContent).toBe("Error The folder is read-only");
+    expect(isInsideToastRegion(message)).toBe(false);
     expect(screen.getByText("Bill saved: C1/26-27/000001")).toBeTruthy();
   });
 });

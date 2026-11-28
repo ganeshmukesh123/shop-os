@@ -38,6 +38,8 @@ export interface Item {
   stockMilli: number;
   active: boolean;
   needsCorrection: boolean;
+  /** Spec 002: the family this item (a variant) belongs to, for families.get */
+  familyId?: string;
 }
 
 export interface StockMovement {
