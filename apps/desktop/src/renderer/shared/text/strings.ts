@@ -1,6 +1,9 @@
+import { familyText } from "./familyText";
+
 /** All screen text lives here so Hindi can be added later. */
 export const uiText = {
   appName: "Shop OS",
+  family: familyText,
   nav: { items: "Items", newBill: "New bill", settings: "Settings" },
   items: {
     title: "Items",
