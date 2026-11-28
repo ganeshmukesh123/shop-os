@@ -1,5 +1,12 @@
 import type { ILikelyDuplicate } from "../search/likelyDuplicates";
 import type {
+  IBarcode,
+  IBarcodeShare,
+  ISearchName,
+  VariantsSetBarcodesInput,
+  VariantsSetSearchNamesInput,
+} from "./codeCommands";
+import type {
   ExceptionsListInput,
   ExceptionsResolveInput,
   IExceptionEvent,
@@ -15,7 +22,7 @@ import type {
   ItemsMergeReverseInput,
 } from "./mergeCommands";
 
-/** The US2 lookup, duplicate and merge commands of spec 002 (contracts/ipc-commands.md). */
+/** The US2 commands of spec 002 (contracts/ipc-commands.md): lookup, duplicates, merges, issues, codes. */
 export interface IMergeCommandMap {
   "items.lookupBarcode": [ItemsLookupBarcodeInput, { variants: Item[] }];
   "items.checkDuplicates": [ItemsCheckDuplicatesInput, { candidates: ILikelyDuplicate[] }];
@@ -24,6 +31,11 @@ export interface IMergeCommandMap {
   "items.merge.list": [ItemsMergeListInput, { merges: IMergeListRow[]; total: number }];
   "exceptions.list": [ExceptionsListInput, { events: IExceptionEvent[] }];
   "exceptions.resolve": [ExceptionsResolveInput, { event: IExceptionEvent }];
+  "variants.setBarcodes": [
+    VariantsSetBarcodesInput,
+    { barcodes: IBarcode[]; sharedWith: IBarcodeShare[] },
+  ];
+  "variants.setSearchNames": [VariantsSetSearchNamesInput, { searchNames: ISearchName[] }];
 }
 
 export const MERGE_COMMAND_NAMES = [
@@ -34,4 +46,6 @@ export const MERGE_COMMAND_NAMES = [
   "items.merge.list",
   "exceptions.list",
   "exceptions.resolve",
+  "variants.setBarcodes",
+  "variants.setSearchNames",
 ] as const satisfies readonly (keyof IMergeCommandMap)[];

@@ -33,6 +33,7 @@ import type { BarcodeService } from "../services/barcode";
 import type { DataIssueService } from "../services/dataIssues";
 import type { DuplicateService } from "../services/duplicates";
 import type { MergeService } from "../services/merge";
+import type { VariantCodesService } from "../services/variantCodes";
 import { createSystemHandlers, type SystemCommandName } from "./systemHandlers";
 
 // Kept here so callers that import toFailure from handlers still work.
@@ -49,6 +50,7 @@ export interface Services {
   dataIssues: DataIssueService;
   duplicates: DuplicateService;
   merges: MergeService;
+  variantCodes: VariantCodesService;
   families: FamilyService;
   billing: BillingService;
   settings: SettingsService;

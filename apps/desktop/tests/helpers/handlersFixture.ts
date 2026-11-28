@@ -11,6 +11,7 @@ import { BarcodeService } from "../../src/main/services/barcode";
 import { DataIssueService } from "../../src/main/services/dataIssues";
 import { DuplicateService } from "../../src/main/services/duplicates";
 import { MergeService } from "../../src/main/services/merge";
+import { VariantCodesService } from "../../src/main/services/variantCodes";
 import { SearchService } from "../../src/main/services/search";
 import { CatalogueService } from "../../src/main/services/catalogue";
 import { FamilyService } from "../../src/main/services/families";
@@ -62,6 +63,7 @@ export function buildHandlersFixture(options: IFixtureOptions = {}): IHandlersFi
     dataIssues: new DataIssueService(testDb.db, testDb.ctx),
     duplicates: new DuplicateService(testDb.db, testDb.ctx),
     merges: new MergeService(testDb.db, testDb.ctx, search),
+    variantCodes: new VariantCodesService(testDb.db, testDb.ctx, search),
     billing: new BillingService(testDb.db, testDb.ctx),
     settings: new SettingsService(testDb.db, testDb.ctx),
     print: new PrintService(

@@ -53,6 +53,8 @@ const EXPECTED_COMMAND_NAMES = [
   "items.merge.list",
   "exceptions.list",
   "exceptions.resolve",
+  "variants.setBarcodes",
+  "variants.setSearchNames",
 ];
 
 describe("command list", () => {
