@@ -10,10 +10,10 @@ import {
   type ShopProfile,
   type ThemePreference,
 } from "@shopos/core";
-import type { DB } from "../db/connection";
-import type { Ctx } from "../db/seed";
-import { BillClockRepository } from "../repositories/BillClockRepository";
-import { SettingsRepository } from "../repositories/SettingsRepository";
+import type { DB } from "../../db/connection";
+import type { Ctx } from "../../db/seed";
+import { BillClockRepository } from "../../repositories/BillClockRepository";
+import { SettingsRepository } from "../../repositories/SettingsRepository";
 
 export class SettingsService {
   private readonly repo: SettingsRepository;

@@ -1,5 +1,5 @@
-import { SettingsService } from "../../src/main/services/SettingsService";
-import { createTestDb, type TestDb } from "../helpers/testDb";
+import { SettingsService } from "./SettingsService";
+import { createTestDb, type TestDb } from "../../../../tests/helpers/testDb";
 
 let testDb: TestDb;
 beforeEach(() => {

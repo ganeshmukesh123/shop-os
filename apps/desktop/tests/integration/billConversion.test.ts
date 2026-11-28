@@ -3,9 +3,7 @@ import { buildHandlersFixture } from "../helpers/handlersFixture";
 
 /**
  * Spec 002 T029: billing in an alternate unit (2 rolls of wire at 90 m a roll). Written ahead of
- * T034, which extends BillingService for entered units. T034 waits for PR #126 (BillingService
- * moves to its own folder), so these tests are skipped until it is built: remove `.skip` in
- * T034's PR and they must pass there.
+ * T034 (BillingService for entered units, built on top of #126) and un-skipped with it.
  */
 const WIRE_PRICE_PAISE = 2_500;
 let clientBillNumber = 0;
@@ -58,7 +56,7 @@ const stockOf = (sqlite: Database.Database, variantId: string) =>
     }
   ).stock_milli;
 
-describe.skip("bills in an alternate unit (spec 002 T029; waits for T034 and PR #126)", () => {
+describe("bills in an alternate unit (spec 002 T029, built in T034)", () => {
   it("stores 2 rolls as entered 2000 and base 180000 milli, and deducts 180 m", async () => {
     const fixture = await wireWithRoll(90_000);
 

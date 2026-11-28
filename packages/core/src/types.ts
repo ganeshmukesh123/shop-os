@@ -147,9 +147,13 @@ export const draftSaveInput = z.object({ payload: z.unknown() });
 
 export const billLineInput = z.object({
   itemId: z.string().min(1),
+  /** In `enteredUom` when it is given (2 rolls = 2000), else in the item's own unit */
   quantityMilli: qtyMilli,
+  /** Rupees per the item's own (base) unit, as on its price */
   ratePaise: nonNegPaise,
   lineDiscountPaise: nonNegPaise,
+  /** Spec 002 T034: an alternate unit of the item (roll); the main process converts it */
+  enteredUom: z.string().trim().min(1).max(20).optional(),
 });
 export type BillLineInput = z.infer<typeof billLineInput>;
 
