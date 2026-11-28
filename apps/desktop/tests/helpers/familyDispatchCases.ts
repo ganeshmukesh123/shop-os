@@ -28,6 +28,11 @@ export const FAMILY_DISPATCH_CASES = {
   "families.addVariants": { input: { familyId: "x", variants: [] }, expected: invalid },
   "variants.update": { input: { id: "no-such-variant" }, expected: notFound },
   "variants.setActive": { input: { id: "no-such-variant", isActive: false }, expected: notFound },
+  "items.search": {
+    input: { query: "pipe", limit: 5 },
+    expected: { ok: true, data: { results: [] } },
+  },
+  "families.grid": { input: { familyId: "no-such-family" }, expected: notFound },
   "variants.setConversions": {
     input: { variantId: "no-such-variant", conversions: [] },
     expected: notFound,

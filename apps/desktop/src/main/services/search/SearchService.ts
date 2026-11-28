@@ -1,8 +1,9 @@
-import type { ISearchEntry, ISearchResult } from "@shopos/core";
+import type { IItemSearchRow, ISearchEntry, ISearchResult } from "@shopos/core";
 import type { Handle } from "../../db/connection";
 import type { Ctx } from "../../db/seed";
 import { SearchSourceRepository } from "../../repositories/SearchSourceRepository";
 import { SearchIndex } from "./SearchIndex";
+import { toSearchRows } from "./searchRows";
 
 /**
  * Search over items (spec 002 research D4): an in-memory index built when the app starts and
@@ -14,13 +15,22 @@ export class SearchService {
   private readonly index = new SearchIndex();
   private readonly source: SearchSourceRepository;
 
-  constructor(databaseHandle: Handle, ctx: Ctx) {
+  constructor(
+    private readonly databaseHandle: Handle,
+    private readonly ctx: Ctx,
+  ) {
     this.source = new SearchSourceRepository(databaseHandle, ctx);
     this.index.replaceAll(this.source.entries(), this.source.billCounts());
   }
 
   search(query: string): ISearchResult[] {
     return this.index.query(query);
+  }
+
+  /** items.search: the best `limit` results as rows the bill screen can show (T038). */
+  searchRows(query: string, limit: number): { results: IItemSearchRow[] } {
+    const ranked = this.index.query(query).slice(0, limit);
+    return { results: toSearchRows(this.databaseHandle, this.ctx, ranked) };
   }
 
   /** Re-read the variant's family: its variant count, names and codes may all have changed. */

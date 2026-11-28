@@ -19,6 +19,12 @@ import type {
   IVariant,
   IVariantCombinationPreview,
 } from "./familyTypes";
+import type {
+  FamiliesGridInput,
+  IFamilyGrid,
+  IItemSearchRow,
+  ItemsSearchInput,
+} from "./searchCommands";
 
 type NoInput = Record<string, never>;
 
@@ -43,6 +49,9 @@ export interface IFamilyCommandMap {
   "variants.update": [VariantsUpdateInput, { variant: IVariant }];
   "variants.setActive": [VariantsSetActiveInput, { variant: IVariant }];
   "variants.setConversions": [VariantsSetConversionsInput, { conversions: IUnitConversion[] }];
+  /** The bill search over the in-memory index (T038) and a family's grid */
+  "items.search": [ItemsSearchInput, { results: IItemSearchRow[] }];
+  "families.grid": [FamiliesGridInput, IFamilyGrid];
 }
 
 export const FAMILY_COMMAND_NAMES = [
@@ -59,4 +68,6 @@ export const FAMILY_COMMAND_NAMES = [
   "variants.update",
   "variants.setActive",
   "variants.setConversions",
+  "items.search",
+  "families.grid",
 ] as const satisfies readonly (keyof IFamilyCommandMap)[];

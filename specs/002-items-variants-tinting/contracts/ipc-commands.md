@@ -36,6 +36,10 @@ Status (2026-11-28, tasks T031 to T035): the US1 commands of this table are buil
 - `catalogue.categories.save` returns `NOT_FOUND` for an unknown parent.
 - `variants.setConversions` returns `UNKNOWN_UNIT` for a unit the shop does not have.
 
+Status (2026-11-28, task T038): `items.search` and `families.grid` (second table) are built early, for the bill's variant grid.
+- `items.search` returns `{ results[] }` in rank order, as in the table. Each row also carries `item`, the variant as the bill needs it (unit, decimals), or null for a family row. A family row's `stockMilli` is the sum of its active variants' stock and `pricePaise` its lowest price.
+- `families.grid` returns `{ axisKeys, tabs[{ tabAxes, rowValues, columnValues, cells }], items[] }` instead of the table's flat `{ rowAxis, columnAxis, tabAxes, cells }`, so the screen gets the grid exactly as core's `buildVariantGrid` lays it out, plus every variant as a billable item.
+
 ## Search, duplicates, merge, data issues
 
 | Command                                  | Input                                                       | Result                                                                                                           | Error codes                                                                           |
