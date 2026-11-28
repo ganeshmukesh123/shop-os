@@ -139,7 +139,7 @@ One row per variant: `sold_qty_90d_milli`, `bill_count_90d`, `last_sold_at`. Upd
 | user_label                               | text (the user name; roles arrive in 005)                                                                                 |
 | reversible_until                         | epoch ms = merged time + 30 days (for `merge` rows)                                                                       |
 
-Triggers reject UPDATE and DELETE.
+Triggers reject UPDATE and DELETE. A BEFORE INSERT trigger also rejects a second reversal for the same merge, including via `INSERT OR REPLACE`, and any insert that reuses an existing reversal’s row ID.
 
 ### `exception_event` (new)
 
