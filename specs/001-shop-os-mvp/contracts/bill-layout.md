@@ -12,6 +12,9 @@ The same content is rendered for the 80 mm receipt (58 mm narrows the item colum
 ## Lines (one row per line, in entry order)
 `#`, item name (wraps), quantity with unit, rate, line discount (only if non-zero), amount.
 
+## Tinted line (spec 002 T067)
+A tinted can (a line with `tint_formula_id`) prints one more row under its own line: the colorants per can and the words "Non-returnable (tinted)", for example `Blue 12.5 ml, Black 0.75 ml per can. Non-returnable (tinted)`. The amounts come from `bill_line_tint`, the snapshot saved with the bill, so a reprint shows what was mixed even after the formula changed. The bill view shows the same text and a "Non-returnable (tinted)" badge.
+
 ## Totals
 1. Lines total.
 2. Bill discount (only if non-zero).

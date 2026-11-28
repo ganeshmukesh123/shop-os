@@ -1,0 +1,1 @@
+export { TintedNote } from "./TintedNote";

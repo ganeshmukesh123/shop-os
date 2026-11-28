@@ -83,6 +83,8 @@ export interface BillLine {
   ratePaise: number;
   lineDiscountPaise: number;
   amountPaise: number;
+  /** Spec 002 T067: a tinted can, with what was mixed per can; it cannot be returned */
+  tint?: { colorants: { name: string; qtyMilli: number }[] };
 }
 
 export interface ShopProfile {

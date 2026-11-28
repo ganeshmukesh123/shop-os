@@ -224,6 +224,22 @@ describe("a repeat of a billed shade (spec 002 T056)", () => {
   });
 });
 
+describe("a saved tinted line read back (spec 002 T067)", () => {
+  it("carries its colorants per can, so the bill view and print can show them", () => {
+    const { sellTinted, formula, billing } = skyBlueShop();
+    const { bill } = sellTinted({ formulaId: formula.id }, 1);
+
+    const { lines } = billing.getBill(bill.id);
+
+    expect(lines[0]!.tint).toEqual({
+      colorants: [
+        { name: "Blue", qtyMilli: 12_500 },
+        { name: "Black", qtyMilli: 750 },
+      ],
+    });
+  });
+});
+
 describe("a formula a bill used is frozen (spec 002 T058)", () => {
   it("refuses a direct UPDATE of the used formula's line", () => {
     const { testDb, sellTinted, formula } = skyBlueShop();
