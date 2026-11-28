@@ -1,0 +1,1 @@
+export { BarcodeRepository } from "./BarcodeRepository";
