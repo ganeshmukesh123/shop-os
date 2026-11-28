@@ -4,6 +4,7 @@
  */
 export const familyText = {
   addTitle: "New item family",
+  open: "New family",
   requiredNote: "Fields marked * are required.",
   name: "Family name",
   kind: "Kind",
@@ -73,6 +74,8 @@ export const familyText = {
   },
   units: {
     title: "Other units",
+    open: "Units",
+    dialogTitle: "Other units: {item}",
     unit: "Unit",
     holds: "Holds ({baseUnit})",
     example: "1 {unit} = {quantity} {baseUnit}",

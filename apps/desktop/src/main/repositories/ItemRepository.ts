@@ -22,6 +22,7 @@ export function toItem(variantRow: Row): Item {
     stockMilli: variantRow.stockMilli,
     active: variantRow.isActive === 1,
     needsCorrection: variantRow.stockMilli < 0,
+    familyId: variantRow.familyId,
   };
 }
 

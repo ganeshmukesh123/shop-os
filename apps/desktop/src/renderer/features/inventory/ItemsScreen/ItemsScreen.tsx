@@ -9,6 +9,9 @@ import { uiText } from "../../../shared/text/strings";
 import { call, messageOf } from "../../../shared/api/api";
 import { useItems } from "../hooks/useItems";
 import { ItemForm } from "../ItemForm";
+import { NewFamilyButton } from "../../items/NewFamilyButton";
+import { UnitsDialog } from "../../items/UnitsDialog";
+import { ItemRowActions } from "./components/ItemRowActions";
 
 export function ItemsScreen() {
   const toast = useToast();
@@ -18,6 +21,7 @@ export function ItemsScreen() {
   const { items, total, loading, reload } = useItems({ query, includeInactive, needsCorrection });
   const [form, setForm] = useState<{ item?: Item } | null>(null);
   const [adjusting, setAdjusting] = useState<Item | null>(null);
+  const [unitsOf, setUnitsOf] = useState<Item | null>(null);
 
   async function toggleActive(it: Item) {
     try {
@@ -32,9 +36,12 @@ export function ItemsScreen() {
     <Flex direction="column" gap="3">
       <Flex justify="between" align="center">
         <Heading size="6">{uiText.items.title}</Heading>
-        <Button size="3" onClick={() => setForm({})}>
-          {uiText.items.add}
-        </Button>
+        <Flex gap="3">
+          <NewFamilyButton onSaved={() => reload()} />
+          <Button size="3" onClick={() => setForm({})}>
+            {uiText.items.add}
+          </Button>
+        </Flex>
       </Flex>
       <Flex gap="4" align="center" wrap="wrap">
         <Box width={LAYOUT.searchFieldWidth}>
@@ -91,22 +98,13 @@ export function ItemsScreen() {
                 {!it.active && <StatusBadge role="neutral" label={uiText.items.inactive} />}
               </Table.Cell>
               <Table.Cell>
-                <Flex gap="2" justify="end">
-                  <Button size="2" variant="soft" onClick={() => setForm({ item: it })}>
-                    {uiText.items.edit}
-                  </Button>
-                  <Button size="2" variant="soft" onClick={() => setAdjusting(it)}>
-                    {uiText.items.adjust}
-                  </Button>
-                  <Button
-                    size="2"
-                    variant="soft"
-                    color="gray"
-                    onClick={() => void toggleActive(it)}
-                  >
-                    {it.active ? uiText.items.deactivate : uiText.items.reactivate}
-                  </Button>
-                </Flex>
+                <ItemRowActions
+                  item={it}
+                  onEdit={() => setForm({ item: it })}
+                  onAdjust={() => setAdjusting(it)}
+                  onUnits={() => setUnitsOf(it)}
+                  onToggleActive={() => void toggleActive(it)}
+                />
               </Table.Cell>
             </Table.Row>
           ))}
@@ -127,6 +125,7 @@ export function ItemsScreen() {
           }}
         />
       )}
+      {unitsOf && <UnitsDialog item={unitsOf} onClose={() => setUnitsOf(null)} />}
       {adjusting && (
         <AdjustStockDialog
           item={adjusting}
