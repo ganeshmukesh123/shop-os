@@ -1,26 +1,22 @@
 import { Dialog, Flex } from "@radix-ui/themes";
 import { uiText } from "../../../shared/text/strings";
 import { ChoiceList } from "./components/ChoiceList";
-import { FormulaProblem } from "./components/FormulaProblem";
-import { MixPanel } from "./components/MixPanel";
+import { FormulaArea } from "./components/FormulaArea";
 import { ShadeFinder } from "./components/ShadeFinder";
 import { useTintPicker } from "./hooks/useTintPicker";
-import { tintLabelOf, variantAsItem } from "./tintPick";
+import { pickOf } from "./tintPick";
 import type { ITintPickerProps } from "./types";
 
 /** The tinting desk (spec 002 T064, FR-014): shade, can, the mix for the tinter, and its price. */
-export function TintPicker({ familyId, title, onAdd, onClose, onCustomShade }: ITintPickerProps) {
+export function TintPicker(props: ITintPickerProps) {
+  const { familyId, title, customerName = "", onAdd, onClose } = props;
   const text = uiText.bill.tintPicker;
   const desk = useTintPicker(familyId);
-  const can = desk.packs.find((pack) => pack.id === desk.choice.packId);
-  const add = () =>
-    can && desk.resolved && desk.shade
-      ? onAdd(variantAsItem(can), {
-          tint: { formulaId: desk.resolved.formula.id },
-          ratePaise: desk.resolved.unitPricePaise,
-          label: tintLabelOf(desk.shade.shadeName, desk.resolved),
-        })
-      : undefined;
+  const add = () => {
+    const can = desk.packs.find((pack) => pack.id === desk.choice.packId);
+    const chosen = pickOf(can, desk.shade, desk.resolved);
+    if (chosen) onAdd(chosen.item, chosen.pick);
+  };
   return (
     <Dialog.Root open onOpenChange={(isOpen) => !isOpen && onClose()}>
       <Dialog.Content maxWidth="640px">
@@ -42,8 +38,7 @@ export function TintPicker({ familyId, title, onAdd, onClose, onCustomShade }: I
             value={desk.choice.packId}
             onChoose={(packId) => void desk.choose({ packId })}
           />
-          {desk.resolved && <MixPanel resolved={desk.resolved} onAdd={add} />}
-          {desk.problem && <FormulaProblem {...desk.problem} onCustomShade={onCustomShade} />}
+          <FormulaArea desk={desk} customerName={customerName} onAdd={add} />
         </Flex>
       </Dialog.Content>
     </Dialog.Root>

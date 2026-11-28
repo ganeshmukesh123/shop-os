@@ -132,6 +132,7 @@ export function NewBillScreen() {
       {gridFamily && (
         <FamilyPicker
           row={gridFamily}
+          customerName={form.customerName}
           onClose={() => setGridFamily(null)}
           onPickItem={(item) => {
             setGridFamily(null);
