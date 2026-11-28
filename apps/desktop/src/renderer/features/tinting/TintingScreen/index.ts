@@ -1,0 +1,1 @@
+export { TintingScreen } from "./TintingScreen";

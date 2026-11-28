@@ -1,0 +1,1 @@
+export { ShadeTable } from "./ShadeTable";

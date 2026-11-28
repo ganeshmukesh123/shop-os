@@ -7,6 +7,7 @@ import { dataIssuesText } from "./dataIssuesText";
 import { mergeLogText } from "./mergeLogText";
 import { mergeText } from "./mergeText";
 import { namesText } from "./namesText";
+import { tintingText } from "./tintingText";
 
 /** All screen text lives here so Hindi can be added later. */
 export const uiText = {
@@ -16,7 +17,14 @@ export const uiText = {
   mergeLog: mergeLogText,
   dataIssues: dataIssuesText,
   names: namesText,
-  nav: { items: "Items", newBill: "New bill", bills: "Bills", settings: "Settings" },
+  tinting: tintingText,
+  nav: {
+    items: "Items",
+    newBill: "New bill",
+    bills: "Bills",
+    tinting: "Tinting",
+    settings: "Settings",
+  },
   bills: {
     title: "Bills",
     number: "Bill number",

@@ -6,6 +6,7 @@ import { ItemsScreen } from "../../features/inventory/ItemsScreen";
 import { NewBillScreen } from "../../features/billing/NewBillScreen";
 import { BillsScreen } from "../../features/bills/BillsScreen";
 import { SettingsScreen } from "../../features/settings/SettingsScreen";
+import { TintingScreen } from "../../features/tinting/TintingScreen";
 import { uiText } from "../../shared/text/strings";
 import { call } from "../../shared/api/api";
 import { ClockWarnings } from "../ClockWarnings/ClockWarnings";
@@ -17,7 +18,7 @@ export function App() {
   const [negatives, setNegatives] = useState(0);
   const clockWarnings = useClockWarnings(route);
 
-  // Keyboard: Ctrl/Cmd+1..3 to switch screens.
+  // Keyboard: Ctrl/Cmd+1..5 to switch screens.
   useEffect(() => {
     const handleKeyDown = (keyboardEvent: KeyboardEvent) => {
       if (!(keyboardEvent.ctrlKey || keyboardEvent.metaKey)) return;
@@ -26,6 +27,7 @@ export function App() {
         "2": "bill",
         "3": "settings",
         "4": "bills",
+        "5": "tinting",
       };
       const shortcutRoute = map[keyboardEvent.key];
       if (shortcutRoute) {
@@ -47,6 +49,7 @@ export function App() {
     ["items", uiText.nav.items],
     ["bill", uiText.nav.newBill],
     ["bills", uiText.nav.bills],
+    ["tinting", uiText.nav.tinting],
     ["settings", uiText.nav.settings],
   ];
   return (
@@ -84,6 +87,7 @@ export function App() {
           {route === "items" && <ItemsScreen />}
           {route === "bill" && <NewBillScreen />}
           {route === "bills" && <BillsScreen />}
+          {route === "tinting" && <TintingScreen />}
           {route === "settings" && <SettingsScreen />}
         </main>
       </Box>
