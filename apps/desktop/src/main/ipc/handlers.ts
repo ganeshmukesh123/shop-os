@@ -14,6 +14,7 @@ import {
   type CommandMap,
   type IFamilyCommandMap,
   type IMergeCommandMap,
+  type ITintCommandMap,
   type CommandName,
   type Result,
 } from "@shopos/core";
@@ -29,6 +30,8 @@ import type { SettingsService } from "../services/SettingsService";
 import { cmd, none } from "./command";
 import { createFamilyHandlers } from "./familyHandlers";
 import { createMergeHandlers } from "./mergeHandlers";
+import { createTintHandlers } from "./tintHandlers";
+import type { TintService } from "../services/tinting";
 import type { BarcodeService } from "../services/barcode";
 import type { DataIssueService } from "../services/dataIssues";
 import type { DuplicateService } from "../services/duplicates";
@@ -51,6 +54,8 @@ export interface Services {
   duplicates: DuplicateService;
   merges: MergeService;
   variantCodes: VariantCodesService;
+  /** Spec 002 US3: shades, formulas, tint charges */
+  tints: TintService;
   families: FamilyService;
   billing: BillingService;
   settings: SettingsService;
@@ -80,6 +85,7 @@ type BillCommandName = Exclude<
   | ThemeCommandName
   | keyof IFamilyCommandMap
   | keyof IMergeCommandMap
+  | keyof ITintCommandMap
 >;
 
 /** After a bill is saved or cancelled, the bill search re-reads the 90-day sales (spec 002 T048). */
@@ -151,6 +157,7 @@ export function createHandlers(services: Services, shell: Shell): Handlers {
     ...createSystemHandlers(services, shell),
     ...createFamilyHandlers(services),
     ...createMergeHandlers(services),
+    ...createTintHandlers(services),
     // The screen's theme choice, kept in the database (spec 018 T035).
     "settings.getTheme": cmd<"settings.getTheme">(none(), () => services.settings.getTheme()),
     "settings.setTheme": cmd<"settings.setTheme">(settingsSetThemeInput, (commandInput) =>

@@ -13,6 +13,7 @@ export * from "./tinting/tintPricing";
 export * from "./tinting/tintCost";
 export * from "./tinting/tintCommands";
 export * from "./tinting/tintResults";
+export * from "./tinting/tintCommandMap";
 export * from "./numbering";
 export * from "./numberGap";
 export * from "./catalogue/axisSignature";

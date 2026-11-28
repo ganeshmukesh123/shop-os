@@ -55,6 +55,13 @@ const EXPECTED_COMMAND_NAMES = [
   "exceptions.resolve",
   "variants.setBarcodes",
   "variants.setSearchNames",
+  "tint.shades.search",
+  "tint.resolve",
+  "tint.customShade.save",
+  "tint.formula.saveVersion",
+  "tint.repeat.list",
+  "tint.charges.list",
+  "tint.charges.save",
 ];
 
 describe("command list", () => {

@@ -24,6 +24,7 @@ import { DataIssueService } from "../services/dataIssues";
 import { DuplicateService } from "../services/duplicates";
 import { MergeService } from "../services/merge";
 import { VariantCodesService } from "../services/variantCodes";
+import { TintService } from "../services/tinting";
 import { rebuildItemSalesStats } from "../repositories/SalesStatRepository";
 import { SearchService } from "../services/search";
 import { PrintService } from "../services/PrintService";
@@ -71,6 +72,7 @@ function buildServices(state: IAppState): Services {
     duplicates: new DuplicateService(db, context),
     merges: new MergeService(db, context, search),
     variantCodes: new VariantCodesService(db, context, search),
+    tints: new TintService(db, context),
     billing: new BillingService(db, context),
     settings: new SettingsService(db, context),
     print: new PrintService(
