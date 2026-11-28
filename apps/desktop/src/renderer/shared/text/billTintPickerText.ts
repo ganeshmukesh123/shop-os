@@ -15,4 +15,16 @@ export const billTintPickerText = {
   customShade: "Custom shade",
   errorLabel: "Error",
   noFormulaLabel: "No formula",
+  custom: {
+    title: "Custom shade for this can",
+    name: "Shade name",
+    customer: "Customer",
+    site: "Site",
+    findColorant: "Find a colorant",
+    addColorant: "Add",
+    amountFor: "ml of {colorant}",
+    save: "Save shade",
+    cancel: "Back",
+    incomplete: "Give the shade a name and an amount in ml for each colorant.",
+  },
 };

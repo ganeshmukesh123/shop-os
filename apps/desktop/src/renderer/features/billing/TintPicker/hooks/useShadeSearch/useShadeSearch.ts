@@ -10,5 +10,7 @@ export function useShadeSearch() {
     setQueryText(nextQuery);
     setShades((await call("tint.shades.search", { query: nextQuery })).shades);
   };
-  return { query, shades, setQuery };
+  // A shade just saved here joins the list, so it can be chosen at once
+  const remember = (shade: ITintShade) => setShades((current) => [shade, ...current]);
+  return { query, shades, setQuery, remember };
 }

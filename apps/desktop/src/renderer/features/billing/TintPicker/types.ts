@@ -7,6 +7,6 @@ export interface ITintPickerProps {
   title: string;
   onAdd: (item: Item, pick: ITintedPick) => void;
   onClose: () => void;
-  /** No formula for the pack: start a custom shade instead (T064) */
-  onCustomShade?: () => void;
+  /** The bill's customer, offered as the custom shade's customer label */
+  customerName?: string;
 }
