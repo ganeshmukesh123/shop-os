@@ -121,7 +121,7 @@ description: "Task list for feature 002: item families, variants, search, merge,
 - [ ] T049 [P] [US2] Build `desktop/src/renderer/features/items/ItemNamesPanel/` (search names with language and kind; barcodes with source; "shared with" warning)
 - [ ] T050 [P] [US2] Show likely duplicates in `FamilyForm/` before save (list with the reason, "Save anyway" and "Open existing") _(2026-11-28: built and tested (FamilyForm.duplicates.test.tsx, 4 tests); "Open existing" closes the form and filters the Items list to that item. Not ticked: light and dark not checked by eye)_
 - [ ] T051 [P] [US2] Build `desktop/src/renderer/features/items/MergeDialog/` (pick survivor, preview stock and history moved, reason required; merge log list with "Reverse" until the window closes and the days left) _(2026-11-28: MergeDialog (#203) and the merge log with Reverse and the days left built and tested. Not ticked: light and dark not checked by eye)_
-- [ ] T052 [P] [US2] Build `desktop/src/renderer/features/items/DataIssues/` (open and resolved, resolve with a note) and the barcode chooser dialog in billing _(2026-11-28, in progress: DataIssues (open and resolved tabs, resolve with a note) built and tested; the barcode chooser in billing is next)_
+- [ ] T052 [P] [US2] Build `desktop/src/renderer/features/items/DataIssues/` (open and resolved, resolve with a note) and the barcode chooser dialog in billing _(2026-11-28: DataIssues (#205) and the barcode chooser on the bill built and tested. Not ticked: light and dark not checked by eye)_
 - [ ] T053 [US2] Write the e2e spec `desktop/tests/e2e/searchMerge.spec.ts` for quickstart scenario 2; measure SC-002 (50-search trial, 95% found) and SC-006
 
 **Checkpoint**: US1 and US2 work; quickstart 2 passes.

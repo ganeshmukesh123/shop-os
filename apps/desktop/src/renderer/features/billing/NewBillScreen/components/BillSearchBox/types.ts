@@ -8,4 +8,6 @@ export interface IBillSearchBoxProps {
   onHighlightChange: (nextIndex: number) => void;
   /** Called with the chosen row (a variant to add, or a family to open): Enter or a click. */
   onChoose: (chosenRow: IItemSearchRow) => void;
+  /** Enter on text that could be a barcode: look the code up first (spec 002 T052) */
+  onEnterCode?: (code: string) => void;
 }
