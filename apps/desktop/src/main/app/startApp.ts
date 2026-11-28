@@ -17,6 +17,7 @@ import { BackupService } from "../services/BackupService";
 import { BillingService } from "../services/BillingService";
 import { electronRenderer } from "../services/electronRenderer";
 import { InventoryService } from "../services/InventoryService";
+import { SearchService } from "../services/search";
 import { PrintService } from "../services/PrintService";
 import { SettingsService } from "../services/SettingsService";
 import { BACKUP_EVERY_MILLISECONDS, listTrustedPageUrls, type IAppConfig } from "./appConfig";
@@ -50,6 +51,8 @@ function buildServices(state: IAppState): Services {
   state.backup = new BackupService(sqlite, db, context);
   return {
     inventory: new InventoryService(db, context),
+    // Built here, at start, from the database (spec 002 research D4)
+    search: new SearchService(db, context),
     billing: new BillingService(db, context),
     settings: new SettingsService(db, context),
     print: new PrintService(

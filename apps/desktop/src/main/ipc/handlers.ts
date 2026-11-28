@@ -28,6 +28,7 @@ import {
 import type { BackupService } from "../services/BackupService";
 import type { BillingService } from "../services/BillingService";
 import type { InventoryService } from "../services/InventoryService";
+import { searchRefreshedAfter, type SearchService } from "../services/search";
 import type { PrintService } from "../services/PrintService";
 import type { IRestoreNumberingPlan } from "../services/RestoreNumbering";
 import type { SettingsService } from "../services/SettingsService";
@@ -35,6 +36,8 @@ import { assertPlanIsConfirmed, planRestoreFor, toRestorePreview } from "./resto
 
 export interface Services {
   inventory: InventoryService;
+  /** The in-memory item search (spec 002 research D4), kept current by the item commands. */
+  search: SearchService;
   billing: BillingService;
   settings: SettingsService;
   print: PrintService;
@@ -107,10 +110,10 @@ function createItemHandlers(services: Services): Pick<Handlers, ItemCommandName>
       services.inventory.listItems(commandInput),
     ),
     "items.create": cmd<"items.create">(itemsCreateInput, (commandInput) =>
-      services.inventory.createItem(commandInput),
+      searchRefreshedAfter(services.inventory.createItem(commandInput), services.search),
     ),
     "items.update": cmd<"items.update">(itemsUpdateInput, (commandInput) =>
-      services.inventory.updateItem(commandInput),
+      searchRefreshedAfter(services.inventory.updateItem(commandInput), services.search),
     ),
     "stock.adjust": cmd<"stock.adjust">(stockAdjustInput, (commandInput) =>
       services.inventory.adjustStock(commandInput),
