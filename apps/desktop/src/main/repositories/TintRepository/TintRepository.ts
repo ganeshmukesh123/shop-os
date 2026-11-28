@@ -3,7 +3,13 @@ import type { ITintChargeRow, ITintFormula, ITintFormulaLine, ITintShade } from 
 import type { Handle } from "../../db/connection";
 import { newId, nowMs } from "../../db/ids";
 import type { Ctx } from "../../db/seed";
-import { tintChargeRule, tintFormula, tintFormulaLine, tintShade } from "../../db/tintSchema";
+import {
+  tintChargeRule,
+  tintFormula,
+  tintFormulaLine,
+  tintShade,
+  tintShadePrice,
+} from "../../db/tintSchema";
 
 const SHADE_SEARCH_LIMIT = 50;
 
@@ -109,6 +115,33 @@ export class TintRepository {
         .filter((lineRow) => lineRow.formulaId === formulaRow.id)
         .map(({ colorantVariantId, qtyMilli }) => ({ colorantVariantId, qtyMilli })),
     }));
+  }
+
+  /** One formula version with its lines, or null. */
+  getFormula(formulaId: string): ITintFormula | null {
+    const formulaRow = this.databaseHandle
+      .select({ shadeId: tintFormula.shadeId, baseVariantId: tintFormula.baseVariantId })
+      .from(tintFormula)
+      .where(and(eq(tintFormula.id, formulaId), eq(tintFormula.shopId, this.ctx.shopId)))
+      .get();
+    if (!formulaRow) return null;
+    return (
+      this.formulasFor(formulaRow.shadeId, [formulaRow.baseVariantId]).find(
+        (formula) => formula.id === formulaId,
+      ) ?? null
+    );
+  }
+
+  /** The shade's own price on this base can, when the shade price list has one (FR-015). */
+  shadePrice(shadeId: string, baseVariantId: string): number | null {
+    const priceRow = this.databaseHandle
+      .select({ pricePaise: tintShadePrice.pricePaise })
+      .from(tintShadePrice)
+      .where(
+        and(eq(tintShadePrice.shadeId, shadeId), eq(tintShadePrice.baseVariantId, baseVariantId)),
+      )
+      .get();
+    return priceRow?.pricePaise ?? null;
   }
 
   highestVersion(shadeId: string, baseVariantId: string): number {

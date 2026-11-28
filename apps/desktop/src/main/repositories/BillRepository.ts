@@ -142,6 +142,10 @@ export class BillRepository {
             amountPaise: newLine.amountPaise,
             enteredUom: newLine.enteredUom ?? null,
             qtyEnteredMilli: newLine.qtyEnteredMilli ?? null,
+            tintFormulaId: newLine.tintFormulaId ?? null,
+            tintChargePaise: newLine.tintChargePaise ?? null,
+            costPaise: newLine.costPaise ?? null,
+            isReturnable: newLine.isReturnable === false ? 0 : 1,
           })
           .returning()
           .get(),

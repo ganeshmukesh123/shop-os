@@ -27,6 +27,8 @@ import { SalesStatRepository } from "../../repositories/SalesStatRepository";
 import { SettingsRepository } from "../../repositories/SettingsRepository";
 import { StockRepository } from "../../repositories/StockRepository";
 import { toBaseLines } from "./enteredUnits";
+import { prepareTintedLine, tintColumns, tintedOf } from "./tintedLines";
+import { writeTintedLine } from "./tintedMovements";
 
 export class BillingService {
   constructor(
@@ -75,6 +77,8 @@ export class BillingService {
         assertQuantity(lineInput.quantityMilli, catalogItem.allowsDecimal);
         return catalogItem;
       });
+      // Spec 002 T061: every tinted line is checked and priced before anything is written
+      const tinted = baseLines.map((lineInput) => prepareTintedLine(tx, this.ctx, lineInput));
 
       // The bill's date and financial year come from the shop's zone, never the device's (FR-019a).
       const billedAt = now.getTime();
@@ -126,6 +130,7 @@ export class BillingService {
           amountPaise: totals.lineAmounts[lineIndex]!,
           enteredUom: lineInput.enteredUom,
           qtyEnteredMilli: lineInput.qtyEnteredMilli,
+          ...tintColumns(tinted[lineIndex]),
         })),
       );
       for (const lineInput of baseLines) {
@@ -137,14 +142,24 @@ export class BillingService {
         });
         items.addStockDelta(lineInput.itemId, -lineInput.quantityMilli);
       }
+      const colorantIds = lines.flatMap((savedLine, lineIndex) =>
+        tintedOf(tinted[lineIndex], (tintedLine) =>
+          writeTintedLine(
+            tx,
+            this.ctx,
+            { billId: saved.id, billLineId: savedLine.id, cansMilli: savedLine.quantityMilli },
+            tintedLine,
+          ),
+        ),
+      );
       // The 90-day sales that rank the bill search (spec 002 T048)
       new SalesStatRepository(tx, this.ctx).recordSale(billedAt, baseLines);
       bills.clearDraft();
 
-      const negativeStockItems = this.itemsWithNegativeStock(
-        items,
-        baseLines.map((lineInput) => lineInput.itemId),
-      );
+      const negativeStockItems = this.itemsWithNegativeStock(items, [
+        ...baseLines.map((lineInput) => lineInput.itemId),
+        ...colorantIds,
+      ]);
       return { bill: saved, lines, negativeStockItems };
     });
   }

@@ -38,4 +38,9 @@ export interface INewLine {
   /** Spec 002 T034: the alternate unit typed and the quantity in it; null for the base unit */
   enteredUom?: string | null;
   qtyEnteredMilli?: number | null;
+  /** Spec 002 T061: a tinted can's formula, charge and cost; a tinted can cannot be returned */
+  tintFormulaId?: string | null;
+  tintChargePaise?: number | null;
+  costPaise?: number | null;
+  isReturnable?: boolean;
 }

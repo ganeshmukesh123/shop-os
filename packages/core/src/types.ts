@@ -156,6 +156,16 @@ export const billLineInput = z.object({
   lineDiscountPaise: nonNegPaise,
   /** Spec 002 T034: an alternate unit of the item (roll); the main process converts it */
   enteredUom: z.string().trim().min(1).max(20).optional(),
+  /**
+   * Spec 002 T061: a tinted can, mixed by the shade's current formula or as a repeat of a billed
+   * line (contracts "Bills (changed)")
+   */
+  tint: z
+    .union([
+      z.object({ formulaId: z.string().min(1) }).strict(),
+      z.object({ sourceBillLineId: z.string().min(1) }).strict(),
+    ])
+    .optional(),
 });
 export type BillLineInput = z.infer<typeof billLineInput>;
 
