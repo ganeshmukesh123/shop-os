@@ -56,6 +56,14 @@ export const MERGE_DISPATCH_CASES = {
   },
   "exceptions.list": { input: {}, expected: { ok: true, data: { events: [] } } },
   "exceptions.resolve": { input: { id: "no-such-issue", note: "x" }, expected: notFound },
+  "variants.setBarcodes": {
+    input: { variantId: "no-such-item", barcodes: [] },
+    expected: notFound,
+  },
+  "variants.setSearchNames": {
+    input: { variantIds: ["no-such-item"], names: [] },
+    expected: notFound,
+  },
   "items.merge.reverse": {
     input: { mergeLogId: "no-such-merge", reason: "x" },
     expected: notFound,

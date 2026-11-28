@@ -6,6 +6,8 @@ import {
   itemsLookupBarcodeInput,
   itemsMergeInput,
   itemsMergeReverseInput,
+  variantsSetBarcodesInput,
+  variantsSetSearchNamesInput,
   type IMergeCommandMap,
   type ItemsLookupBarcodeInput,
 } from "@shopos/core";
@@ -18,6 +20,7 @@ export function createMergeHandlers({
   dataIssues,
   duplicates,
   merges,
+  variantCodes,
 }: Services): Pick<Handlers, keyof IMergeCommandMap> {
   return {
     "items.lookupBarcode": cmd<"items.lookupBarcode">(
@@ -37,6 +40,13 @@ export function createMergeHandlers({
     ),
     "exceptions.resolve": cmd<"exceptions.resolve">(exceptionsResolveInput, (input) =>
       dataIssues.resolve(input),
+    ),
+    "variants.setBarcodes": cmd<"variants.setBarcodes">(variantsSetBarcodesInput, (input) =>
+      variantCodes.setBarcodes(input),
+    ),
+    "variants.setSearchNames": cmd<"variants.setSearchNames">(
+      variantsSetSearchNamesInput,
+      (input) => variantCodes.setSearchNames(input),
     ),
   };
 }
