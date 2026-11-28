@@ -22,6 +22,8 @@ function renderDialog() {
         axisKeys: [],
       },
       variants: [],
+      barcodes: [],
+      searchNames: [],
       conversions: [
         { variantId: "wire", uomCode: "roll", factorMilli: 90_000 },
         { variantId: "other-variant", uomCode: "box", factorMilli: 1_000 },
@@ -71,6 +73,8 @@ describe("UnitsDialog (spec 002 T037)", () => {
         },
         variants: [],
         conversions: [],
+        barcodes: [],
+        searchNames: [],
       }),
       "catalogue.categories.list": () => ({ categories: [] }),
       "catalogue.brands.list": () => ({ brands: [] }),

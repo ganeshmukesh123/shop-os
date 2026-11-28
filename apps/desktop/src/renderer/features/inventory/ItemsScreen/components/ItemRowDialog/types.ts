@@ -1,7 +1,7 @@
 import type { Item } from "@shopos/core";
 
 export interface IItemRowDialog {
-  kind: "units" | "merge";
+  kind: "units" | "merge" | "names";
   item: Item;
 }
 

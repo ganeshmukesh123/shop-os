@@ -80,6 +80,31 @@ describe("variants.setBarcodes (spec 002 T047)", () => {
   });
 });
 
+describe("families.get with codes and names (spec 002 contracts, T049)", () => {
+  it("returns the family's barcodes and search names, as the names panel reads them", async () => {
+    const { handlers, create } = await shop();
+    const elbow = await create("Elbow 1 inch");
+    await handlers["variants.setBarcodes"]({
+      variantId: elbow.id,
+      barcodes: [{ code: "8901234567890", source: "manufacturer" }],
+    });
+    await handlers["variants.setSearchNames"]({
+      variantIds: [elbow.id],
+      names: [{ name: "bend", language: "en", kind: "trade" }],
+    });
+
+    const detail = await handlers["families.get"]({ id: elbow.familyId! });
+
+    expect(detail).toMatchObject({
+      ok: true,
+      data: {
+        barcodes: [{ variantId: elbow.id, code: "8901234567890", source: "manufacturer" }],
+        searchNames: [{ variantId: elbow.id, name: "bend", language: "en", kind: "trade" }],
+      },
+    });
+  });
+});
+
 describe("variants.setSearchNames (spec 002 T047)", () => {
   it("gives two items the same names, found by the bill search", async () => {
     const { handlers, create } = await shop();

@@ -9,6 +9,7 @@ export function ItemRowActions({
   onAdjust,
   onUnits,
   onMerge,
+  onNames,
   onToggleActive,
 }: IItemRowActionsProps) {
   return (
@@ -21,6 +22,9 @@ export function ItemRowActions({
       </Button>
       <Button size="2" variant="soft" onClick={onUnits}>
         {uiText.family.units.open}
+      </Button>
+      <Button size="2" variant="soft" onClick={onNames}>
+        {uiText.names.open}
       </Button>
       <Button size="2" variant="soft" onClick={onMerge}>
         {uiText.merge.open}

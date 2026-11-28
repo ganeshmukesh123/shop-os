@@ -4,6 +4,7 @@ import { familyText } from "./familyText";
 import { dataIssuesText } from "./dataIssuesText";
 import { mergeLogText } from "./mergeLogText";
 import { mergeText } from "./mergeText";
+import { namesText } from "./namesText";
 
 /** All screen text lives here so Hindi can be added later. */
 export const uiText = {
@@ -12,6 +13,7 @@ export const uiText = {
   merge: mergeText,
   mergeLog: mergeLogText,
   dataIssues: dataIssuesText,
+  names: namesText,
   nav: { items: "Items", newBill: "New bill", bills: "Bills", settings: "Settings" },
   bills: {
     title: "Bills",
