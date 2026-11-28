@@ -3,7 +3,7 @@ import { createTestDb } from "./testDb";
 
 /**
  * Quickstart scenario 3's shop (spec 002 US3): base "Royale" in Pastel 4 L and White 1 L, and
- * colorants Blue and Black in ml. Prices: Pastel 4 L ₹1,450.00, Blue ₹2.40 per ml to buy.
+ * colorants Blue and Black in ml. Prices: Pastel 4 L sells at ₹1,450.00 and costs ₹1,100.00; Blue costs ₹2.40 and Black ₹3.00 per ml.
  */
 const PAINT_FIELDS = {
   petroleumClass: "B",
@@ -23,11 +23,13 @@ export function tintShop() {
         axes: { base_type: "Pastel", pack_size: "4 L" },
         declaredQtyMilli: 4_000,
         sellingPricePaise: 145_000,
+        purchasePricePaise: 110_000,
       },
       {
         axes: { base_type: "White", pack_size: "1 L" },
         declaredQtyMilli: 1_000,
         sellingPricePaise: 40_000,
+        purchasePricePaise: 30_000,
       },
     ].map((variant) => ({
       ...variant,
@@ -38,7 +40,7 @@ export function tintShop() {
       declaredUom: "litre",
     })),
   });
-  const colorant = (name: string) =>
+  const colorant = (name: string, purchasePerMlPaise: number) =>
     families.create({
       family: { name, kind: "colorant", spec: {}, axisKeys: [] },
       variants: [
@@ -49,6 +51,7 @@ export function tintShop() {
           baseUom: "ml",
           allowDecimal: true,
           sellingPricePaise: 300,
+          purchasePricePaise: purchasePerMlPaise,
           openingQtyMilli: 1_000_000,
           declaredQtyMilli: 1_000_000,
           declaredUom: "ml",
@@ -62,7 +65,7 @@ export function tintShop() {
     royale: royale.family,
     pastel4l: pastel4l!,
     white1l: white1l!,
-    blue: colorant("Blue"),
-    black: colorant("Black"),
+    blue: colorant("Blue", 240),
+    black: colorant("Black", 300),
   };
 }
