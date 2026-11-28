@@ -104,6 +104,29 @@ export class MergeRepository {
       .run();
   }
 
+  /** A merge log row and the code rows it moved, or null. */
+  getLog(mergeLogId: string): { mergeLog: IMergeLog; movedRows: unknown[] } | null {
+    const logRow = this.databaseHandle
+      .select()
+      .from(itemMergeLog)
+      .where(and(eq(itemMergeLog.id, mergeLogId), eq(itemMergeLog.shopId, this.ctx.shopId)))
+      .get();
+    return logRow
+      ? { mergeLog: toMergeLog(logRow), movedRows: JSON.parse(logRow.movedRowsJson) as unknown[] }
+      : null;
+  }
+
+  /** Whether a reverse row already points at this merge. */
+  isReversed(mergeLogId: string): boolean {
+    return (
+      this.databaseHandle
+        .select({ id: itemMergeLog.id })
+        .from(itemMergeLog)
+        .where(eq(itemMergeLog.mergeLogId, mergeLogId))
+        .get() !== undefined
+    );
+  }
+
   insertLog(newLog: INewMergeLog, movedRows: readonly unknown[] = []): IMergeLog {
     const now = nowMs();
     const logRow = this.databaseHandle
