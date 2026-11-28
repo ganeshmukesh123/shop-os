@@ -1,0 +1,1 @@
+export { useTintPicker } from "./useTintPicker";

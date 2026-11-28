@@ -1,5 +1,6 @@
 import { billGridText } from "./billGridText";
 import { billBarcodeText, billTintText } from "./billBarcodeText";
+import { billTintPickerText } from "./billTintPickerText";
 import { familyText } from "./familyText";
 import { dataIssuesText } from "./dataIssuesText";
 import { mergeLogText } from "./mergeLogText";
@@ -101,6 +102,7 @@ export const uiText = {
     grid: billGridText,
     barcode: billBarcodeText,
     tint: billTintText,
+    tintPicker: billTintPickerText,
     title: "New bill",
     search: "Type 2 or more letters of an item name, press Enter to add",
     noMatch: "No matching items",
