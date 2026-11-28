@@ -98,6 +98,8 @@ describe("exceptions.list and exceptions.resolve (spec 002 T047)", () => {
     expect(open.data.events).toMatchObject([
       { kind: "duplicate_barcode", detail: "8901234567890", status: "open" },
     ]);
+    // The screen names the items, not their ids
+    expect([...open.data.events[0]!.subjectNames].sort()).toEqual(["Elbow 1 inch", "Elbow grey"]);
 
     const resolved = await handlers["exceptions.resolve"]({
       id: open.data.events[0]!.id,
