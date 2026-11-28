@@ -2,12 +2,13 @@ import { Button, Flex } from "@radix-ui/themes";
 import { uiText } from "../../../../../shared/text/strings";
 import type { IItemRowActionsProps } from "./types";
 
-/** An item row's buttons: Edit, Adjust stock, Units (spec 002 T037) and Deactivate or Reactivate. */
+/** An item row's buttons: Edit, Adjust stock, Units (spec 002 T037), Merge (T051) and Deactivate or Reactivate. */
 export function ItemRowActions({
   item,
   onEdit,
   onAdjust,
   onUnits,
+  onMerge,
   onToggleActive,
 }: IItemRowActionsProps) {
   return (
@@ -20,6 +21,9 @@ export function ItemRowActions({
       </Button>
       <Button size="2" variant="soft" onClick={onUnits}>
         {uiText.family.units.open}
+      </Button>
+      <Button size="2" variant="soft" onClick={onMerge}>
+        {uiText.merge.open}
       </Button>
       <Button size="2" variant="soft" color="gray" onClick={onToggleActive}>
         {item.active ? uiText.items.deactivate : uiText.items.reactivate}
