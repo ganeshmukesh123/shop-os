@@ -225,6 +225,14 @@ describe("a repeat of a billed shade (spec 002 T056)", () => {
 });
 
 describe("a saved tinted line read back (spec 002 T067)", () => {
+  it("is returned tinted by the save itself, so the bill shown after saving says so", () => {
+    const { sellTinted, formula } = skyBlueShop();
+
+    const { lines } = sellTinted({ formulaId: formula.id }, 1);
+
+    expect(lines[0]!.tint?.colorants.map((colorant) => colorant.name)).toEqual(["Blue", "Black"]);
+  });
+
   it("carries its colorants per can, so the bill view and print can show them", () => {
     const { sellTinted, formula, billing } = skyBlueShop();
     const { bill } = sellTinted({ formulaId: formula.id }, 1);
