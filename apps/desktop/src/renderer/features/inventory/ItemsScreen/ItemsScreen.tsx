@@ -9,6 +9,7 @@ import { uiText } from "../../../shared/text/strings";
 import { call, messageOf } from "../../../shared/api/api";
 import { useItems } from "../hooks/useItems";
 import { ItemForm } from "../ItemForm";
+import { MergeLogButton } from "../../items/MergeLog";
 import { NewFamilyButton } from "../../items/NewFamilyButton";
 import { ItemRowActions } from "./components/ItemRowActions";
 import { ItemRowDialog, type IItemRowDialog } from "./components/ItemRowDialog";
@@ -37,6 +38,7 @@ export function ItemsScreen() {
       <Flex justify="between" align="center">
         <Heading size="6">{uiText.items.title}</Heading>
         <Flex gap="3">
+          <MergeLogButton onReversed={() => reload()} />
           <NewFamilyButton
             onSaved={() => reload()}
             onOpenExisting={(duplicate) => setQuery(duplicate.displayName)}

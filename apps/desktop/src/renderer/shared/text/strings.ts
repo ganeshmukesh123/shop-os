@@ -1,5 +1,6 @@
 import { billGridText } from "./billGridText";
 import { familyText } from "./familyText";
+import { mergeLogText } from "./mergeLogText";
 import { mergeText } from "./mergeText";
 
 /** All screen text lives here so Hindi can be added later. */
@@ -7,6 +8,7 @@ export const uiText = {
   appName: "Shop OS",
   family: familyText,
   merge: mergeText,
+  mergeLog: mergeLogText,
   nav: { items: "Items", newBill: "New bill", bills: "Bills", settings: "Settings" },
   bills: {
     title: "Bills",
