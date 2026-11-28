@@ -8,6 +8,7 @@ import { loadDraftForm, type IBillForm } from "../billForm";
 import { useDraftAutosave } from "../hooks/useDraftAutosave";
 import { useBillForm } from "./hooks/useBillForm";
 import { useBillSave } from "./hooks/useBillSave";
+import { FamilyPicker } from "./components/FamilyPicker";
 import { useBarcodeEntry } from "./hooks/useBarcodeEntry";
 import { useItemSearch } from "./hooks/useItemSearch";
 import { useLineConversions } from "./hooks/useLineConversions";
@@ -19,7 +20,6 @@ import { BillSummaryPanel } from "./components/BillSummaryPanel";
 import { RecoverDraftDialog } from "./components/RecoverDraftDialog";
 import { useRoundedTotal } from "../RoundOffLine/useRoundedTotal";
 import { BarcodeChooser } from "../BarcodeChooser";
-import { VariantGrid } from "../VariantGrid";
 
 export function NewBillScreen() {
   const [ready, setReady] = useState(false);
@@ -37,6 +37,7 @@ export function NewBillScreen() {
     patchLine,
     removeLine,
     addItem,
+    addTintedItem,
   } = useBillForm(rememberLineToFocus);
   useLineConversions(form.draft.lines, patchLine);
   const roundedTotal = useRoundedTotal(evaluation.grandTotalPaise);
@@ -129,13 +130,17 @@ export function NewBillScreen() {
         />
       )}
       {gridFamily && (
-        <VariantGrid
-          familyId={gridFamily.id}
-          title={gridFamily.displayName}
+        <FamilyPicker
+          row={gridFamily}
           onClose={() => setGridFamily(null)}
-          onPick={(item) => {
+          onPickItem={(item) => {
             setGridFamily(null);
             addItemAndClearSearch(item);
+          }}
+          onPickTinted={(item, pick) => {
+            setGridFamily(null);
+            addTintedItem(item, pick);
+            clearSearch();
           }}
         />
       )}
