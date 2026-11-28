@@ -40,7 +40,10 @@ description: "Task list for feature 002: item families, variants, search, merge,
 - [ ] T007 [P] Write tests in `core/tests/search/normaliseSearchText.test.ts` and `core/tests/search/editDistance.test.ts`: NFC, lower case, Latin diacritics removed, Devanagari kept; Damerau-Levenshtein "elbow"/"elbwo" = 1, "paipa"/"pipe" = 2; `editDistanceWithin` stops early above the limit
 - [ ] T008 [P] Write tests in `core/tests/search/rankSearchMatches.test.ts`: tier order exact barcode or code, whole word, prefix, fuzzy (distance 1 for 4 to 7 characters, 2 for 8 or more); within a tier more `bill_count_90d` first; a multi-variant family appears once as a family row
 - [ ] T009 [P] Write tests in `core/tests/catalogue/variantDraft.test.ts` for `validateVariantDraft`: for family kind `base_paint`, `colorant`, `paint` or `thinner_solvent`, `petroleum_class`, `declared_qty_milli` and `declared_uom` are required (`MISSING_PAINT_FIELDS`); `sealed_pack_only` with `allow_decimal` 1 gives `SEALED_PACK_DECIMAL`; `warranty_months` 0 to 120; `trade_label` up to 20 characters; `location_tag` up to 30
-- [ ] T010 [P] Implement `core/src/catalogue/axisSignature.ts` and `core/src/catalogue/variantCombinations.ts` to pass T004 and T005
+
+- [ ] T089 [US1] Add FR-002 boundary tests to `core/tests/catalogue/variantCombinations.test.ts` after T005: 10 × 10 × 5 axis values generate all 500 combinations; 10 × 10 × 6 axis values are refused with `TOO_MANY_COMBINATIONS` and the requested count (600) in the error message.
+- [ ] T010 [P] Implement `core/src/catalogue/axisSignature.ts` and `core/src/catalogue/variantCombinations.ts` to pass T004 and T005; enforce FR-002’s 500-combination limit to pass T089
+
 - [ ] T011 [P] Implement `core/src/units/unitConversion.ts` (`convertToBaseMilli`) to pass T006
 - [ ] T012 [P] Implement `core/src/search/normaliseSearchText.ts` and `core/src/search/editDistance.ts` to pass T007
 - [ ] T013 Implement `core/src/search/rankSearchMatches.ts` to pass T008 (depends on T012)
@@ -77,7 +80,9 @@ description: "Task list for feature 002: item families, variants, search, merge,
 
 - [ ] T026 [P] [US1] Write tests in `core/tests/catalogue/variantGrid.test.ts`: axis 1 rows, axis 2 columns, axes 3 and 4 as tabs, missing combinations are empty cells, inactive cells marked
 - [ ] T027 [P] [US1] Write tests in `core/tests/catalogue/titleRender.test.ts` and `core/tests/catalogue/categoryDefaults.test.ts`: `{brand} {size} {class}` renders "Supreme 0.5 in 4 kg"; missing values are skipped without double spaces; a child category inherits empty defaults from its nearest ancestor
-- [ ] T028 [P] [US1] Write tests in `desktop/src/main/services/families/FamilyService.test.ts`: create with 5 of 6 combinations; `DUPLICATE_SIGNATURE`; opening stock writes one `opening` movement per variant; deactivate never deletes; a variant on a saved bill can be deactivated and the bill still reads it
+
+- [ ] T028 [P] [US1] Write tests in `desktop/src/main/services/families/FamilyService.test.ts`: create with 5 of 6 combinations; `DUPLICATE_SIGNATURE`; opening stock writes one `opening` movement per variant; deactivate never deletes; a variant on a saved bill can be deactivated and the bill still reads it; `families.previewVariants` rejects 10 × 10 × 6 axis values with `TOO_MANY_COMBINATIONS` and the requested count (600) in the error message
+
 - [ ] T029 [P] [US1] Write tests in `desktop/tests/integration/billConversion.test.ts`: `bills.save` with `enteredUom` `roll` stores `entered_uom`, `qty_entered_milli` 2000 and `qty_base_milli` 180000, and deducts 180 m; 0.33 roll at 90000 stores 330 entered and 29700 base milli and deducts 29.7 m; 0.333 roll on a separate variant at 90500 fails with `INEXACT_CONVERSION` and writes nothing; `UNKNOWN_UNIT` when no conversion exists
 
 ### Implementation
@@ -85,7 +90,9 @@ description: "Task list for feature 002: item families, variants, search, merge,
 - [ ] T030 [P] [US1] Implement `core/src/catalogue/variantGrid.ts`, `titleRender.ts`, `categoryDefaults.ts` to pass T026 and T027
 - [ ] T031 [US1] Add Zod schemas and command types for `catalogue.*`, `families.*` and `variants.*` (first table of `contracts/ipc-commands.md`) in `core/src/commands.ts` and `core/src/types.ts`
 - [ ] T032 [P] [US1] Implement `desktop/src/main/repositories/CatalogueRepository.ts` (categories, brands, units) and `FamilyRepository.ts` (families, variants, conversions, prices, batches)
-- [ ] T033 [US1] Implement `desktop/src/main/services/catalogue/CatalogueService.ts` and `desktop/src/main/services/families/FamilyService.ts` to pass T028
+
+- [ ] T033 [US1] Implement `desktop/src/main/services/catalogue/CatalogueService.ts` and `desktop/src/main/services/families/FamilyService.ts` to pass T028; enforce the 500-combination limit in `families.previewVariants`, returning `TOO_MANY_COMBINATIONS` with the requested count in the error message when the limit is exceeded
+
 - [ ] T034 [US1] Extend `desktop/src/main/services/BillingService.ts` for entered units to pass T029 (conversion via `convertToBaseMilli`, both quantities stored)
 - [ ] T035 [US1] Register the commands in `desktop/src/main/ipc/handlers.ts` and the bridge in `desktop/src/preload/bridge.ts`
 - [ ] T036 [P] [US1] Build `desktop/src/renderer/features/items/FamilyForm/` (name, kind, category, brand, axis picker limited to 4 with the reason shown) and `VariantPreview/` (combination table with tick boxes, price and opening quantity per row), with a `useFamilyForm` hook holding the logic
